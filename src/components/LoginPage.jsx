@@ -71,14 +71,14 @@ export const LoginPage = ({ onLoginSuccess }) => {
       <div className="portal-wrapper">
         {/* ================= Left Side: Visual Promo Banner ================= */}
         <div className="promo-column" style={{
-            backgroundImage: `url('/road-work.jpg')`
+            backgroundImage: `url('${import.meta.env.BASE_URL}road-work.jpg')`
         }}>
           <div className="promo-overlay"/>
 
           <div className="promo-content">
             {/* Top Brand Pill */}
             <div className="promo-top-badge">
-              <img src="/logo-agency.jpg" alt="شعار جهاز تنفيذ مشروعات المواصلات" className="promo-logo-icon"/>
+              <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" className="promo-logo-icon"/>
               <div className="promo-brand-text">
                 <h4>جهاز تنفيذ مشروعات المواصلات</h4>
                 <p>منظومة إدارة الكسارات والوقود ومتابعة القطاعات</p>
@@ -115,7 +115,7 @@ export const LoginPage = ({ onLoginSuccess }) => {
             </div>
 
             <div className="form-logo-box">
-              <img src="/logo-agency.jpg" alt="شعار جهاز تنفيذ مشروعات المواصلات" className="form-logo-img"/>
+              <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" className="form-logo-img"/>
             </div>
           </div>
 

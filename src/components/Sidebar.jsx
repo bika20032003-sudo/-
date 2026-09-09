@@ -66,7 +66,7 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
       <div className="sidebar-app-brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div className="agency-logo-wrap">
-            <img src="/logo-agency.jpg" alt="شعار جهاز تنفيذ مشروعات المواصلات" className="agency-sidebar-logo"/>
+            <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" className="agency-sidebar-logo"/>
           </div>
           <div className="brand-app-title">
             <h2>منظومة متابعة الكسارات</h2>

@@ -103,7 +103,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             </div>
 
             <div className="header-agency-emblem">
-              <img src="/logo-agency.jpg" alt="شعار جهاز تنفيذ مشروعات المواصلات" />
+              <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" />
               <div className="emblem-sub">منظومة المتابعة اليومية المعتمدة</div>
             </div>
 

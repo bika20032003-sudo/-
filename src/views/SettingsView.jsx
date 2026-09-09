@@ -111,7 +111,7 @@ export const SettingsView = () => {
             <div className="form-group" style={{ marginTop: '1rem' }}>
               <label className="form-label">شعار المنظومة وجهاز المواصلات</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '0.75rem', background: '#f8fafc' }}>
-                <img src="/logo-agency.jpg" alt="شعار الجهاز" style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #e2e8f0' }}/>
+                <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار الجهاز" style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #e2e8f0' }}/>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontSize: '0.85rem', fontWeight: 800 }}>logo-agency.jpg</h4>
                   <p style={{ fontSize: '0.72rem', color: '#64748b' }}>شعار مخصص معتمد لتقارير PDF والطباعة</p>
