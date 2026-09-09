@@ -39,9 +39,24 @@ export const ReportsArchiveView = ({ currentUser }) => {
         : 'http://localhost:5000/api/reports';
       
       const res = await fastFetch(url);
-      if (res && res.success && res.reports) {
-        setReports(res.reports);
+      let list = [];
+      if (res && res.reports) {
+        list = res.reports;
+      } else if (Array.isArray(res)) {
+        list = res;
       }
+      
+      // Merge with locally created reports
+      try {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
+        const newOnes = local.filter(r => !existingIds.has(String(r.id || r.reportNumber)));
+        list = [...newOnes, ...list];
+      } catch (storageErr) {
+        console.warn('Storage error in archive:', storageErr);
+      }
+
+      setReports(list);
     } catch (err) {
       console.error('Failed to load reports archive', err);
     } finally {

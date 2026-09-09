@@ -68,9 +68,22 @@ export const SectorDashboardView = ({ currentUser }) => {
     try {
       setIsLoadingReports(true);
       const res = await fastFetch(`http://localhost:5000/api/reports?sector=${sectorCode}`);
-      if (res && res.success && res.reports) {
-        setReports(res.reports);
+      let list = [];
+      if (res && res.reports) {
+        list = res.reports;
+      } else if (Array.isArray(res)) {
+        list = res;
       }
+      
+      try {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const matchingLocal = local.filter(r => (r.sectorCode === sectorCode || (r.sector || '').includes(sectorCode)));
+        const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
+        const newOnes = matchingLocal.filter(r => !existingIds.has(String(r.id || r.reportNumber)));
+        list = [...newOnes, ...list];
+      } catch (e) {}
+
+      setReports(list);
     } catch (err) {
       console.error('Failed to load sector reports', err);
     } finally {

@@ -19,7 +19,8 @@ const FuelView = lazy(() => import('./FuelView').then(m => ({ default: m.FuelVie
 const AlertsView = lazy(() => import('./AlertsView').then(m => ({ default: m.AlertsView })));
 const UsersView = lazy(() => import('./UsersView').then(m => ({ default: m.UsersView })));
 const ReportsArchiveView = lazy(() => import('./ReportsArchiveView').then(m => ({ default: m.ReportsArchiveView })));
-const CreateReportModal = lazy(() => import('../components/CreateReportModal').then(m => ({ default: m.CreateReportModal })));
+import { CreateReportModal } from '../components/CreateReportModal';
+import { OfficialPrintModal } from '../components/OfficialPrintModal';
 
 const ViewLoadingFallback = () => (
   <div style={{
@@ -51,6 +52,7 @@ export const MainSystem = ({ onLogout, currentUser }) => {
     const [activeTab, setActiveTab] = useState(isSectorSupervisor ? 'sector-dashboard' : 'dashboard');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
 
     // If activeTab is 'create-report', open the modal and stay on appropriate tab
     const handleTabChange = (tabId) => {
@@ -149,9 +151,20 @@ export const MainSystem = ({ onLogout, currentUser }) => {
           isOpen={isCreateModalOpen}
           currentUser={currentUser}
           onClose={() => setIsCreateModalOpen(false)}
-          onReportCreated={() => {
-            // refresh
+          onReportCreated={(rep) => {
+            console.log('Report created successfully:', rep);
           }}
+          onPrintReport={(newRep) => {
+            setSelectedReportForPrint(newRep);
+          }}
+        />
+      )}
+
+      {/* Official Print Modal */}
+      {selectedReportForPrint && (
+        <OfficialPrintModal
+          report={selectedReportForPrint}
+          onClose={() => setSelectedReportForPrint(null)}
         />
       )}
     </div>);
