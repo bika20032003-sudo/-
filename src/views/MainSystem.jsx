@@ -1,23 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
-import { DashboardView } from './DashboardView';
-import { SectorDashboardView } from './SectorDashboardView';
-import { UploadReportsView } from './UploadReportsView';
-import { RoadProgressView } from './RoadProgressView';
-import { SectorsView } from './SectorsView';
-import { DailyAnalysisView } from './DailyAnalysisView';
-import { TomorrowPlanView } from './TomorrowPlanView';
-import { DailyReportsView } from './DailyReportsView';
-import { ReportsView } from './ReportsView';
-import { EquipmentView } from './EquipmentView';
-import { CrushersView } from './CrushersView';
-import { SharshoorView } from './SharshoorView';
-import { FuelView } from './FuelView';
-import { AlertsView } from './AlertsView';
-import { UsersView } from './UsersView';
-import { ReportsArchiveView } from './ReportsArchiveView';
-import { CreateReportModal } from '../components/CreateReportModal';
+
+// Lazy-loaded views for instant initial page speed and reduced bundle size
+const DashboardView = lazy(() => import('./DashboardView').then(m => ({ default: m.DashboardView })));
+const SectorDashboardView = lazy(() => import('./SectorDashboardView').then(m => ({ default: m.SectorDashboardView })));
+const UploadReportsView = lazy(() => import('./UploadReportsView').then(m => ({ default: m.UploadReportsView })));
+const RoadProgressView = lazy(() => import('./RoadProgressView').then(m => ({ default: m.RoadProgressView })));
+const SectorsView = lazy(() => import('./SectorsView').then(m => ({ default: m.SectorsView })));
+const DailyAnalysisView = lazy(() => import('./DailyAnalysisView').then(m => ({ default: m.DailyAnalysisView })));
+const TomorrowPlanView = lazy(() => import('./TomorrowPlanView').then(m => ({ default: m.TomorrowPlanView })));
+const DailyReportsView = lazy(() => import('./DailyReportsView').then(m => ({ default: m.DailyReportsView })));
+const ReportsView = lazy(() => import('./ReportsView').then(m => ({ default: m.ReportsView })));
+const EquipmentView = lazy(() => import('./EquipmentView').then(m => ({ default: m.EquipmentView })));
+const CrushersView = lazy(() => import('./CrushersView').then(m => ({ default: m.CrushersView })));
+const SharshoorView = lazy(() => import('./SharshoorView').then(m => ({ default: m.SharshoorView })));
+const FuelView = lazy(() => import('./FuelView').then(m => ({ default: m.FuelView })));
+const AlertsView = lazy(() => import('./AlertsView').then(m => ({ default: m.AlertsView })));
+const UsersView = lazy(() => import('./UsersView').then(m => ({ default: m.UsersView })));
+const ReportsArchiveView = lazy(() => import('./ReportsArchiveView').then(m => ({ default: m.ReportsArchiveView })));
+const CreateReportModal = lazy(() => import('../components/CreateReportModal').then(m => ({ default: m.CreateReportModal })));
+
+const ViewLoadingFallback = () => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '350px',
+    gap: '0.85rem',
+    color: '#64748b'
+  }}>
+    <div style={{
+      width: '36px',
+      height: '36px',
+      border: '3px solid #e2e8f0',
+      borderTopColor: '#2563eb',
+      borderRadius: '50%',
+      animation: 'spin 0.6s linear infinite'
+    }} />
+    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>جاري تحميل الشاشة فورياً...</span>
+  </div>
+);
 
 export const MainSystem = ({ onLogout, currentUser }) => {
     const isSectorSupervisor = currentUser?.role?.includes('مشرف') || Boolean(currentUser?.sector && currentUser.sector !== 'all');
@@ -88,32 +112,34 @@ export const MainSystem = ({ onLogout, currentUser }) => {
         />
 
         <main className="custom-page-container">
-          {isSectorSupervisor ? (
-            /* Sector Supervisor Dedicated Views: Dashboard or Archive */
-            <>
-              {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} />}
-              {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
-            </>
-          ) : (
-            <>
-              {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
-              {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} onNavigateTab={handleTabChange}/>}
-              {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
-              {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
-              {activeTab === 'sectors' && <SectorsView />}
-              {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
-              {activeTab === 'daily-analysis' && <DailyAnalysisView onNavigateTab={handleTabChange}/>}
-              {activeTab === 'tomorrow-plan' && <TomorrowPlanView />}
-              {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} />}
-              {activeTab === 'analytics' && <ReportsView />}
-              {activeTab === 'crushers' && <CrushersView />}
-              {activeTab === 'sharshoor' && <SharshoorView />}
-              {activeTab === 'fuel' && <FuelView />}
-              {activeTab === 'equipment' && <EquipmentView />}
-              {activeTab === 'users' && <UsersView />}
-              {activeTab === 'alerts' && <AlertsView />}
-            </>
-          )}
+          <Suspense fallback={<ViewLoadingFallback />}>
+            {isSectorSupervisor ? (
+              /* Sector Supervisor Dedicated Views: Dashboard or Archive */
+              <>
+                {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} />}
+                {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
+              </>
+            ) : (
+              <>
+                {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
+                {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} onNavigateTab={handleTabChange}/>}
+                {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
+                {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
+                {activeTab === 'sectors' && <SectorsView />}
+                {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
+                {activeTab === 'daily-analysis' && <DailyAnalysisView onNavigateTab={handleTabChange}/>}
+                {activeTab === 'tomorrow-plan' && <TomorrowPlanView />}
+                {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} />}
+                {activeTab === 'analytics' && <ReportsView />}
+                {activeTab === 'crushers' && <CrushersView />}
+                {activeTab === 'sharshoor' && <SharshoorView />}
+                {activeTab === 'fuel' && <FuelView />}
+                {activeTab === 'equipment' && <EquipmentView />}
+                {activeTab === 'users' && <UsersView />}
+                {activeTab === 'alerts' && <AlertsView />}
+              </>
+            )}
+          </Suspense>
         </main>
       </div>
 
