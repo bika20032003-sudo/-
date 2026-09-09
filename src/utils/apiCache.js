@@ -2,7 +2,14 @@
 const cache = new Map();
 const TTL = 30000; // 30 seconds fresh cache
 
-export async function fastFetch(url, options = {}) {
+export async function fastFetch(rawUrl, options = {}) {
+  let url = rawUrl;
+  if (typeof url === 'string' && url.includes('localhost:5000/api')) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      const apiBase = import.meta.env.VITE_API_BASE || '';
+      url = url.replace(/https?:\/\/localhost:5000/, apiBase);
+    }
+  }
   const method = options.method || 'GET';
 
   // For non-GET requests, invalidate cache and perform direct fetch
