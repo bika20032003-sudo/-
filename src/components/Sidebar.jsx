@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Home, Milestone, Building2, UploadCloud, FileText, 
-  Layers, CalendarDays, BarChart3, Truck, Factory, 
-  Mountain, Fuel, Bell, Users, LogOut, CheckCircle2, ShieldCheck, Plus
+  Home, Milestone, UploadCloud, FileText, 
+  Layers, CalendarDays, Truck, Factory, 
+  Mountain, Fuel, Bell, Users, LogOut, ShieldCheck, Plus
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
@@ -10,12 +10,7 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
     const [unreadAlerts, setUnreadAlerts] = useState(0);
     const [pendingReportsCount, setPendingReportsCount] = useState(0);
 
-    const isSectorSupervisor = currentUser?.role?.includes('مشرف') || Boolean(currentUser?.sector && currentUser.sector !== 'all');
-    const isSectorA = (currentUser?.sector || '').includes('A') || (currentUser?.username || '').includes('a');
-    const sectorLabel = isSectorA ? 'القطاع (A)' : 'القطاع (B)';
-
     useEffect(() => {
-        if (isSectorSupervisor) return;
         fastFetch('http://localhost:5000/api/alerts')
             .then(data => {
                 if (data.success && data.alerts) {
@@ -32,34 +27,24 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
                 }
             })
             .catch(() => { });
-    }, [activeTab, isSectorSupervisor]);
+    }, [activeTab]);
 
-    // Navigation menus tailored for roles: Sector supervisors have dedicated sector options
-    const supervisorMenuItems = [
-        { id: 'sector-dashboard', label: `لوحة ${sectorLabel} الميدانية`, icon: Milestone },
-        { id: 'reports-archive', label: `أرشيف تقارير ${sectorLabel} والطباعة`, icon: FileText },
-        { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: Plus }
-    ];
-
-    const managerMenuItems = [
+    const menuItems = [
         { id: 'dashboard', label: 'الرئيسية (لوحة التحكم العامة)', icon: Home },
-        { id: 'sectors', label: 'متابعة القطاعات (A و B)', icon: Building2 },
-        { id: 'reports-archive', label: 'أرشيف تقارير القطاعات والطباعة', icon: FileText, badge: pendingReportsCount > 0 ? `${pendingReportsCount} قيد الاعتماد` : undefined },
-        { id: 'create-report', label: 'إنشاء تقرير قطاع جديد', icon: Plus },
+        { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: Plus },
+        { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText, badge: pendingReportsCount > 0 ? `${pendingReportsCount} قيد الاعتماد` : undefined },
         { id: 'daily-reports', label: 'اعتماد ومراجعة التقارير', icon: ShieldCheck },
-        { id: 'road-progress', label: 'إنجاز طريق أوباري غات', icon: Milestone },
-        { id: 'upload-reports', label: 'رفع التقارير الميدانية', icon: UploadCloud },
+        { id: 'road-progress', label: 'إنجاز طريق أوباري - غات', icon: Milestone },
+        { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
         { id: 'daily-analysis', label: 'تحليل اليومية والأداء', icon: Layers },
         { id: 'tomorrow-plan', label: 'خطة الغد والتنفيذ', icon: CalendarDays },
-        { id: 'crushers', label: 'الكسارات والإنتاج', icon: Factory },
+        { id: 'crushers', label: 'الكسارات ومعدلات الإنتاج', icon: Factory },
         { id: 'sharshoor', label: 'الشرشور والركام', icon: Mountain },
-        { id: 'fuel', label: 'الوقود والصهاريج', icon: Fuel },
-        { id: 'equipment', label: 'المعدات والآليات', icon: Truck },
+        { id: 'fuel', label: 'إدارة الوقود والصهاريج', icon: Fuel },
+        { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
         { id: 'users', label: 'مركز المستخدمين والصلاحيات', icon: Users },
-        { id: 'alerts', label: 'التنبيهات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+        { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
     ];
-
-    const menuItems = isSectorSupervisor ? supervisorMenuItems : managerMenuItems;
 
     return (<aside className={`custom-app-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Brand Header with Agency Emblem */}
@@ -70,7 +55,7 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
           </div>
           <div className="brand-app-title">
             <h2>منظومة متابعة الكسارات</h2>
-            <h3>والمعدات والوقود والقطاعات</h3>
+            <h3>والمعدات والوقود والتشغيل</h3>
           </div>
         </div>
 
@@ -90,17 +75,17 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
         margin: '0.75rem 1rem 0.25rem 1rem',
         padding: '0.45rem 0.75rem',
         borderRadius: '8px',
-        background: isSectorSupervisor ? '#eff6ff' : '#f8fafc',
-        border: isSectorSupervisor ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: isSectorSupervisor ? '#1d4ed8' : '#0f172a' }}>
+        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>
           {currentUser?.name || 'مدير المشروع'}
         </div>
         <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>
-          {isSectorSupervisor ? sectorLabel : 'إشراف عام'}
+          إدارة المشروع
         </span>
       </div>
 

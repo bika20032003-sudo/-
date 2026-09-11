@@ -10,11 +10,6 @@ import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
 export const ReportsArchiveView = ({ currentUser }) => {
-  const isSectorSupervisor = currentUser?.role?.includes('مشرف') || Boolean(currentUser?.sector && currentUser.sector !== 'all');
-  const userSectorCode = (currentUser?.sector || '').includes('B') || (currentUser?.username || '').includes('b') ? 'B' : 'A';
-  
-  // Sector filter default
-  const [sectorFilter, setSectorFilter] = useState(isSectorSupervisor ? userSectorCode : 'all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,9 +29,7 @@ export const ReportsArchiveView = ({ currentUser }) => {
   const fetchReports = async () => {
     try {
       setIsLoading(true);
-      const url = sectorFilter !== 'all' 
-        ? `http://localhost:5000/api/reports?sector=${sectorFilter}`
-        : 'http://localhost:5000/api/reports';
+      const url = 'http://localhost:5000/api/reports';
       
       const res = await fastFetch(url);
       let list = [];
@@ -66,15 +59,10 @@ export const ReportsArchiveView = ({ currentUser }) => {
 
   useEffect(() => {
     fetchReports();
-  }, [sectorFilter]);
+  }, []);
 
   // Filtering Logic
   const filteredReports = reports.filter((r) => {
-    // Sector filter
-    if (sectorFilter !== 'all') {
-      const s = (r.sector || '') + (r.crusherName || '') + (r.reportNumber || '');
-      if (!s.toUpperCase().includes(sectorFilter.toUpperCase())) return false;
-    }
 
     // Status filter
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
@@ -125,8 +113,8 @@ export const ReportsArchiveView = ({ currentUser }) => {
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'أرشيف تقارير القطاعات');
-    XLSX.writeFile(wb, `أرشيف_تقارير_القطاعات_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'أرشيف تقارير المشروع');
+    XLSX.writeFile(wb, `أرشيف_تقارير_المشروع_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Delete Report handler
@@ -177,10 +165,10 @@ export const ReportsArchiveView = ({ currentUser }) => {
             </div>
             <div>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                أرشيف تقارير القطاعات ونظام الطباعة المعتمد
+                الأرشيف المركزي لتقارير المشروع ونظام الطباعة المعتمد
               </h2>
               <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>
-                السجل المركزي الموثق لكافة تقارير القطاعين (A و B) مع إمكانية الإنشاء الفوري والطباعة الرسمية
+                السجل المركزي الموثق لكافة التقارير الميدانية واليومية لطريق أوباري - غات مع إمكانية الطباعة الرسمية
               </p>
             </div>
           </div>
@@ -327,32 +315,21 @@ export const ReportsArchiveView = ({ currentUser }) => {
           />
         </div>
 
-        {/* Sector Selector */}
+        {/* Type Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>القطاع:</span>
-          {isSectorSupervisor ? (
-            <span style={{
-              background: '#eff6ff',
-              color: '#1d4ed8',
-              padding: '0.45rem 0.85rem',
-              borderRadius: '8px',
-              fontWeight: 800,
-              fontSize: '0.82rem',
-              border: '1px solid #bfdbfe'
-            }}>
-              {userSectorCode === 'A' ? 'القطاع الأول (A)' : 'القطاع الثاني (B)'}
-            </span>
-          ) : (
-            <select
-              value={sectorFilter}
-              onChange={(e) => setSectorFilter(e.target.value)}
-              style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
-            >
-              <option value="all">كافة القطاعات (A و B)</option>
-              <option value="A">القطاع الأول (A) - شركة الرواد</option>
-              <option value="B">القطاع الثاني (B) - شركة نيوم</option>
-            </select>
-          )}
+          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>التصنيف:</span>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
+          >
+            <option value="all">كافة التقارير</option>
+            <option value="تقرير يومي شامل">تقرير يومي شامل</option>
+            <option value="تقرير تقدم أعمال الرصف">تقرير أعمال الرصف</option>
+            <option value="تقرير تشغيل وإنتاج الكسارة">تقرير إنتاج الكسارات</option>
+            <option value="تقرير تزويد واستهلاك الوقود">تقرير الوقود</option>
+            <option value="تقرير حركة وتشغيل المعدات">تقرير المعدات والآليات</option>
+          </select>
         </div>
 
         {/* Status Selector */}
@@ -424,7 +401,7 @@ export const ReportsArchiveView = ({ currentUser }) => {
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>رقم التقرير</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>التاريخ</th>
-                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>القطاع والشركة</th>
+                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الموقع والجهة المنفذة</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>بيان ونوع التقرير</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>إنتاج الكسارة</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>أعمال الرصف</th>
@@ -462,13 +439,13 @@ export const ReportsArchiveView = ({ currentUser }) => {
                         {r.date ? new Date(r.date).toLocaleDateString('ar-LY') : '—'}
                       </td>
 
-                      {/* Sector */}
+                      {/* Location & Entity */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        <div style={{ fontWeight: 800, fontSize: '0.86rem', color: isA ? '#1e40af' : '#c2410c' }}>
-                          {isA ? 'القطاع الأول (A)' : 'القطاع الثاني (B)'}
+                        <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#1e40af' }}>
+                          {r.sector || 'مشروع طريق أوباري - غات'}
                         </div>
                         <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                          {isA ? 'شركة الرواد' : 'شركة نيوم'}
+                          {r.companyName || 'جهاز تنفيذ مشروعات المواصلات'}
                         </div>
                       </td>
 

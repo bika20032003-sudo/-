@@ -3,7 +3,6 @@ import { Fuel, UploadCloud, Factory, Truck, Mountain, CheckCircle2, X, RefreshCw
 import { fastFetch } from '../utils/apiCache.js';
 export const DashboardView = ({ onNavigateTab }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedSector, setSelectedSector] = useState('all');
     const [activeChartTab, setActiveChartTab] = useState('progress');
     const [selectedImage, setSelectedImage] = useState(null);
     // Live Metrics State
@@ -150,14 +149,8 @@ export const DashboardView = ({ onNavigateTab }) => {
           </button>
         </div>
 
-        {/* Sector Filter & Actions */}
+        {/* Action Controls */}
         <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-          <select className="filter-select" value={selectedSector} onChange={(e) => setSelectedSector(e.target.value)} style={{ height: '34px', fontSize: '0.82rem', padding: '0 0.65rem' }}>
-            <option value="all">كافة القطاعات (الإجمالي)</option>
-            <option value="A">القطعة A (المقلع الشمالي)</option>
-            <option value="B">القطعة B (المقلع الأوسط)</option>
-          </select>
-
           <button className="secondary-action-btn" onClick={fetchDashboardData} disabled={isLoading} style={{ height: '34px', padding: '0 0.75rem' }}>
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''}/>
             <span>تحديث</span>
@@ -170,7 +163,7 @@ export const DashboardView = ({ onNavigateTab }) => {
         </div>
       </div>
 
-      {/* ================= HERO CARD: OVERALL ROAD PROJECT PROGRESS & SECTOR GAUGES ================= */}
+      {/* ================= HERO CARD: OVERALL ROAD PROJECT PROGRESS ================= */}
       <div className="dashboard-white-card" style={{
             padding: '1.5rem 1.75rem',
             marginBottom: '1.5rem',
@@ -188,13 +181,13 @@ export const DashboardView = ({ onNavigateTab }) => {
                 مشروع صيانة طريق أوباري - غات (نسبة الإنجاز التنفيذي العام)
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0.2rem 0 0' }}>
-                المرحلة الأولى بطول إجمالي: <strong>226.28 كم</strong> • الإنجاز اليومي: <strong>+{metrics.roadProgress.totalTodayMeters} م.ط</strong>
+                المرحلة الأولى بطول إجمالي: <strong>226.28 كم</strong> • معدل الإنجاز اليومي: <strong>+{metrics.roadProgress.totalTodayMeters} م.ط</strong>
               </p>
             </div>
           </div>
 
           <button onClick={() => onNavigateTab('road-progress')} className="secondary-action-btn" style={{ background: '#fff', fontSize: '0.82rem', fontWeight: 800, color: '#2563eb', borderColor: '#bfdbfe' }}>
-            <span>عرض تفاصيل المحطات والقطاعات</span>
+            <span>عرض تفاصيل مسار الطريق</span>
             <ChevronLeft size={16}/>
           </button>
         </div>
@@ -232,33 +225,33 @@ export const DashboardView = ({ onNavigateTab }) => {
             </div>
           </div>
 
-          {/* Sector A Progress Card */}
+          {/* Road Length Progress Card */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.2rem 1.35rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>القطاع (A) - شركة الرواد</span>
-              <strong style={{ fontSize: '1.25rem', color: '#2563eb' }}>{metrics.roadProgress.sectorAPercentage}%</strong>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>🛣️ المسافة المنفذة والمتبقية</span>
+              <strong style={{ fontSize: '1.15rem', color: '#2563eb' }}>215.00 كم</strong>
             </div>
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
-              <div style={{ width: `${metrics.roadProgress.sectorAPercentage}%`, height: '100%', background: '#2563eb', borderRadius: '4px' }}/>
+              <div style={{ width: `${(215 / 226.28) * 100}%`, height: '100%', background: '#2563eb', borderRadius: '4px' }}/>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>محطات 00+000 إلى 45+000</span>
-              <span>115.36 كم</span>
+              <span>المنجز: 215.00 كم</span>
+              <span style={{ color: '#dc2626', fontWeight: 700 }}>المتبقي: 11.28 كم فقط</span>
             </div>
           </div>
 
-          {/* Sector B Progress Card */}
+          {/* Daily Productivity & Readiness Card */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.2rem 1.35rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>القطاع (B) - شركة نيوم</span>
-              <strong style={{ fontSize: '1.25rem', color: '#16a34a' }}>{metrics.roadProgress.sectorBPercentage}%</strong>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>⚡ معدل الإنتاج والجاهزية</span>
+              <strong style={{ fontSize: '1.15rem', color: '#16a34a' }}>+{metrics.roadProgress.totalTodayMeters} م.ط</strong>
             </div>
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
-              <div style={{ width: `${metrics.roadProgress.sectorBPercentage}%`, height: '100%', background: '#16a34a', borderRadius: '4px' }}/>
+              <div style={{ width: '88%', height: '100%', background: '#16a34a', borderRadius: '4px' }}/>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>محطات 45+000 إلى 90+000</span>
-              <span>110.92 كم</span>
+              <span>{metrics.operatingHours} ساعة تشغيل اليوم</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>{metrics.activeEquipment} معدة ميدانية جاهزة</span>
             </div>
           </div>
         </div>
@@ -276,7 +269,7 @@ export const DashboardView = ({ onNavigateTab }) => {
                 لوحة الرسوم والمخططات البيانية التفاعلية
               </h3>
               <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0.15rem 0 0' }}>
-                تحليل مرئي فوري لمعدلات الإنجاز ومقارنة القطاعات ومنحنيات الإنتاج الأسبوعية
+                تحليل مرئي فوري لمعدلات الإنجاز التراكمي لطبقات المسار ومنحنيات الإنتاج الأسبوعية
               </p>
             </div>
           </div>
@@ -294,7 +287,7 @@ export const DashboardView = ({ onNavigateTab }) => {
             cursor: 'pointer',
             boxShadow: activeChartTab === 'progress' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none'
         }}>
-              📊 نسب الطبقات والقطاعات
+              📊 نسب إنجاز طبقات الطريق
             </button>
 
             <button onClick={() => setActiveChartTab('trends')} style={{
@@ -327,13 +320,13 @@ export const DashboardView = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* ================= CHART 1: SECTOR COMPARISON & LAYER COMPLETION BARS ================= */}
+        {/* ================= CHART 1: 4-LAYER ROAD PROGRESS & COMPARATIVE BARS ================= */}
         {activeChartTab === 'progress' && (<div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
               {/* Left Side: Layer Completion Grouped Bars */}
               <div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginBottom: '1rem', display: 'block' }}>
-                  مقارنة نسب الإنجاز حسب الطبقات (القطاع A مقابل القطاع B مقابل الإجمالي):
+                  نسب الإنجاز التفصيلية لطبقات الطريق (المسافة الكلية 226.28 كم):
                 </span>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
@@ -357,57 +350,45 @@ export const DashboardView = ({ onNavigateTab }) => {
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#64748b', marginTop: '0.25rem' }}>
-                        <span>القطاع A: <strong style={{ color: '#2563eb' }}>{layer.sectorA}%</strong></span>
-                        <span>القطاع B: <strong style={{ color: '#16a34a' }}>{layer.sectorB}%</strong></span>
-                        <span>إجمالي المنجز: <strong>{layer.meters.toLocaleString()} م.ط</strong></span>
+                        <span>المنجز: <strong>{layer.meters.toLocaleString()} م.ط</strong></span>
+                        <span>المتبقي: <strong style={{ color: '#dc2626' }}>{Math.max(0, 226280 - layer.meters).toLocaleString()} م.ط</strong></span>
+                        <span style={{ color: '#16a34a', fontWeight: 700 }}>الحالة: نشط ومستمر</span>
                       </div>
                     </div>))}
                 </div>
               </div>
 
-              {/* Right Side: Sector Comparative Bar Chart (SVG) */}
+              {/* Right Side: 4 Layers Comparative Bar Chart (SVG) */}
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem', display: 'block' }}>
-                  المخطط المقارن للقطاعات (A vs B):
+                  المخطط المقارن للطبقات الأربع للمشروع:
                 </span>
 
                 <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', paddingTop: '1rem', borderBottom: '2px solid #cbd5e1' }}>
-                  {/* Bar 1: Sector A */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '35%' }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#2563eb' }}>{metrics.roadProgress.sectorAPercentage}%</span>
-                    <div style={{
-                width: '100%',
-                height: `${metrics.roadProgress.sectorAPercentage * 1.3}px`,
-                background: 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)',
-                borderRadius: '6px 6px 0 0',
-                boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)'
-            }}/>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#1e293b' }}>القطاع (A)</span>
-                  </div>
-
-                  {/* Bar 2: Sector B */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '35%' }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#16a34a' }}>{metrics.roadProgress.sectorBPercentage}%</span>
-                    <div style={{
-                width: '100%',
-                height: `${metrics.roadProgress.sectorBPercentage * 1.3}px`,
-                background: 'linear-gradient(180deg, #22c55e 0%, #15803d 100%)',
-                borderRadius: '6px 6px 0 0',
-                boxShadow: '0 4px 10px rgba(22, 163, 74, 0.25)'
-            }}/>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#1e293b' }}>القطاع (B)</span>
-                  </div>
+                  {metrics.roadProgress.layers.map((layer, idx) => (
+                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.45rem', width: '22%' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 900, color: layer.color }}>{layer.percentage}%</span>
+                      <div style={{
+                        width: '100%',
+                        height: `${layer.percentage * 1.3}px`,
+                        background: `linear-gradient(180deg, ${layer.color} 0%, ${layer.color}cc 100%)`,
+                        borderRadius: '6px 6px 0 0',
+                        boxShadow: `0 4px 10px ${layer.color}33`
+                      }}/>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1e293b', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                        {idx === 0 ? 'FDR' : idx === 1 ? 'الأساس' : idx === 2 ? 'MCO' : 'الاسفلت'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.75rem', fontSize: '0.75rem', color: '#64748b' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#2563eb' }}/>
-                    <span>شركة الرواد (115.36 كم)</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#16a34a' }}/>
-                    <span>شركة نيوم (110.92 كم)</span>
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginTop: '0.85rem', fontSize: '0.74rem', color: '#64748b' }}>
+                  {metrics.roadProgress.layers.map((layer, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: layer.color }}/>
+                      <span style={{ fontWeight: 600 }}>{layer.name}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -509,7 +490,7 @@ export const DashboardView = ({ onNavigateTab }) => {
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
             <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>
-              {(selectedSector === 'A' ? metrics.sectorAProd : selectedSector === 'B' ? metrics.sectorBProd : metrics.totalProduction).toLocaleString()}
+              {metrics.totalProduction.toLocaleString()}
             </span>
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>طن</span>
           </div>
@@ -547,7 +528,7 @@ export const DashboardView = ({ onNavigateTab }) => {
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
             <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>
-              {(selectedSector === 'A' ? metrics.sectorAFuel : selectedSector === 'B' ? metrics.sectorBFuel : metrics.totalFuel).toLocaleString()}
+              {metrics.totalFuel.toLocaleString()}
             </span>
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>لتر</span>
           </div>
@@ -660,10 +641,10 @@ export const DashboardView = ({ onNavigateTab }) => {
         <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
-              الموقف التنفيذي لمواقع العمل (القطعة A والقطعة B)
+              الموقف التنفيذي العام للعمليات والإنتاج الميداني
             </h3>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>
-              مقارنة فورية
+            <span style={{ fontSize: '0.75rem', color: '#15803d', background: '#dcfce7', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>
+              مؤشرات موحدة
             </span>
           </div>
 
@@ -671,35 +652,35 @@ export const DashboardView = ({ onNavigateTab }) => {
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ textAlign: 'right', padding: '0.65rem 0.85rem' }}>البيان الميداني</th>
-                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>القطعة A</th>
-                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>القطعة B</th>
-                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>الإجمالي</th>
+                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>المتحقق اليوم</th>
+                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>المستهدف</th>
+                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>نسبة التحقيق</th>
               </tr>
             </thead>
             <tbody>
               <tr onClick={() => onNavigateTab('crushers')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>🏭 إنتاج الكسارات (طن)</td>
-                <td style={{ textAlign: 'center' }}>{metrics.sectorAProd.toLocaleString()}</td>
-                <td style={{ textAlign: 'center' }}>{metrics.sectorBProd.toLocaleString()}</td>
-                <td style={{ textAlign: 'center' }}><strong>{metrics.totalProduction.toLocaleString()}</strong></td>
+                <td style={{ fontWeight: 700, color: '#1e293b' }}>🏭 إنتاج الكسارات</td>
+                <td style={{ textAlign: 'center', fontWeight: 700, color: '#2563eb' }}>{metrics.totalProduction.toLocaleString()} طن</td>
+                <td style={{ textAlign: 'center', color: '#64748b' }}>1,300 طن</td>
+                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>96.1%</span></td>
               </tr>
               <tr onClick={() => onNavigateTab('sharshoor')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>⛰️ رصيد الشرشور (طن)</td>
-                <td style={{ textAlign: 'center' }}>{Math.round(metrics.sectorAProd * 0.6).toLocaleString()}</td>
-                <td style={{ textAlign: 'center' }}>{Math.round(metrics.sectorBProd * 0.6).toLocaleString()}</td>
-                <td style={{ textAlign: 'center' }}><strong>{metrics.totalSharshoor.toLocaleString()}</strong></td>
+                <td style={{ fontWeight: 700, color: '#1e293b' }}>⛰️ توريد الشرشور</td>
+                <td style={{ textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>{metrics.totalSharshoor.toLocaleString()} طن</td>
+                <td style={{ textAlign: 'center', color: '#64748b' }}>700 طن</td>
+                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>107.1%</span></td>
               </tr>
               <tr onClick={() => onNavigateTab('fuel')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>⛽ استهلاك السولار (لتر)</td>
-                <td style={{ textAlign: 'center' }}>{metrics.sectorAFuel.toLocaleString()}</td>
-                <td style={{ textAlign: 'center' }}>{metrics.sectorBFuel.toLocaleString()}</td>
-                <td style={{ textAlign: 'center' }}><strong>{metrics.totalFuel.toLocaleString()}</strong></td>
+                <td style={{ fontWeight: 700, color: '#1e293b' }}>⛽ استهلاك السولار</td>
+                <td style={{ textAlign: 'center', fontWeight: 700, color: '#ea580c' }}>{metrics.totalFuel.toLocaleString()} لتر</td>
+                <td style={{ textAlign: 'center', color: '#64748b' }}>4,000 لتر</td>
+                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>96.2%</span></td>
               </tr>
               <tr onClick={() => onNavigateTab('equipment')} style={{ cursor: 'pointer' }}>
                 <td style={{ fontWeight: 700, color: '#1e293b' }}>🚜 المعدات العاملة</td>
-                <td style={{ textAlign: 'center' }}>{metrics.activeEquipment - Math.round(metrics.activeEquipment / 2)}</td>
-                <td style={{ textAlign: 'center' }}>{Math.round(metrics.activeEquipment / 2)}</td>
-                <td style={{ textAlign: 'center' }}><strong>{metrics.activeEquipment}</strong></td>
+                <td style={{ textAlign: 'center', fontWeight: 700, color: '#7c3aed' }}>{metrics.activeEquipment} معدة</td>
+                <td style={{ textAlign: 'center', color: '#64748b' }}>{metrics.totalEquipment} معدة</td>
+                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>{Math.round((metrics.activeEquipment / Math.max(1, metrics.totalEquipment)) * 100)}%</span></td>
               </tr>
             </tbody>
           </table>

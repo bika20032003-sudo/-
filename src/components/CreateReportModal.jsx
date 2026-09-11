@@ -5,18 +5,12 @@ import { fastFetch } from '../utils/apiCache.js';
 export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreated, onPrintReport }) => {
   if (!isOpen) return null;
 
-  const isSectorSupervisor = currentUser?.role?.includes('مشرف') || Boolean(currentUser?.sector && currentUser.sector !== 'all');
-  const userSectorCode = (currentUser?.sector || '').includes('B') || (currentUser?.username || '').includes('b') ? 'B' : 'A';
-  
-  // Selected Sector
-  const [selectedSector, setSelectedSector] = useState(isSectorSupervisor ? userSectorCode : 'A');
-  const isA = selectedSector === 'A';
-  const sectorNameArabic = isA ? 'القطعة A' : 'القطعة B';
-  const sectorLabel = isA ? 'القطاع الأول (A)' : 'القطاع الثاني (B)';
-  const defaultCompanyName = isA ? 'شركة الرواد للمقاولات العامة' : 'شركة نيوم للمقاولات والاستثمار';
+  // Work Location / Station
+  const [workLocation, setWorkLocation] = useState('مشروع طريق أوباري - غات (المسار العام)');
+  const defaultCompanyName = 'جهاز تنفيذ مشروعات المواصلات';
 
   // Auto-generate report number
-  const [reportNumber, setReportNumber] = useState(`REP-SEC-${selectedSector}-${Date.now().toString().slice(-4)}`);
+  const [reportNumber, setReportNumber] = useState(`REP-ROAD-${Date.now().toString().slice(-4)}`);
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportType, setReportType] = useState('تقرير يومي شامل');
   const [shiftType, setShiftType] = useState('وردية صباحية (07:00 ص - 04:00 م)');
@@ -25,7 +19,7 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
   const [productionAmount, setProductionAmount] = useState('');
   const [roadMeters, setRoadMeters] = useState('');
   const [fuelAmount, setFuelAmount] = useState('');
-  const [workingEquipment, setWorkingEquipment] = useState(isA ? '12' : '14');
+  const [workingEquipment, setWorkingEquipment] = useState('28');
   const [stoppedEquipment, setStoppedEquipment] = useState('2');
   const [notes, setNotes] = useState('');
 
@@ -37,12 +31,6 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
   // Status
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdReportData, setCreatedReportData] = useState(null);
-
-  const handleSectorChange = (newSec) => {
-    setSelectedSector(newSec);
-    setReportNumber(`REP-SEC-${newSec}-${Date.now().toString().slice(-4)}`);
-    setWorkingEquipment(newSec === 'A' ? '12' : '14');
-  };
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -61,25 +49,25 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
 
     try {
       const payload = {
-        reportNumber: reportNumber || `REP-SEC-${selectedSector}-${Date.now().toString().slice(-4)}`,
+        reportNumber: reportNumber || `REP-ROAD-${Date.now().toString().slice(-4)}`,
         date: new Date(reportDate).toISOString(),
-        sector: sectorNameArabic,
-        sectorCode: selectedSector,
+        sector: workLocation,
+        sectorCode: 'ROAD',
         companyName: defaultCompanyName,
         reportType,
         shiftType,
-        crusherName: isA ? 'كسارة القطاع (A)' : 'كسارة القطاع (B)',
-        materialName: `${reportType} - ${sectorLabel}`,
+        crusherName: 'كسارة المشروع المركزية',
+        materialName: `${reportType} - مشروع طريق أوباري - غات`,
         productionAmount: Number(productionAmount) || 0,
         salesAmount: Number(roadMeters) || 0,
         roadMeters: Number(roadMeters) || 0,
         fuelAmount: Number(fuelAmount) || 0,
         workingEquipmentCount: Number(workingEquipment) || 0,
         stoppedEquipmentCount: Number(stoppedEquipment) || 0,
-        uploadedBy: currentUser?.name || `مشرف ${sectorLabel}`,
-        status: isSectorSupervisor ? 'pending_review' : 'approved',
-        approvedBy: isSectorSupervisor ? null : (currentUser?.name || 'مدير القطاعات'),
-        notes: notes || `تنفيذ أعمال اليوم بموقع ${sectorLabel}`,
+        uploadedBy: currentUser?.name || 'مهندس الموقع الميداني',
+        status: 'approved',
+        approvedBy: currentUser?.name || 'الإدارة الهندسية',
+        notes: notes || `تنفيذ أعمال اليوم بموقع ${workLocation}`,
         imageUrl: attachedFile,
         fileName
       };
@@ -123,10 +111,10 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
       console.error('Error in handleSubmit:', err);
       const fallbackReport = {
         id: Date.now(),
-        reportNumber: reportNumber || `REP-SEC-${selectedSector}-${Date.now().toString().slice(-4)}`,
+        reportNumber: reportNumber || `REP-ROAD-${Date.now().toString().slice(-4)}`,
         date: new Date().toISOString(),
-        sector: sectorNameArabic,
-        sectorCode: selectedSector,
+        sector: workLocation,
+        sectorCode: 'ROAD',
         companyName: defaultCompanyName,
         reportType,
         productionAmount: Number(productionAmount) || 0,
@@ -192,7 +180,7 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff' }}>
-                إنشاء تقرير ميداني رسمي للقطاع
+                إنشاء تقرير ميداني رسمي للمشروع
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
                 طريق أوباري - غات | جهاز تنفيذ مشروعات المواصلات
@@ -240,7 +228,7 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
               تم تسجيل التقرير الميداني بنجاح!
             </h3>
             <p style={{ fontSize: '0.92rem', color: '#475569', maxWidth: '480px', margin: '0 auto 1.5rem auto' }}>
-              تم حفظ التقرير برقم <strong>{createdReportData.reportNumber}</strong> في أرشيف {sectorLabel} وتوجيهه للاعتماد الرسمي.
+              تم حفظ التقرير برقم <strong>{createdReportData.reportNumber}</strong> في الأرشيف وتوجيهه للاعتماد الرسمي.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -250,21 +238,22 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
                   if (onPrintReport) onPrintReport(createdReportData);
                 }}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
                   background: '#2563eb',
-                  color: '#fff',
+                  color: '#ffffff',
                   border: 'none',
                   padding: '0.75rem 1.6rem',
                   borderRadius: '10px',
-                  fontWeight: 900,
-                  fontSize: '0.94rem',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
                 }}
               >
-                <span>🖨️ طباعة التقرير الرسمي الآن (Print / PDF)</span>
+                <FileText size={18} />
+                <span>معاينة وطباعة التقرير (PDF)</span>
               </button>
 
               <button
@@ -288,47 +277,31 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
           /* Report Form */
           <form onSubmit={handleSubmit} style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
-            {/* Sector Selector & Number */}
+            {/* Location & Number & Date */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
-                  القطاع الميداني *
+                  موقع العمل / المسار *
                 </label>
-                {isSectorSupervisor ? (
-                  <input
-                    type="text"
-                    disabled
-                    value={`${sectorLabel} - ${defaultCompanyName}`}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      background: '#f8fafc',
-                      fontWeight: 800,
-                      color: '#1e293b',
-                      cursor: 'not-allowed',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                ) : (
-                  <select
-                    value={selectedSector}
-                    onChange={(e) => handleSectorChange(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontWeight: 800,
-                      color: '#1e293b',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="A">القطاع الأول (A) - شركة الرواد للمقاولات</option>
-                    <option value="B">القطاع الثاني (B) - شركة نيوم للمقاولات</option>
-                  </select>
-                )}
+                <select
+                  value={workLocation}
+                  onChange={(e) => setWorkLocation(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontWeight: 800,
+                    color: '#1e293b',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="مشروع طريق أوباري - غات (المسار العام)">مشروع طريق أوباري - غات (المسار العام)</option>
+                  <option value="مسار أعمال الرصف والطبقات الاسفلتية">مسار أعمال الرصف والطبقات الاسفلتية</option>
+                  <option value="موقع الكسارات المركزية والمقلع">موقع الكسارات المركزية والمقلع</option>
+                  <option value="محطة الخلط والتجهيز الميداني">محطة الخلط والتجهيز الميداني</option>
+                  <option value="المستودع الرئيسي ومستودعات الوقود">المستودع الرئيسي ومستودعات الوقود</option>
+                </select>
               </div>
 
               <div>
@@ -388,7 +361,7 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
                     boxSizing: 'border-box'
                   }}
                 >
-                  <option value="تقرير يومي شامل">تقرير يومي شامل لكافة بنود القطاع</option>
+                  <option value="تقرير يومي شامل">تقرير يومي شامل لكافة بنود المشروع</option>
                   <option value="تقرير تقدم أعمال الرصف">تقرير تقدم أعمال الرصف والطبقات</option>
                   <option value="تقرير تشغيل وإنتاج الكسارة">تقرير تشغيل وإنتاج الكسارة والشرشور</option>
                   <option value="تقرير تزويد واستهلاك الوقود">تقرير تزويد واستهلاك الديزل</option>
@@ -598,7 +571,7 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  background: isA ? '#2563eb' : '#ea580c',
+                  background: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
                   padding: '0.75rem 1.8rem',
@@ -606,7 +579,7 @@ export const CreateReportModal = ({ isOpen, onClose, currentUser, onReportCreate
                   fontWeight: 900,
                   fontSize: '0.94rem',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  boxShadow: isA ? '0 4px 14px rgba(37, 99, 235, 0.4)' : '0 4px 14px rgba(234, 88, 12, 0.4)'
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)'
                 }}
               >
                 <Send size={16} />

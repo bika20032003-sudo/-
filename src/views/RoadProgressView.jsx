@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Milestone, RefreshCw, FileSpreadsheet, MapPin, Edit3, Check, X } from 'lucide-react';
+import { Milestone, RefreshCw, FileSpreadsheet, MapPin, Edit3, Check, X, Layers } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
+
 export const RoadProgressView = ({ onNavigateTab }) => {
     const [projectData, setProjectData] = useState(null);
-    const [selectedSector, setSelectedSector] = useState('all');
     const [isLoading, setIsLoading] = useState(true);
     // Quick Edit State
     const [editingId, setEditingId] = useState(null);
     const [editMeters, setEditMeters] = useState(0);
     const [editNotes, setEditNotes] = useState('');
+
     const fetchRoadProgress = async () => {
         try {
-            const data = await fastFetch(`http://localhost:5000/api/road-progress?sector=${selectedSector}`);
+            const data = await fastFetch('http://localhost:5000/api/road-progress');
             if (data && data.success) {
                 setProjectData(data);
             }
@@ -24,9 +25,11 @@ export const RoadProgressView = ({ onNavigateTab }) => {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
         fetchRoadProgress();
-    }, [selectedSector]);
+    }, []);
+
     const handleSaveEdit = async (id) => {
         try {
             const data = await fastFetch('http://localhost:5000/api/road-progress/update-daily', {
@@ -47,12 +50,12 @@ export const RoadProgressView = ({ onNavigateTab }) => {
             alert('خطأ أثناء حفظ التحديث');
         }
     };
+
     const handleExportExcel = () => {
         if (!projectData?.items)
             return;
         const exportData = projectData.items.map((item, idx) => ({
             'م': idx + 1,
-            'القطاع': item.sector,
             'التصنيف': item.category,
             'الوصف / البند': item.itemName,
             'أعمال اليوم (م.ط)': item.todayMeters,
@@ -68,9 +71,11 @@ export const RoadProgressView = ({ onNavigateTab }) => {
         XLSX.utils.book_append_sheet(wb, ws, 'نسبة الإنجاز اليومية');
         XLSX.writeFile(wb, `نسبة_الانجاز_اليومية_طريق_اوباري_غات_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
-    const sectorAItems = (projectData?.items || []).filter((i) => i.sector.includes('A'));
-    const sectorBItems = (projectData?.items || []).filter((i) => i.sector.includes('B'));
-    return (<div className="view-content" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+
+    const allItems = projectData?.items || [];
+
+    return (
+    <div className="view-content" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Top Project Badge & Header */}
       <div style={{
             background: '#ffffff',
@@ -94,7 +99,7 @@ export const RoadProgressView = ({ onNavigateTab }) => {
                 مشروع صيانة طريق أوباري - غات
               </h2>
               <span className="stock-pill" style={{ fontSize: '0.78rem', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-                المرحلة الأولى: 226.28 كم
+                المسار الكلي الموحد: 226.28 كم
               </span>
             </div>
             <p style={{ fontSize: '0.84rem', color: '#64748b', marginTop: '0.2rem' }}>
@@ -104,15 +109,9 @@ export const RoadProgressView = ({ onNavigateTab }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-          <select className="filter-select" value={selectedSector} onChange={(e) => setSelectedSector(e.target.value)} style={{ height: '38px', fontSize: '0.85rem' }}>
-            <option value="all">كافة القطاعات (القطاع A + B)</option>
-            <option value="A">القطاع (A) - شركة الرواد</option>
-            <option value="B">القطاع (B) - شركة نيوم</option>
-          </select>
-
           <button className="secondary-action-btn" onClick={fetchRoadProgress} disabled={isLoading} style={{ height: '38px' }}>
             <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/>
-            <span>تحديث</span>
+            <span>تحديث البيانات</span>
           </button>
 
           <button className="primary-action-btn" onClick={handleExportExcel} style={{ height: '38px' }}>
@@ -185,146 +184,89 @@ export const RoadProgressView = ({ onNavigateTab }) => {
         </div>
       </div>
 
-      {/* Sector A Detailed Progress Table */}
-      {(selectedSector === 'all' || selectedSector === 'A') && (<div className="dashboard-white-card" style={{ padding: '1.5rem', marginBottom: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MapPin size={18} color="#2563eb"/>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                القطاع (A) - شركة الرواد
-              </h3>
-            </div>
-            <span style={{ fontSize: '0.78rem', color: '#64748b', background: '#f8fafc', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 700 }}>
-              المحطات من 00+000 إلى 45+000 ومن 90+000 إلى 115+363
-            </span>
+      {/* Comprehensive Unified Road Progress Table */}
+      <div className="dashboard-white-card" style={{ padding: '1.5rem', marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Layers size={18} color="#2563eb"/>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+              الموقف التنفيذي التفصيلي لبنود وأعمال المسار الميدانية
+            </h3>
           </div>
+          <span style={{ fontSize: '0.78rem', color: '#166534', background: '#dcfce7', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 700 }}>
+            طول المسار الكلي: 226.28 كم
+          </span>
+        </div>
 
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>البند / الوصف</th>
-                <th>التصنيف</th>
-                <th>أعمال اليوم (م.ط)</th>
-                <th>الأعمال السابقة (م.ط)</th>
-                <th>الإجمالي (م.ط)</th>
-                <th>المستهدف اليومي</th>
-                <th>الزيادة / النقصان</th>
-                <th>الجاهز للعمل بالبند</th>
-                <th>ملاحظات</th>
-                <th>تعديل</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sectorAItems.map((item) => (<tr key={item.id}>
-                  <td><strong>{item.itemName}</strong></td>
-                  <td>
-                    <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: item.category.includes('أساسية') ? '#eff6ff' : '#f8fafc', color: item.category.includes('أساسية') ? '#2563eb' : '#64748b', fontWeight: 700 }}>
-                      {item.category}
-                    </span>
-                  </td>
-                  <td>
-                    {editingId === item.id ? (<input type="number" className="form-input" value={editMeters} onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)} style={{ width: '90px', height: '32px', padding: '0.2rem' }}/>) : (<strong style={{ color: item.todayMeters > 0 ? '#16a34a' : '#64748b' }}>
-                        {item.todayMeters.toLocaleString()}
-                      </strong>)}
-                  </td>
-                  <td>{item.previousMeters.toLocaleString()}</td>
-                  <td><strong>{item.totalMeters.toLocaleString()}</strong></td>
-                  <td>{item.dailyTarget}</td>
-                  <td>
-                    <span style={{ fontWeight: 800, color: item.varianceMeters >= 0 ? '#16a34a' : '#dc2626' }}>
-                      {item.varianceMeters > 0 ? `+${item.varianceMeters}` : item.varianceMeters}
-                    </span>
-                  </td>
-                  <td><span className="stock-pill">{item.readyLength.toLocaleString()} م</span></td>
-                  <td style={{ fontSize: '0.8rem', color: '#475569' }}>
-                    {editingId === item.id ? (<input type="text" className="form-input" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} style={{ height: '32px', fontSize: '0.8rem' }}/>) : (item.notes || '—')}
-                  </td>
-                  <td>
-                    {editingId === item.id ? (<div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button onClick={() => handleSaveEdit(item.id)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-                          <Check size={14}/>
-                        </button>
-                        <button onClick={() => setEditingId(null)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-                          <X size={14}/>
-                        </button>
-                      </div>) : (<button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', color: '#2563eb' }} title="تحديث منجز اليوم">
-                        <Edit3 size={14}/>
-                      </button>)}
-                  </td>
-                </tr>))}
-            </tbody>
-          </table>
-        </div>)}
-
-      {/* Sector B Detailed Progress Table */}
-      {(selectedSector === 'all' || selectedSector === 'B') && (<div className="dashboard-white-card" style={{ padding: '1.5rem', marginBottom: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MapPin size={18} color="#16a34a"/>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                القطاع (B) - شركة نيوم
-              </h3>
-            </div>
-            <span style={{ fontSize: '0.78rem', color: '#64748b', background: '#f8fafc', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 700 }}>
-              المحطات من 45+000 إلى 90+000 ومن 110+900
-            </span>
-          </div>
-
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>البند / الوصف</th>
-                <th>التصنيف</th>
-                <th>أعمال اليوم (م.ط)</th>
-                <th>الأعمال السابقة (م.ط)</th>
-                <th>الإجمالي (م.ط)</th>
-                <th>المستهدف اليومي</th>
-                <th>الزيادة / النقصان</th>
-                <th>الجاهز للعمل بالبند</th>
-                <th>ملاحظات</th>
-                <th>تعديل</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sectorBItems.map((item) => (<tr key={item.id}>
-                  <td><strong>{item.itemName}</strong></td>
-                  <td>
-                    <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: item.category.includes('أساسية') ? '#eff6ff' : '#f8fafc', color: item.category.includes('أساسية') ? '#2563eb' : '#64748b', fontWeight: 700 }}>
-                      {item.category}
-                    </span>
-                  </td>
-                  <td>
-                    {editingId === item.id ? (<input type="number" className="form-input" value={editMeters} onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)} style={{ width: '90px', height: '32px', padding: '0.2rem' }}/>) : (<strong style={{ color: item.todayMeters > 0 ? '#16a34a' : '#64748b' }}>
-                        {item.todayMeters.toLocaleString()}
-                      </strong>)}
-                  </td>
-                  <td>{item.previousMeters.toLocaleString()}</td>
-                  <td><strong>{item.totalMeters.toLocaleString()}</strong></td>
-                  <td>{item.dailyTarget}</td>
-                  <td>
-                    <span style={{ fontWeight: 800, color: item.varianceMeters >= 0 ? '#16a34a' : '#dc2626' }}>
-                      {item.varianceMeters > 0 ? `+${item.varianceMeters}` : item.varianceMeters}
-                    </span>
-                  </td>
-                  <td><span className="stock-pill">{item.readyLength.toLocaleString()} م</span></td>
-                  <td style={{ fontSize: '0.8rem', color: '#475569' }}>
-                    {editingId === item.id ? (<input type="text" className="form-input" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} style={{ height: '32px', fontSize: '0.8rem' }}/>) : (item.notes || '—')}
-                  </td>
-                  <td>
-                    {editingId === item.id ? (<div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button onClick={() => handleSaveEdit(item.id)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-                          <Check size={14}/>
-                        </button>
-                        <button onClick={() => setEditingId(null)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-                          <X size={14}/>
-                        </button>
-                      </div>) : (<button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', color: '#2563eb' }} title="تحديث منجز اليوم">
-                        <Edit3 size={14}/>
-                      </button>)}
-                  </td>
-                </tr>))}
-            </tbody>
-          </table>
-        </div>)}
+        <table className="custom-table">
+          <thead>
+            <tr>
+              <th>البند / الوصف الميداني</th>
+              <th>التصنيف الفني</th>
+              <th>أعمال اليوم (م.ط)</th>
+              <th>الأعمال السابقة (م.ط)</th>
+              <th>الإجمالي المنفذ (م.ط)</th>
+              <th>المستهدف اليومي</th>
+              <th>الزيادة / الفارق</th>
+              <th>الجاهز للعمل بالبند</th>
+              <th>ملاحظات الموقع</th>
+              <th>تحديث</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allItems.map((item) => (<tr key={item.id}>
+                <td><strong>{item.itemName}</strong></td>
+                <td>
+                  <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: item.category.includes('أساسية') ? '#eff6ff' : '#f8fafc', color: item.category.includes('أساسية') ? '#2563eb' : '#64748b', fontWeight: 700 }}>
+                    {item.category}
+                  </span>
+                </td>
+                <td>
+                  {editingId === item.id ? (
+                    <input type="number" className="form-input" value={editMeters} onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)} style={{ width: '90px', height: '32px', padding: '0.2rem' }}/>
+                  ) : (
+                    <strong style={{ color: item.todayMeters > 0 ? '#16a34a' : '#64748b' }}>
+                      {item.todayMeters.toLocaleString()}
+                    </strong>
+                  )}
+                </td>
+                <td>{item.previousMeters.toLocaleString()}</td>
+                <td><strong>{item.totalMeters.toLocaleString()}</strong></td>
+                <td>{item.dailyTarget}</td>
+                <td>
+                  <span style={{ fontWeight: 800, color: item.varianceMeters >= 0 ? '#16a34a' : '#dc2626' }}>
+                    {item.varianceMeters > 0 ? `+${item.varianceMeters}` : item.varianceMeters}
+                  </span>
+                </td>
+                <td><span className="stock-pill">{item.readyLength.toLocaleString()} م</span></td>
+                <td style={{ fontSize: '0.8rem', color: '#475569' }}>
+                  {editingId === item.id ? (
+                    <input type="text" className="form-input" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} style={{ height: '32px', fontSize: '0.8rem' }}/>
+                  ) : (
+                    item.notes || '—'
+                  )}
+                </td>
+                <td>
+                  {editingId === item.id ? (
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <button onClick={() => handleSaveEdit(item.id)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
+                        <Check size={14}/>
+                      </button>
+                      <button onClick={() => setEditingId(null)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
+                        <X size={14}/>
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', color: '#2563eb' }} title="تحديث منجز اليوم">
+                      <Edit3 size={14}/>
+                    </button>
+                  )}
+                </td>
+              </tr>))}
+          </tbody>
+        </table>
+      </div>
     </div>);
 };
+
+export default RoadProgressView;

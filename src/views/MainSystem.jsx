@@ -4,10 +4,8 @@ import { Navbar } from '../components/Navbar';
 
 // Lazy-loaded views for instant initial page speed and reduced bundle size
 const DashboardView = lazy(() => import('./DashboardView').then(m => ({ default: m.DashboardView })));
-const SectorDashboardView = lazy(() => import('./SectorDashboardView').then(m => ({ default: m.SectorDashboardView })));
 const UploadReportsView = lazy(() => import('./UploadReportsView').then(m => ({ default: m.UploadReportsView })));
 const RoadProgressView = lazy(() => import('./RoadProgressView').then(m => ({ default: m.RoadProgressView })));
-const SectorsView = lazy(() => import('./SectorsView').then(m => ({ default: m.SectorsView })));
 const DailyAnalysisView = lazy(() => import('./DailyAnalysisView').then(m => ({ default: m.DailyAnalysisView })));
 const TomorrowPlanView = lazy(() => import('./TomorrowPlanView').then(m => ({ default: m.TomorrowPlanView })));
 const DailyReportsView = lazy(() => import('./DailyReportsView').then(m => ({ default: m.DailyReportsView })));
@@ -45,11 +43,7 @@ const ViewLoadingFallback = () => (
 );
 
 export const MainSystem = ({ onLogout, currentUser }) => {
-    const isSectorSupervisor = currentUser?.role?.includes('مشرف') || Boolean(currentUser?.sector && currentUser.sector !== 'all');
-    const isSectorA = (currentUser?.sector || '').includes('A') || (currentUser?.username || '').includes('a');
-    const sectorName = isSectorA ? 'القطاع (A)' : 'القطاع (B)';
-
-    const [activeTab, setActiveTab] = useState(isSectorSupervisor ? 'sector-dashboard' : 'dashboard');
+    const [activeTab, setActiveTab] = useState('dashboard');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
@@ -66,11 +60,9 @@ export const MainSystem = ({ onLogout, currentUser }) => {
 
     const tabTitles = {
         'dashboard': 'لوحة التحكم والمتابعة التنفيذية الشاملة',
-        'sector-dashboard': `بوابة ${sectorName} - العمليات والتقارير الميدانية`,
-        'reports-archive': `أرشيف تقارير ${isSectorSupervisor ? sectorName : 'القطاعات'} ونظام الطباعة`,
-        'create-report': `إنشاء تقرير ميداني جديد - ${sectorName}`,
+        'reports-archive': 'أرشيف تقارير المشروع ونظام الطباعة',
+        'create-report': 'إنشاء تقرير ميداني جديد',
         'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات',
-        'sectors': 'متابعة قطاعات المشروع (A و B)',
         'upload-reports': 'رفع ومعالجة التقارير الميدانية',
         'daily-analysis': 'تحليل اليومية والأداء التشغيلي',
         'tomorrow-plan': 'إدارة واعتماد خطة الغد ومقارنة التنفيذ',
@@ -107,40 +99,28 @@ export const MainSystem = ({ onLogout, currentUser }) => {
       <div className="custom-system-main">
         <Navbar 
           currentTabName={tabTitles[activeTab] || 'لوحة التحكم'} 
-          onBellClick={isSectorSupervisor ? undefined : () => setActiveTab('alerts')} 
-          onProfileClick={isSectorSupervisor ? undefined : () => setActiveTab('users')}
+          onBellClick={() => setActiveTab('alerts')} 
+          onProfileClick={() => setActiveTab('users')}
           currentUser={currentUser}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
         />
 
         <main className="custom-page-container">
           <Suspense fallback={<ViewLoadingFallback />}>
-            {isSectorSupervisor ? (
-              /* Sector Supervisor Dedicated Views: Dashboard or Archive */
-              <>
-                {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} />}
-                {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
-              </>
-            ) : (
-              <>
-                {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
-                {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} onNavigateTab={handleTabChange}/>}
-                {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
-                {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
-                {activeTab === 'sectors' && <SectorsView />}
-                {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
-                {activeTab === 'daily-analysis' && <DailyAnalysisView onNavigateTab={handleTabChange}/>}
-                {activeTab === 'tomorrow-plan' && <TomorrowPlanView />}
-                {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} />}
-                {activeTab === 'analytics' && <ReportsView />}
-                {activeTab === 'crushers' && <CrushersView />}
-                {activeTab === 'sharshoor' && <SharshoorView />}
-                {activeTab === 'fuel' && <FuelView />}
-                {activeTab === 'equipment' && <EquipmentView />}
-                {activeTab === 'users' && <UsersView />}
-                {activeTab === 'alerts' && <AlertsView />}
-              </>
-            )}
+            {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
+            {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
+            {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
+            {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
+            {activeTab === 'daily-analysis' && <DailyAnalysisView onNavigateTab={handleTabChange}/>}
+            {activeTab === 'tomorrow-plan' && <TomorrowPlanView />}
+            {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} />}
+            {activeTab === 'analytics' && <ReportsView />}
+            {activeTab === 'crushers' && <CrushersView />}
+            {activeTab === 'sharshoor' && <SharshoorView />}
+            {activeTab === 'fuel' && <FuelView />}
+            {activeTab === 'equipment' && <EquipmentView />}
+            {activeTab === 'users' && <UsersView />}
+            {activeTab === 'alerts' && <AlertsView />}
           </Suspense>
         </main>
       </div>
