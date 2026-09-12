@@ -24,6 +24,8 @@ export const ReportsArchiveView = ({ currentUser }) => {
   const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [viewDetailsReport, setViewDetailsReport] = useState(null);
+  const [reportToDelete, setReportToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch Reports
   const fetchReports = async () => {
@@ -39,12 +41,18 @@ export const ReportsArchiveView = ({ currentUser }) => {
         list = res;
       }
       
-      // Merge with locally created reports
+      // Merge with locally created reports & filter deleted
       try {
+        const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
         const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
-        const newOnes = local.filter(r => !existingIds.has(String(r.id || r.reportNumber)));
+        const newOnes = local.filter(r => 
+          !deletedSet.has(String(r.id)) && 
+          !deletedSet.has(String(r.reportNumber)) && 
+          !existingIds.has(String(r.id || r.reportNumber))
+        );
         list = [...newOnes, ...list];
+        list = list.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
       } catch (storageErr) {
         console.warn('Storage error in archive:', storageErr);
       }
@@ -59,6 +67,15 @@ export const ReportsArchiveView = ({ currentUser }) => {
 
   useEffect(() => {
     fetchReports();
+    const handleGlobalDelete = (e) => {
+      const delId = e.detail?.id;
+      const delNum = e.detail?.reportNumber;
+      if (delId || delNum) {
+        setReports(prev => prev.filter(r => String(r.id) !== delId && String(r.reportNumber) !== delNum));
+      }
+    };
+    window.addEventListener('report-deleted', handleGlobalDelete);
+    return () => window.removeEventListener('report-deleted', handleGlobalDelete);
   }, []);
 
   // Filtering Logic
@@ -117,18 +134,63 @@ export const ReportsArchiveView = ({ currentUser }) => {
     XLSX.writeFile(wb, `أرشيف_تقارير_المشروع_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  // Delete Report handler
-  const handleDeleteReport = async (id, repNum) => {
-    if (!window.confirm(`هل أنت متأكد من حذف التقرير (${repNum || id}) نهائياً من الأرشيف؟`)) return;
+  // Delete Report confirmation handler
+  const confirmDeleteReport = async () => {
+    if (!reportToDelete) return;
+    setIsDeleting(true);
+    const targetId = String(reportToDelete.id || '');
+    const targetNum = String(reportToDelete.reportNumber || '');
+
     try {
-      const res = await fastFetch(`http://localhost:5000/api/reports/${id}`, { method: 'DELETE' });
-      if (res && res.success) {
-        setReports(prev => prev.filter(r => r.id !== id));
-      } else {
-        alert('تعذر حذف التقرير.');
+      // 1. Invalidate via API/Mock
+      const deleteIdentifier = targetId || targetNum;
+      if (deleteIdentifier) {
+        await fastFetch(`http://localhost:5000/api/reports/${deleteIdentifier}`, { method: 'DELETE' }).catch(() => {});
       }
+
+      // 2. Remove from localStorage 'local_reports'
+      try {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const updatedLocal = local.filter(r => {
+          const rId = String(r.id || '');
+          const rNum = String(r.reportNumber || '');
+          return rId !== targetId && rNum !== targetNum && (targetNum ? rId !== targetNum : true) && (targetId ? rNum !== targetId : true);
+        });
+        localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+      } catch (storageErr) {
+        console.error('LocalStorage error updating local_reports:', storageErr);
+      }
+
+      // 3. Mark in localStorage 'deleted_report_ids'
+      try {
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
+        if (targetNum && !deleted.includes(targetNum)) deleted.push(targetNum);
+        localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+      } catch (delErr) {
+        console.error('LocalStorage error updating deleted_report_ids:', delErr);
+      }
+
+      // 4. Update React state immediately
+      setReports(prev => prev.filter(r => {
+        const rId = String(r.id || '');
+        const rNum = String(r.reportNumber || '');
+        if (targetId && rId === targetId) return false;
+        if (targetNum && rNum === targetNum) return false;
+        if (targetNum && rId === targetNum) return false;
+        if (targetId && rNum === targetId) return false;
+        return true;
+      }));
+
+      // 5. Global sync event across all views
+      window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
+
+      setReportToDelete(null);
     } catch (e) {
+      console.error('Error during report deletion:', e);
       alert('حدث خطأ أثناء الحذف.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -543,7 +605,7 @@ export const ReportsArchiveView = ({ currentUser }) => {
                           {/* Delete */}
                           <button
                             type="button"
-                            onClick={() => handleDeleteReport(r.id, r.reportNumber)}
+                            onClick={() => setReportToDelete(r)}
                             title="حذف التقرير"
                             style={{
                               background: '#fef2f2',
@@ -687,6 +749,127 @@ export const ReportsArchiveView = ({ currentUser }) => {
             setSelectedReportForPrint(newRep);
           }}
         />
+      )}
+
+      {/* In-App Delete Confirmation Modal */}
+      {reportToDelete && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '1rem',
+          direction: 'rtl'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '460px',
+            padding: '2rem 1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            textAlign: 'center',
+            border: '1px solid #fee2e2'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={26} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف التقرير نهائياً
+            </h3>
+            
+            <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              هل أنت متأكد من رغبتك في حذف هذا التقرير من أرشيف المشروع؟
+            </p>
+
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '0.85rem 1.1rem',
+              marginBottom: '1.5rem',
+              textAlign: 'right',
+              fontSize: '0.82rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ color: '#64748b' }}>رقم التقرير:</span>
+                <span style={{ fontWeight: 800, color: '#1e293b' }}>{reportToDelete.reportNumber || `#REP-${reportToDelete.id}`}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ color: '#64748b' }}>بيان التقرير:</span>
+                <span style={{ fontWeight: 700, color: '#2563eb' }}>{reportToDelete.materialName || reportToDelete.reportType || 'تقرير يومي'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>الموقع / التاريخ:</span>
+                <span style={{ color: '#475569' }}>{reportToDelete.sector || 'الموقع العام'} • {reportToDelete.date ? reportToDelete.date.split('T')[0] : ''}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                id="confirm-delete-report-btn"
+                disabled={isDeleting}
+                onClick={confirmDeleteReport}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '9px',
+                  padding: '0.7rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>{isDeleting ? 'جاري الحذف...' : 'نعم، حذف التقرير'}</span>
+              </button>
+
+              <button
+                type="button"
+                id="cancel-delete-report-btn"
+                disabled={isDeleting}
+                onClick={() => setReportToDelete(null)}
+                style={{
+                  flex: 1,
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '9px',
+                  padding: '0.7rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: isDeleting ? 'not-allowed' : 'pointer'
+                }}
+              >
+                إلغاء التراجع
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

@@ -117,18 +117,32 @@ export const DailyReportsView = ({ currentUser }) => {
 
     // Handle Delete
     const handleDeleteReport = async (id, title) => {
-        if (!window.confirm(`هل أنت متأكد من حذف التقرير (${title}) نهائياً؟`))
+        if (!window.confirm(`هل أنت متأكد من حذف التقرير (${title || id}) نهائياً؟`))
             return;
         try {
-            const response = await fetch(`http://localhost:5000/api/reports/${id}`, { method: 'DELETE' });
-            const data = await response.json();
-            if (data.success) {
-                setReports(reports.filter(r => r.id !== id));
-            } else {
-                alert('حدث خطأ أثناء حذف التقرير.');
-            }
+            const targetId = String(id || '');
+            const targetNum = String(title || '');
+
+            try {
+                await fetch(`http://localhost:5000/api/reports/${targetId || targetNum}`, { method: 'DELETE' });
+            } catch (err) {}
+
+            // Remove from localStorage
+            try {
+                const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                const updatedLocal = local.filter(r => String(r.id) !== targetId && String(r.reportNumber) !== targetNum && String(r.reportNumber) !== targetId);
+                localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+
+                const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+                if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
+                if (targetNum && !deleted.includes(targetNum)) deleted.push(targetNum);
+                localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+            } catch (storageErr) {}
+
+            setReports(prev => prev.filter(r => String(r.id) !== targetId && String(r.reportNumber) !== targetNum && String(r.reportNumber) !== targetId));
+            window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
         } catch (error) {
-            alert('تعذر الاتصال بالخادم.');
+            alert('حدث خطأ أثناء حذف التقرير.');
         }
     };
 

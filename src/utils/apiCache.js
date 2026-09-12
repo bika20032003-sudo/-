@@ -67,10 +67,27 @@ export function getFallbackData(url) {
     };
   }
   if (url.includes('/api/reports')) {
+    let list = [...(initialRecentReports || [])];
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+        list = list.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
+        const validLocal = local.filter(r => 
+          !deleted.has(String(r.id)) && 
+          !deleted.has(String(r.reportNumber)) && 
+          !existingIds.has(String(r.id || r.reportNumber))
+        );
+        list = [...validLocal, ...list];
+      }
+    } catch (e) {
+      console.warn('Error reading reports cache:', e);
+    }
     return {
       success: true,
-      reports: initialRecentReports || [],
-      data: initialRecentReports || []
+      reports: list,
+      data: list
     };
   }
   if (url.includes('/api/crushers')) {
@@ -219,8 +236,24 @@ export async function fastFetch(rawUrl, options = {}) {
   // If in production without a custom API backend (e.g. GitHub Pages static hosting),
   // immediately serve instant mock data without impossible network roundtrips
   if (isProduction && !apiBase) {
-    const method = options.method || 'GET';
+    const method = (options.method || 'GET').toUpperCase();
     if (method !== 'GET') {
+      if (method === 'DELETE' && url.includes('/api/reports/')) {
+        const reportId = url.split('/api/reports/')[1]?.split('?')[0];
+        if (reportId && typeof window !== 'undefined' && window.localStorage) {
+          try {
+            const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+            if (!deleted.includes(String(reportId))) deleted.push(String(reportId));
+            localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+
+            const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+            const updatedLocal = local.filter(r => String(r.id) !== String(reportId) && String(r.reportNumber) !== String(reportId));
+            localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+          } catch (e) {
+            console.error('Error syncing report deletion in fastFetch:', e);
+          }
+        }
+      }
       return { success: true, message: 'Saved locally' };
     }
     return getFallbackData(url);

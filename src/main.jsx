@@ -33,6 +33,22 @@ window.fetch = async function (url, options = {}) {
     // Instant offline/static response for GitHub Pages
     const method = (options.method || 'GET').toUpperCase();
     if (method !== 'GET') {
+      if (method === 'DELETE' && url.includes('/api/reports/')) {
+        const reportId = url.split('/api/reports/')[1]?.split('?')[0];
+        if (reportId && typeof window !== 'undefined' && window.localStorage) {
+          try {
+            const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+            if (!deleted.includes(String(reportId))) deleted.push(String(reportId));
+            localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+
+            const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+            const updatedLocal = local.filter(r => String(r.id) !== String(reportId) && String(r.reportNumber) !== String(reportId));
+            localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+          } catch (e) {
+            console.error('Error syncing report deletion in main.jsx:', e);
+          }
+        }
+      }
       return new Response(JSON.stringify({ success: true, message: 'Saved successfully' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
