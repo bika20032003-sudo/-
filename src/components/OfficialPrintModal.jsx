@@ -30,7 +30,25 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   });
 
   return (
-    <div className="official-print-modal-overlay">
+    <div 
+      className="official-print-modal-overlay"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(15, 23, 42, 0.82)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 99999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        overflow: 'hidden'
+      }}
+    >
       {/* Top Action Bar (Hidden on Print) */}
       <div className="print-controls-bar no-print">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -103,7 +121,21 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             </div>
 
             <div className="header-agency-emblem">
-              <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" />
+              <img 
+                src={`${import.meta.env.BASE_URL}logo-agency.jpg`} 
+                alt="شعار جهاز تنفيذ مشروعات المواصلات" 
+                style={{
+                  width: '78px',
+                  height: '78px',
+                  maxWidth: '78px',
+                  maxHeight: '78px',
+                  objectFit: 'contain',
+                  borderRadius: '50%',
+                  border: '1.5px solid #cbd5e1',
+                  padding: '2px',
+                  display: 'inline-block'
+                }}
+              />
               <div className="emblem-sub">منظومة المتابعة اليومية المعتمدة</div>
             </div>
 

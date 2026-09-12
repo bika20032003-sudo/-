@@ -188,35 +188,71 @@ export const DailyReportsView = ({ currentUser }) => {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                background: '#2563eb',
-                color: '#fff',
+                gap: '0.5rem',
+                background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                color: '#ffffff',
                 border: 'none',
-                padding: '0.55rem 1.1rem',
-                borderRadius: '8px',
-                fontWeight: 900,
-                fontSize: '0.86rem',
+                padding: '0.65rem 1.35rem',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '0.88rem',
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.28)',
+                transition: 'all 0.2s ease'
               }}
             >
-              <Plus size={16} />
+              <Plus size={17} />
               <span>إنشاء تقرير قطاع جديد ✍️</span>
             </button>
 
-            <button className="secondary-action-btn" onClick={fetchReports} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <button
+              onClick={exportExcel}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                background: '#ffffff',
+                color: '#15803d',
+                border: '1px solid #bbf7d0',
+                padding: '0.65rem 1.15rem',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.08)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileSpreadsheet size={16} color="#16a34a" />
+              <span>تصدير إكسل</span>
+            </button>
+
+            <button
+              onClick={fetchReports}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                background: '#ffffff',
+                color: '#334155',
+                border: '1px solid #cbd5e1',
+                padding: '0.65rem 1.15rem',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+                transition: 'all 0.2s ease'
+              }}
+            >
               <RefreshCw size={15} />
               <span>تحديث</span>
-            </button>
-            <button className="secondary-action-btn" onClick={exportExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-              <FileSpreadsheet size={15} />
-              <span>تصدير إكسل</span>
             </button>
           </div>
         </div>
@@ -278,18 +314,20 @@ export const DailyReportsView = ({ currentUser }) => {
         {/* Filters and Search Bar */}
         <div className="table-controls-card" style={{ marginBottom: '1rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           {/* Status Tabs */}
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', gap: '0.45rem', background: '#f1f5f9', padding: '0.3rem', borderRadius: '10px' }}>
             <button
               onClick={() => setStatusFilter('all')}
               style={{
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
+                padding: '0.45rem 1rem',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
                 fontWeight: 800,
                 border: 'none',
                 cursor: 'pointer',
-                background: statusFilter === 'all' ? '#0f172a' : '#f1f5f9',
-                color: statusFilter === 'all' ? '#fff' : '#475569'
+                background: statusFilter === 'all' ? '#0f172a' : 'transparent',
+                color: statusFilter === 'all' ? '#ffffff' : '#475569',
+                boxShadow: statusFilter === 'all' ? '0 2px 6px rgba(15, 23, 42, 0.2)' : 'none',
+                transition: 'all 0.2s ease'
               }}
             >
               الكل ({reports.length})
@@ -297,17 +335,19 @@ export const DailyReportsView = ({ currentUser }) => {
             <button
               onClick={() => setStatusFilter('pending_review')}
               style={{
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
+                padding: '0.45rem 1rem',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
                 fontWeight: 800,
                 border: 'none',
                 cursor: 'pointer',
-                background: statusFilter === 'pending_review' ? '#d97706' : '#fef3c7',
-                color: statusFilter === 'pending_review' ? '#fff' : '#92400e',
+                background: statusFilter === 'pending_review' ? '#d97706' : 'transparent',
+                color: statusFilter === 'pending_review' ? '#ffffff' : '#92400e',
+                boxShadow: statusFilter === 'pending_review' ? '0 2px 6px rgba(217, 119, 6, 0.25)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem'
+                gap: '0.35rem',
+                transition: 'all 0.2s ease'
               }}
             >
               <Clock size={14} />
@@ -316,17 +356,19 @@ export const DailyReportsView = ({ currentUser }) => {
             <button
               onClick={() => setStatusFilter('approved')}
               style={{
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
+                padding: '0.45rem 1rem',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
                 fontWeight: 800,
                 border: 'none',
                 cursor: 'pointer',
-                background: statusFilter === 'approved' ? '#16a34a' : '#f0fdf4',
-                color: statusFilter === 'approved' ? '#fff' : '#166534',
+                background: statusFilter === 'approved' ? '#16a34a' : 'transparent',
+                color: statusFilter === 'approved' ? '#ffffff' : '#166534',
+                boxShadow: statusFilter === 'approved' ? '0 2px 6px rgba(22, 163, 74, 0.25)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem'
+                gap: '0.35rem',
+                transition: 'all 0.2s ease'
               }}
             >
               <CheckCircle2 size={14} />

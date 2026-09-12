@@ -1,3 +1,5 @@
+@import './premium-ui.css';
+
 :root {
   --sidebar-width: 240px;
   --navbar-height: 52px;
