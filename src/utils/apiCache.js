@@ -14,7 +14,10 @@ import {
 const cache = new Map();
 const TTL = 60000; // 60 seconds fresh cache
 
-function getFallbackData(url) {
+// Keep a reference to the unpatched native fetch before any overrides
+const nativeFetch = (typeof window !== 'undefined' && window.fetch) ? window.fetch.bind(window) : fetch;
+
+export function getFallbackData(url) {
   if (url.includes('/api/dashboard/summary')) {
     return {
       success: true,
@@ -195,7 +198,7 @@ async function fetchWithTimeout(url, options, timeoutMs = 1200) {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
-    const res = await fetch(url, { ...options, signal: controller.signal });
+    const res = await nativeFetch(url, { ...options, signal: controller.signal });
     clearTimeout(id);
     if (!res.ok) return null;
     const contentType = res.headers.get('content-type');
@@ -208,9 +211,23 @@ async function fetchWithTimeout(url, options, timeoutMs = 1200) {
 
 export async function fastFetch(rawUrl, options = {}) {
   let url = rawUrl;
+  const isProduction = typeof window !== 'undefined' && 
+                       window.location.hostname !== 'localhost' && 
+                       window.location.hostname !== '127.0.0.1';
+  const apiBase = import.meta.env.VITE_API_BASE || '';
+
+  // If in production without a custom API backend (e.g. GitHub Pages static hosting),
+  // immediately serve instant mock data without impossible network roundtrips
+  if (isProduction && !apiBase) {
+    const method = options.method || 'GET';
+    if (method !== 'GET') {
+      return { success: true, message: 'Saved locally' };
+    }
+    return getFallbackData(url);
+  }
+
   if (typeof url === 'string' && url.includes('localhost:5000/api')) {
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      const apiBase = import.meta.env.VITE_API_BASE || '';
+    if (isProduction && apiBase) {
       url = url.replace(/https?:\/\/localhost:5000/, apiBase);
     }
   }
@@ -229,7 +246,7 @@ export async function fastFetch(rawUrl, options = {}) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(url, { ...options, signal: controller.signal });
+      const res = await nativeFetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) return await res.json();
     } catch {
@@ -244,16 +261,6 @@ export async function fastFetch(rawUrl, options = {}) {
 
   // Return fresh cache instantly (0ms)
   if (cached && (now - cached.timestamp < TTL)) {
-    return cached.data;
-  }
-
-  // Return stale cache immediately and revalidate in background
-  if (cached) {
-    fetchWithTimeout(url, options, 1500)
-      .then(freshData => {
-        if (freshData) cache.set(cacheKey, { data: freshData, timestamp: Date.now() });
-      })
-      .catch(() => {});
     return cached.data;
   }
 

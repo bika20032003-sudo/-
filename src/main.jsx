@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import './premium-ui.css';
-import { fastFetch } from './utils/apiCache.js';
+import { getFallbackData } from './utils/apiCache.js';
 
 // Automatically normalize API requests and provide offline/static fallback in production
 const originalFetch = window.fetch;
@@ -30,19 +30,20 @@ window.fetch = async function (url, options = {}) {
       }
     }
 
-    // Static fallback on GitHub Pages / Client-only mode
-    try {
-      const fallbackData = await fastFetch(url, options);
-      return new Response(JSON.stringify(fallbackData), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    } catch {
-      return new Response(JSON.stringify({ success: true, message: 'Saved' }), {
+    // Instant offline/static response for GitHub Pages
+    const method = (options.method || 'GET').toUpperCase();
+    if (method !== 'GET') {
+      return new Response(JSON.stringify({ success: true, message: 'Saved successfully' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    const fallbackData = getFallbackData(url);
+    return new Response(JSON.stringify(fallbackData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   return originalFetch(url, options);
