@@ -13,18 +13,16 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
     useEffect(() => {
         fastFetch('http://localhost:5000/api/alerts')
             .then(data => {
-                if (data.success && data.alerts) {
-                    setUnreadAlerts(data.alerts.filter((a) => !a.isRead).length);
-                }
+                const list = data?.alerts || (Array.isArray(data) ? data : []);
+                setUnreadAlerts(list.filter(a => !a.isRead).length);
             })
             .catch(() => { });
 
         fastFetch('http://localhost:5000/api/reports')
             .then(data => {
-                if (data.success && data.reports) {
-                    const pending = data.reports.filter(r => r.status === 'pending_review').length;
-                    setPendingReportsCount(pending);
-                }
+                const list = data?.reports || (Array.isArray(data) ? data : []);
+                const pending = list.filter(r => r.status === 'pending_review').length;
+                setPendingReportsCount(pending);
             })
             .catch(() => { });
     }, [activeTab]);

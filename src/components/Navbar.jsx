@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu } from 'lucide-react';
+import { fastFetch } from '../utils/apiCache.js';
 
 export const Navbar = ({ currentTabName, onBellClick, onProfileClick, currentUser, onToggleMobileSidebar }) => {
     const [unreadCount, setUnreadCount] = useState(0);
 
     const fetchUnreadAlerts = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/alerts');
-            const data = await response.json();
-            if (data.success && data.alerts) {
-                const unread = data.alerts.filter((a) => !a.isRead).length;
-                setUnreadCount(unread);
-            }
+            const data = await fastFetch('http://localhost:5000/api/alerts');
+            const alertsList = data?.alerts || (Array.isArray(data) ? data : []);
+            const unread = alertsList.filter((a) => !a.isRead).length;
+            setUnreadCount(unread);
         }
-        catch (error) {
-            console.error('Failed to fetch alerts count', error);
+        catch {
+            // silent fallback
         }
     };
 

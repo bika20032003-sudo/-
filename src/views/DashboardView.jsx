@@ -109,7 +109,7 @@ export const DashboardView = ({ onNavigateTab }) => {
     };
     useEffect(() => {
         fetchDashboardData();
-    }, [selectedSector]);
+    }, []);
     return (<div className="view-content" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Top Quick Links & Sector Selector Bar */}
       <div style={{

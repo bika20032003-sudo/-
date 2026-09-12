@@ -29,6 +29,8 @@ function getFallbackData(url) {
       sectorBFuel: initialDailySummary?.solarConsumption?.sectorB || 1800,
       sectorAProd: initialDailySummary?.totalProduction?.sectorA || 850,
       sectorBProd: initialDailySummary?.totalProduction?.sectorB || 620,
+      recentAlerts: initialAlerts || [],
+      recentReports: initialRecentReports || [],
       roadProgress: {
         kpis: {
           fdr: { meters: 220203, percentage: 97.3 },
@@ -48,28 +50,143 @@ function getFallbackData(url) {
     };
   }
   if (url.includes('/api/road-progress')) {
-    return initialRoadProgress || [];
+    return {
+      success: true,
+      items: initialRoadProgress || [],
+      roadProgress: initialRoadProgress || [],
+      summary: {
+        totalRoadLengthKm: 226.28,
+        overallPercentage: 95.0,
+        sectorAPercentage: 96.2,
+        sectorBPercentage: 93.8,
+        totalTodayMeters: 1060
+      }
+    };
   }
   if (url.includes('/api/reports')) {
-    return initialRecentReports || [];
+    return {
+      success: true,
+      reports: initialRecentReports || [],
+      data: initialRecentReports || []
+    };
   }
   if (url.includes('/api/crushers')) {
-    return initialCrushers || [];
+    return {
+      success: true,
+      logs: initialCrushers || [],
+      crushers: initialCrushers || []
+    };
   }
   if (url.includes('/api/sharshoor')) {
-    return initialCrusherStocks || [];
+    return {
+      success: true,
+      logs: initialCrusherStocks || [],
+      stocks: initialCrusherStocks || []
+    };
   }
   if (url.includes('/api/fuel')) {
-    return initialFuelLogs || [];
+    return {
+      success: true,
+      logs: initialFuelLogs || [],
+      fuel: initialFuelLogs || []
+    };
   }
   if (url.includes('/api/equipment')) {
-    return initialEquipment || [];
+    return {
+      success: true,
+      equipment: initialEquipment || []
+    };
   }
   if (url.includes('/api/alerts')) {
-    return initialAlerts || [];
+    return {
+      success: true,
+      alerts: initialAlerts || []
+    };
   }
   if (url.includes('/api/plans')) {
-    return initialTomorrowPlan || [];
+    return {
+      success: true,
+      plan: {
+        id: 1,
+        title: 'خطة تشغيل الكسارات والمعدات المعتمدة - الغد',
+        status: 'approved',
+        approvedBy: 'م. حسام الدين (مدير المشروع)',
+        approvedAt: new Date().toISOString(),
+        items: initialTomorrowPlan || []
+      },
+      suggestedPlan: {
+        title: 'خطة مقترحة ذكياً لتوزيع المعدات والكسارات',
+        items: initialTomorrowPlan || []
+      },
+      items: initialTomorrowPlan || [],
+      plans: initialTomorrowPlan || []
+    };
+  }
+  if (url.includes('/api/analysis')) {
+    return {
+      success: true,
+      analysisDate: new Date().toISOString().split('T')[0],
+      sector: 'all',
+      operational: {
+        totalEquipment: 48,
+        workingEquipment: 42,
+        stoppedEquipment: 4,
+        standbyEquipment: 2,
+        totalOperatingHours: 312,
+        estimatedStoppedHours: 32,
+        readinessRate: 88
+      },
+      fuel: {
+        dispensedToday: 4250,
+        avg7Days: 4100,
+        variancePercentage: 3.6,
+        isHigherThanAverage: true,
+        fuelBalance: 28500,
+        totalReceived: 30000
+      },
+      crushers: {
+        productionToday: 1470,
+        avg7Days: 1380,
+        variancePercentage: 6.5,
+        operatingCrushers: 2,
+        operatingHours: 16,
+        productivityPerHour: 92
+      },
+      sharshoor: {
+        producedToday: 882,
+        dispatchedToday: 790,
+        currentBalance: 21350
+      },
+      warnings: [
+        {
+          type: 'danger',
+          title: 'عطل هيدروليكي بالجريدر CAT 140K',
+          message: 'توقف الجريدر كود (EQ-103) بالمحطة 62+500 لتبديل سكينة التسوية.',
+          suggestedAction: 'توجيه فريق الصيانة الميكانيكية'
+        },
+        {
+          type: 'warning',
+          title: 'معدل استهلاك ديزل مرتفع بالقطعة A',
+          message: 'ارتفاع معدل استهلاك الحفار Komatsu بنسبة 12% عن المتوسط.',
+          suggestedAction: 'فحص فلاتر الوقود وبخاخات المحرك'
+        }
+      ],
+      issues: [
+        { id: 1, title: 'تذبذب ضغط مضخة وقود الكسارة الشمالية', status: 'pending', severity: 'medium', sector: 'القطعة B' },
+        { id: 2, title: 'تأخر توريد طبقة الأساس الحبيبي بالمحطة 78', status: 'resolved', severity: 'high', sector: 'القطعة A' }
+      ]
+    };
+  }
+  if (url.includes('/api/users')) {
+    return {
+      success: true,
+      users: [
+        { id: 1, name: 'مدير المشروع', username: 'admin', email: 'admin@mot.gov.ly', role: 'مدير المشروع', sector: 'all', createdAt: '2026-01-10' },
+        { id: 2, name: 'مدير القطاعات', username: 'admin_sectors', email: 'admin_sectors@mot.gov.ly', role: 'مدير القطاعات', sector: 'all', createdAt: '2026-01-15' },
+        { id: 3, name: 'مشرف القطاع (A)', username: 'sector_a', email: 'sector_a@mot.gov.ly', role: 'مشرف القطاع (A)', sector: 'القطعة A', createdAt: '2026-01-20' },
+        { id: 4, name: 'مشرف القطاع (B)', username: 'sector_b', email: 'sector_b@mot.gov.ly', role: 'مشرف القطاع (B)', sector: 'القطعة B', createdAt: '2026-01-25' }
+      ]
+    };
   }
   return { success: true, data: [] };
 }
