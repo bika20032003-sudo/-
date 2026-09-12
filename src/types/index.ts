@@ -3,17 +3,23 @@
 // =============================================
 // نوع المستخدم
 // =============================================
+export type UserRole = 'admin' | 'treasury_manager' | 'storekeeper' | 'viewer';
+export type UserStatus = 'active' | 'frozen' | 'suspended';
+
 export interface User {
   Id: number;
   FullName: string;
   Username: string;
-  Role: 'admin' | 'storekeeper' | 'viewer';
+  Role: UserRole;
+  RoleLabel?: string;
   Email?: string;
   Phone?: string;
+  Status: UserStatus;
   IsActive: boolean;
   CreatedAt: string;
   UpdatedAt: string;
   LastLogin?: string;
+  Warehouse?: string;
 }
 
 // =============================================
@@ -24,192 +30,193 @@ export interface Warehouse {
   Name: string;
   Code: string;
   Location?: string;
-  Type: string;
-  ManagerId?: number;
+  Type: 'رئيسي' | 'إقليمي / فرعي' | 'مخزن فرعي';
   ManagerName?: string;
   Description?: string;
   IsActive: boolean;
   CreatedAt: string;
+  TotalStock?: number;
 }
 
 // =============================================
-// نوع التصنيف
+// نوع التصنيف ومكان التخزين
 // =============================================
+export type ItemCategoryType = 'أدوية' | 'أكياس الدم' | 'الكواشف والمحاليل' | 'المستلزمات الطبية' | 'مستلزمات السلامة' | 'المواد المخبرية';
+export type StorageLocationType = 'ثلاجة' | 'مخزن' | 'خزانة';
+
 export interface Category {
   Id: number;
   Name: string;
   Description?: string;
-  ParentId?: number;
   IsActive: boolean;
   CreatedAt: string;
 }
 
 // =============================================
-// نوع الصنف
+// نوع الصنف الطبي والمخزني
 // =============================================
 export interface Item {
   Id: number;
   Name: string;
   Code: string;
   Barcode?: string;
-  CategoryId: number;
-  CategoryName?: string;
+  Category: ItemCategoryType;
   Unit: string;
-  MinQuantity: number;
-  MaxQuantity: number;
-  ReorderLevel: number;
+  StorageType: StorageLocationType;
+  StorageLocation?: string;
+  SupplierId?: number;
+  SupplierName?: string;
+  ActualStock: number; // الرصيد الفعلي
+  DamagedStock?: number; // الرصيد التالف
+  UnitPrice?: number; // الجانب المالي (مخفي افتراضياً)
+  Status: 'متوفر' | 'غير متوفر' | 'تالف';
   Description?: string;
   IsActive: boolean;
   CreatedAt: string;
   UpdatedAt: string;
-  TotalStock?: number;
 }
 
 // =============================================
-// نوع رصيد الصنف
+// نوع سجل المادة التالفة
 // =============================================
-export interface ItemStock {
+export interface DamagedItemRecord {
   Id: number;
-  ItemId: number;
-  ItemName?: string;
-  ItemCode?: string;
-  WarehouseId: number;
-  WarehouseName?: string;
+  ItemCode: string;
+  ItemName: string;
   Quantity: number;
-  BatchNumber?: string;
-  ExpiryDate?: string;
-  UnitPrice: number;
-  LastUpdated: string;
+  Unit: string;
+  BatchNumber: string;
+  ExpiryDate: string;
+  Reason: string; // سبب التلف (انتهاء صلاحية، كسر، سوء تخزين، عيب تصنيع)
+  ReportNumber: string; // رقم محضر التلف
+  Date: string;
+  RecordedBy: string; // تم التوثيق بواسطة (أمين الخزينة / مسؤول المخزن)
+  Warehouse: string;
+  DisposalStatus: 'بانتظار الإتلاف' | 'تم الإتلاف' | 'معاينة';
 }
 
 // =============================================
-// نوع المورد
+// نوع المورد والجهات المستفيدة
 // =============================================
 export interface Supplier {
   Id: number;
   Name: string;
+  Code: string;
   ContactPerson?: string;
   Phone?: string;
   Email?: string;
   Address?: string;
-  TaxNumber?: string;
+  Category?: string;
   IsActive: boolean;
   CreatedAt: string;
   UpdatedAt: string;
 }
 
-// =============================================
-// نوع حركة المخزون
-// =============================================
-export interface Transaction {
+export interface BeneficiaryEntity {
   Id: number;
-  TransactionNumber: string;
-  Type: 'inbound' | 'outbound' | 'transfer';
-  Status: 'pending' | 'approved' | 'cancelled';
-  WarehouseId: number;
-  WarehouseName?: string;
-  DestWarehouseId?: number;
-  DestWarehouseName?: string;
-  SupplierId?: number;
-  SupplierName?: string;
-  UserId: number;
-  UserName?: string;
-  ApprovedById?: number;
-  ApprovedByName?: string;
-  Notes?: string;
-  TransactionDate: string;
-  CreatedAt: string;
-  Details?: TransactionDetail[];
+  Name: string; // اسم مصرف الدم أو المستشفى
+  Code: string;
+  City: string;
+  DelegateName?: string; // اسم المندوب الافتراضي
+  DelegatePhone?: string;
+  DelegateIdNumber?: string;
+  Address?: string;
+  Type: 'مصرف دم مركزي' | 'بنك دم فرعي' | 'مستشفى عام' | 'مركز تخصصي';
 }
 
 // =============================================
-// نوع تفاصيل الحركة
+// بنود إذن الاستلام والصرف
 // =============================================
-export interface TransactionDetail {
-  Id: number;
-  TransactionId: number;
-  ItemId: number;
-  ItemName?: string;
-  ItemCode?: string;
+export interface TransactionItemDetail {
+  ItemCode: string;
+  ItemName: string;
   Quantity: number;
-  UnitPrice: number;
-  BatchNumber?: string;
-  ExpiryDate?: string;
+  Unit: string;
+  BatchNumber: string;
+  ExpiryDate: string;
+  StorageType?: StorageLocationType;
+  StorageLocation?: string;
+  UnitPrice?: number;
   Notes?: string;
 }
 
 // =============================================
-// نوع سجل المراجعة
+// نوع إذن الاستلام (الوارد)
 // =============================================
-export interface AuditLog {
+export interface ReceivingVoucher {
   Id: number;
-  Action: string;
-  TableName: string;
-  RecordId?: number;
-  OldValues?: string;
-  NewValues?: string;
-  UserId?: number;
-  UserName?: string;
-  IpAddress?: string;
+  VoucherNumber: string; // رقم إذن الاستلام
+  PoNumber?: string; // رقم أمر الشراء / التكليف
+  Date: string;
+  Warehouse: string;
+  SupplierName: string; // اسم المورد
+  SupplierCode?: string;
+  DelegateName: string; // اسم مندوب المورد
+  DelegatePhone: string;
+  DelegateIdNumber?: string; // الرقم الوطني أو رقم الهوية
+  StorekeeperName: string; // أمين الخزينة / المخزن المستلم
+  StorekeeperSignature?: boolean;
+  Items: TransactionItemDetail[];
+  TotalQuantity: number;
+  Notes?: string;
+  Status: 'معتمد' | 'قيد المراجعة' | 'معلق' | 'ملغي';
   CreatedAt: string;
 }
 
 // =============================================
-// أنواع إحصائيات لوحة التحكم
+// نوع إذن الصرف (المنصرف)
 // =============================================
-export interface DashboardStats {
-  totalItems: number;
-  totalStock: number;
-  totalValue: number;
-  lowStockItems: number;
-  expiringItems: number;
-  pendingTransactions: number;
-  recentTransactions: Transaction[];
-  expiryAlerts: ItemStock[];
-  lowStockAlerts: (Item & { TotalStock: number })[];
-  monthlyMovement: MonthlyMovement[];
-}
-
-export interface MonthlyMovement {
-  month: string;
-  inbound: number;
-  outbound: number;
-}
-
-// =============================================
-// نوع استجابة الـ API
-// =============================================
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  total?: number;
+export interface IssueVoucher {
+  Id: number;
+  VoucherNumber: string; // رقم إذن الصرف
+  Date: string;
+  Warehouse: string;
+  BeneficiaryName: string; // اسم الجهة المستفيدة (مصرف دم / مستشفى)
+  BeneficiaryType?: string;
+  ReceiverName: string; // اسم المستلم (مندوب الجهة)
+  ReceiverPhone: string;
+  ReceiverIdNumber: string; // رقم هوية المستلم
+  StorekeeperName: string; // أمين الخزينة / المخزن القائم بالصرف
+  StorekeeperSignature?: boolean;
+  Items: TransactionItemDetail[];
+  TotalQuantity: number;
+  Purpose?: string; // الغرض من الصرف
+  Notes?: string;
+  Status: 'معتمد' | 'معلق' | 'ملغي';
+  CreatedAt: string;
 }
 
 // =============================================
-// نوع بيانات تسجيل الدخول
+// نوع تقارير الصلاحية
 // =============================================
-export interface LoginCredentials {
-  username: string;
-  password: string;
+export interface ExpiryReportItem {
+  ItemCode: string;
+  ItemName: string;
+  BatchNumber: string;
+  ExpiryDate: string;
+  ActualStock: number;
+  Unit: string;
+  StorageLocation: string;
+  StorageType: StorageLocationType;
+  DaysUntilExpiry: number;
+  Status: 'ساري' | 'قريب الانتهاء' | 'حرج (أقل من شهر)' | 'منتهي الصلاحية';
 }
 
-export interface AuthToken {
-  token: string;
-  user: User;
-}
-
 // =============================================
-// نوع معلمات البحث والفلترة
+// نوع النسخة الاحتياطية
 // =============================================
-export interface SearchParams {
-  search?: string;
-  category?: number;
-  warehouse?: number;
-  status?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+export interface SystemBackupData {
+  backupDate: string;
+  version: string;
+  systemName: string;
+  data: {
+    items: Item[];
+    receivingVouchers: ReceivingVoucher[];
+    issueVouchers: IssueVoucher[];
+    damagedItems: DamagedItemRecord[];
+    warehouses: Warehouse[];
+    suppliers: Supplier[];
+    beneficiaries: BeneficiaryEntity[];
+    users: User[];
+  };
 }

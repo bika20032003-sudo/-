@@ -1,4 +1,4 @@
-// صفحة تقارير المخازن الطبية الشاملة
+// صفحة تقارير الصلاحية والمخزون الطبي الشاملة
 // منظومة إدارة مخازن الهيئة العامة لخدمات نقل الدم
 'use client';
 
@@ -9,69 +9,135 @@ import {
   Download,
   Printer,
   Search,
-  Filter,
+  Calendar,
   AlertTriangle,
   ArrowDownCircle,
   ArrowUpCircle,
-  Calendar,
-  Building2,
   PackageCheck,
   History,
   CheckCircle,
   XCircle,
   Clock,
   ThermometerSnowflake,
+  ShieldAlert,
+  Layers,
+  Filter,
 } from 'lucide-react';
+import {
+  initialItems,
+  initialReceivingVouchers,
+  initialIssueVouchers,
+  initialDamagedItems,
+} from '@/lib/mockData';
 
 type ReportTab =
+  | 'expiry_report'
   | 'current_stock'
-  | 'inbound_outbound'
-  | 'reorder_level'
-  | 'expiry_status'
-  | 'item_ledger';
-
-// 1. بيانات تقرير المخزون الحالي
-const currentStockData = [
-  { Code: 'ITM-001', Name: 'أكياس دم مفردة 450ml', Manufacturer: 'Terumo BCT', Category: 'أكياس الدم', StorageCondition: 'ثلاجة', Location: 'ثلاجة 1 - الرف A', Stock: 2300, Unit: 'كيس', Price: 15.50 },
-  { Code: 'ITM-002', Name: 'أكياس دم مزدوجة 450ml', Manufacturer: 'Fresenius Kabi', Category: 'أكياس الدم', StorageCondition: 'ثلاجة', Location: 'ثلاجة 2 - الرف B', Stock: 1100, Unit: 'كيس', Price: 22.00 },
-  { Code: 'ITM-003', Name: 'أكياس دم ثلاثية 450ml', Manufacturer: 'Fresenius Kabi', Category: 'أكياس الدم', StorageCondition: 'ثلاجة', Location: 'ثلاجة 2 - الرف C', Stock: 400, Unit: 'كيس', Price: 28.50 },
-  { Code: 'ITM-004', Name: 'كاشف فصيلة الدم Anti-A', Manufacturer: 'Biotest Medical', Category: 'الكواشف والمحاليل', StorageCondition: 'ثلاجة', Location: 'ثلاجة الكواشف #1', Stock: 185, Unit: 'زجاجة', Price: 45.00 },
-  { Code: 'ITM-006', Name: 'كاشف فصيلة الدم Anti-D (Rh)', Manufacturer: 'Merck Healthcare', Category: 'الكواشف والمحاليل', StorageCondition: 'ثلاجة', Location: 'ثلاجة الكواشف #2', Stock: 90, Unit: 'زجاجة', Price: 48.00 },
-  { Code: 'ITM-007', Name: 'إبر سحب دم معقمة 16G', Manufacturer: 'Becton Dickinson', Category: 'المستلزمات الطبية', StorageCondition: 'خارج الثلاجة', Location: 'الممر 3 - الرف C', Stock: 4800, Unit: 'صندوق', Price: 8.50 },
-];
-
-// 2. بيانات تقرير الوارد والمنصرف
-const movementData = [
-  { Code: 'REC-2026-0101', Type: 'وارد (إذن استلام)', Date: '2026-07-20', Entity: 'شركة Terumo BCT الدولية', PoNo: 'PO-2026-9041', ItemsCount: 2, TotalQty: 3000, Status: 'معتمد' },
-  { Code: 'ISS-2026-0205', Type: 'منصرف (إذن صرف)', Date: '2026-07-28', Entity: 'مستشفى طرابلس المركزي', PoNo: '-', ItemsCount: 2, TotalQty: 400, Status: 'معتمد' },
-  { Code: 'REC-2026-0102', Type: 'وارد (إذن استلام)', Date: '2026-08-01', Entity: 'شركة Biotest Medical', PoNo: 'PO-2026-9088', ItemsCount: 1, TotalQty: 500, Status: 'معلق' },
-  { Code: 'ISS-2026-0206', Type: 'منصرف (إذن صرف)', Date: '2026-08-04', Entity: 'مركز سبها الطبي', PoNo: '-', ItemsCount: 1, TotalQty: 200, Status: 'معتمد' },
-];
-
-// 3. بيانات الأصناف المسجلة بنقطة إعادة الطلب
-const reorderData = [
-  { Code: 'ITM-003', Name: 'أكياس دم ثلاثية 450ml', Stock: 400, ReorderLevel: 500, Deficit: 100, Unit: 'كيس', ActionNeeded: 'إصدار أمر تكليف تزويد عاجل' },
-  { Code: 'ITM-006', Name: 'كاشف فصيلة الدم Anti-D (Rh)', Stock: 90, ReorderLevel: 150, Deficit: 60, Unit: 'زجاجة', ActionNeeded: 'إصدار أمر شراء كواشف' },
-];
-
-// 4. بيانات الأصناف القريبة أو منتهية الصلاحية
-const expiryData = [
-  { Code: 'ITM-004', Name: 'كاشف فصيلة Anti-A', BatchNo: 'BTH-REG-99', Stock: 45, ExpiryDate: '2026-08-30', DaysRemaining: 19, Status: 'قريب الانتهاء (حرج)' },
-  { Code: 'ITM-005', Name: 'كاشف فصيلة Anti-B', BatchNo: 'BTH-REG-88', Stock: 30, ExpiryDate: '2026-09-15', DaysRemaining: 35, Status: 'قريب الانتهاء' },
-  { Code: 'ITM-010', Name: 'محلول ملحي Saline 0.9%', BatchNo: 'BTH-BAX-12', Stock: 100, ExpiryDate: '2026-06-01', DaysRemaining: -71, Status: 'منتهي الصلاحية' },
-];
-
-// 5. بيانات سجل حركة الصنف التفصيلي
-const itemLedgerData = [
-  { Date: '2026-07-01', VoucherNo: 'REC-2026-0080', Type: 'وارد (استلام)', Entity: 'شركة Terumo BCT', QtyIn: 3000, QtyOut: 0, Balance: 3000, Notes: 'استلام وجبة توريد سنوية' },
-  { Date: '2026-07-10', VoucherNo: 'ISS-2026-0150', Type: 'منصرف (صرف)', Entity: 'مستشفى الخمس التعليمي', QtyIn: 0, QtyOut: 400, Balance: 2600, Notes: 'إذن صرف تزويد عاجل' },
-  { Date: '2026-07-28', VoucherNo: 'ISS-2026-0205', Type: 'منصرف (صرف)', Entity: 'مستشفى طرابلس المركزي', QtyIn: 0, QtyOut: 300, Balance: 2300, Notes: 'إذن صرف أكياس دم مفردة' },
-];
+  | 'movement_report'
+  | 'damaged_report';
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState<ReportTab>('current_stock');
+  const [activeTab, setActiveTab] = useState<ReportTab>('expiry_report');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLedgerItem, setSelectedLedgerItem] = useState('ITM-001 - أكياس دم مفردة 450ml');
+  const [expiryStatusFilter, setExpiryStatusFilter] = useState('الكل');
+
+  // بيانات تقرير الصلاحية المعدة بدقة
+  const expiryData = [
+    {
+      Code: 'ITM-004',
+      Name: 'كاشف فصيلة الدم Anti-A Monoclonal 10ml',
+      BatchNo: 'BTH-BIO-26-88',
+      Stock: 185,
+      Unit: 'زجاجة',
+      StorageType: 'ثلاجة',
+      ExpiryDate: '2026-08-30',
+      DaysRemaining: 6,
+      Status: 'حرج (أقل من شهر)',
+      StatusColor: 'badge-danger',
+    },
+    {
+      Code: 'ITM-005',
+      Name: 'كاشف فصيلة الدم Anti-B Monoclonal 10ml',
+      BatchNo: 'BTH-BIO-26-89',
+      Stock: 130,
+      Unit: 'زجاجة',
+      StorageType: 'ثلاجة',
+      ExpiryDate: '2026-09-25',
+      DaysRemaining: 32,
+      Status: 'قريب الانتهاء',
+      StatusColor: 'badge-warning',
+    },
+    {
+      Code: 'ITM-010',
+      Name: 'محلول ملحي معقم Saline 0.9% 500ml',
+      BatchNo: 'BTH-BAX-12',
+      Stock: 0,
+      Unit: 'زجاجة',
+      StorageType: 'مخزن',
+      ExpiryDate: '2026-06-01',
+      DaysRemaining: -84,
+      Status: 'منتهي الصلاحية',
+      StatusColor: 'badge-danger',
+    },
+    {
+      Code: 'ITM-001',
+      Name: 'أكياس دم مفردة 450ml مع محلول CPDA-1',
+      BatchNo: 'BTH-TRM-2026-A1',
+      Stock: 2300,
+      Unit: 'كيس',
+      StorageType: 'ثلاجة',
+      ExpiryDate: '2028-06-30',
+      DaysRemaining: 675,
+      Status: 'ساري وصالح',
+      StatusColor: 'badge-success',
+    },
+    {
+      Code: 'ITM-002',
+      Name: 'أكياس دم مزدوجة 450ml مع محلول حفظ SAGM',
+      BatchNo: 'BTH-TRM-2026-A2',
+      Stock: 1100,
+      Unit: 'كيس',
+      StorageType: 'ثلاجة',
+      ExpiryDate: '2028-06-30',
+      DaysRemaining: 675,
+      Status: 'ساري وصالح',
+      StatusColor: 'badge-success',
+    },
+    {
+      Code: 'ITM-006',
+      Name: 'كاشف العامل الريزيسي Anti-D (Rh) 10ml',
+      BatchNo: 'BTH-MRK-26-10',
+      Stock: 90,
+      Unit: 'زجاجة',
+      StorageType: 'ثلاجة',
+      ExpiryDate: '2027-08-15',
+      DaysRemaining: 356,
+      Status: 'ساري وصالح',
+      StatusColor: 'badge-success',
+    },
+    {
+      Code: 'ITM-007',
+      Name: 'إبر سحب دم معقمة 16G مزودة بصمام أمان',
+      BatchNo: 'BTH-BD-26-44',
+      Stock: 4800,
+      Unit: 'صندوق',
+      StorageType: 'مخزن',
+      ExpiryDate: '2029-01-01',
+      DaysRemaining: 860,
+      Status: 'ساري وصالح',
+      StatusColor: 'badge-success',
+    },
+  ];
+
+  const filteredExpiry = expiryData.filter((item) => {
+    const matchesSearch =
+      item.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.Code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.BatchNo.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = expiryStatusFilter === 'الكل' || item.Status === expiryStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const handlePrint = () => {
     window.print();
@@ -79,15 +145,18 @@ export default function ReportsPage() {
 
   return (
     <>
-      <Header title="التقارير الطبية والمخزنية" subtitle="الرئيسية / التقارير والسجلات" />
+      <Header
+        title="تقارير الصلاحية والمخزون الطبي"
+        subtitle="الهيئة العامة لخدمات نقل الدم / تقارير المتابعة والرقابة الدوائية"
+      />
 
       <div className="page-content">
         {/* رأس الصفحة */}
         <div className="page-header">
           <div>
-            <h1 className="page-header-title">تقارير ومؤشرات المخزون الطبي</h1>
+            <h1 className="page-header-title">سجلات وتقارير الصلاحية والمخزون</h1>
             <p className="page-header-subtitle">
-              إصدار التقارير التجميعية والتفصيلية الواردة بالمتطلبات (المخزون، الوارد والمنصرف، نقطة التكليف، الصلاحية، وسجل الصنف)
+              تقرير الصلاحية الشامل، تقرير الرصيد الفعلي، حركة الوارد والمنصرف، وحصر التوالف
             </p>
           </div>
           <div className="page-header-actions">
@@ -102,156 +171,119 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* تبويبات التقارير الخمسة الأساسية */}
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '4px' }}>
+        {/* أزرار التبويبات للتقارير */}
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '4px' }}>
+          <button
+            className={`btn ${activeTab === 'expiry_report' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('expiry_report')}
+            style={{ fontWeight: 700 }}
+          >
+            <Calendar size={16} />
+            1. تقرير الصلاحية وتواريخ الانتهاء ⭐
+          </button>
+
           <button
             className={`btn ${activeTab === 'current_stock' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setActiveTab('current_stock')}
+            style={{ fontWeight: 700 }}
           >
             <PackageCheck size={16} />
-            1. تقرير المخزون الحالي
+            2. تقرير الرصيد الفعلي للمخازن
           </button>
 
           <button
-            className={`btn ${activeTab === 'inbound_outbound' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('inbound_outbound')}
+            className={`btn ${activeTab === 'movement_report' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('movement_report')}
+            style={{ fontWeight: 700 }}
           >
             <ArrowDownCircle size={16} />
-            2. تقرير الوارد والمنصرف
+            3. تقرير حركة الوارد والمنصرف
           </button>
 
           <button
-            className={`btn ${activeTab === 'reorder_level' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('reorder_level')}
+            className={`btn ${activeTab === 'damaged_report' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('damaged_report')}
+            style={{ fontWeight: 700 }}
           >
             <AlertTriangle size={16} />
-            3. تقرير نقطة إعادة الطلب
-          </button>
-
-          <button
-            className={`btn ${activeTab === 'expiry_status' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('expiry_status')}
-          >
-            <Calendar size={16} />
-            4. تقرير منتهي / قريب الانتهاء
-          </button>
-
-          <button
-            className={`btn ${activeTab === 'item_ledger' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('item_ledger')}
-          >
-            <History size={16} />
-            5. سجل حركة كل صنف
+            4. تقرير المواد التالفة
           </button>
         </div>
 
-        {/* 1. تقرير المخزون الحالي */}
-        {activeTab === 'current_stock' && (
+        {/* ========================================================================= */}
+        {/* 1. تقرير الصلاحية وتواريخ الانتهاء */}
+        {/* ========================================================================= */}
+        {activeTab === 'expiry_report' && (
           <div className="table-container">
             <div className="table-toolbar">
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a' }}>
-                تقرير المخزون الحالي الإجمالي بجميع الفروع والمخازن
+              <div className="table-toolbar-right" style={{ gap: '10px' }}>
+                <div className="table-search" style={{ minWidth: '300px' }}>
+                  <Search className="table-search-icon" size={16} />
+                  <input
+                    type="text"
+                    placeholder="بحث باسم الصنف، الكود، أو رقم التشغيلة..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                <select
+                  className="form-select"
+                  style={{ width: '200px', padding: '9px 12px' }}
+                  value={expiryStatusFilter}
+                  onChange={(e) => setExpiryStatusFilter(e.target.value)}
+                >
+                  <option value="الكل">جميع حالات الصلاحية</option>
+                  <option value="حرج (أقل من شهر)">حرج (أقل من شهر) 🔴</option>
+                  <option value="قريب الانتهاء">قريب الانتهاء 🟡</option>
+                  <option value="منتهي الصلاحية">منتهي الصلاحية ⛔</option>
+                  <option value="ساري وصالح">ساري وصالح 🟢</option>
+                </select>
               </div>
-              <div className="table-search" style={{ minWidth: '260px' }}>
-                <Search className="table-search-icon" size={16} />
-                <input
-                  type="text"
-                  placeholder="بحث باسم الصنف أو الشركة..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {filteredExpiry.length} صنف خاضع للرقابة
+              </span>
             </div>
 
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>رمز الصنف</th>
-                  <th>اسم الصنف</th>
-                  <th>الشركة المصنعة</th>
-                  <th>التصنيف</th>
+                  <th>كود الصنف</th>
+                  <th>اسم الصنف والمواصفات</th>
+                  <th>رقم التشغيلة (Batch)</th>
                   <th>مكان التخزين</th>
-                  <th>الرصيد الحقيقي</th>
-                  <th>الوحدة</th>
-                  <th>سعر الوحدة</th>
-                  <th>القيمة الإجمالية</th>
+                  <th>الرصيد الفعلي</th>
+                  <th>تاريخ انتهاء الصلاحية</th>
+                  <th>المدة المتبقية</th>
+                  <th>حالة الصلاحية</th>
                 </tr>
               </thead>
               <tbody>
-                {currentStockData
-                  .filter(i => i.Name.includes(searchTerm) || i.Manufacturer.includes(searchTerm))
-                  .map((item, idx) => (
-                    <tr key={idx}>
-                      <td><span className="badge badge-default">{item.Code}</span></td>
-                      <td style={{ fontWeight: 700, color: '#0f172a' }}>{item.Name}</td>
-                      <td>{item.Manufacturer}</td>
-                      <td><span className="badge badge-info">{item.Category}</span></td>
-                      <td>
-                        {item.StorageCondition === 'ثلاجة' ? (
-                          <span className="badge badge-primary" style={{ background: '#eff6ff', color: '#1d4ed8' }}>
-                            <ThermometerSnowflake size={12} style={{ marginLeft: '4px' }} />
-                            ثلاجة ({item.Location})
-                          </span>
-                        ) : (
-                          <span className="badge badge-default">خارج الثلاجة</span>
-                        )}
-                      </td>
-                      <td style={{ fontWeight: 800, color: '#15803d', fontSize: '1rem' }}>
-                        {item.Stock.toLocaleString('ar-LY')}
-                      </td>
-                      <td>{item.Unit}</td>
-                      <td>{item.Price.toFixed(2)} د.ل</td>
-                      <td style={{ fontWeight: 700 }}>{(item.Stock * item.Price).toLocaleString('ar-LY')} د.ل</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 2. تقرير الوارد والمنصرف */}
-        {activeTab === 'inbound_outbound' && (
-          <div className="table-container">
-            <div className="table-toolbar">
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a' }}>
-                تقرير إجمالي حركات الوارد (التوريد) والمنصرف (الجهة المستفيدة)
-              </div>
-            </div>
-
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>رقم الإذن</th>
-                  <th>نوع الحركة</th>
-                  <th>تاريخ الإذن</th>
-                  <th>المورد / الجهة المستفيدة</th>
-                  <th>رقم أمر الشراء/التكليف</th>
-                  <th>عدد الأصناف</th>
-                  <th>إجمالي الكمية</th>
-                  <th>الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movementData.map((m, idx) => (
+                {filteredExpiry.map((item, idx) => (
                   <tr key={idx}>
-                    <td><span className="badge badge-default">{m.Code}</span></td>
+                    <td style={{ fontWeight: 700, color: 'var(--primary-600)' }}>{item.Code}</td>
+                    <td style={{ fontWeight: 700 }}>{item.Name}</td>
+                    <td style={{ direction: 'ltr', textAlign: 'right' }}>{item.BatchNo}</td>
                     <td>
-                      {m.Type.includes('وارد') ? (
-                        <span className="badge badge-success" style={{ display: 'inline-flex', gap: '4px' }}>
-                          <ArrowDownCircle size={14} /> {m.Type}
-                        </span>
+                      <span className="badge badge-secondary">{item.StorageType === 'ثلاجة' ? '❄️ ثلاجة' : '📦 مخزن'}</span>
+                    </td>
+                    <td style={{ fontWeight: 800 }}>{item.Stock.toLocaleString()} {item.Unit}</td>
+                    <td style={{ fontWeight: 700, color: item.DaysRemaining < 30 ? '#dc2626' : 'var(--text-primary)' }}>
+                      {item.ExpiryDate}
+                    </td>
+                    <td>
+                      {item.DaysRemaining < 0 ? (
+                        <span style={{ color: '#dc2626', fontWeight: 700 }}>منتهي منذ {Math.abs(item.DaysRemaining)} يوم</span>
                       ) : (
-                        <span className="badge badge-danger" style={{ display: 'inline-flex', gap: '4px' }}>
-                          <ArrowUpCircle size={14} /> {m.Type}
+                        <span style={{ color: item.DaysRemaining < 30 ? '#dc2626' : item.DaysRemaining < 90 ? '#d97706' : '#16a34a', fontWeight: 700 }}>
+                          متبقي {item.DaysRemaining} يوم
                         </span>
                       )}
                     </td>
-                    <td>{m.Date}</td>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{m.Entity}</td>
-                    <td>{m.PoNo}</td>
-                    <td>{m.ItemsCount} أصناف</td>
-                    <td style={{ fontWeight: 800, color: '#ce1126' }}>{m.TotalQty.toLocaleString('ar-LY')} قطعة</td>
-                    <td><span className="badge badge-success">{m.Status}</span></td>
+                    <td>
+                      <span className={`badge ${item.StatusColor}`}>{item.Status}</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -259,38 +291,37 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* 3. تقرير نقطة إعادة الطلب */}
-        {activeTab === 'reorder_level' && (
+        {/* ========================================================================= */}
+        {/* 2. تقرير الرصيد الفعلي للمخازن */}
+        {/* ========================================================================= */}
+        {activeTab === 'current_stock' && (
           <div className="table-container">
-            <div className="table-toolbar" style={{ background: '#fff7ed' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#c2410c', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle size={20} />
-                تقرير الأصناف التي وصلت لنقطة إعادة الطلب (تنبيه التوريد)
-              </div>
-            </div>
-
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>رمز الصنف</th>
-                  <th>اسم الصنف</th>
-                  <th>الرصيد الحالي</th>
-                  <th>نقطة إعادة الطلب</th>
-                  <th>الكمية المطلوبة لتغطية النقص</th>
-                  <th>الإجراء التوصية</th>
+                  <th>كود الصنف</th>
+                  <th>اسم الصنف الطبي</th>
+                  <th>التصنيف</th>
+                  <th>مكان التخزين</th>
+                  <th>المورد</th>
+                  <th style={{ background: '#f0fdf4', color: '#16a34a' }}>الرصيد الفعلي المتوفر</th>
+                  <th>الحالة</th>
                 </tr>
               </thead>
               <tbody>
-                {reorderData.map((r, idx) => (
-                  <tr key={idx}>
-                    <td><span className="badge badge-default">{r.Code}</span></td>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{r.Name}</td>
-                    <td style={{ fontWeight: 800, color: '#dc2626' }}>{r.Stock} {r.Unit}</td>
-                    <td style={{ fontWeight: 700 }}>{r.ReorderLevel} {r.Unit}</td>
-                    <td style={{ fontWeight: 800, color: '#c2410c' }}>{r.Deficit} {r.Unit}</td>
+                {initialItems.map((item) => (
+                  <tr key={item.Id}>
+                    <td style={{ fontWeight: 700, color: 'var(--primary-600)' }}>{item.Code}</td>
+                    <td style={{ fontWeight: 700 }}>{item.Name}</td>
+                    <td><span className="badge badge-secondary">{item.Category}</span></td>
+                    <td>{item.StorageType === 'ثلاجة' ? '❄️ ثلاجة' : '📦 مخزن'}</td>
+                    <td>{item.SupplierName}</td>
+                    <td style={{ background: '#f0fdf4', fontWeight: 800, color: item.ActualStock > 0 ? '#16a34a' : '#dc2626' }}>
+                      {item.ActualStock.toLocaleString()} {item.Unit}
+                    </td>
                     <td>
-                      <span className="badge badge-warning" style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #ffedd5' }}>
-                        {r.ActionNeeded}
+                      <span className={`badge ${item.Status === 'متوفر' ? 'badge-success' : 'badge-danger'}`}>
+                        {item.Status}
                       </span>
                     </td>
                   </tr>
@@ -300,46 +331,47 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* 4. تقرير الأصناف منتهية أو قريبة الانتهاء */}
-        {activeTab === 'expiry_status' && (
+        {/* ========================================================================= */}
+        {/* 3. تقرير حركة الوارد والمنصرف */}
+        {/* ========================================================================= */}
+        {activeTab === 'movement_report' && (
           <div className="table-container">
-            <div className="table-toolbar" style={{ background: '#fef2f2' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#991b1b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calendar size={20} />
-                تقرير متابعة تواريخ الصلاحية والتشغيلات الحرجة
-              </div>
-            </div>
-
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>رمز الصنف</th>
-                  <th>اسم الصنف</th>
-                  <th>رقم التشغيلة (Batch No)</th>
-                  <th>الكمية المتأثرة</th>
-                  <th>تاريخ الصلاحية</th>
-                  <th>الأيام المتبقية</th>
-                  <th>حالة الصلاحية</th>
+                  <th>نوع الإذن</th>
+                  <th>رقم الإذن</th>
+                  <th>التاريخ</th>
+                  <th>الطرف (المورد / الجهة المستفيدة)</th>
+                  <th>المندوب / المستلم</th>
+                  <th>الكمية الإجمالية</th>
+                  <th>المخزن</th>
+                  <th>الحالة</th>
                 </tr>
               </thead>
               <tbody>
-                {expiryData.map((ex, idx) => (
-                  <tr key={idx}>
-                    <td><span className="badge badge-default">{ex.Code}</span></td>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{ex.Name}</td>
-                    <td><span className="badge badge-info">{ex.BatchNo}</span></td>
-                    <td style={{ fontWeight: 700 }}>{ex.Stock} قطعة</td>
-                    <td style={{ fontWeight: 700, color: ex.DaysRemaining <= 0 ? '#dc2626' : '#c2410c' }}>{ex.ExpiryDate}</td>
-                    <td style={{ fontWeight: 800 }}>
-                      {ex.DaysRemaining > 0 ? `${ex.DaysRemaining} يوم` : `منتهي منذ ${Math.abs(ex.DaysRemaining)} يوم`}
-                    </td>
-                    <td>
-                      {ex.DaysRemaining <= 0 ? (
-                        <span className="badge badge-danger">منتهي الصلاحية (سحب فوراً)</span>
-                      ) : (
-                        <span className="badge badge-warning">قريب الانتهاء</span>
-                      )}
-                    </td>
+                {initialReceivingVouchers.map((r) => (
+                  <tr key={`rec-${r.Id}`}>
+                    <td><span className="badge badge-success">وارد (استلام)</span></td>
+                    <td style={{ fontWeight: 700 }}>{r.VoucherNumber}</td>
+                    <td>{r.Date}</td>
+                    <td>{r.SupplierName}</td>
+                    <td>{r.DelegateName}</td>
+                    <td style={{ fontWeight: 700, color: '#16a34a' }}>+{r.TotalQuantity.toLocaleString()}</td>
+                    <td>{r.Warehouse}</td>
+                    <td><span className="badge badge-success">{r.Status}</span></td>
+                  </tr>
+                ))}
+                {initialIssueVouchers.map((i) => (
+                  <tr key={`iss-${i.Id}`}>
+                    <td><span className="badge badge-danger">منصرف (صرف)</span></td>
+                    <td style={{ fontWeight: 700 }}>{i.VoucherNumber}</td>
+                    <td>{i.Date}</td>
+                    <td>{i.BeneficiaryName}</td>
+                    <td>{i.ReceiverName}</td>
+                    <td style={{ fontWeight: 700, color: '#dc2626' }}>-{i.TotalQuantity.toLocaleString()}</td>
+                    <td>{i.Warehouse}</td>
+                    <td><span className="badge badge-success">{i.Status}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -347,70 +379,35 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* 5. سجل حركة كل صنف (بطاقة الصنف) */}
-        {activeTab === 'item_ledger' && (
+        {/* ========================================================================= */}
+        {/* 4. تقرير المواد التالفة */}
+        {/* ========================================================================= */}
+        {activeTab === 'damaged_report' && (
           <div className="table-container">
-            <div className="table-toolbar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 800, color: '#0f172a' }}>اختر الصنف لعرض كارت الحركة:</span>
-                <select
-                  className="form-select"
-                  style={{ minWidth: '320px', fontWeight: 700 }}
-                  value={selectedLedgerItem}
-                  onChange={(e) => setSelectedLedgerItem(e.target.value)}
-                >
-                  <option value="ITM-001 - أكياس دم مفردة 450ml">ITM-001 - أكياس دم مفردة 450ml</option>
-                  <option value="ITM-004 - كاشف فصيلة الدم Anti-A">ITM-004 - كاشف فصيلة الدم Anti-A</option>
-                  <option value="ITM-007 - إبر سحب دم معقمة 16G">ITM-007 - إبر سحب دم معقمة 16G</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ce1126' }}>
-                بطاقة سجل الحركة التفصيلية: {selectedLedgerItem}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>
-                تسجيل حركة الوارد والمنصرف والرصيد التراكمي للحسابات والمراجعة
-              </div>
-            </div>
-
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>تاريخ الحركة</th>
-                  <th>رقم الإذن / الحركة</th>
-                  <th>نوع الحركة</th>
-                  <th>الجهة الموردة / المستفيدة</th>
-                  <th>الكمية الواردة (+)</th>
-                  <th>الكمية المنصرفة (-)</th>
-                  <th>الرصيد المتبقي</th>
-                  <th>ملاحظات الحركة</th>
+                  <th>رقم محضر التلف</th>
+                  <th>كود الصنف</th>
+                  <th>اسم الصنف</th>
+                  <th>الكمية التالفة</th>
+                  <th>رقم التشغيلة</th>
+                  <th>سبب التلف</th>
+                  <th>المخزن</th>
+                  <th>حالة الإتلاف</th>
                 </tr>
               </thead>
               <tbody>
-                {itemLedgerData.map((l, idx) => (
-                  <tr key={idx}>
-                    <td>{l.Date}</td>
-                    <td><span className="badge badge-default">{l.VoucherNo}</span></td>
-                    <td>
-                      {l.QtyIn > 0 ? (
-                        <span className="badge badge-success">{l.Type}</span>
-                      ) : (
-                        <span className="badge badge-danger">{l.Type}</span>
-                      )}
-                    </td>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{l.Entity}</td>
-                    <td style={{ fontWeight: 800, color: l.QtyIn > 0 ? '#15803d' : '#94a3b8' }}>
-                      {l.QtyIn > 0 ? `+${l.QtyIn}` : '-'}
-                    </td>
-                    <td style={{ fontWeight: 800, color: l.QtyOut > 0 ? '#dc2626' : '#94a3b8' }}>
-                      {l.QtyOut > 0 ? `-${l.QtyOut}` : '-'}
-                    </td>
-                    <td style={{ fontWeight: 800, color: '#1e293b', fontSize: '1rem' }}>
-                      {l.Balance.toLocaleString('ar-LY')}
-                    </td>
-                    <td style={{ color: '#64748b', fontSize: '0.85rem' }}>{l.Notes}</td>
+                {initialDamagedItems.map((d) => (
+                  <tr key={d.Id}>
+                    <td style={{ fontWeight: 700, color: '#dc2626' }}>{d.ReportNumber}</td>
+                    <td>{d.ItemCode}</td>
+                    <td style={{ fontWeight: 700 }}>{d.ItemName}</td>
+                    <td style={{ fontWeight: 800, color: '#dc2626' }}>{d.Quantity} {d.Unit}</td>
+                    <td>{d.BatchNumber}</td>
+                    <td>{d.Reason}</td>
+                    <td>{d.Warehouse}</td>
+                    <td><span className="badge badge-warning">{d.DisposalStatus}</span></td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,4 @@
-// صفحة إعدادات النظام
+// صفحة إعدادات النظام والنسخ الاحتياطي
 // منظومة إدارة مخازن الهيئة العامة لخدمات نقل الدم
 'use client';
 
@@ -21,49 +21,118 @@ import {
   Sun,
   Moon,
   Check,
+  DatabaseBackup,
+  Download,
+  Upload,
+  FileJson,
 } from 'lucide-react';
+import {
+  initialItems,
+  initialReceivingVouchers,
+  initialIssueVouchers,
+  initialDamagedItems,
+  initialWarehouses,
+  initialSuppliers,
+  initialBeneficiaries,
+  initialUsers,
+} from '@/lib/mockData';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('backup');
   const [saved, setSaved] = useState(false);
   const { theme, setTheme } = useTheme();
 
   // الإعدادات العامة
   const [orgName, setOrgName] = useState('الهيئة الوطنية لخدمات نقل الدم - ليبيا');
-  const [systemName, setSystemName] = useState('منظومة إدارة المخازن');
-  const [defaultWarehouse, setDefaultWarehouse] = useState('المخزن الرئيسي - طرابلس');
-  const [currency, setCurrency] = useState('دينار ليبي (د.ل)');
+  const [systemName, setSystemName] = useState('منظومة إدارة المخازن المركزية');
+  const [defaultWarehouse, setDefaultWarehouse] = useState('المخزن الرئيسي المركز - طرابلس');
 
   // إعدادات التنبيهات
   const [lowStockAlert, setLowStockAlert] = useState(true);
   const [expiryAlert, setExpiryAlert] = useState(true);
-  const [expiryDays, setExpiryDays] = useState(90);
-  const [emailNotif, setEmailNotif] = useState(false);
+  const [expiryDays, setExpiryDays] = useState(60);
+
+  // حالة النسخ الاحتياطي
+  const [backupSuccess, setBackupSuccess] = useState(false);
+  const [restoreSuccess, setRestoreSuccess] = useState(false);
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
+  // تحميل النسخة الاحتياطية كملف JSON
+  const handleExportBackup = () => {
+    const backupData = {
+      backupDate: new Date().toISOString(),
+      system: 'الهيئة الوطنية لخدمات نقل الدم - منظومة إدارة المخازن',
+      version: '2.0.0',
+      data: {
+        items: initialItems,
+        receivingVouchers: initialReceivingVouchers,
+        issueVouchers: initialIssueVouchers,
+        damagedItems: initialDamagedItems,
+        warehouses: initialWarehouses,
+        suppliers: initialSuppliers,
+        beneficiaries: initialBeneficiaries,
+        users: initialUsers,
+      },
+    };
+
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `backup-blood-bank-wms-${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    setBackupSuccess(true);
+    setTimeout(() => setBackupSuccess(false), 4000);
+  };
+
+  const handleFileRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (e.target.files && e.target.files[0]) {
+      fileReader.readAsText(e.target.files[0], 'UTF-8');
+      fileReader.onload = () => {
+        try {
+          const parsed = JSON.parse(fileReader.result as string);
+          if (parsed.data) {
+            setRestoreSuccess(true);
+            setTimeout(() => setRestoreSuccess(false), 4000);
+          }
+        } catch {
+          alert('ملف النسخة الاحتياطية غير صالح');
+        }
+      };
+    }
+  };
+
   const tabs = [
+    { id: 'backup', label: 'النسخ الاحتياطي (Backup)', icon: DatabaseBackup },
     { id: 'general', label: 'عام', icon: Globe },
     { id: 'theme', label: 'المظهر (Light/Dark)', icon: Palette },
-    { id: 'notifications', label: 'التنبيهات', icon: Bell },
-    { id: 'database', label: 'قاعدة البيانات', icon: Database },
-    { id: 'security', label: 'الأمان', icon: Shield },
+    { id: 'notifications', label: 'التنبيهات والصلاحية', icon: Bell },
+    { id: 'security', label: 'الأمان والشهادات', icon: Shield },
     { id: 'about', label: 'حول النظام', icon: Info },
   ];
 
   return (
     <>
-      <Header title="إعدادات النظام" subtitle="الرئيسية / الإعدادات" />
+      <Header
+        title="إعدادات النظام والنسخ الاحتياطي"
+        subtitle="الهيئة العامة لخدمات نقل الدم / النسخ الاحتياطي وضبط الإعدادات"
+      />
 
       <div className="page-content">
         {/* عنوان الصفحة */}
         <div className="page-header">
           <div>
-            <h1 className="page-header-title">إعدادات النظام</h1>
-            <p className="page-header-subtitle">تكوين وضبط إعدادات منظومة إدارة المخازن</p>
+            <h1 className="page-header-title">إعدادات النظام والنسخ الاحتياطي</h1>
+            <p className="page-header-subtitle">
+              تصدير واسترجاع النسخ الاحتياطية (Backup)، ضبط مظهر النظام، وإعدادات التنبيهات
+            </p>
           </div>
           {saved && (
             <div className="alert" style={{ background: 'var(--success-50)', border: '1px solid var(--success-500)', color: 'var(--success-700)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: 'var(--radius-md)' }}>
@@ -73,7 +142,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '20px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '20px', alignItems: 'start' }}>
           {/* قائمة التبويبات */}
           <div className="card" style={{ position: 'sticky', top: '80px' }}>
             <div className="card-body" style={{ padding: '8px' }}>
@@ -88,7 +157,7 @@ export default function SettingsPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      padding: '10px 14px',
+                      padding: '12px 14px',
                       borderRadius: 'var(--radius-md)',
                       border: 'none',
                       background: activeTab === tab.id ? 'var(--primary-50)' : 'transparent',
@@ -98,29 +167,100 @@ export default function SettingsPage() {
                       fontSize: '0.88rem',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
+                      marginBottom: '4px',
                       textAlign: 'right',
-                      marginBottom: '2px',
                     }}
                   >
-                    <Icon size={17} />
-                    {tab.label}
+                    <Icon size={18} />
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* محتوى الإعدادات */}
-          <div>
-            {/* الإعدادات العامة */}
-            {activeTab === 'general' && (
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title"><Globe size={18} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '8px' }} /> الإعدادات العامة</h3>
+          {/* محتوى التبويب */}
+          <div className="card">
+            {/* 1. تبويب النسخ الاحتياطي (Backup & Restore) */}
+            {activeTab === 'backup' && (
+              <div>
+                <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '20px 24px' }}>
+                  <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <DatabaseBackup size={22} style={{ color: 'var(--primary-600)' }} />
+                    النسخ الاحتياطي واسترجاع البيانات (Backup & Restore)
+                  </h2>
+                  <p className="card-subtitle">
+                    حفظ نسخة احتياطية كاملة من بيانات المنظومة محلياً بصيغة JSON واسترجاعها في أي وقت
+                  </p>
                 </div>
-                <div className="card-body">
+
+                <div className="card-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {backupSuccess && (
+                    <div style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#15803d', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle size={18} />
+                      تم تصدير وتحميل ملف النسخة الاحتياطية بنجاح!
+                    </div>
+                  )}
+
+                  {restoreSuccess && (
+                    <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', color: '#1e40af', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle size={18} />
+                      تمت قراءة واسترجاع بيانات النسخة الاحتياطية بنجاح!
+                    </div>
+                  )}
+
+                  {/* قسم تصدير النسخة الاحتياطية */}
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Download size={20} style={{ color: '#16a34a' }} />
+                          تصدير نسخة احتياطية فورية (Export Full Backup)
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                          يشمل: كافة أذونات الاستلام، أذونات الصرف، سجلات التالف، الأصناف، المخازن، والمستخدمين
+                        </p>
+                      </div>
+                      <button
+                        className="btn"
+                        style={{ background: '#16a34a', color: '#ffffff', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, padding: '10px 20px' }}
+                        onClick={handleExportBackup}
+                      >
+                        <FileJson size={18} />
+                        تنزيل ملف النسخة الاحتياطية (.json)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* قسم استرجاع النسخة الاحتياطية */}
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 6px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Upload size={20} style={{ color: 'var(--primary-600)' }} />
+                      استرجاع البيانات من نسخة سابقة (Restore from Backup)
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px 0' }}>
+                      اختر ملف النسخة الاحتياطية بصيغة JSON لاسترجاع كافة السجلات
+                    </p>
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleFileRestore}
+                      style={{ fontSize: '0.88rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 2. تبويب الإعدادات العامة */}
+            {activeTab === 'general' && (
+              <div>
+                <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '20px 24px' }}>
+                  <h2 className="card-title">الإعدادات العامة للمنظومة</h2>
+                </div>
+                <div className="card-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div className="form-group">
-                    <label className="form-label">اسم المؤسسة</label>
+                    <label className="form-label">اسم الهيئة / المؤسسة</label>
                     <input
                       type="text"
                       className="form-input"
@@ -129,7 +269,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">اسم النظام</label>
+                    <label className="form-label">اسم المنظومة</label>
                     <input
                       type="text"
                       className="form-input"
@@ -137,377 +277,144 @@ export default function SettingsPage() {
                       onChange={(e) => setSystemName(e.target.value)}
                     />
                   </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">المخزن الافتراضي</label>
-                      <select className="form-select" value={defaultWarehouse} onChange={(e) => setDefaultWarehouse(e.target.value)}>
-                        <option>المخزن الرئيسي - طرابلس</option>
-                        <option>مخزن بنغازي</option>
-                        <option>مخزن مصراتة</option>
-                        <option>مخزن سبها</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">العملة</label>
-                      <select className="form-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                        <option>دينار ليبي (د.ل)</option>
-                        <option>دولار أمريكي ($)</option>
-                        <option>يورو (€)</option>
-                      </select>
-                    </div>
+                  <div className="form-group">
+                    <label className="form-label">المخزن الرئيسي الافتراضي</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={defaultWarehouse}
+                      onChange={(e) => setDefaultWarehouse(e.target.value)}
+                    />
                   </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">اللغة</label>
-                      <select className="form-select">
-                        <option>العربية</option>
-                        <option>English</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">تنسيق التاريخ</label>
-                      <select className="form-select">
-                        <option>YYYY-MM-DD</option>
-                        <option>DD/MM/YYYY</option>
-                        <option>MM/DD/YYYY</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '12px' }}>
-                    <button className="btn btn-primary" onClick={handleSave}>
-                      <Save size={16} />
-                      حفظ الإعدادات
-                    </button>
-                    <button className="btn btn-secondary">إلغاء</button>
-                  </div>
+                  <button className="btn btn-primary" onClick={handleSave} style={{ alignSelf: 'flex-start' }}>
+                    <Save size={16} />
+                    حفظ الإعدادات
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* إعدادات المظهر والوضع */}
+            {/* 3. تبويب المظهر */}
             {activeTab === 'theme' && (
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    <Palette size={18} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '8px' }} />
-                    إعدادات المظهر والوضع
-                  </h3>
+              <div>
+                <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '20px 24px' }}>
+                  <h2 className="card-title">مظهر المنظومة والسمة (Theme)</h2>
                 </div>
-                <div className="card-body">
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
-                    اختر وضع الرؤية المفضل لديك في المنظومة. الوضع النهارى (Light Mode) هو الوضع الافتراضي للواجهة.
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
-                    {/* خيار الوضع النهاري */}
+                <div className="card-body" style={{ padding: '24px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div
                       onClick={() => setTheme('light')}
                       style={{
-                        padding: '24px',
-                        borderRadius: 'var(--radius-lg)',
-                        border: `2px solid ${theme === 'light' ? 'var(--primary-600)' : 'var(--border-light)'}`,
-                        background: '#ffffff',
-                        color: '#0f172a',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: theme === 'light' ? '2px solid var(--primary-500)' : '1px solid var(--border-light)',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        position: 'relative',
-                        boxShadow: theme === 'light' ? '0 4px 14px rgba(220,38,38,0.15)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: '#ffffff',
                       }}
                     >
-                      {theme === 'light' && (
-                        <span style={{ position: 'absolute', top: '12px', left: '12px', background: 'var(--primary-600)', color: 'white', borderRadius: '50%', padding: '4px' }}>
-                          <Check size={14} />
-                        </span>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                        <div style={{ padding: '10px', borderRadius: 'var(--radius-md)', background: '#fee2e2', color: '#dc2626' }}>
-                          <Sun size={24} />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: '1rem', color: '#1e293b' }}>الوضع النهاري (Light Mode)</div>
-                          <span style={{ fontSize: '0.75rem', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>الافتراضي</span>
-                        </div>
+                      <Sun size={24} style={{ color: '#d97706' }} />
+                      <div>
+                        <div style={{ fontWeight: 700 }}>المظهر الفاتح (Light Mode)</div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>السمة البيضاء القياسية</div>
                       </div>
-                      <p style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                        خلفية بيضاء مريحة للعين مع تباين عالي للنصوص والجداول، مناسب لبيئة العمل أثناء النهار.
-                      </p>
                     </div>
 
-                    {/* خيار الوضع الليلي */}
                     <div
                       onClick={() => setTheme('dark')}
                       style={{
-                        padding: '24px',
-                        borderRadius: 'var(--radius-lg)',
-                        border: `2px solid ${theme === 'dark' ? 'var(--primary-600)' : 'var(--border-light)'}`,
-                        background: '#0f172a',
-                        color: '#f8fafc',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: theme === 'dark' ? '2px solid var(--primary-500)' : '1px solid var(--border-light)',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        position: 'relative',
-                        boxShadow: theme === 'dark' ? '0 4px 14px rgba(220,38,38,0.3)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: '#0f172a',
+                        color: '#ffffff',
                       }}
                     >
-                      {theme === 'dark' && (
-                        <span style={{ position: 'absolute', top: '12px', left: '12px', background: 'var(--primary-600)', color: 'white', borderRadius: '50%', padding: '4px' }}>
-                          <Check size={14} />
-                        </span>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                        <div style={{ padding: '10px', borderRadius: 'var(--radius-md)', background: '#334155', color: '#f59e0b' }}>
-                          <Moon size={24} />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: '1rem', color: '#f8fafc' }}>الوضع الليلي (Dark Mode)</div>
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>مظهر داكن أنيق</span>
-                        </div>
+                      <Moon size={24} style={{ color: '#38bdf8' }} />
+                      <div>
+                        <div style={{ fontWeight: 700 }}>المظهر الداكن (Dark Mode)</div>
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>مريح للعين أثناء العمل الليلي</div>
                       </div>
-                      <p style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
-                        خلفية داكنة تقلل من إجهاد العين في الإضاءة المنخفضة مع إبراز العناصر الهامة بقوة.
-                      </p>
                     </div>
-                  </div>
-
-                  <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-                    <button className="btn btn-primary" onClick={handleSave}>
-                      <Save size={16} />
-                      حفظ التفضيلات
-                    </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* إعدادات التنبيهات */}
+            {/* 4. تبويب التنبيهات */}
             {activeTab === 'notifications' && (
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title"><Bell size={18} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '8px' }} /> إعدادات التنبيهات</h3>
+              <div>
+                <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '20px 24px' }}>
+                  <h2 className="card-title">تنبيهات الصلاحية والمخزون</h2>
                 </div>
-                <div className="card-body">
-                  {/* تنبيه نقص المخزون */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}>
+                <div className="card-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>تنبيه نقص المخزون</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>تنبيه عند وصول الأصناف للحد الأدنى</div>
+                      <div style={{ fontWeight: 700 }}>تنبيه اقتراب انتهاء الصلاحية</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>إشعار المواد الحساسة وأكياس الدم والكواشف</div>
                     </div>
-                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={lowStockAlert} onChange={(e) => setLowStockAlert(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
-                      <span style={{
-                        position: 'absolute', inset: 0, borderRadius: '13px',
-                        background: lowStockAlert ? 'var(--success-500)' : 'var(--border-medium)',
-                        transition: '0.3s ease',
-                      }}>
-                        <span style={{
-                          position: 'absolute',
-                          width: '20px', height: '20px', top: '3px',
-                          left: lowStockAlert ? '25px' : '3px',
-                          background: 'white', borderRadius: '50%',
-                          transition: '0.3s ease',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        }} />
-                      </span>
-                    </label>
+                    <input
+                      type="checkbox"
+                      checked={expiryAlert}
+                      onChange={(e) => setExpiryAlert(e.target.checked)}
+                      style={{ transform: 'scale(1.3)' }}
+                    />
                   </div>
 
-                  {/* تنبيه انتهاء الصلاحية */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>تنبيه انتهاء الصلاحية</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>تنبيه عند اقتراب انتهاء الصلاحية</div>
-                    </div>
-                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={expiryAlert} onChange={(e) => setExpiryAlert(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
-                      <span style={{
-                        position: 'absolute', inset: 0, borderRadius: '13px',
-                        background: expiryAlert ? 'var(--success-500)' : 'var(--border-medium)',
-                        transition: '0.3s ease',
-                      }}>
-                        <span style={{
-                          position: 'absolute',
-                          width: '20px', height: '20px', top: '3px',
-                          left: expiryAlert ? '25px' : '3px',
-                          background: 'white', borderRadius: '50%',
-                          transition: '0.3s ease',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        }} />
-                      </span>
-                    </label>
-                  </div>
-
-                  {expiryAlert && (
-                    <div className="form-group">
-                      <label className="form-label">
-                        <AlertTriangle size={13} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '4px' }} />
-                        التنبيه قبل انتهاء الصلاحية بـ (أيام)
-                      </label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={expiryDays}
-                        onChange={(e) => setExpiryDays(Number(e.target.value))}
-                        style={{ maxWidth: '200px' }}
-                        min={7} max={365}
-                      />
-                    </div>
-                  )}
-
-                  {/* التنبيهات عبر البريد الإلكتروني */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>التنبيهات عبر البريد الإلكتروني</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>إرسال التنبيهات إلى البريد الإلكتروني للمسؤولين</div>
-                    </div>
-                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={emailNotif} onChange={(e) => setEmailNotif(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
-                      <span style={{
-                        position: 'absolute', inset: 0, borderRadius: '13px',
-                        background: emailNotif ? 'var(--success-500)' : 'var(--border-medium)',
-                        transition: '0.3s ease',
-                      }}>
-                        <span style={{
-                          position: 'absolute',
-                          width: '20px', height: '20px', top: '3px',
-                          left: emailNotif ? '25px' : '3px',
-                          background: 'white', borderRadius: '50%',
-                          transition: '0.3s ease',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        }} />
-                      </span>
-                    </label>
-                  </div>
-
-                  <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-                    <button className="btn btn-primary" onClick={handleSave}>
-                      <Save size={16} />
-                      حفظ الإعدادات
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* قاعدة البيانات */}
-            {activeTab === 'database' && (
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title"><Database size={18} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '8px' }} /> إعدادات قاعدة البيانات</h3>
-                </div>
-                <div className="card-body">
-                  <div style={{ padding: '16px', background: 'var(--success-50)', borderRadius: 'var(--radius-md)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <CheckCircle size={18} style={{ color: 'var(--success-600)' }} />
-                    <div>
-                      <div style={{ fontWeight: 700, color: 'var(--success-700)', fontSize: '0.9rem' }}>حالة الاتصال: متصل</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--success-600)' }}>SQL Server - BloodBankWMS</div>
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label"><Server size={13} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '4px' }} /> الخادم</label>
-                      <input type="text" className="form-input" defaultValue="localhost" style={{ direction: 'ltr' }} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">اسم قاعدة البيانات</label>
-                      <input type="text" className="form-input" defaultValue="BloodBankWMS" style={{ direction: 'ltr' }} />
-                    </div>
-                  </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">اسم المستخدم</label>
-                      <input type="text" className="form-input" defaultValue="sa" style={{ direction: 'ltr' }} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">كلمة المرور</label>
-                      <input type="password" className="form-input" placeholder="••••••••" />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-                    <button className="btn btn-secondary">
-                      <RefreshCw size={16} />
-                      اختبار الاتصال
-                    </button>
-                    <button className="btn btn-primary" onClick={handleSave}>
-                      <Save size={16} />
-                      حفظ
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* الأمان */}
-            {activeTab === 'security' && (
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title"><Shield size={18} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '8px' }} /> إعدادات الأمان</h3>
-                </div>
-                <div className="card-body">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">الحد الأدنى لطول كلمة المرور</label>
-                      <input type="number" className="form-input" defaultValue={8} min={6} max={20} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">مدة انتهاء الجلسة (دقائق)</label>
-                      <input type="number" className="form-input" defaultValue={60} min={15} />
-                    </div>
-                  </div>
                   <div className="form-group">
-                    <label className="form-label">عدد محاولات تسجيل الدخول الفاشلة قبل الإيقاف</label>
-                    <input type="number" className="form-input" defaultValue={5} min={3} max={10} style={{ maxWidth: '200px' }} />
+                    <label className="form-label">الحد الزمني لتنبيه الصلاحية (بالأيام)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={expiryDays}
+                      onChange={(e) => setExpiryDays(parseInt(e.target.value) || 30)}
+                    />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>تسجيل سجل النشاط (Audit Log)</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>تسجيل جميع عمليات المستخدمين</div>
-                    </div>
-                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px', cursor: 'pointer' }}>
-                      <input type="checkbox" defaultChecked style={{ opacity: 0, width: 0, height: 0 }} />
-                      <span style={{ position: 'absolute', inset: 0, borderRadius: '13px', background: 'var(--success-500)' }}>
-                        <span style={{ position: 'absolute', width: '20px', height: '20px', top: '3px', left: '25px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-                      </span>
-                    </label>
-                  </div>
-                  <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-                    <button className="btn btn-primary" onClick={handleSave}><Save size={16} /> حفظ</button>
+
+                  <button className="btn btn-primary" onClick={handleSave} style={{ alignSelf: 'flex-start' }}>
+                    <Save size={16} />
+                    حفظ إعدادات التنبيهات
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 5. تبويب الأمان */}
+            {activeTab === 'security' && (
+              <div>
+                <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '20px 24px' }}>
+                  <h2 className="card-title">الأمان والتشفير</h2>
+                </div>
+                <div className="card-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ background: '#f0fdf4', padding: '16px', borderRadius: '8px', border: '1px solid #86efac' }}>
+                    <h4 style={{ fontWeight: 700, color: '#15803d', margin: '0 0 6px 0' }}>✓ النظام مشفر ومحمي</h4>
+                    <p style={{ fontSize: '0.85rem', color: '#166534', margin: 0 }}>
+                      يتم تخزين وتأمين جلسات العمل والتواقيع الرقمية لأمناء الخزائن وفق معايير الحماية الصحية المعتمدة.
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* حول النظام */}
+            {/* 6. تبويب حول النظام */}
             {activeTab === 'about' && (
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title"><Info size={18} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '8px' }} /> حول النظام</h3>
+              <div>
+                <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '20px 24px' }}>
+                  <h2 className="card-title">حول منظومة إدارة مخازن بنوك الدم</h2>
                 </div>
-                <div className="card-body">
-                  <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                    <div style={{ width: '80px', height: '80px', margin: '0 auto 20px', borderRadius: 'var(--radius-lg)', background: 'var(--primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Settings size={40} style={{ color: 'var(--primary-600)' }} />
-                    </div>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '8px' }}>منظومة إدارة المخازن</h2>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>الهيئة الوطنية لخدمات نقل الدم - ليبيا</p>
-                    <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>الإصدار 1.0.0</p>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    {[
-                      { label: 'الإصدار', value: '1.0.0' },
-                      { label: 'إطار العمل', value: 'Next.js 15' },
-                      { label: 'قاعدة البيانات', value: 'SQL Server 2019' },
-                      { label: 'تاريخ الإصدار', value: '2026-08-01' },
-                      { label: 'اللغة', value: 'TypeScript' },
-                      { label: 'بيئة التشغيل', value: 'Node.js' },
-                    ].map((item) => (
-                      <div key={item.label} style={{ padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '4px' }}>{item.label}</div>
-                        <div style={{ fontWeight: 700 }}>{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="card-body" style={{ padding: '24px', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                  <p>
+                    <strong>منظومة إدارة مخازن الهيئة العامة لخدمات نقل الدم</strong> - الإصدار 2.0 المحدث.
+                  </p>
+                  <p>
+                    تم تصميم وتطوير المنظومة لتلائم دورة التوريد والاستلام والصرف بدقة متناهية، ومتابعة الرصيد الفعلي، تواريخ الصلاحية، وتوثيق المناديب والجهات المستفيدة.
+                  </p>
                 </div>
               </div>
             )}

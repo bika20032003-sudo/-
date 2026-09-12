@@ -5,146 +5,79 @@
 import { useState } from 'react';
 import Header from '@/components/layout/Header';
 import {
-  Warehouse,
+  Warehouse as WarehouseIcon,
   Plus,
   MapPin,
-  User,
-  Package,
   CheckCircle,
-  XCircle,
   ThermometerSnowflake,
   Box,
   Layers,
   X,
   Save,
+  Building2,
+  Package,
 } from 'lucide-react';
-
-interface StorageSection {
-  Name: string;
-  Type: 'ثلاجة مبردة' | 'مخزن جاف' | 'ثلاجة تجميد';
-  Capacity: string;
-  ItemsCount: number;
-}
-
-interface MedicalWarehouse {
-  Id: number;
-  Name: string;
-  Code: string;
-  Location: string;
-  Type: 'رئيسي' | 'إقليمي / فرعي';
-  Manager: string;
-  ColdStorageCount: number;
-  AmbientStorageCount: number;
-  TotalStock: number;
-  IsActive: boolean;
-  Sections: StorageSection[];
-}
-
-const warehousesData: MedicalWarehouse[] = [
-  {
-    Id: 1,
-    Name: 'المخزن الرئيسي المركز - طرابلس',
-    Code: 'WH-001',
-    Location: 'طرابلس - المقر الرئيسي الهيئة',
-    Type: 'رئيسي',
-    Manager: 'د. علي الفيتوري',
-    ColdStorageCount: 8,
-    AmbientStorageCount: 12,
-    TotalStock: 14200,
-    IsActive: true,
-    Sections: [
-      { Name: 'ثلاجة حفظ أكياس الدم #1 (4°C)', Type: 'ثلاجة مبردة', Capacity: '5,000 كيس', ItemsCount: 3400 },
-      { Name: 'ثلاجة حفظ أكياس الدم #2 (4°C)', Type: 'ثلاجة مبردة', Capacity: '5,000 كيس', ItemsCount: 2800 },
-      { Name: 'ثلاجة الكواشف والمحاليل #1 (2-8°C)', Type: 'ثلاجة مبردة', Capacity: '1,000 عبوة', ItemsCount: 450 },
-      { Name: 'مخزن المستلزمات الطبية الجافة', Type: 'مخزن جاف', Capacity: '20,000 صندوق', ItemsCount: 7550 },
-    ],
-  },
-  {
-    Id: 2,
-    Name: 'مخزن المركز الإقليمي - بنغازي',
-    Code: 'WH-002',
-    Location: 'بنغازي - شارع الهواري',
-    Type: 'إقليمي / فرعي',
-    Manager: 'أحمد محمد الصالح',
-    ColdStorageCount: 4,
-    AmbientStorageCount: 6,
-    TotalStock: 5800,
-    IsActive: true,
-    Sections: [
-      { Name: 'ثلاجة حفظ الدم بنغازي #1', Type: 'ثلاجة مبردة', Capacity: '3,000 كيس', ItemsCount: 1800 },
-      { Name: 'ثلاجة تجميد البلازما (-20°C)', Type: 'ثلاجة تجميد', Capacity: '2,000 كيس', ItemsCount: 950 },
-      { Name: 'مخزن الإبر والأجهزة', Type: 'مخزن جاف', Capacity: '10,000 صندوق', ItemsCount: 3050 },
-    ],
-  },
-  {
-    Id: 3,
-    Name: 'مخزن المركز الإقليمي - مصراتة',
-    Code: 'WH-003',
-    Location: 'مصراتة - قرب المجمع الطبي',
-    Type: 'إقليمي / فرعي',
-    Manager: 'فاطمة علي الزروق',
-    ColdStorageCount: 3,
-    AmbientStorageCount: 5,
-    TotalStock: 4200,
-    IsActive: true,
-    Sections: [
-      { Name: 'ثلاجة الدم وكواشف مصراتة', Type: 'ثلاجة مبردة', Capacity: '2,500 كيس', ItemsCount: 1200 },
-      { Name: 'مخزن المواد الجافة والوقاية', Type: 'مخزن جاف', Capacity: '8,000 صندوق', ItemsCount: 3000 },
-    ],
-  },
-];
+import { initialWarehouses } from '@/lib/mockData';
+import { Warehouse } from '@/types';
 
 export default function WarehousesPage() {
-  const [warehouses, setWarehouses] = useState<MedicalWarehouse[]>(warehousesData);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>(initialWarehouses);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState<MedicalWarehouse | null>(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
 
+  // نموذج إضافة مخزن مبسط
   const [newWh, setNewWh] = useState({
     Name: '',
     Code: `WH-00${warehouses.length + 1}`,
-    Location: '',
-    Type: 'إقليمي / فرعي' as MedicalWarehouse['Type'],
-    Manager: '',
-    ColdStorageCount: '2',
-    AmbientStorageCount: '3',
+    Location: 'طرابلس',
+    Type: 'إقليمي / فرعي' as Warehouse['Type'],
+    ManagerName: 'أمين المخزن المختص',
+    Description: '',
   });
 
   const handleCreateWarehouse = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWh.Name) return;
 
-    const wh: MedicalWarehouse = {
+    const wh: Warehouse = {
       Id: warehouses.length + 1,
       Name: newWh.Name,
       Code: newWh.Code,
       Location: newWh.Location || 'ليبيا',
       Type: newWh.Type,
-      Manager: newWh.Manager || 'مسؤول مخزن',
-      ColdStorageCount: parseInt(newWh.ColdStorageCount) || 2,
-      AmbientStorageCount: parseInt(newWh.AmbientStorageCount) || 3,
-      TotalStock: 0,
+      ManagerName: newWh.ManagerName,
+      Description: newWh.Description || 'مخزن تابع للهيئة العامة لخدمات نقل الدم',
       IsActive: true,
-      Sections: [
-        { Name: 'ثلاجة حفظ أكياس الدم الرئيسي', Type: 'ثلاجة مبردة', Capacity: '2,000 كيس', ItemsCount: 0 },
-        { Name: 'قسم المستلزمات الجافة', Type: 'مخزن جاف', Capacity: '5,000 وحدة', ItemsCount: 0 },
-      ],
+      CreatedAt: new Date().toISOString().split('T')[0],
+      TotalStock: 0,
     };
 
     setWarehouses([...warehouses, wh]);
     setShowAddModal(false);
+    setNewWh({
+      Name: '',
+      Code: `WH-00${warehouses.length + 2}`,
+      Location: 'طرابلس',
+      Type: 'إقليمي / فرعي',
+      ManagerName: 'أمين المخزن المختص',
+      Description: '',
+    });
   };
 
   return (
     <>
-      <Header title="أماكن والمخازن الطبية" subtitle="الرئيسية / إدارة المخازن وأماكن التخزين" />
+      <Header
+        title="إدارة المخازن ومواقع التخزين"
+        subtitle="الهيئة العامة لخدمات نقل الدم / المخازن الرئيسية والإقليمية"
+      />
 
       <div className="page-content">
         {/* رأس الصفحة */}
         <div className="page-header">
           <div>
-            <h1 className="page-header-title">المخازن وأماكن التخزين التفصيلية</h1>
+            <h1 className="page-header-title">المخازن والمراكز الإقليمية</h1>
             <p className="page-header-subtitle">
-              تحديد وحصر مواقع التخزين للمواد الطبية (ثلاجات تبريد أكياس الدم والكواشف / المخازن الجافة)
+              حصر ومتابعة المخزن الرئيسي العام والمخازن الإقليمية التابعة للهيئة مع تصنيف سعات التخزين
             </p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
@@ -153,246 +86,189 @@ export default function WarehousesPage() {
           </button>
         </div>
 
-        {/* عرض بطاقات المخازن */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '20px' }}>
+        {/* شبكة بطاقات المخازن */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
           {warehouses.map((wh) => (
             <div
               key={wh.Id}
               className="card"
-              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', transition: 'transform 0.2s' }}
-              onClick={() => setSelectedWarehouse(wh)}
+              style={{
+                border: wh.Type === 'رئيسي' ? '2px solid var(--primary-500)' : '1px solid var(--border-light)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
             >
-              <div className="card-body">
-                {/* رأس المخزن */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div
-                      style={{
-                        width: '52px',
-                        height: '52px',
-                        borderRadius: '12px',
-                        background: wh.Type === 'رئيسي' ? '#fef2f2' : '#eff6ff',
-                        color: wh.Type === 'رئيسي' ? '#ce1126' : '#2563eb',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Warehouse size={26} />
-                    </div>
-                    <div>
-                      <h3 style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a' }}>{wh.Name}</h3>
-                      <span className="badge badge-default" style={{ marginTop: '4px' }}>{wh.Code}</span>
-                    </div>
+              {wh.Type === 'رئيسي' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    background: 'var(--primary-600)',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                  }}
+                >
+                  ★ المخزن الرئيسي الافتراضي
+                </div>
+              )}
+
+              <div className="card-body" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: wh.Type === 'رئيسي' ? 'var(--primary-50)' : '#f8fafc',
+                      color: wh.Type === 'رئيسي' ? 'var(--primary-600)' : '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <WarehouseIcon size={26} />
                   </div>
-                  <span className={`badge ${wh.Type === 'رئيسي' ? 'badge-danger' : 'badge-primary'}`}>
-                    {wh.Type}
-                  </span>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                      {wh.Name}
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      الكود: {wh.Code} | النوع: {wh.Type}
+                    </span>
+                  </div>
                 </div>
 
-                {/* تفاصيل الموقع والمسؤول */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px', fontSize: '0.88rem', color: '#475569' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MapPin size={15} style={{ color: '#ce1126' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MapPin size={16} style={{ color: 'var(--primary-500)' }} />
                     <span>{wh.Location}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <User size={15} style={{ color: '#64748b' }} />
-                    <span>المسؤول: <strong>{wh.Manager}</strong></span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Package size={16} style={{ color: '#16a34a' }} />
+                    <span>الرصيد المخزني الفعلي: <strong>{wh.TotalStock?.toLocaleString() || 0} وحدة</strong></span>
                   </div>
                 </div>
 
-                {/* وحدات التخزين والمخزون */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '12px', background: '#f8fafc', borderRadius: '10px', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ThermometerSnowflake size={18} style={{ color: '#2563eb' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ثلاجات تبريد</div>
-                      <div style={{ fontWeight: 800, color: '#1e293b' }}>{wh.ColdStorageCount} ثلاجة</div>
-                    </div>
-                  </div>
+                {wh.Description && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-tertiary)', margin: '0 0 16px 0', borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
+                    {wh.Description}
+                  </p>
+                )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Box size={18} style={{ color: '#ea580c' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>مخازن جافة</div>
-                      <div style={{ fontWeight: 800, color: '#1e293b' }}>{wh.AmbientStorageCount} مواقع</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                  <span style={{ color: '#64748b' }}>إجمالي المخزون:</span>
-                  <span style={{ fontWeight: 800, color: '#15803d', fontSize: '1rem' }}>
-                    {wh.TotalStock.toLocaleString('ar-LY')} وحدة
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', paddingTop: '12px' }}>
+                  <span className="badge badge-success">
+                    <CheckCircle size={12} style={{ marginLeft: '4px' }} />
+                    مخزن نشط
                   </span>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => alert(`المخزن ${wh.Name} جاهز للعمليات وتوريد الأصناف`)}
+                  >
+                    عرض التفاصيل
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* نافذة إضافة مخزن جديد */}
-        {showAddModal && (
-          <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
-              <div className="modal-header">
-                <h3 className="modal-title">إضافة مخزن / موقع تخزين جديد</h3>
-                <button className="modal-close" onClick={() => setShowAddModal(false)}>
-                  <X size={18} />
-                </button>
+      {/* مودال إضافة مخزن جديد مبسط */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '540px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">إضافة مخزن جديد</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  تسجيل موقع تخزيني أو مركز إقليمي جديد
+                </p>
               </div>
-
-              <form onSubmit={handleCreateWarehouse}>
-                <div className="modal-body">
-                  <div className="form-group">
-                    <label className="form-label">اسم المخزن <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="مثال: مخزن المركز الإقليمي - طبرق"
-                      required
-                      value={newWh.Name}
-                      onChange={(e) => setNewWh({ ...newWh, Name: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">رمز المخزن</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={newWh.Code}
-                        onChange={(e) => setNewWh({ ...newWh, Code: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">النوع</label>
-                      <select
-                        className="form-select"
-                        value={newWh.Type}
-                        onChange={(e) => setNewWh({ ...newWh, Type: e.target.value as MedicalWarehouse['Type'] })}
-                      >
-                        <option value="رئيسي">رئيسي</option>
-                        <option value="إقليمي / فرعي">إقليمي / فرعي</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">الموقع الجغرافي</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="مثال: طبرق - مجمع خدمات نقل الدم"
-                      value={newWh.Location}
-                      onChange={(e) => setNewWh({ ...newWh, Location: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">عدد ثلاجات التبريد</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={newWh.ColdStorageCount}
-                        onChange={(e) => setNewWh({ ...newWh, ColdStorageCount: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">عدد أقسام المخزن الجاف</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={newWh.AmbientStorageCount}
-                        onChange={(e) => setNewWh({ ...newWh, AmbientStorageCount: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">مسؤول المخزن</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="اسم مسؤول المخزن"
-                      value={newWh.Manager}
-                      onChange={(e) => setNewWh({ ...newWh, Manager: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                    إلغاء
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    <Save size={16} />
-                    حفظ المخزن
-                  </button>
-                </div>
-              </form>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>
+                <X size={20} />
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* نافذة عرض الأقسام والثلاجات بالمخزن */}
-        {selectedWarehouse && (
-          <div className="modal-overlay" onClick={() => setSelectedWarehouse(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
-              <div className="modal-header">
-                <h3 className="modal-title">أماكن ومواقع التخزين التفصيلية - {selectedWarehouse.Name}</h3>
-                <button className="modal-close" onClick={() => setSelectedWarehouse(null)}>
-                  <X size={18} />
-                </button>
-              </div>
+            <form onSubmit={handleCreateWarehouse}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="form-group">
+                  <label className="form-label">اسم المخزن</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="مثال: مخزن المركز الإقليمي - الزاوية"
+                    value={newWh.Name}
+                    onChange={(e) => setNewWh({ ...newWh, Name: e.target.value })}
+                    required
+                  />
+                </div>
 
-              <div className="modal-body">
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '12px' }}>
-                  وحدات التبريد والمخازن التابعة للمركز:
-                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label">كود المخزن</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={newWh.Code}
+                      onChange={(e) => setNewWh({ ...newWh, Code: e.target.value })}
+                      required
+                    />
+                  </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {selectedWarehouse.Sections.map((sec, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '12px 16px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
+                  <div className="form-group">
+                    <label className="form-label">نوع المخزن</label>
+                    <select
+                      className="form-select"
+                      value={newWh.Type}
+                      onChange={(e) => setNewWh({ ...newWh, Type: e.target.value as Warehouse['Type'] })}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {sec.Type.includes('ثلاجة') ? (
-                          <ThermometerSnowflake size={22} style={{ color: '#2563eb' }} />
-                        ) : (
-                          <Box size={22} style={{ color: '#ea580c' }} />
-                        )}
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{sec.Name}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>السعة الاستيعابية: {sec.Capacity}</div>
-                        </div>
-                      </div>
-                      <span className="badge badge-success">{sec.ItemsCount.toLocaleString('ar-LY')} صنف مخزن</span>
-                    </div>
-                  ))}
+                      <option value="إقليمي / فرعي">إقليمي / فرعي</option>
+                      <option value="رئيسي">رئيسي</option>
+                      <option value="مخزن فرعي">مخزن فرعي</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">الموقع والمدينة</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="مثال: طرابلس - طريق الشط"
+                    value={newWh.Location}
+                    onChange={(e) => setNewWh({ ...newWh, Location: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">الوصف والملاحظات</label>
+                  <textarea
+                    className="form-input"
+                    rows={2}
+                    placeholder="وصف المخزن وسعته الاستيعابية..."
+                    value={newWh.Description}
+                    onChange={(e) => setNewWh({ ...newWh, Description: e.target.value })}
+                  />
                 </div>
               </div>
 
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setSelectedWarehouse(null)}>
-                  إغلاق
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
+                  إلغاء
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} />
+                  حفظ المخزن
                 </button>
               </div>
-            </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }

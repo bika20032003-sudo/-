@@ -1,4 +1,4 @@
-// صفحة إدارة المستخدمين والصلاحيات
+// صفحة إدارة المستخدمين والصلاحيات - تجميد وإيقاف وإعادة تعيين كلمة المرور
 // منظومة إدارة مخازن الهيئة العامة لخدمات نقل الدم
 'use client';
 
@@ -8,155 +8,156 @@ import {
   Users,
   Plus,
   Search,
-  Edit,
-  Eye,
+  KeyRound,
+  Snowflake,
+  Ban,
+  CheckCircle2,
   X,
   Save,
-  User,
+  User as UserIcon,
   ShieldCheck,
-  CheckCircle,
-  XCircle,
-  FileCheck2,
+  Building2,
+  Copy,
+  Check,
+  RefreshCw,
+  Phone,
+  Mail,
   Lock,
 } from 'lucide-react';
-
-export interface AppUser {
-  Id: number;
-  FullName: string;
-  Username: string;
-  Role: 'admin' | 'storekeeper' | 'committee';
-  RoleLabel: 'مدير النظام' | 'مسؤول المخزن' | 'لجنة الاستلام';
-  Email: string;
-  Warehouse: string;
-  LastLogin: string;
-  IsActive: boolean;
-  Permissions: {
-    AddEditItem: boolean;
-    ApproveReceiving: boolean; // إذن الاستلام المعاينة
-    CreateIssueVoucher: boolean; // إذن الصرف
-    ViewReports: boolean; // التقارير
-  };
-}
-
-const initialUsersData: AppUser[] = [
-  {
-    Id: 1,
-    FullName: 'مدير النظام الرئيسي',
-    Username: 'admin',
-    Role: 'admin',
-    RoleLabel: 'مدير النظام',
-    Email: 'admin@blood-bank.ly',
-    Warehouse: 'جميع المخازن والفروع',
-    LastLogin: '2026-08-05',
-    IsActive: true,
-    Permissions: { AddEditItem: true, ApproveReceiving: true, CreateIssueVoucher: true, ViewReports: true },
-  },
-  {
-    Id: 2,
-    FullName: 'أحمد محمد الصالح',
-    Username: 'ahmed',
-    Role: 'storekeeper',
-    RoleLabel: 'مسؤول المخزن',
-    Email: 'ahmed@blood-bank.ly',
-    Warehouse: 'المخزن الرئيسي - طرابلس',
-    LastLogin: '2026-08-04',
-    IsActive: true,
-    Permissions: { AddEditItem: true, ApproveReceiving: false, CreateIssueVoucher: true, ViewReports: true },
-  },
-  {
-    Id: 3,
-    FullName: 'د. علي الفيتوري (لجنة الاستلام)',
-    Username: 'committee_ali',
-    Role: 'committee',
-    RoleLabel: 'لجنة الاستلام',
-    Email: 'ali.committee@blood-bank.ly',
-    Warehouse: 'لجنة استلام المواد الطبية',
-    LastLogin: '2026-08-03',
-    IsActive: true,
-    Permissions: { AddEditItem: false, ApproveReceiving: true, CreateIssueVoucher: false, ViewReports: true },
-  },
-  {
-    Id: 4,
-    FullName: 'فاطمة علي الزروق',
-    Username: 'fatima',
-    Role: 'storekeeper',
-    RoleLabel: 'مسؤول المخزن',
-    Email: 'fatima@blood-bank.ly',
-    Warehouse: 'مخزن بنغازي',
-    LastLogin: '2026-07-28',
-    IsActive: true,
-    Permissions: { AddEditItem: true, ApproveReceiving: false, CreateIssueVoucher: true, ViewReports: true },
-  },
-];
-
-const roleBadgeColor: Record<string, string> = {
-  admin: 'badge-danger',
-  storekeeper: 'badge-primary',
-  committee: 'badge-warning',
-};
+import { initialUsers, initialWarehouses } from '@/lib/mockData';
+import { User, UserRole, UserStatus } from '@/types';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<AppUser[]>(initialUsersData);
+  const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+  const [roleFilter, setRoleFilter] = useState('الكل');
+  const [statusFilter, setStatusFilter] = useState('الكل');
 
+  // النوافذ المنبثقة
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUserForPass, setSelectedUserForPass] = useState<User | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // نموذج إضافة مستخدم
   const [newUser, setNewUser] = useState({
     FullName: '',
     Username: '',
-    Role: 'storekeeper' as AppUser['Role'],
+    Role: 'storekeeper' as UserRole,
     Email: '',
-    Warehouse: 'المخزن الرئيسي - طرابلس',
+    Phone: '',
+    Warehouse: 'المخزن الرئيسي المركز - طرابلس',
+    InitialPassword: 'User@2026',
   });
 
+  // توليد كلمة مرور عشوائية
+  const generateNewPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+    let result = '';
+    for (let i = 0; i < 10; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const handleOpenPasswordReset = (user: User) => {
+    setSelectedUserForPass(user);
+    setGeneratedPassword(generateNewPassword());
+    setCopied(false);
+    setShowPasswordModal(true);
+  };
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(generatedPassword);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // تغيير حالة المستخدم (تجميد - إيقاف - تفعيل)
+  const handleUpdateStatus = (userId: number, newStatus: UserStatus) => {
+    setUsers(
+      users.map((u) => {
+        if (u.Id === userId) {
+          return {
+            ...u,
+            Status: newStatus,
+            IsActive: newStatus === 'active',
+            UpdatedAt: new Date().toISOString().split('T')[0],
+          };
+        }
+        return u;
+      })
+    );
+  };
+
+  // إنشاء مستخدم جديد
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUser.FullName || !newUser.Username) return;
 
-    let roleLabel: AppUser['RoleLabel'] = 'مسؤول المخزن';
+    let roleLabel = 'أمين خزينة / مخزن (استلام وصرف)';
     if (newUser.Role === 'admin') roleLabel = 'مدير النظام';
-    if (newUser.Role === 'committee') roleLabel = 'لجنة الاستلام';
+    if (newUser.Role === 'treasury_manager') roleLabel = 'مدير الخزينة والمخازن';
+    if (newUser.Role === 'viewer') roleLabel = 'مراقب عام (عرض وتقارير)';
 
-    const userObj: AppUser = {
+    const created: User = {
       Id: users.length + 1,
       FullName: newUser.FullName,
       Username: newUser.Username,
       Role: newUser.Role,
       RoleLabel: roleLabel,
-      Email: newUser.Email || `${newUser.Username}@blood-bank.ly`,
-      Warehouse: newUser.Warehouse,
-      LastLogin: 'لم يدخل بعد',
+      Email: newUser.Email || `${newUser.Username}@blood-bank.gov.ly`,
+      Phone: newUser.Phone || '09XXXXXXXX',
+      Status: 'active',
       IsActive: true,
-      Permissions: {
-        AddEditItem: newUser.Role !== 'committee',
-        ApproveReceiving: newUser.Role === 'admin' || newUser.Role === 'committee',
-        CreateIssueVoucher: newUser.Role !== 'committee',
-        ViewReports: true,
-      },
+      CreatedAt: new Date().toISOString().split('T')[0],
+      UpdatedAt: new Date().toISOString().split('T')[0],
+      LastLogin: 'لم يسجل دخول بعد',
+      Warehouse: newUser.Warehouse,
     };
 
-    setUsers([...users, userObj]);
+    setUsers([...users, created]);
     setShowAddModal(false);
+    setNewUser({
+      FullName: '',
+      Username: '',
+      Role: 'storekeeper',
+      Email: '',
+      Phone: '',
+      Warehouse: 'المخزن الرئيسي المركز - طرابلس',
+      InitialPassword: 'User@2026',
+    });
   };
 
-  const filtered = users.filter(
-    (u) =>
-      u.FullName.includes(searchTerm) ||
-      u.Username.includes(searchTerm) ||
-      u.RoleLabel.includes(searchTerm)
-  );
+  // فلترة المستخدمين
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
+      u.FullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.Username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.Phone && u.Phone.includes(searchTerm)) ||
+      (u.Warehouse && u.Warehouse.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesRole = roleFilter === 'الكل' || u.Role === roleFilter;
+    const matchesStatus = statusFilter === 'الكل' || u.Status === statusFilter;
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   return (
     <>
-      <Header title="المستخدمون والصلاحيات" subtitle="الرئيسية / المستخدمون والصلاحيات" />
+      <Header
+        title="إدارة المستخدمين والصلاحيات"
+        subtitle="الهيئة العامة لخدمات نقل الدم / تجميد الحسابات وإعادة تعيين كلمات المرور"
+      />
 
       <div className="page-content">
         {/* رأس الصفحة */}
         <div className="page-header">
           <div>
-            <h1 className="page-header-title">إدارة المستخدمين والأدوار الوظيفية</h1>
+            <h1 className="page-header-title">المستخدمون وحسابات النظام</h1>
             <p className="page-header-subtitle">
-              تحديد الصلاحيات الأدوار: مدير النظام، مسؤول المخزن، ولجنة الاستلام للمعايتنة والإقرار
+              إدارة صلاحيات مدير النظام، مدير الخزينة، أمناء الخزائن مع إمكانية التجميد والإيقاف الفوري وإعادة تعيين كلمة المرور
             </p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
@@ -165,267 +166,416 @@ export default function UsersPage() {
           </button>
         </div>
 
-        {/* بطاقات الأدوار الثلاثة الأساسية */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+        {/* بطاقات الإحصاء السريع لحالات المستخدمين */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
           <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fef2f2', color: '#ce1126', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={26} />
+            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle2 size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>مديرو النظام</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>
-                {users.filter(u => u.Role === 'admin').length} مستخدم
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>حسابات نشطة</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#16a34a' }}>
+                {users.filter((u) => u.Status === 'active').length} مستخدم
               </div>
             </div>
           </div>
 
           <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <User size={26} />
+            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#eff6ff', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Snowflake size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>مسؤولو المخازن</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2563eb' }}>
-                {users.filter(u => u.Role === 'storekeeper').length} مستخدم
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>حسابات مجمدة (تجميد)</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0284c7' }}>
+                {users.filter((u) => u.Status === 'frozen').length} مستخدم
               </div>
             </div>
           </div>
 
           <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileCheck2 size={26} />
+            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ban size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>أعضاء لجنة الاستلام</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ea580c' }}>
-                {users.filter(u => u.Role === 'committee').length} مستخدم
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>حسابات موقوفة (إيقاف)</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#dc2626' }}>
+                {users.filter((u) => u.Status === 'suspended').length} مستخدم
               </div>
             </div>
           </div>
         </div>
 
-        {/* جدول المستخدمين والصلاحيات */}
+        {/* شريط البحث والفلترة */}
         <div className="table-container">
           <div className="table-toolbar">
-            <div className="table-search" style={{ minWidth: '280px' }}>
-              <Search className="table-search-icon" size={16} />
-              <input
-                type="text"
-                placeholder="بحث باسم المستخدم أو الدور..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="table-toolbar-right" style={{ gap: '10px', flexWrap: 'wrap' }}>
+              <div className="table-search" style={{ minWidth: '280px' }}>
+                <Search className="table-search-icon" size={16} />
+                <input
+                  type="text"
+                  placeholder="بحث باسم المستخدم، اسم الدخول، أو الهاتف..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <select
+                className="form-select"
+                style={{ width: '190px', padding: '9px 12px' }}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="الكل">جميع الأدوار</option>
+                <option value="admin">مدير النظام</option>
+                <option value="treasury_manager">مدير الخزينة والمخازن</option>
+                <option value="storekeeper">أمين خزينة / مخزن</option>
+                <option value="viewer">مراقب عام</option>
+              </select>
+
+              <select
+                className="form-select"
+                style={{ width: '160px', padding: '9px 12px' }}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="الكل">جميع الحالات</option>
+                <option value="active">نشط 🟢</option>
+                <option value="frozen">مجمد ❄️</option>
+                <option value="suspended">موقوف ⛔</option>
+              </select>
             </div>
-            <div>
-              <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                عرض {filtered.length} مستخدم مسجل
-              </span>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              إجمالي المستخدمين: {filteredUsers.length}
             </div>
           </div>
 
+          {/* جدول المستخدمين */}
           <table className="data-table">
             <thead>
               <tr>
                 <th>اسم المستخدم</th>
-                <th>اسم الحساب</th>
+                <th>اسم الدخول (Username)</th>
                 <th>الدور والصلاحية</th>
-                <th>المخزن التابع</th>
-                <th>صلاحية إذن الاستلام</th>
-                <th>صلاحية إذن الصرف</th>
-                <th>صلاحية التقارير</th>
-                <th>الحالة</th>
-                <th>الإجراءات</th>
+                <th>المخزن التابع له</th>
+                <th>الهاتف والبريد</th>
+                <th>الحالة الحالية</th>
+                <th>آخر تسجيل دخول</th>
+                <th>الإجراءات والتحكم</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
-                <tr key={u.Id}>
-                  <td style={{ fontWeight: 700, color: '#0f172a' }}>{u.FullName}</td>
-                  <td><span className="badge badge-default">{u.Username}</span></td>
+              {filteredUsers.map((user) => (
+                <tr key={user.Id}>
                   <td>
-                    <span className={`badge ${roleBadgeColor[u.Role] || 'badge-default'}`}>
-                      {u.RoleLabel}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '50%',
+                          background: 'var(--primary-50)',
+                          color: 'var(--primary-600)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {user.FullName.charAt(0)}
+                      </div>
+                      <span style={{ fontWeight: 700 }}>{user.FullName}</span>
+                    </div>
+                  </td>
+                  <td style={{ direction: 'ltr', textAlign: 'right', fontWeight: 600, color: 'var(--primary-700)' }}>
+                    @{user.Username}
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        user.Role === 'admin'
+                          ? 'badge-danger'
+                          : user.Role === 'treasury_manager'
+                          ? 'badge-primary'
+                          : user.Role === 'storekeeper'
+                          ? 'badge-success'
+                          : 'badge-secondary'
+                      }`}
+                    >
+                      {user.RoleLabel || user.Role}
                     </span>
                   </td>
-                  <td style={{ color: '#475569', fontSize: '0.88rem' }}>{u.Warehouse}</td>
+                  <td style={{ fontSize: '0.85rem' }}>{user.Warehouse || 'المخزن الرئيسي'}</td>
                   <td>
-                    {u.Permissions.ApproveReceiving ? (
-                      <span className="badge badge-success">مخول للمعاينة والاعتماد</span>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>غير مخول</span>
-                    )}
+                    <div style={{ fontSize: '0.82rem' }}>📞 {user.Phone || '-'}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.Email}</div>
                   </td>
                   <td>
-                    {u.Permissions.CreateIssueVoucher ? (
-                      <span className="badge badge-primary">مخول للصرف</span>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>غير مخول</span>
-                    )}
+                    <span
+                      className={`badge ${
+                        user.Status === 'active'
+                          ? 'badge-success'
+                          : user.Status === 'frozen'
+                          ? 'badge-info'
+                          : 'badge-danger'
+                      }`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      {user.Status === 'active' && '🟢 نشط'}
+                      {user.Status === 'frozen' && '❄️ مجمد'}
+                      {user.Status === 'suspended' && '⛔ موقوف'}
+                    </span>
                   </td>
+                  <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{user.LastLogin || '-'}</td>
                   <td>
-                    {u.Permissions.ViewReports ? (
-                      <span className="badge badge-success">متاح</span>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>محظور</span>
-                    )}
-                  </td>
-                  <td>
-                    {u.IsActive ? (
-                      <span className="badge badge-success">نشط</span>
-                    ) : (
-                      <span className="badge badge-danger">معطل</span>
-                    )}
-                  </td>
-                  <td>
-                    <button className="btn-icon" title="عرض تفاصيل الصلاحيات" onClick={() => setSelectedUser(u)}>
-                      <Eye size={16} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {/* زر إعادة تعيين كلمة المرور */}
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        title="إعادة تعيين كلمة المرور"
+                        onClick={() => handleOpenPasswordReset(user)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <KeyRound size={14} />
+                        الباسورد
+                      </button>
+
+                      {/* أزرار تجميد / إيقاف / تنشيط */}
+                      {user.Status === 'active' ? (
+                        <>
+                          <button
+                            className="btn btn-sm"
+                            title="تجميد الحساب مؤقتاً"
+                            onClick={() => handleUpdateStatus(user.Id, 'frozen')}
+                            style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '4px 8px' }}
+                          >
+                            <Snowflake size={14} />
+                            تجميد
+                          </button>
+                          <button
+                            className="btn btn-sm"
+                            title="إيقاف الحساب نهائياً"
+                            onClick={() => handleUpdateStatus(user.Id, 'suspended')}
+                            style={{ background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', padding: '4px 8px' }}
+                          >
+                            <Ban size={14} />
+                            إيقاف
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-sm"
+                          title="إعادة تفعيل الحساب"
+                          onClick={() => handleUpdateStatus(user.Id, 'active')}
+                          style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '4px 8px' }}
+                        >
+                          <CheckCircle2 size={14} />
+                          تفعيل
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* نافذة إضافة مستخدم جديد */}
-        {showAddModal && (
-          <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px' }}>
-              <div className="modal-header">
-                <h3 className="modal-title">إضافة مستخدم وتحديد الصلاحية</h3>
-                <button className="modal-close" onClick={() => setShowAddModal(false)}>
-                  <X size={18} />
-                </button>
+      {/* ========================================================================= */}
+      {/* 🔑 مودال إعادة تعيين وتوليد كلمة المرور (أداة الباسورد) */}
+      {/* ========================================================================= */}
+      {showPasswordModal && selectedUserForPass && (
+        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '500px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <KeyRound size={22} style={{ color: 'var(--primary-600)' }} />
+                <div>
+                  <h3 className="modal-title">إعادة تعيين كلمة المرور</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    للمستخدم: {selectedUserForPass.FullName} (@{selectedUserForPass.Username})
+                  </p>
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                تم توليد كلمة مرور مؤقتة آمنة للمستخدم. يمكنك نسخها وتسليمها له فوراً:
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: '#f8fafc',
+                  border: '2px dashed var(--primary-400)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '12px 16px',
+                }}
+              >
+                <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '2px', color: 'var(--primary-700)', direction: 'ltr' }}>
+                  {generatedPassword}
+                </span>
+
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    title="توليد كلمة مرور أخرى"
+                    onClick={() => setGeneratedPassword(generateNewPassword())}
+                  >
+                    <RefreshCw size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={handleCopyPassword}
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    {copied ? <Check size={15} /> : <Copy size={15} />}
+                    {copied ? 'تم النسخ' : 'نسخ'}
+                  </button>
+                </div>
               </div>
 
-              <form onSubmit={handleCreateUser}>
-                <div className="modal-body">
+              <div style={{ fontSize: '0.8rem', color: '#16a34a', background: '#f0fdf4', padding: '8px 12px', borderRadius: '6px' }}>
+                ✓ سيُطلب من المستخدم تغيير كلمة المرور عند أول تسجيل دخول قادم.
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  alert(`تم تحديث كلمة مرور المستخدم ${selectedUserForPass.FullName} بنجاح!`);
+                  setShowPasswordModal(false);
+                }}
+              >
+                حفظ واعتماد التعيين
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 👤 مودال إضافة مستخدم جديد */}
+      {/* ========================================================================= */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '600px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">إضافة مستخدم جديد للنظام</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  تحديد الدور (مدير النظام، مدير الخزينة، أمين المخزن) والمخزن التابع له
+                </p>
+              </div>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="form-group">
+                  <label className="form-label">الاسم الكامل للمستخدم</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="الاسم الثلاثي واللقب"
+                    value={newUser.FullName}
+                    onChange={(e) => setNewUser({ ...newUser, FullName: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label className="form-label">الاسم الكامل <span className="required">*</span></label>
+                    <label className="form-label">اسم الدخول (Username)</label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="مثال: د. طارق علي"
+                      placeholder="اسم المستخدم بالإنجليزية"
+                      value={newUser.Username}
+                      onChange={(e) => setNewUser({ ...newUser, Username: e.target.value })}
                       required
-                      value={newUser.FullName}
-                      onChange={(e) => setNewUser({ ...newUser, FullName: e.target.value })}
                     />
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">اسم المستخدم (Username) <span className="required">*</span></label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="tariq"
-                        required
-                        value={newUser.Username}
-                        onChange={(e) => setNewUser({ ...newUser, Username: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">الدور الوظيفي <span className="required">*</span></label>
-                      <select
-                        className="form-select"
-                        value={newUser.Role}
-                        onChange={(e) => setNewUser({ ...newUser, Role: e.target.value as AppUser['Role'] })}
-                      >
-                        <option value="admin">مدير النظام (جميع الصلاحيات)</option>
-                        <option value="storekeeper">مسؤول المخزن (إضافة وإذن صرف)</option>
-                        <option value="committee">لجنة الاستلام (معاينة واعتماد التوريد)</option>
-                      </select>
-                    </div>
-                  </div>
-
                   <div className="form-group">
-                    <label className="form-label">البريد الإلكتروني</label>
+                    <label className="form-label">الدور والصلاحيات</label>
+                    <select
+                      className="form-select"
+                      value={newUser.Role}
+                      onChange={(e) => setNewUser({ ...newUser, Role: e.target.value as UserRole })}
+                    >
+                      <option value="storekeeper">أمين خزينة / مخزن (استلام وصرف)</option>
+                      <option value="treasury_manager">مدير الخزينة والمخازن</option>
+                      <option value="admin">مدير النظام (Admin)</option>
+                      <option value="viewer">مراقب عام (عرض فقط)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label">رقم الهاتف</label>
                     <input
-                      type="email"
+                      type="text"
                       className="form-input"
-                      placeholder="tariq@blood-bank.ly"
-                      value={newUser.Email}
-                      onChange={(e) => setNewUser({ ...newUser, Email: e.target.value })}
+                      placeholder="09XXXXXXXX"
+                      value={newUser.Phone}
+                      onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
                     />
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">المخزن المسؤول عنه</label>
+                    <label className="form-label">المخزن التابع له</label>
                     <select
                       className="form-select"
                       value={newUser.Warehouse}
                       onChange={(e) => setNewUser({ ...newUser, Warehouse: e.target.value })}
                     >
-                      <option value="جميع المخازن والفروع">جميع المخازن والفروع</option>
-                      <option value="المخزن الرئيسي - طرابلس">المخزن الرئيسي - طرابلس</option>
-                      <option value="مخزن بنغازي">مخزن بنغازي</option>
-                      <option value="مخزن مصراتة">مخزن مصراتة</option>
+                      {initialWarehouses.map((wh) => (
+                        <option key={wh.Id} value={wh.Name}>
+                          {wh.Name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                    إلغاء
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    <Save size={16} />
-                    حفظ المستخدم
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* نافذة تفاصيل صلاحيات المستخدم */}
-        {selectedUser && (
-          <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-              <div className="modal-header">
-                <h3 className="modal-title">صلاحيات حساب {selectedUser.FullName}</h3>
-                <button className="modal-close" onClick={() => setSelectedUser(null)}>
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="modal-body">
-                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', marginBottom: '16px' }}>
-                  <div style={{ fontWeight: 800, color: '#0f172a' }}>الدور الوظيفي: {selectedUser.RoleLabel}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#64748b' }}>المخزن: {selectedUser.Warehouse}</div>
-                </div>
-
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '10px' }}>جدول الصلاحيات الممنوحة:</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>إضافة وتعديل الأصناف الطبية:</span>
-                    {selectedUser.Permissions.AddEditItem ? <CheckCircle size={18} style={{ color: '#16a34a' }} /> : <XCircle size={18} style={{ color: '#dc2626' }} />}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>معاينة واعتماد إذونات الاستلام (لجنة الاستلام):</span>
-                    {selectedUser.Permissions.ApproveReceiving ? <CheckCircle size={18} style={{ color: '#16a34a' }} /> : <XCircle size={18} style={{ color: '#dc2626' }} />}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>إنشاء وإكتمال إذونات الصرف للجهات المستفيدة:</span>
-                    {selectedUser.Permissions.CreateIssueVoucher ? <CheckCircle size={18} style={{ color: '#16a34a' }} /> : <XCircle size={18} style={{ color: '#dc2626' }} />}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>استعراض واستخراج التقارير الخمسة:</span>
-                    {selectedUser.Permissions.ViewReports ? <CheckCircle size={18} style={{ color: '#16a34a' }} /> : <XCircle size={18} style={{ color: '#dc2626' }} />}
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">البريد الإلكتروني</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="user@blood-bank.gov.ly"
+                    value={newUser.Email}
+                    onChange={(e) => setNewUser({ ...newUser, Email: e.target.value })}
+                  />
                 </div>
               </div>
 
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setSelectedUser(null)}>
-                  إغلاق
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
+                  إلغاء
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} />
+                  إنشاء الحساب
                 </button>
               </div>
-            </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }
