@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, Search, Printer, Plus, RefreshCw, FileSpreadsheet, 
   CheckCircle2, Clock, AlertTriangle, Eye, Edit2, Trash2, 
-  Building2, Milestone, Factory, Fuel, Truck, Layers, Filter, Calendar, Download
+  Building2, Milestone, Factory, Fuel, Truck, Layers, Filter, Calendar, Download, CalendarRange
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
-export const ReportsArchiveView = ({ currentUser }) => {
+export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -331,6 +331,31 @@ export const ReportsArchiveView = ({ currentUser }) => {
             <Plus size={18} />
             <span>إنشاء تقرير ميداني جديد ✍️</span>
           </button>
+
+          {onNavigateTab && (
+            <button
+              onClick={() => onNavigateTab('periodic-reports')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '0.7rem 1.35rem',
+                borderRadius: '10px',
+                fontWeight: 900,
+                fontSize: '0.92rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
+                transition: 'all 0.2s ease'
+              }}
+              title="توليد التقرير الدوري الشهري والسنوي التلقائي"
+            >
+              <CalendarRange size={18} />
+              <span>التقارير الدورية (شهرية وسنوية) 📊</span>
+            </button>
+          )}
 
           <button
             onClick={handleExportExcel}

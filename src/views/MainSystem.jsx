@@ -87,12 +87,12 @@ export const MainSystem = ({ onLogout, currentUser }) => {
         <main className="custom-page-container">
           {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
           {activeTab === 'periodic-reports' && <PeriodicReportsView currentUser={currentUser} />}
-          {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
+          {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} onNavigateTab={handleTabChange} />}
           {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
           {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
           {activeTab === 'daily-analysis' && <DailyAnalysisView onNavigateTab={handleTabChange}/>}
           {activeTab === 'tomorrow-plan' && <TomorrowPlanView />}
-          {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} />}
+          {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} onNavigateTab={handleTabChange} />}
           {activeTab === 'analytics' && <ReportsView />}
           {activeTab === 'crushers' && <CrushersView />}
           {activeTab === 'sharshoor' && <SharshoorView />}

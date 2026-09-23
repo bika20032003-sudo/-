@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, Search, FileSpreadsheet, Eye, X, RefreshCw, 
   Edit2, Trash2, CheckCircle2, Clock, AlertTriangle, Check, ShieldCheck,
-  Printer, Plus
+  Printer, Plus, CalendarRange
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
-export const DailyReportsView = ({ currentUser }) => {
+export const DailyReportsView = ({ currentUser, onNavigateTab }) => {
     const [reports, setReports] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sectorFilter, setSectorFilter] = useState('all');
@@ -309,6 +309,31 @@ export const DailyReportsView = ({ currentUser }) => {
               <Plus size={17} />
               <span>إنشاء تقرير قطاع جديد ✍️</span>
             </button>
+
+            {onNavigateTab && (
+              <button
+                onClick={() => onNavigateTab('periodic-reports')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
+                  transition: 'all 0.2s ease'
+                }}
+                title="توليد التقرير الشهري والسنوي التلقائي من هذه التقارير الميدانية"
+              >
+                <CalendarRange size={17} />
+                <span>التقرير الشهري والسنوي 📊</span>
+              </button>
+            )}
 
             <button
               onClick={exportExcel}

@@ -3,7 +3,8 @@ import {
   FileText, Calendar, CalendarRange, Printer, Download, RefreshCw, 
   CheckCircle2, TrendingUp, Factory, Fuel, Mountain, Truck, 
   Milestone, Layers, Award, Sparkles, Building2, Save, FileSpreadsheet,
-  ChevronLeft, ArrowUpRight, ShieldCheck, AlertCircle, BarChart3
+  ChevronLeft, ArrowUpRight, ShieldCheck, AlertCircle, BarChart3,
+  Eye, Plus, Check
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, 
@@ -11,6 +12,8 @@ import {
 } from 'recharts';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
+import { CreateReportModal } from '../components/CreateReportModal';
+import { OfficialPrintModal } from '../components/OfficialPrintModal';
 
 export const PeriodicReportsView = ({ currentUser }) => {
   const [reportType, setReportType] = useState('monthly'); // 'monthly' | 'annual'
@@ -23,6 +26,8 @@ export const PeriodicReportsView = ({ currentUser }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedDailyReportForPrint, setSelectedDailyReportForPrint] = useState(null);
 
   const ARABIC_MONTHS = [
     { value: 1, label: 'يناير' },
@@ -180,6 +185,26 @@ export const PeriodicReportsView = ({ currentUser }) => {
       XLSX.utils.book_append_sheet(wb, wsSec, 'مقارنة القطاعات');
     }
 
+    // Sheet 5: Contributing Daily Reports (The dynamic source records)
+    if (reportData.contributingReports && reportData.contributingReports.length > 0) {
+      const dailyRows = reportData.contributingReports.map((r, idx) => ({
+        'م': idx + 1,
+        'رقم التقرير': r.reportNumber,
+        'تاريخ التقرير': r.date ? new Date(r.date).toLocaleDateString('ar-LY') : '',
+        'القطاع / الموقع': r.sector,
+        'نوع التقرير': r.reportType,
+        'إنتاج الركام (طن)': r.productionAmount,
+        'استهلاك الوقود (لتر)': r.fuelAmount,
+        'منجز الطريق (م.ط)': r.roadMeters,
+        'المعدات العاملة': r.workingEquipmentCount || '-',
+        'المهندس / المسؤول': r.uploadedBy,
+        'الحالة': r.status === 'approved' ? 'معتمد' : 'قيد المراجعة',
+        'ملاحظات': r.notes || ''
+      }));
+      const wsDaily = XLSX.utils.json_to_sheet(dailyRows);
+      XLSX.utils.book_append_sheet(wb, wsDaily, 'التقارير اليومية المساهمة');
+    }
+
     const fileName = `${reportData.reportCode}_${reportType === 'annual' ? selectedYear : `${selectedYear}_${selectedMonth}`}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
@@ -248,6 +273,22 @@ export const PeriodicReportsView = ({ currentUser }) => {
 
         {/* Top Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <button 
+            className="primary-action-btn"
+            onClick={() => setIsCreateModalOpen(true)}
+            style={{ 
+              height: '40px', 
+              padding: '0 1.25rem', 
+              fontSize: '0.85rem', 
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+              borderColor: '#059669',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)' 
+            }}
+          >
+            <Plus size={16} />
+            <span>+ إضافة تقرير يومي للفترة</span>
+          </button>
+
           <button 
             className="secondary-action-btn"
             onClick={fetchPeriodicReport}
@@ -771,6 +812,212 @@ export const PeriodicReportsView = ({ currentUser }) => {
         </div>
       )}
 
+      {/* SECTION: Contributing Daily Reports Breakdown (Source Records Table) */}
+      {reportData && (
+        <div className="dashboard-white-card" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #dbeafe'
+              }}>
+                <FileText size={22} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    سجل التقارير اليومية المساهمة في هذا التقرير الدوري
+                  </h4>
+                  <span style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '20px',
+                    background: reportData.hasRealReports ? '#dcfce7' : '#fef3c7',
+                    color: reportData.hasRealReports ? '#15803d' : '#b45309',
+                    border: `1px solid ${reportData.hasRealReports ? '#bbf7d0' : '#fde68a'}`
+                  }}>
+                    {reportData.contributingReportsCount > 0 
+                      ? `${reportData.contributingReportsCount} تقرير يومي معتمد`
+                      : 'بانتظار إدخال تقارير اليومية'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.25rem 0 0 0' }}>
+                  {reportData.hasRealReports 
+                    ? 'يتم تجميع كافة كميات الإنتاج والوقود وأمتار الرصف آلياً ومباشرة من هذه التقارير الميدانية.'
+                    : 'لا توجد تقارير مدخلة لهذا الشهر حتى الآن. اضغط الزر لإضافة تقرير وسيقوم النظام بتحديث التقرير الشهري والسنوي تلقائياً.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              className="primary-action-btn"
+              onClick={() => setIsCreateModalOpen(true)}
+              style={{
+                height: '36px',
+                padding: '0 1rem',
+                fontSize: '0.82rem',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                borderColor: '#059669'
+              }}
+            >
+              <Plus size={15} />
+              <span>إضافة تقرير يومي للفترة</span>
+            </button>
+          </div>
+
+          {reportData.contributingReports && reportData.contributingReports.length > 0 ? (
+            <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+              <table className="custom-table" style={{ width: '100%', fontSize: '0.84rem' }}>
+                <thead style={{ background: '#f8fafc' }}>
+                  <tr>
+                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>رقم التقرير</th>
+                    <th>التاريخ</th>
+                    <th>القطاع / الموقع</th>
+                    <th>نوع التقرير</th>
+                    <th>إنتاج الركام (طن)</th>
+                    <th>استهلاك الوقود (لتر)</th>
+                    <th>منجز الطريق (م.ط)</th>
+                    <th>المهندس المُعد</th>
+                    <th>الحالة</th>
+                    <th style={{ textAlign: 'center' }}>معاينة وطباعة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.contributingReports.map((r, idx) => (
+                    <tr key={r.id || idx} style={{ transition: 'background-color 0.15s ease' }}>
+                      <td style={{ fontWeight: 800, color: '#1e40af', padding: '0.75rem' }}>
+                        {r.reportNumber}
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                          {r.date ? new Date(r.date).toLocaleDateString('ar-LY') : '-'}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '4px',
+                          background: String(r.sector).includes('A') ? '#e0f2fe' : '#fef3c7',
+                          color: String(r.sector).includes('A') ? '#0369a1' : '#b45309'
+                        }}>
+                          {r.sector}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#334155' }}>
+                        {r.reportType}
+                      </td>
+                      <td>
+                        <strong style={{ color: '#0f172a' }}>
+                          {Number(r.productionAmount || 0).toLocaleString()}
+                        </strong> طن
+                      </td>
+                      <td>
+                        <strong style={{ color: '#dc2626' }}>
+                          {Number(r.fuelAmount || 0).toLocaleString()}
+                        </strong> لتر
+                      </td>
+                      <td>
+                        <strong style={{ color: '#16a34a' }}>
+                          {Number(r.roadMeters || 0).toLocaleString()}
+                        </strong> م.ط
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        {r.uploadedBy}
+                      </td>
+                      <td>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '4px',
+                          background: '#dcfce7',
+                          color: '#15803d'
+                        }}>
+                          ✓ معتمد
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          onClick={() => setSelectedDailyReportForPrint(r)}
+                          style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '6px',
+                            padding: '0.35rem 0.65rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: '#1d4ed8',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}
+                          title="معاينة التقرير وطباعته رسمياً"
+                        >
+                          <Printer size={13} />
+                          <span>معاينة / طباعة</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
+                  <tr>
+                    <td colSpan={4} style={{ padding: '0.75rem', textAlign: 'right', color: '#0f172a' }}>
+                      إجمالي المساهمة الميدانية الفعلية ({reportData.contributingReports.length} تقرير):
+                    </td>
+                    <td style={{ color: '#1d4ed8' }}>
+                      {reportData.contributingReports.reduce((s, r) => s + (Number(r.productionAmount) || 0), 0).toLocaleString()} طن
+                    </td>
+                    <td style={{ color: '#dc2626' }}>
+                      {reportData.contributingReports.reduce((s, r) => s + (Number(r.fuelAmount) || 0), 0).toLocaleString()} لتر
+                    </td>
+                    <td style={{ color: '#16a34a' }}>
+                      {reportData.contributingReports.reduce((s, r) => s + (Number(r.roadMeters) || 0), 0).toLocaleString()} م.ط
+                    </td>
+                    <td colSpan={3}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <div style={{
+              background: '#f8fafc',
+              border: '1px dashed #cbd5e1',
+              borderRadius: '10px',
+              padding: '2rem 1.5rem',
+              textAlign: 'center'
+            }}>
+              <AlertCircle size={32} color="#94a3b8" style={{ margin: '0 auto 0.6rem auto' }} />
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#334155', marginBottom: '0.3rem' }}>
+                لا توجد تقارير يومية مدخلة لهذه الفترة المحددة
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', maxWidth: '600px', margin: '0 auto 1.25rem auto' }}>
+                البيانات الإحصائية المعروضة حالياً تعتمد على معدلات الأداء القياسية للجهاز. يمكنك إضافة تقرير ميداني جديد ليتم ربطه واحتسابه ضمن هذا التقرير الدوري فوراً.
+              </p>
+              <button
+                className="primary-action-btn"
+                onClick={() => setIsCreateModalOpen(true)}
+                style={{ padding: '0 1.25rem', height: '38px', fontSize: '0.85rem' }}
+              >
+                <Plus size={16} />
+                <span>+ تسجيل وإدخال تقرير يومي جديد</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Executive Recommendations & Official Endorsement */}
       {reportData && (
         <div className="dashboard-white-card" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
@@ -987,6 +1234,41 @@ export const PeriodicReportsView = ({ currentUser }) => {
                 </tbody>
               </table>
 
+              {/* Contributing Daily Reports in Print Preview */}
+              {reportData.contributingReports && reportData.contributingReports.length > 0 && (
+                <>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                    بيان التقارير اليومية المساهمة في هذا التقرير الدوري ({reportData.contributingReports.length} تقرير):
+                  </h4>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '0.78rem' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9' }}>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>رقم التقرير</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>التاريخ</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>القطاع</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>الإنتاج (طن)</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>الوقود (لتر)</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>الرصف (م.ط)</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>المسؤول</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.contributingReports.slice(0, 15).map((r, i) => (
+                        <tr key={i} style={{ textAlign: 'center' }}>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem', fontWeight: 700 }}>{r.reportNumber}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{r.date ? new Date(r.date).toLocaleDateString('ar-LY') : '-'}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{r.sector}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{Number(r.productionAmount || 0).toLocaleString()}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{Number(r.fuelAmount || 0).toLocaleString()}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{Number(r.roadMeters || 0).toLocaleString()}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{r.uploadedBy}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
               {/* Notes */}
               <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '0.5rem' }}>ملاحظات وتوصيات الإدارة التنفيذية:</h4>
               <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.85rem', marginBottom: '2rem', fontSize: '0.82rem', lineHeight: '1.6' }}>
@@ -1021,6 +1303,29 @@ export const PeriodicReportsView = ({ currentUser }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal for Creating New Daily Report */}
+      {isCreateModalOpen && (
+        <CreateReportModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          currentUser={currentUser}
+          onReportCreated={() => {
+            setIsCreateModalOpen(false);
+            fetchPeriodicReport();
+          }}
+        />
+      )}
+
+      {/* Modal for Printing Selected Daily Report */}
+      {selectedDailyReportForPrint && (
+        <OfficialPrintModal
+          isOpen={!!selectedDailyReportForPrint}
+          onClose={() => setSelectedDailyReportForPrint(null)}
+          report={selectedDailyReportForPrint}
+          currentUser={currentUser}
+        />
       )}
 
     </div>
