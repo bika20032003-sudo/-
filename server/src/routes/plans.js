@@ -55,8 +55,23 @@ router.post('/', (req, res) => {
   }
 });
 
-// POST /api/plans/:id/approve
-router.post('/:id/approve', (req, res) => {
+// PUT /api/plans/:id (Update plan items or decisions)
+router.put('/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = store.updatePlan(id, req.body);
+    if (updated) {
+      res.json({ success: true, plan: updated, message: 'تم تحديث بنود الخطة بنجاح' });
+    } else {
+      res.status(404).json({ success: false, message: 'الخطة غير موجودة' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'خطأ أثناء تحديث الخطة' });
+  }
+});
+
+// POST & PUT /api/plans/:id/approve
+const handleApprovePlan = (req, res) => {
   try {
     const { id } = req.params;
     const { approvedBy } = req.body;
@@ -64,6 +79,19 @@ router.post('/:id/approve', (req, res) => {
     res.json({ success: true, plan: approved, message: 'تم اعتماد خطة التشغيل بنجاح' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'خطأ أثناء اعتماد الخطة' });
+  }
+};
+router.post('/:id/approve', handleApprovePlan);
+router.put('/:id/approve', handleApprovePlan);
+
+// DELETE /api/plans/:id
+router.delete('/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    store.deletePlan(id);
+    res.json({ success: true, message: 'تم حذف الخطة بنجاح' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'خطأ أثناء حذف الخطة' });
   }
 });
 

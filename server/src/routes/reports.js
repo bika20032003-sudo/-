@@ -14,6 +14,37 @@ router.get('/', (req, res) => {
   }
 });
 
+// GET /api/reports/periodic - Auto-generate Monthly or Annual report
+router.get('/periodic', (req, res) => {
+  try {
+    const { type = 'monthly', year = 2026, month = 9, sector = 'all' } = req.query;
+    const periodicReport = store.generatePeriodicReport({ type, year, month, sector });
+    res.json(periodicReport);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/reports/periodic/save - Save periodic report to persistent archive
+router.post('/periodic/save', (req, res) => {
+  try {
+    const saved = store.savePeriodicReport(req.body);
+    res.json({ success: true, report: saved, message: 'تم حفظ التقرير الدوري في الأرشيف الرسمي بنجاح' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/reports/periodic/saved - Get saved periodic reports list
+router.get('/periodic/saved', (req, res) => {
+  try {
+    const saved = store.getSavedPeriodicReports();
+    res.json({ success: true, reports: saved });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // POST /api/reports/upload or /api/reports/create
 const handleCreateReport = (req, res) => {
   try {
@@ -65,15 +96,29 @@ router.put('/:id/reject', (req, res) => {
   }
 });
 
+// PUT /api/reports/:id (Edit / Update report)
+router.put('/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = store.updateReport(id, req.body);
+    if (updated) {
+      res.json({ success: true, report: updated, message: 'تم تحديث التقرير بنجاح' });
+    } else {
+      res.status(404).json({ success: false, message: 'التقرير غير موجود' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // DELETE /api/reports/:id
 router.delete('/:id', (req, res) => {
   try {
-    const id = Number(req.params.id);
-    store.data.reports = (store.data.reports || []).filter(r => r.id !== id);
-    store.scheduleSave();
-    res.json({ success: true, message: 'تم حذف التقرير' });
+    const { id } = req.params;
+    const deleted = store.deleteReport(id);
+    res.json({ success: true, message: 'تم حذف التقرير بنجاح', deleted });
   } catch (error) {
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

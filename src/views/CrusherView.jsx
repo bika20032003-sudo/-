@@ -101,11 +101,6 @@ export const CrusherView = () => {
             <FileSpreadsheet size={17}/>
             <span>تصدير إكسل</span>
           </button>
-
-          <button className="primary-action-btn" onClick={() => setIsModalOpen(true)}>
-            <Plus size={18}/>
-            <span>تسجيل دفعة إنتاج يومية</span>
-          </button>
         </div>
       </div>
 

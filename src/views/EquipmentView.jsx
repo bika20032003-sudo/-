@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Search, Plus, CheckCircle2, Wrench, AlertOctagon, MapPin, User, X, FileSpreadsheet, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Truck, Search, Plus, CheckCircle2, Wrench, AlertOctagon, MapPin, User, X, FileSpreadsheet, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
 export const EquipmentView = () => {
     const [equipmentList, setEquipmentList] = useState([]);
@@ -9,6 +9,8 @@ export const EquipmentView = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
+    const [viewDetailsLog, setViewDetailsLog] = useState(null);
+    const [logToDelete, setLogToDelete] = useState(null);
     // New equipment form state
     const [formData, setFormData] = useState({
         code: '',
@@ -82,7 +84,7 @@ export const EquipmentView = () => {
             }
         }
         catch (error) {
-            alert('فشل الاتصال بالخادم.');
+            console.error('Failed to save equipment', error);
         }
     };
     const handleEdit = (eq) => {
@@ -102,18 +104,21 @@ export const EquipmentView = () => {
         });
         setIsModalOpen(true);
     };
-    const handleDelete = async (id) => {
-        if (!confirm('هل أنت متأكد من حذف هذه المعدة؟ لا يمكن التراجع عن هذا الإجراء.'))
-            return;
+    const handleDelete = (eq) => {
+        setLogToDelete(eq);
+    };
+    const confirmDeleteEquipment = async () => {
+        if (!logToDelete) return;
+        const targetId = logToDelete.id;
+        // Optimistic UI update
+        setEquipmentList(prev => prev.filter(e => e.id !== targetId && String(e.id) !== String(targetId)));
+        setLogToDelete(null);
         try {
-            const res = await fetch(`http://localhost:5000/api/equipment/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success)
-                fetchEquipment();
+            await fetch(`http://localhost:5000/api/equipment/${targetId}`, { method: 'DELETE' });
+        } catch (error) {
+            console.error('Failed to delete equipment from backend', error);
         }
-        catch (error) {
-            alert('فشل حذف السجل');
-        }
+        fetchEquipment();
     };
     const openAddModal = () => {
         setEditingItem(null);
@@ -272,11 +277,15 @@ export const EquipmentView = () => {
                 <td style={{ fontSize: '0.85rem', color: '#64748b' }}>{eq.notes || 'جاهزة'}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    <button onClick={() => setViewDetailsLog(eq)} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#334155', fontWeight: 700 }} title="عرض التفاصيل">
+                      <Eye size={13}/>
+                      <span>عرض</span>
+                    </button>
                     <button onClick={() => handleEdit(eq)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#2563eb', fontWeight: 700 }} title="تعديل">
                       <Pencil size={13}/>
                       <span>تعديل</span>
                     </button>
-                    <button onClick={() => handleDelete(eq.id)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
+                    <button onClick={() => handleDelete(eq)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
                       <Trash2 size={13}/>
                       <span>حذف</span>
                     </button>
@@ -349,5 +358,162 @@ export const EquipmentView = () => {
             </form>
           </div>
         </div>)}
+
+      {/* View Equipment Details Modal */}
+      {viewDetailsLog && (
+        <div className="modal-backdrop" onClick={() => setViewDetailsLog(null)}>
+          <div className="modal-card" style={{ maxWidth: '540px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Truck size={20} color="#2563eb" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                  تفاصيل المعدة ({viewDetailsLog.code})
+                </h3>
+              </div>
+              <button onClick={() => setViewDetailsLog(null)} className="close-btn">
+                <X size={20}/>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem 0', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>اسم وطراز المعدة:</span>
+                <span style={{ fontWeight: 800 }}>{viewDetailsLog.name}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>نوع المعدة:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.type || 'آلية'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>الحالة التشغيلية:</span>
+                <span className={`status-badge ${viewDetailsLog.status}`}>
+                  {viewDetailsLog.status === 'operational' && 'عاملة بالميدان'}
+                  {viewDetailsLog.status === 'maintenance' && 'تحت الصيانة'}
+                  {viewDetailsLog.status === 'stopped' && 'متوقفة'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>السائق المشغل:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.driver || 'غير محدد'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>الموقع الميداني:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.location || 'القطعة A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>ساعات العمل اليومية:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.dailyHours || 8} ساعة / يوم</span>
+              </div>
+              {viewDetailsLog.fuelConsumptionRate && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>معدل استهلاك الوقود:</span>
+                  <span style={{ fontWeight: 700 }}>{viewDetailsLog.fuelConsumptionRate} لتر / ساعة</span>
+                </div>
+              )}
+              {viewDetailsLog.imageUrl && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>الصورة الميدانية:</span>
+                  <button 
+                    onClick={() => {
+                      const img = viewDetailsLog.imageUrl;
+                      setViewDetailsLog(null);
+                      setSelectedImage(img);
+                    }}
+                    style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', color: '#6d28d9', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    عرض الصورة الكبيرة
+                  </button>
+                </div>
+              )}
+              {viewDetailsLog.notes && (
+                <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '0.25rem' }}>
+                  <div style={{ fontWeight: 700, color: '#475569', marginBottom: '0.25rem' }}>ملاحظات:</div>
+                  <div style={{ color: '#334155' }}>{viewDetailsLog.notes}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="secondary-action-btn" 
+                onClick={() => {
+                  const eq = viewDetailsLog;
+                  setViewDetailsLog(null);
+                  handleEdit(eq);
+                }}
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                <Pencil size={14} />
+                <span>تعديل هذه المعدة</span>
+              </button>
+              <button 
+                type="button" 
+                className="primary-action-btn" 
+                onClick={() => setViewDetailsLog(null)}
+                style={{ height: '42px', padding: '0 1.5rem' }}
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {logToDelete && (
+        <div className="modal-backdrop" style={{ zIndex: 99999 }}>
+          <div className="modal-card" style={{ maxWidth: '440px', textAlign: 'center', padding: '1.75rem' }}>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف المعدة
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: '#64748b', marginBottom: '1.25rem' }}>
+              هل أنت متأكد من حذف المعدة ({logToDelete.name}) - كود ({logToDelete.code})؟ سيتم تحديث أسطول الآليات فوراً.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={confirmDeleteEquipment}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.65rem 1.25rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogToDelete(null)}
+                className="secondary-action-btn"
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>);
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Fuel, Plus, Search, FileSpreadsheet, Droplet, Truck, Calendar, X, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Fuel, Plus, Search, FileSpreadsheet, Droplet, Truck, Calendar, X, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
 import { initialEquipmentList } from '../data/mockData';
 import * as XLSX from 'xlsx';
 export const FuelView = () => {
@@ -9,6 +9,8 @@ export const FuelView = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [editingLog, setEditingLog] = useState(null);
+    const [viewDetailsLog, setViewDetailsLog] = useState(null);
+    const [logToDelete, setLogToDelete] = useState(null);
     const defaultForm = {
         ticketNumber: `FUEL-${Date.now().toString().slice(-4)}`,
         date: new Date().toISOString().split('T')[0],
@@ -68,7 +70,7 @@ export const FuelView = () => {
             }
         }
         catch (error) {
-            alert('فشل الاتصال بالخادم. يرجى التأكد من تشغيله.');
+            console.error('Failed to save fuel log', error);
         }
     };
     const handleEdit = (log) => {
@@ -86,18 +88,21 @@ export const FuelView = () => {
         });
         setIsModalOpen(true);
     };
-    const handleDelete = async (id) => {
-        if (!confirm('هل أنت متأكد من حذف هذا الإذن؟ لا يمكن التراجع عن هذا الإجراء.'))
-            return;
+    const handleDelete = (log) => {
+        setLogToDelete(log);
+    };
+    const confirmDeleteFuel = async () => {
+        if (!logToDelete) return;
+        const targetId = logToDelete.id;
+        // Optimistic UI update
+        setFuelLogs(prev => prev.filter(f => f.id !== targetId && String(f.id) !== String(targetId)));
+        setLogToDelete(null);
         try {
-            const res = await fetch(`http://localhost:5000/api/fuel/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success)
-                fetchLogs();
+            await fetch(`http://localhost:5000/api/fuel/${targetId}`, { method: 'DELETE' });
+        } catch (error) {
+            console.error('Failed to delete fuel record from backend', error);
         }
-        catch (error) {
-            alert('فشل حذف السجل');
-        }
+        fetchLogs();
     };
     const openAddModal = () => {
         setEditingLog(null);
@@ -188,10 +193,6 @@ export const FuelView = () => {
             <FileSpreadsheet size={17}/>
             <span>تصدير إكسل</span>
           </button>
-          <button className="primary-action-btn" onClick={openAddModal}>
-            <Plus size={18}/>
-            <span>تسجيل إذن صرف وقود</span>
-          </button>
         </div>
       </div>
 
@@ -243,11 +244,15 @@ export const FuelView = () => {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    <button onClick={() => setViewDetailsLog(log)} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#334155', fontWeight: 700 }} title="عرض التفاصيل">
+                      <Eye size={13}/>
+                      <span>عرض</span>
+                    </button>
                     <button onClick={() => handleEdit(log)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#2563eb', fontWeight: 700 }} title="تعديل">
                       <Pencil size={13}/>
                       <span>تعديل</span>
                     </button>
-                    <button onClick={() => handleDelete(log.id)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
+                    <button onClick={() => handleDelete(log)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
                       <Trash2 size={13}/>
                       <span>حذف</span>
                     </button>
@@ -324,5 +329,152 @@ export const FuelView = () => {
             </form>
           </div>
         </div>)}
+
+      {/* View Fuel Details Modal */}
+      {viewDetailsLog && (
+        <div className="modal-backdrop" onClick={() => setViewDetailsLog(null)}>
+          <div className="modal-card" style={{ maxWidth: '540px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Fuel size={20} color="#ea580c" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                  تفاصيل إذن صرف الوقود ({viewDetailsLog.ticketNumber})
+                </h3>
+              </div>
+              <button onClick={() => setViewDetailsLog(null)} className="close-btn">
+                <X size={20}/>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem 0', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>المعدة المستفيدة:</span>
+                <span style={{ fontWeight: 800 }}>{viewDetailsLog.equipmentName}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>الكمية المصروفة:</span>
+                <span style={{ fontWeight: 800, color: '#ea580c' }}>{viewDetailsLog.liters} لتر ديزل</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>السائق / المستلم:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.driverName || '-'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>مصدر الصرف:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.tankSource || '-'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>مسؤول التزويد:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.pumpOperator || '-'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>التاريخ:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.date ? viewDetailsLog.date.split('T')[0] : 'اليوم'}</span>
+              </div>
+              {viewDetailsLog.imageUrl && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>صورة العداد:</span>
+                  <button 
+                    onClick={() => {
+                      const img = viewDetailsLog.imageUrl;
+                      setViewDetailsLog(null);
+                      setSelectedImage(img);
+                    }}
+                    style={{ background: '#fff7ed', border: '1px solid #fed7aa', color: '#c2410c', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    عرض الصورة الكبيرة
+                  </button>
+                </div>
+              )}
+              {viewDetailsLog.notes && (
+                <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '0.25rem' }}>
+                  <div style={{ fontWeight: 700, color: '#475569', marginBottom: '0.25rem' }}>ملاحظات:</div>
+                  <div style={{ color: '#334155' }}>{viewDetailsLog.notes}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="secondary-action-btn" 
+                onClick={() => {
+                  const log = viewDetailsLog;
+                  setViewDetailsLog(null);
+                  handleEdit(log);
+                }}
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                <Pencil size={14} />
+                <span>تعديل هذا الإذن</span>
+              </button>
+              <button 
+                type="button" 
+                className="primary-action-btn" 
+                onClick={() => setViewDetailsLog(null)}
+                style={{ height: '42px', padding: '0 1.5rem' }}
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {logToDelete && (
+        <div className="modal-backdrop" style={{ zIndex: 99999 }}>
+          <div className="modal-card" style={{ maxWidth: '440px', textAlign: 'center', padding: '1.75rem' }}>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف إذن الوقود
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: '#64748b', marginBottom: '1.25rem' }}>
+              هل أنت متأكد من حذف إذن الصرف ({logToDelete.ticketNumber})؟ سيتم تحديث إجمالي الوقود فوراً.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={confirmDeleteFuel}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.65rem 1.25rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogToDelete(null)}
+                className="secondary-action-btn"
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>);
 };

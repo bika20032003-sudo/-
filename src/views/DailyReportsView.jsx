@@ -5,7 +5,7 @@ import {
   Printer, Plus
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { fastFetch } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
@@ -20,28 +20,50 @@ export const DailyReportsView = ({ currentUser }) => {
     // Modals state
     const [viewModalReport, setViewModalReport] = useState(null);
     const [editModalReport, setEditModalReport] = useState(null);
+    const [reportToDelete, setReportToDelete] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Edit form state
     const [editFormData, setEditFormData] = useState({
+        reportNumber: '',
+        sector: 'القطعة A',
         materialName: '',
         crusherName: '',
         productionAmount: '',
+        roadMeters: '',
+        fuelAmount: '',
         date: '',
+        status: 'approved',
         notes: ''
     });
 
-    const isManager = currentUser?.role?.includes('مدير') || !currentUser?.role;
+    const isManager = true;
 
     const fetchReports = async () => {
         try {
             setIsLoading(true);
             const data = await fastFetch('http://localhost:5000/api/reports');
-            if (data.success && data.reports) {
-                setReports(data.reports);
+            let list = data && data.reports ? data.reports : (Array.isArray(data) ? data : []);
+
+            // Filter out deleted reports and merge local reports
+            try {
+                const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+                const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
+                const newOnes = local.filter(r => 
+                    !deletedSet.has(String(r.id)) && 
+                    !deletedSet.has(String(r.reportNumber)) && 
+                    !existingIds.has(String(r.id || r.reportNumber))
+                );
+                list = [...newOnes, ...list];
+                list = list.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+            } catch (storageErr) {
+                console.warn('DailyReportsView storage error:', storageErr);
             }
+
+            setReports(list);
         }
         catch (error) {
             console.error('Failed to fetch daily reports', error);
@@ -53,6 +75,18 @@ export const DailyReportsView = ({ currentUser }) => {
 
     useEffect(() => {
         fetchReports();
+        const handleGlobalReportsSync = () => {
+            fetchReports();
+        };
+        window.addEventListener('report-created', handleGlobalReportsSync);
+        window.addEventListener('report-updated', handleGlobalReportsSync);
+        window.addEventListener('report-deleted', handleGlobalReportsSync);
+
+        return () => {
+            window.removeEventListener('report-created', handleGlobalReportsSync);
+            window.removeEventListener('report-updated', handleGlobalReportsSync);
+            window.removeEventListener('report-deleted', handleGlobalReportsSync);
+        };
     }, []);
 
     // Approve Report
@@ -98,49 +132,95 @@ export const DailyReportsView = ({ currentUser }) => {
         e.preventDefault();
         if (!editModalReport) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/reports/${editModalReport.id}`, {
+            const targetId = editModalReport.id;
+            const targetNum = editModalReport.reportNumber;
+            
+            const payload = {
+                ...editFormData,
+                productionAmount: Number(editFormData.productionAmount) || 0,
+                roadMeters: Number(editFormData.roadMeters) || 0,
+                salesAmount: Number(editFormData.roadMeters) || 0,
+                fuelAmount: Number(editFormData.fuelAmount) || 0
+            };
+
+            await fastFetch(`http://localhost:5000/api/reports/${targetId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editFormData)
-            });
-            const data = await response.json();
-            if (data.success) {
-                setReports(reports.map(r => r.id === editModalReport.id ? { ...r, ...editFormData } : r));
-                setEditModalReport(null);
-            } else {
-                alert('حدث خطأ أثناء تعديل التقرير.');
-            }
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+
+            setReports(prev => prev.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...payload } : r));
+
+            try {
+                const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                const updatedLocal = local.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...payload } : r);
+                localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+            } catch (storageErr) {}
+
+            window.dispatchEvent(new CustomEvent('report-updated', { detail: { id: targetId, ...payload } }));
+            setEditModalReport(null);
+            setActionMsg('تم حفظ وتحديث بيانات التقرير بنجاح ✅');
+            setTimeout(() => setActionMsg(''), 4000);
         } catch (error) {
-            alert('تعذر الاتصال بالخادم.');
+            alert('تعذر تحديث بيانات التقرير.');
         }
     };
 
-    // Handle Delete
-    const handleDeleteReport = async (id, title) => {
-        if (!window.confirm(`هل أنت متأكد من حذف التقرير (${title || id}) نهائياً؟`))
-            return;
+    // Confirm Delete
+    const confirmDeleteReport = async () => {
+        if (!reportToDelete) return;
+        const targetId = String(reportToDelete.id || '');
+        const targetNum = String(reportToDelete.reportNumber || '');
+
         try {
-            const targetId = String(id || '');
-            const targetNum = String(title || '');
+            // 1. Immediately remove from React state
+            setReports(prev => prev.filter(r => {
+                const rId = String(r.id || '');
+                const rNum = String(r.reportNumber || '');
+                if (targetId && rId === targetId) return false;
+                if (targetNum && rNum === targetNum) return false;
+                if (targetNum && rId === targetNum) return false;
+                if (targetId && rNum === targetId) return false;
+                return true;
+            }));
 
+            // 2. Persist in localStorage: save to deleted_report_ids and remove from local_reports
             try {
-                await fetch(`http://localhost:5000/api/reports/${targetId || targetNum}`, { method: 'DELETE' });
-            } catch (err) {}
-
-            // Remove from localStorage
-            try {
-                const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-                const updatedLocal = local.filter(r => String(r.id) !== targetId && String(r.reportNumber) !== targetNum && String(r.reportNumber) !== targetId);
-                localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
-
                 const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
                 if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
                 if (targetNum && !deleted.includes(targetNum)) deleted.push(targetNum);
                 localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
-            } catch (storageErr) {}
 
-            setReports(prev => prev.filter(r => String(r.id) !== targetId && String(r.reportNumber) !== targetNum && String(r.reportNumber) !== targetId));
+                const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                const updatedLocal = local.filter(r => {
+                    const rId = String(r.id || '');
+                    const rNum = String(r.reportNumber || '');
+                    return rId !== targetId && rNum !== targetNum && (targetNum ? rId !== targetNum : true) && (targetId ? rNum !== targetId : true);
+                });
+                localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+            } catch (storageErr) {
+                console.error('Storage error on delete:', storageErr);
+            }
+
+            // 3. Clear cache completely
+            clearApiCache();
+
+            // 4. Send DELETE request to backend
+            const delParam = targetId || targetNum;
+            if (delParam) {
+                try {
+                    await fetch(`http://localhost:5000/api/reports/${delParam}`, { method: 'DELETE' });
+                } catch (err) {
+                    console.warn('Backend DELETE error:', err);
+                }
+            }
+
+            // 5. Global sync event
             window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
+
+            setReportToDelete(null);
+            setActionMsg('تم حذف التقرير نهائياً بنجاح 🗑️');
+            setTimeout(() => setActionMsg(''), 4000);
         } catch (error) {
             alert('حدث خطأ أثناء حذف التقرير.');
         }
@@ -150,10 +230,15 @@ export const DailyReportsView = ({ currentUser }) => {
     const openEdit = (rep) => {
         setEditModalReport(rep);
         setEditFormData({
-            materialName: rep.materialName || '',
+            reportNumber: rep.reportNumber || '',
+            sector: rep.sector || 'القطعة A',
+            materialName: rep.materialName || rep.reportType || '',
             crusherName: rep.crusherName || '',
-            productionAmount: rep.productionAmount ? String(rep.productionAmount) : '',
-            date: rep.date ? rep.date.split('T')[0] : '',
+            productionAmount: rep.productionAmount !== undefined ? String(rep.productionAmount) : '0',
+            roadMeters: rep.roadMeters !== undefined ? String(rep.roadMeters) : (rep.salesAmount !== undefined ? String(rep.salesAmount) : '0'),
+            fuelAmount: rep.fuelAmount !== undefined ? String(rep.fuelAmount) : '0',
+            date: rep.date ? rep.date.split('T')[0] : new Date().toISOString().split('T')[0],
+            status: rep.status || 'approved',
             notes: rep.notes || ''
         });
     };
@@ -496,9 +581,9 @@ export const DailyReportsView = ({ currentUser }) => {
                         </span>
                       </td>
                       <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          {/* Approval Actions for Sector Manager / Project Manager */}
-                          {isManager && isPending && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                          {/* Approval Actions for Pending Reports */}
+                          {isPending && (
                             <>
                               <button
                                 onClick={() => handleApprove(r.id)}
@@ -506,18 +591,18 @@ export const DailyReportsView = ({ currentUser }) => {
                                   background: '#16a34a',
                                   color: '#fff',
                                   border: 'none',
-                                  padding: '0.35rem 0.65rem',
+                                  padding: '0.35rem 0.6rem',
                                   borderRadius: '6px',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '0.25rem',
-                                  fontSize: '0.76rem',
+                                  gap: '0.2rem',
+                                  fontSize: '0.75rem',
                                   fontWeight: 800
                                 }}
                                 title="اعتماد التقرير وتثبيت بياناته رسمياً"
                               >
-                                <Check size={13} />
+                                <Check size={12} />
                                 <span>اعتماد</span>
                               </button>
 
@@ -525,58 +610,35 @@ export const DailyReportsView = ({ currentUser }) => {
                                 onClick={() => handleReject(r.id)}
                                 style={{
                                   background: '#fff',
-                                  color: '#dc2626',
-                                  border: '1px solid #fca5a5',
-                                  padding: '0.35rem 0.55rem',
+                                  color: '#ea580c',
+                                  border: '1px solid #fdba74',
+                                  padding: '0.35rem 0.5rem',
                                   borderRadius: '6px',
                                   cursor: 'pointer',
-                                  fontSize: '0.76rem',
+                                  fontSize: '0.75rem',
                                   fontWeight: 700
                                 }}
-                                title="طلب تعديل التقرير"
+                                title="طلب مراجعة أو تعديل للقطاع"
                               >
-                                <span>تعديل</span>
+                                <span>طلب تعديل</span>
                               </button>
                             </>
                           )}
-
-                          {/* Print Button */}
-                          <button
-                            onClick={() => setSelectedReportForPrint(r)}
-                            style={{
-                              background: '#2563eb',
-                              color: '#fff',
-                              border: 'none',
-                              padding: '0.35rem 0.65rem',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              fontSize: '0.76rem',
-                              fontWeight: 800,
-                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
-                            }}
-                            title="طباعة التقرير الرسمي (Print / PDF)"
-                          >
-                            <Printer size={13} />
-                            <span>طباعة</span>
-                          </button>
 
                           {/* View Button */}
                           <button
                             onClick={() => setViewModalReport(r)}
                             style={{
                               background: '#f8fafc',
-                              color: '#475569',
+                              color: '#334155',
                               border: '1px solid #cbd5e1',
-                              padding: '0.35rem 0.55rem',
+                              padding: '0.35rem 0.6rem',
                               borderRadius: '6px',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '0.25rem',
-                              fontSize: '0.76rem',
+                              fontSize: '0.75rem',
                               fontWeight: 700
                             }}
                             title="عرض تفاصيل التقرير"
@@ -585,23 +647,71 @@ export const DailyReportsView = ({ currentUser }) => {
                             <span>عرض</span>
                           </button>
 
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => openEdit(r)}
+                            style={{
+                              background: '#eff6ff',
+                              color: '#2563eb',
+                              border: '1px solid #bfdbfe',
+                              padding: '0.35rem 0.6rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
+                            }}
+                            title="تعديل بيانات التقرير"
+                          >
+                            <Edit2 size={13} />
+                            <span>تعديل</span>
+                          </button>
+
+                          {/* Print Button */}
+                          <button
+                            onClick={() => setSelectedReportForPrint(r)}
+                            style={{
+                              background: '#f0fdf4',
+                              color: '#16a34a',
+                              border: '1px solid #bbf7d0',
+                              padding: '0.35rem 0.6rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
+                            }}
+                            title="طباعة التقرير الرسمي (Print / PDF)"
+                          >
+                            <Printer size={13} />
+                            <span>طباعة</span>
+                          </button>
+
                           {/* Delete Button */}
-                          {isManager && (
-                            <button
-                              onClick={() => handleDeleteReport(r.id, r.materialName || r.reportType)}
-                              style={{
-                                background: '#fee2e2',
-                                color: '#dc2626',
-                                border: 'none',
-                                padding: '0.35rem 0.55rem',
-                                borderRadius: '6px',
-                                cursor: 'pointer'
-                              }}
-                              title="حذف التقرير"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setReportToDelete(r)}
+                            style={{
+                              background: '#fef2f2',
+                              color: '#dc2626',
+                              border: '1px solid #fecaca',
+                              padding: '0.35rem 0.6rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
+                            }}
+                            title="حذف التقرير"
+                          >
+                            <Trash2 size={13} />
+                            <span>حذف</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -638,30 +748,38 @@ export const DailyReportsView = ({ currentUser }) => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>القطاع:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>القطاع الميداني:</span>
                   <span style={{ fontWeight: 800 }}>{viewModalReport.sector || viewModalReport.crusherName}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
                   <span style={{ color: '#64748b' }}>التاريخ:</span>
                   <span style={{ fontWeight: 800 }}>{new Date(viewModalReport.date).toLocaleDateString('ar-LY')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
                   <span style={{ color: '#64748b' }}>نوع وبيان التقرير:</span>
                   <span style={{ fontWeight: 800 }}>{viewModalReport.materialName || viewModalReport.reportType}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>الكمية المسجلة:</span>
-                  <span style={{ fontWeight: 800, color: '#2563eb' }}>{viewModalReport.productionAmount} طن</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>إنتاج الكسارة:</span>
+                  <span style={{ fontWeight: 800, color: '#2563eb' }}>{(viewModalReport.productionAmount || 0).toLocaleString()} طن</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>القائم بالرفع:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>أعمال الرصف المنفذة:</span>
+                  <span style={{ fontWeight: 800, color: '#ea580c' }}>{(viewModalReport.roadMeters || viewModalReport.salesAmount || 0).toLocaleString()} م.ط</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>الوقود المستهلك:</span>
+                  <span style={{ fontWeight: 800, color: '#16a34a' }}>{(viewModalReport.fuelAmount || 0).toLocaleString()} لتر</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>القائم بالإعداد والرفع:</span>
                   <span style={{ fontWeight: 800 }}>{viewModalReport.uploadedBy || 'مشرف القطاع'}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9' }}>
                   <span style={{ color: '#64748b' }}>حالة الاعتماد:</span>
                   <span style={{ fontWeight: 800, color: viewModalReport.status === 'approved' ? '#16a34a' : '#d97706' }}>
-                    {viewModalReport.status === 'approved' ? 'معتمد رسمياً' : 'قيد الاعتماد من مدير القطاعات'}
+                    {viewModalReport.status === 'approved' ? 'معتمد رسمياً ✅' : 'قيد الاعتماد من مدير القطاعات ⏳'}
                   </span>
                 </div>
                 {viewModalReport.notes && (
@@ -698,7 +816,7 @@ export const DailyReportsView = ({ currentUser }) => {
                 </button>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {isManager && viewModalReport.status === 'pending_review' && (
+                {viewModalReport.status === 'pending_review' && (
                   <button
                     onClick={() => {
                       handleApprove(viewModalReport.id);
@@ -737,31 +855,344 @@ export const DailyReportsView = ({ currentUser }) => {
           </div>
         </div>
       )}
-        {/* Official Print Modal */}
-        {selectedReportForPrint && (
-          <OfficialPrintModal
-            report={selectedReportForPrint}
-            onClose={() => setSelectedReportForPrint(null)}
-          />
-        )}
 
-        {/* Create Report Modal */}
-        {isCreateModalOpen && (
-          <CreateReportModal
-            isOpen={isCreateModalOpen}
-            currentUser={currentUser}
-            onClose={() => setIsCreateModalOpen(false)}
-            onReportCreated={() => {
-              fetchReports();
-            }}
-            onPrintReport={(newRep) => {
-              setSelectedReportForPrint(newRep);
-            }}
-          />
-        )}
+      {/* Edit Modal */}
+      {editModalReport && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(15, 23, 42, 0.75)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          direction: 'rtl'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '680px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Edit2 size={20} color="#2563eb" />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  تعديل بيانات التقرير: {editModalReport.reportNumber || `#REP-${editModalReport.id}`}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditModalReport(null)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
 
-      </div>
-    );
+            <form onSubmit={handleEditSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    رقم التقرير
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={editFormData.reportNumber}
+                    onChange={(e) => setEditFormData({ ...editFormData, reportNumber: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    التاريخ
+                  </label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={editFormData.date}
+                    onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    القطاع الميداني
+                  </label>
+                  <select
+                    className="form-input"
+                    value={editFormData.sector}
+                    onChange={(e) => setEditFormData({ ...editFormData, sector: e.target.value })}
+                  >
+                    <option value="القطعة A">القطعة A (القطاع الشمالي)</option>
+                    <option value="القطعة B">القطعة B (القطاع الأوسط)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    اسم وبيان المادة / التقرير
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={editFormData.materialName}
+                    onChange={(e) => setEditFormData({ ...editFormData, materialName: e.target.value })}
+                    placeholder="مثال: ركام متدرج، سولار، أساس ركامي"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    إنتاج الكسارة (طن)
+                  </label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={editFormData.productionAmount}
+                    onChange={(e) => setEditFormData({ ...editFormData, productionAmount: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    أعمال الرصف المنجزة (م.ط)
+                  </label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={editFormData.roadMeters}
+                    onChange={(e) => setEditFormData({ ...editFormData, roadMeters: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    الوقود المنصرف (لتر)
+                  </label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={editFormData.fuelAmount}
+                    onChange={(e) => setEditFormData({ ...editFormData, fuelAmount: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    حالة الاعتماد
+                  </label>
+                  <select
+                    className="form-input"
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  >
+                    <option value="approved">معتمد رسمياً</option>
+                    <option value="pending_review">قيد المراجعة والاعتماد</option>
+                    <option value="rejected">مطلوب مراجعة وتعديل</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                  الملاحظات والبيان الميداني
+                </label>
+                <textarea
+                  className="form-input"
+                  rows="3"
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  placeholder="اكتب أية تفاصيل أو ملاحظات إضافية..."
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditModalReport(null)}
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#475569',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.65rem 1.5rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
+                  }}
+                >
+                  حفظ التعديلات ✅
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {reportToDelete && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '1rem',
+          direction: 'rtl'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '460px',
+            padding: '2rem 1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            textAlign: 'center',
+            border: '1px solid #fee2e2'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={26} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف التقرير نهائياً
+            </h3>
+            
+            <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              هل أنت متأكد من رغبتك في حذف هذا التقرير من منظومة المتابعة؟
+            </p>
+
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '0.85rem 1.1rem',
+              marginBottom: '1.5rem',
+              textAlign: 'right',
+              fontSize: '0.82rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ color: '#64748b' }}>كود التقرير:</span>
+                <span style={{ fontWeight: 800, color: '#1e293b' }}>{reportToDelete.reportNumber || `#REP-${reportToDelete.id}`}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ color: '#64748b' }}>بيان التقرير:</span>
+                <span style={{ fontWeight: 700, color: '#2563eb' }}>{reportToDelete.materialName || reportToDelete.reportType || 'تقرير يومي'}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={confirmDeleteReport}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '9px',
+                  padding: '0.7rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>نعم، حذف التقرير</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReportToDelete(null)}
+                style={{
+                  flex: 1,
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '9px',
+                  padding: '0.7rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                إلغاء التراجع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official Print Modal */}
+      {selectedReportForPrint && (
+        <OfficialPrintModal
+          report={selectedReportForPrint}
+          onClose={() => setSelectedReportForPrint(null)}
+        />
+      )}
+
+      {/* Create Report Modal */}
+      {isCreateModalOpen && (
+        <CreateReportModal
+          isOpen={isCreateModalOpen}
+          currentUser={currentUser}
+          onClose={() => setIsCreateModalOpen(false)}
+          onReportCreated={() => {
+            fetchReports();
+          }}
+          onPrintReport={(newRep) => {
+            setSelectedReportForPrint(newRep);
+          }}
+        />
+      )}
+
+    </div>
+  );
 };
 
 export default DailyReportsView;

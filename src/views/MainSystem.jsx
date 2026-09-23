@@ -16,6 +16,7 @@ import { FuelView } from './FuelView';
 import { AlertsView } from './AlertsView';
 import { UsersView } from './UsersView';
 import { ReportsArchiveView } from './ReportsArchiveView';
+import { PeriodicReportsView } from './PeriodicReportsView';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 
@@ -37,6 +38,7 @@ export const MainSystem = ({ onLogout, currentUser }) => {
 
     const tabTitles = {
         'dashboard': 'لوحة التحكم والمتابعة التنفيذية الشاملة',
+        'periodic-reports': 'مركز التقارير الدورية (الشهرية والسنوية التلقائية)',
         'reports-archive': 'أرشيف تقارير المشروع ونظام الطباعة',
         'create-report': 'إنشاء تقرير ميداني جديد',
         'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات',
@@ -84,6 +86,7 @@ export const MainSystem = ({ onLogout, currentUser }) => {
 
         <main className="custom-page-container">
           {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
+          {activeTab === 'periodic-reports' && <PeriodicReportsView currentUser={currentUser} />}
           {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} />}
           {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
           {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}

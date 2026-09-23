@@ -8,15 +8,21 @@ import { getFallbackData } from './utils/apiCache.js';
 // Automatically normalize API requests and provide offline/static fallback in production
 const originalFetch = window.fetch;
 window.fetch = async function (url, options = {}) {
-  const isApiUrl = typeof url === 'string' && (url.includes('/api/') || url.includes('localhost:5000'));
-  const isProduction = typeof window !== 'undefined' && 
-                       window.location.hostname !== 'localhost' && 
-                       window.location.hostname !== '127.0.0.1';
+  let requestUrl = url;
+  if (typeof url === 'string' && typeof window !== 'undefined') {
+    // If accessing via local network IP, redirect localhost:5000 to current host:5000 or relative /api
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('github.io')) {
+      requestUrl = url.replace('localhost:5000', `${window.location.hostname}:5000`);
+    }
+  }
+
+  const isApiUrl = typeof requestUrl === 'string' && (requestUrl.includes('/api/') || requestUrl.includes(':5000'));
+  const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
   const apiBase = import.meta.env.VITE_API_BASE || '';
 
-  if (isApiUrl && isProduction) {
+  if (isApiUrl && isGitHubPages) {
     if (apiBase) {
-      const targetUrl = url.replace(/https?:\/\/localhost:5000/, apiBase);
+      const targetUrl = requestUrl.replace(/https?:\/\/[^/]+/, apiBase);
       try {
         const res = await originalFetch(targetUrl, options);
         if (res.ok) {

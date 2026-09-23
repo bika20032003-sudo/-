@@ -705,58 +705,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateTab }) =
         </div>
       </div>
 
-      {/* ================= SECTION: URGENT ISSUES & TOMORROW PLAN DECISION ================= */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-        {/* Urgent Issues requiring management decision */}
-        <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ShieldAlert size={20} color="#dc2626" />
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                🚨 أهم المشاكل التي تحتاج قراراً عاجلاً
-              </h3>
-            </div>
-            <button 
-              onClick={() => onNavigateTab('daily-analysis')}
-              style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}
-            >
-              عرض السجل الكامل
-            </button>
-          </div>
-
-          {metrics.urgentIssues.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {metrics.urgentIssues.map((iss: any) => (
-                <div 
-                  key={iss.id}
-                  style={{ 
-                    background: '#fef2f2', 
-                    border: '1px solid #fecaca', 
-                    borderRadius: '10px', 
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <div>
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#991b1b' }}>{iss.title}</h4>
-                    <p style={{ fontSize: '0.78rem', color: '#b91c1c', marginTop: '0.1rem' }}>{iss.description}</p>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', background: '#fff', color: '#991b1b', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                    {iss.category}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#64748b' }}>
-              <CheckCircle2 size={32} color="#16a34a" style={{ margin: '0 auto 0.4rem', opacity: 0.5 }} />
-              <p style={{ fontSize: '0.84rem' }}>لا توجد أعطال أو مشاكل معلقة حالياً.</p>
-            </div>
-          )}
-        </div>
-
+      {/* ================= SECTION: TOMORROW PLAN DECISION ================= */}
+      <div style={{ marginBottom: '1.5rem' }}>
         {/* Tomorrow Plan Executive Preview */}
         <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>

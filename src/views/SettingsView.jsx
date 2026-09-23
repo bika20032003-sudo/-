@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
 import { Settings, Save, Database, Mail, CheckCircle2 } from 'lucide-react';
 export const SettingsView = () => {
-    const [systemName, setSystemName] = useState('منظومة متابعة الكسارات والمعدات والوقود');
-    const [agencyName, setAgencyName] = useState('جهاز تنفيذ مشروعات المواصلات');
-    const [dailyTarget, setDailyTarget] = useState(2500);
-    const [fuelLimit, setFuelLimit] = useState(5000);
-    const [backupFrequency, setBackupFrequency] = useState('daily');
+    const savedSettings = (() => {
+        try { return JSON.parse(localStorage.getItem('app_settings') || '{}'); } catch { return {}; }
+    })();
+    const [systemName, setSystemName] = useState(savedSettings.systemName || 'منظومة متابعة الكسارات والمعدات والوقود');
+    const [agencyName, setAgencyName] = useState(savedSettings.agencyName || 'جهاز تنفيذ مشروعات المواصلات');
+    const [dailyTarget, setDailyTarget] = useState(savedSettings.dailyTarget || 2500);
+    const [fuelLimit, setFuelLimit] = useState(savedSettings.fuelLimit || 5000);
+    const [backupFrequency, setBackupFrequency] = useState(savedSettings.backupFrequency || 'daily');
     const [submitted, setSubmitted] = useState(false);
+
     const handleSave = (e) => {
         e.preventDefault();
+        const cfg = { systemName, agencyName, dailyTarget, fuelLimit, backupFrequency };
+        localStorage.setItem('app_settings', JSON.stringify(cfg));
         setSubmitted(true);
-        setTimeout(() => setSubmitted(false), 3000);
+        setTimeout(() => setSubmitted(false), 3500);
+    };
+
+    const handleExportBackup = async () => {
+        try {
+            const res = await fetch('http://localhost:5000/api/reports');
+            const data = await res.json();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_crusher_db_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert('حدث خطأ أثناء تصدير النسخة الاحتياطية.');
+        }
     };
     return (<div className="view-content">
       <div style={{ marginBottom: '1.5rem' }}>
@@ -38,8 +60,8 @@ export const SettingsView = () => {
               مزامنة البيانات الحالية وتخزين نسخة احتياطية محلية أو سحابية آمنة.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button type="button" className="secondary-action-btn" style={{ justifyContent: 'center' }}>
-                <span>تصدير نسخة احتياطية كامة (SQL)</span>
+              <button type="button" onClick={handleExportBackup} className="secondary-action-btn" style={{ justifyContent: 'center' }}>
+                <span>تصدير نسخة احتياطية كاملة (JSON / DB)</span>
               </button>
               <button type="button" className="secondary-action-btn" style={{ justifyContent: 'center', borderColor: '#f43f5e', color: '#f43f5e' }}>
                 <span>تهيئة قاعدة البيانات (فورمات)</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckCircle2, Truck, Factory, Fuel, X, FileSpreadsheet, Sparkles, ShieldCheck, Edit2 } from 'lucide-react';
+import { Plus, CheckCircle2, Truck, Factory, Fuel, X, FileSpreadsheet, Sparkles, ShieldCheck, Edit2, Save } from 'lucide-react';
 import * as XLSX from 'xlsx';
 export const TomorrowPlanView = () => {
     const [activeSubTab, setActiveSubTab] = useState('proposal');
@@ -144,6 +144,34 @@ export const TomorrowPlanView = () => {
             setIsLoading(false);
         }
     };
+    // Handle Save Plan as Draft
+    const handleSavePlanDraft = async () => {
+        try {
+            setIsLoading(true);
+            let planId = currentPlanId;
+            const url = planId ? `http://localhost:5000/api/plans/${planId}` : 'http://localhost:5000/api/plans';
+            const method = planId ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    planDate,
+                    title: planTitle,
+                    items: planItems,
+                    status: 'draft'
+                })
+            });
+            const data = await res.json();
+            if (data.success && data.plan) {
+                setCurrentPlanId(data.plan.id);
+            }
+            alert('تم حفظ تعديلات الخطة بنجاح ✅');
+        } catch (e) {
+            alert('حدث خطأ أثناء حفظ الخطة');
+        } finally {
+            setIsLoading(false);
+        }
+    };
     // Add Item to Plan
     const handleAddItem = (e) => {
         e.preventDefault();
@@ -258,6 +286,10 @@ export const TomorrowPlanView = () => {
                   <button className="secondary-action-btn" style={{ background: '#fff' }} onClick={() => setIsAddModalOpen(true)}>
                     <Plus size={16}/>
                     <span>إضافة بند للخطة</span>
+                  </button>
+                  <button className="secondary-action-btn" style={{ background: '#fff', color: '#2563eb', borderColor: '#bfdbfe' }} onClick={handleSavePlanDraft}>
+                    <Save size={16}/>
+                    <span>حفظ التعديلات كمسودة</span>
                   </button>
                   <button className="primary-action-btn" onClick={handleApprovePlan} disabled={isLoading} style={{ background: '#16a34a' }}>
                     <CheckCircle2 size={17}/>

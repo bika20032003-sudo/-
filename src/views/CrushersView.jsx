@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Factory, Plus, FileSpreadsheet, TrendingUp, Layers, X, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Factory, Plus, FileSpreadsheet, TrendingUp, Layers, X, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
 export const CrushersView = () => {
     const [crushers, setCrushers] = useState([]);
     const [logs, setLogs] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewDetailsLog, setViewDetailsLog] = useState(null);
+    const [logToDelete, setLogToDelete] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [editingLog, setEditingLog] = useState(null);
@@ -13,6 +15,7 @@ export const CrushersView = () => {
         sector: 'القطعة A',
         dailyTons: 0,
         sharshoorTons: 0,
+        notes: '',
         imageUrl: ''
     });
     const fetchLogs = async () => {
@@ -46,22 +49,27 @@ export const CrushersView = () => {
                 ? `http://localhost:5000/api/crushers/${editingLog.id}`
                 : 'http://localhost:5000/api/crushers';
             const method = editingLog ? 'PUT' : 'POST';
+            const payload = {
+                name: formData.name,
+                sector: formData.sector,
+                dailyProductionTons: Number(formData.dailyTons) || 0,
+                sharshoorTons: Number(formData.sharshoorTons) || 0,
+                notes: formData.notes || '',
+                imageUrl: formData.imageUrl
+            };
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: formData.name,
-                    sector: formData.sector,
-                    dailyProductionTons: formData.dailyTons,
-                    sharshoorTons: formData.sharshoorTons,
-                    imageUrl: formData.imageUrl
-                })
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
             if (data.success) {
+                if (editingLog) {
+                    setLogs(prev => prev.map(l => l.id === editingLog.id ? { ...l, ...payload } : l));
+                }
                 setIsModalOpen(false);
                 setEditingLog(null);
-                setFormData({ name: 'الكسارة رقم 1 (الشمالية)', sector: 'القطعة A', dailyTons: 0, sharshoorTons: 0, imageUrl: '' });
+                setFormData({ name: 'الكسارة رقم 1 (الشمالية)', sector: 'القطعة A', dailyTons: 0, sharshoorTons: 0, notes: '', imageUrl: '' });
                 fetchLogs();
             }
         }
@@ -76,26 +84,29 @@ export const CrushersView = () => {
             sector: log.sector || 'القطعة A',
             dailyTons: log.dailyProductionTons || 0,
             sharshoorTons: log.sharshoorTons || 0,
+            notes: log.notes || '',
             imageUrl: log.imageUrl || ''
         });
         setIsModalOpen(true);
     };
-    const handleDelete = async (id) => {
-        if (!confirm('هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.'))
-            return;
+    const confirmDeleteCrusher = async () => {
+        if (!logToDelete) return;
+        const targetId = logToDelete.id;
         try {
-            const res = await fetch(`http://localhost:5000/api/crushers/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success)
-                fetchLogs();
+            setLogs(prev => prev.filter(l => l.id !== targetId));
+            const res = await fetch(`http://localhost:5000/api/crushers/${targetId}`, { method: 'DELETE' });
+            await res.json();
+            setLogToDelete(null);
+            fetchLogs();
         }
         catch (error) {
-            alert('فشل حذف السجل');
+            setLogToDelete(null);
+            fetchLogs();
         }
     };
     const openAddModal = () => {
         setEditingLog(null);
-        setFormData({ name: 'الكسارة رقم 1 (الشمالية)', sector: 'القطعة A', dailyTons: 0, sharshoorTons: 0, imageUrl: '' });
+        setFormData({ name: 'الكسارة رقم 1 (الشمالية)', sector: 'القطعة A', dailyTons: 0, sharshoorTons: 0, notes: '', imageUrl: '' });
         setIsModalOpen(true);
     };
     const exportExcel = () => {
@@ -183,10 +194,6 @@ export const CrushersView = () => {
             <FileSpreadsheet size={17}/>
             <span>تصدير إكسل</span>
           </button>
-          <button className="primary-action-btn" onClick={openAddModal}>
-            <Plus size={18}/>
-            <span>تسجيل إنتاج جديد</span>
-          </button>
         </div>
       </div>
 
@@ -223,11 +230,15 @@ export const CrushersView = () => {
                 <td style={{ fontSize: '0.85rem', color: '#64748b' }}>{l.notes || 'تقرير معتمد'}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    <button onClick={() => setViewDetailsLog(l)} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#334155', fontWeight: 700 }} title="عرض التفاصيل">
+                      <Eye size={13}/>
+                      <span>عرض</span>
+                    </button>
                     <button onClick={() => handleEdit(l)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#2563eb', fontWeight: 700 }} title="تعديل">
                       <Pencil size={13}/>
                       <span>تعديل</span>
                     </button>
-                    <button onClick={() => handleDelete(l.id)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
+                    <button onClick={() => setLogToDelete(l)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
                       <Trash2 size={13}/>
                       <span>حذف</span>
                     </button>
@@ -264,6 +275,149 @@ export const CrushersView = () => {
           </div>
         </div>)}
 
+      {/* View Crusher Details Modal */}
+      {viewDetailsLog && (
+        <div className="modal-backdrop" onClick={() => setViewDetailsLog(null)}>
+          <div className="modal-card" style={{ maxWidth: '540px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Factory size={20} color="#2563eb" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                  تفاصيل سجل الكسارة (#{viewDetailsLog.id})
+                </h3>
+              </div>
+              <button onClick={() => setViewDetailsLog(null)} className="close-btn">
+                <X size={20}/>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem 0', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>اسم الكسارة:</span>
+                <span style={{ fontWeight: 800 }}>{viewDetailsLog.name}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>القطاع الميداني:</span>
+                <span style={{ fontWeight: 800 }}>{viewDetailsLog.sector}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>إنتاج اليوم (طن):</span>
+                <span style={{ fontWeight: 800, color: '#16a34a' }}>+{(viewDetailsLog.dailyProductionTons || 0).toLocaleString()} طن</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>حصة الشرشور (طن):</span>
+                <span style={{ fontWeight: 800, color: '#2563eb' }}>+{(viewDetailsLog.sharshoorTons || 0).toLocaleString()} طن</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>تاريخ السجل:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.date ? viewDetailsLog.date.split('T')[0] : 'اليوم'}</span>
+              </div>
+              {viewDetailsLog.notes && (
+                <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '0.25rem' }}>
+                  <div style={{ fontWeight: 700, color: '#475569', marginBottom: '0.25rem' }}>الملاحظات والبيان:</div>
+                  <div style={{ color: '#334155' }}>{viewDetailsLog.notes}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="secondary-action-btn" 
+                onClick={() => {
+                  const log = viewDetailsLog;
+                  setViewDetailsLog(null);
+                  handleEdit(log);
+                }}
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                <Pencil size={14} />
+                <span>تعديل هذا السجل</span>
+              </button>
+              <button 
+                type="button" 
+                className="primary-action-btn" 
+                onClick={() => setViewDetailsLog(null)}
+                style={{ height: '42px', padding: '0 1.5rem' }}
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {logToDelete && (
+        <div className="modal-backdrop" style={{ zIndex: 99999 }}>
+          <div className="modal-card" style={{ maxWidth: '440px', textAlign: 'center', padding: '1.75rem' }}>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف سجل الكسارة
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: '#64748b', marginBottom: '1.25rem' }}>
+              هل أنت متأكد من حذف سجل ({logToDelete.name})؟ سيتم تحديث إجمالي الإنتاج فوراً.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={confirmDeleteCrusher}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '9px',
+                  padding: '0.65rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>نعم، حذف السجل</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogToDelete(null)}
+                style={{
+                  flex: 1,
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '9px',
+                  padding: '0.65rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                إلغاء التراجع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Crusher Batch Modal */}
       {isModalOpen && (<div className="modal-backdrop">
           <div className="modal-card">
@@ -291,6 +445,11 @@ export const CrushersView = () => {
                   <label className="form-label">كمية الشرشور المنتج (طن) <span className="required-asterisk">*</span></label>
                   <input type="number" className="form-input" value={formData.sharshoorTons} onChange={(e) => setFormData({ ...formData, sharshoorTons: Number(e.target.value) })} required/>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">ملاحظات وبيان التشغيل</label>
+                <input type="text" className="form-input" value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="ملاحظات الإنتاج أو حالة المواد..."/>
               </div>
 
               <div className="modal-actions">

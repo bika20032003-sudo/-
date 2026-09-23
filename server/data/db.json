@@ -7,8 +7,8 @@
       "email": "admin",
       "role": "مدير المشروع",
       "sector": "all",
-      "createdAt": "2026-09-08T13:05:52.315Z",
-      "updatedAt": "2026-09-08T13:05:52.315Z"
+      "createdAt": "2026-09-14T08:45:05.768Z",
+      "updatedAt": "2026-09-15T12:11:11.990Z"
     },
     {
       "id": 2,
@@ -17,8 +17,8 @@
       "email": "admin_sectors",
       "role": "مدير القطاعات",
       "sector": "all",
-      "createdAt": "2026-09-08T13:05:52.316Z",
-      "updatedAt": "2026-09-08T13:05:52.316Z"
+      "createdAt": "2026-09-14T08:45:05.768Z",
+      "updatedAt": "2026-09-15T16:59:45.117Z"
     },
     {
       "id": 3,
@@ -27,8 +27,8 @@
       "email": "sector_a",
       "role": "مشرف القطاع (A)",
       "sector": "القطعة A",
-      "createdAt": "2026-09-08T13:05:52.316Z",
-      "updatedAt": "2026-09-08T13:05:52.316Z"
+      "createdAt": "2026-09-14T08:45:05.768Z",
+      "updatedAt": "2026-09-14T08:45:05.768Z"
     },
     {
       "id": 4,
@@ -37,8 +37,17 @@
       "email": "sector_b",
       "role": "مشرف القطاع (B)",
       "sector": "القطعة B",
-      "createdAt": "2026-09-08T13:05:52.316Z",
-      "updatedAt": "2026-09-08T13:05:52.316Z"
+      "createdAt": "2026-09-14T08:45:05.768Z",
+      "updatedAt": "2026-09-14T08:45:05.768Z"
+    },
+    {
+      "id": 1789655834980,
+      "name": "Eng Khalid F",
+      "email": "khalid",
+      "role": "مدير القطاعات",
+      "sector": "القطعة A",
+      "createdAt": "2026-09-17T14:37:14.980Z",
+      "updatedAt": "2026-09-17T14:40:34.658Z"
     }
   ],
   "roadProgress": [
@@ -201,6 +210,21 @@
   ],
   "equipment": [
     {
+      "id": 1789656323374,
+      "code": "EQ-99",
+      "name": "Bulldozer CAT D8T",
+      "type": "معدة عامة",
+      "category": "heavy",
+      "status": "operational",
+      "driver": "",
+      "location": "الموقع العام",
+      "dailyHours": 8,
+      "fuelConsumptionRate": 25,
+      "imageUrl": null,
+      "notes": "",
+      "createdAt": "2026-09-17T14:45:23.374Z"
+    },
+    {
       "id": 1,
       "code": "EQ-101",
       "name": "لودر CAT 966H",
@@ -281,43 +305,13 @@
   ],
   "crushers": [
     {
-      "id": 1788869301802,
-      "name": "موقع القطاع A",
-      "sector": "القطعة A",
-      "dailyProductionTons": 1200,
-      "sharshoorTons": 650,
-      "imageUrl": null,
-      "notes": "معتمد من التقرير (REP-SEC-A-1796)",
-      "createdAt": "2026-09-08T12:08:21.802Z"
-    },
-    {
-      "id": 1788869118695,
-      "name": "موقع القطاع A",
-      "sector": "القطعة A",
-      "dailyProductionTons": 1200,
-      "sharshoorTons": 650,
-      "imageUrl": null,
-      "notes": "معتمد من التقرير (REP-SEC-A-8689)",
-      "createdAt": "2026-09-08T12:05:18.695Z"
-    },
-    {
-      "id": 1788828879222,
-      "name": "كسارة القطاع (A)",
-      "sector": "القطعة A",
-      "dailyProductionTons": 750,
-      "sharshoorTons": 450,
-      "imageUrl": null,
-      "notes": "معتمد من التقرير (REP-SEC-A-9195)",
-      "createdAt": "2026-09-08T00:54:39.222Z"
-    },
-    {
       "id": 1,
       "name": "الكسارة الرئيسية - أوباري",
       "sector": "القطعة A",
       "dailyProductionTons": 850,
       "sharshoorTons": 510,
       "notes": "إنتاج مطابق للمواصفات",
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-18T17:40:49.465Z"
     },
     {
       "id": 2,
@@ -326,14 +320,14 @@
       "dailyProductionTons": 620,
       "sharshoorTons": 372,
       "notes": "عمل مستقر",
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-18T17:40:49.465Z"
     }
   ],
   "fuel": [
     {
       "id": 1,
       "ticketNumber": "FUEL-9481",
-      "date": "2026-09-08T00:08:21.107Z",
+      "date": "2026-09-18T17:40:49.465Z",
       "equipmentName": "لودر CAT 966H (EQ-101)",
       "liters": 180,
       "driverName": "سالم علي",
@@ -346,7 +340,7 @@
     {
       "id": 2,
       "ticketNumber": "FUEL-9482",
-      "date": "2026-09-08T00:08:21.107Z",
+      "date": "2026-09-18T17:40:49.465Z",
       "equipmentName": "حفار Komatsu PC300 (EQ-102)",
       "liters": 220,
       "driverName": "محمد صالح",
@@ -359,7 +353,7 @@
     {
       "id": 3,
       "ticketNumber": "FUEL-9483",
-      "date": "2026-09-08T00:08:21.107Z",
+      "date": "2026-09-18T17:40:49.465Z",
       "equipmentName": "مولد الكسارة الرئيسية 500kVA",
       "liters": 450,
       "driverName": "رمضان السنوسي",
@@ -372,7 +366,7 @@
     {
       "id": 4,
       "ticketNumber": "FUEL-9484",
-      "date": "2026-09-08T00:08:21.107Z",
+      "date": "2026-09-18T17:40:49.465Z",
       "equipmentName": "فاردة أسفلت Vögele (EQ-105)",
       "liters": 160,
       "driverName": "عمران المهدي",
@@ -392,7 +386,7 @@
       "truckCode": "TRK-01",
       "destination": "موقع الخلطة الإسفلتية - المحطة 52",
       "notes": "توريد شرشور ناعم",
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-17T14:09:25.462Z"
     },
     {
       "id": 2,
@@ -402,73 +396,17 @@
       "truckCode": "TRK-02",
       "destination": "موقع طبقة الأساس الحبيبي - المحطة 110",
       "notes": "توريد ركام متدرج",
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-17T14:09:25.462Z"
     }
   ],
   "alerts": [
-    {
-      "id": 1788877355612,
-      "type": "warning",
-      "title": "تقرير وارد قيد الاعتماد من القطعة A",
-      "message": "تم رفع تقرير يومي شامل رقم (REP-SEC-A-5612) من قبل مشرف القطاع (A) بانتظار مراجعة واعتماد مدير القطاعات.",
-      "isRead": false,
-      "createdAt": "2026-09-08T14:22:35.612Z"
-    },
-    {
-      "id": 1788869301802,
-      "type": "info",
-      "title": "تم اعتماد تقرير القطعة A",
-      "message": "قام مدير القطاعات باعتماد تقرير تقرير يومي شامل رقم (REP-SEC-A-1796) بنجاح.",
-      "isRead": true,
-      "createdAt": "2026-09-08T12:08:21.802Z"
-    },
-    {
-      "id": 1788869301796,
-      "type": "warning",
-      "title": "تقرير وارد قيد الاعتماد من القطعة A",
-      "message": "تم رفع تقرير يومي شامل رقم (REP-SEC-A-1796) من قبل مشرف القطاع (A) بانتظار مراجعة واعتماد مدير القطاعات.",
-      "isRead": true,
-      "createdAt": "2026-09-08T12:08:21.796Z"
-    },
-    {
-      "id": 1788869118695,
-      "type": "info",
-      "title": "تم اعتماد تقرير القطعة A",
-      "message": "قام مدير القطاعات باعتماد تقرير تقرير يومي شامل رقم (REP-SEC-A-8689) بنجاح.",
-      "isRead": true,
-      "createdAt": "2026-09-08T12:05:18.695Z"
-    },
-    {
-      "id": 1788869118689,
-      "type": "warning",
-      "title": "تقرير وارد قيد الاعتماد من القطعة A",
-      "message": "تم رفع تقرير يومي شامل رقم (REP-SEC-A-8689) من قبل مشرف القطاع (A) بانتظار مراجعة واعتماد مدير القطاعات.",
-      "isRead": true,
-      "createdAt": "2026-09-08T12:05:18.689Z"
-    },
-    {
-      "id": 1788828879222,
-      "type": "info",
-      "title": "تم اعتماد تقرير القطعة A",
-      "message": "قام مدير القطاعات باعتماد تقرير تقرير يومي شامل رقم (REP-SEC-A-9195) بنجاح.",
-      "isRead": true,
-      "createdAt": "2026-09-08T00:54:39.222Z"
-    },
-    {
-      "id": 1788828879195,
-      "type": "warning",
-      "title": "تقرير وارد قيد الاعتماد من القطعة A",
-      "message": "تم رفع تقرير يومي شامل رقم (REP-SEC-A-9195) من قبل مشرف القطاع (A) بانتظار مراجعة واعتماد مدير القطاعات.",
-      "isRead": true,
-      "createdAt": "2026-09-08T00:54:39.195Z"
-    },
     {
       "id": 1,
       "type": "warning",
       "title": "تنبيه استهلاك السولار - القطعة A",
       "message": "ارتفاع معدل استهلاك الديزل في الحفار CAT 336D بنسبة 12% عن المعدل الطبيعي.",
       "isRead": true,
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-17T14:09:25.462Z"
     },
     {
       "id": 2,
@@ -476,7 +414,7 @@
       "title": "صيانة دورية عاجلة - جريدر CAT 140K",
       "message": "توقف الجريدر كود (EQ-103) بالمحطة 62+500 لتبديل سكينة التسوية والسيور.",
       "isRead": true,
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-17T14:09:25.462Z"
     },
     {
       "id": 3,
@@ -484,124 +422,10 @@
       "title": "وصول صهريج وقود جديد",
       "message": "تم استلام وتفريغ صهريج ديزل سعة 30,000 لتر في الخزان الرئيسي بالقطاع الشمالي.",
       "isRead": true,
-      "createdAt": "2026-09-08T00:08:21.107Z"
+      "createdAt": "2026-09-17T14:09:25.462Z"
     }
   ],
-  "reports": [
-    {
-      "id": 1788877355612,
-      "reportNumber": "REP-SEC-A-5612",
-      "date": "2026-09-08T00:00:00.000Z",
-      "sector": "القطعة A",
-      "reportType": "تقرير يومي شامل",
-      "crusherName": "موقع القطاع (A)",
-      "materialName": "تقرير يومي شامل - القطاع (A)",
-      "productionAmount": 0,
-      "salesAmount": 0,
-      "uploadedBy": "مشرف القطاع (A)",
-      "status": "pending_review",
-      "approvedBy": null,
-      "notes": "وقود: 0 لتر - إنجاز رصف: 0 م.ط",
-      "imageUrl": null,
-      "parsedData": null
-    },
-    {
-      "id": 1788869301796,
-      "reportNumber": "REP-SEC-A-1796",
-      "date": "2026-09-08T12:08:21.765Z",
-      "sector": "القطعة A",
-      "reportType": "تقرير يومي شامل",
-      "crusherName": "موقع القطاع A",
-      "materialName": "تقرير يومي شامل - القطاع (A)",
-      "productionAmount": 1200,
-      "salesAmount": 650,
-      "uploadedBy": "مشرف القطاع (A)",
-      "status": "approved",
-      "approvedBy": "مدير القطاعات",
-      "notes": "تقرير تشغيلي اختباري للتأكد من انسيابية العمل",
-      "imageUrl": null,
-      "parsedData": null,
-      "approvedAt": "2026-09-08T12:08:21.802Z"
-    },
-    {
-      "id": 1788869118689,
-      "reportNumber": "REP-SEC-A-8689",
-      "date": "2026-09-08T12:05:18.644Z",
-      "sector": "القطعة A",
-      "reportType": "تقرير يومي شامل",
-      "crusherName": "موقع القطاع A",
-      "materialName": "تقرير يومي شامل - القطاع (A)",
-      "productionAmount": 1200,
-      "salesAmount": 650,
-      "uploadedBy": "مشرف القطاع (A)",
-      "status": "approved",
-      "approvedBy": "مدير القطاعات",
-      "notes": "تقرير تشغيلي اختباري للتأكد من انسيابية العمل",
-      "imageUrl": null,
-      "parsedData": null,
-      "approvedAt": "2026-09-08T12:05:18.695Z"
-    },
-    {
-      "id": 1788828879195,
-      "reportNumber": "REP-SEC-A-9195",
-      "date": "2026-09-08T00:54:39.195Z",
-      "sector": "القطعة A",
-      "reportType": "تقرير يومي شامل",
-      "crusherName": "كسارة القطاع (A)",
-      "materialName": "تقرير رصف واختبار دورة الاعتماد",
-      "productionAmount": 750,
-      "salesAmount": 0,
-      "uploadedBy": "مشرف القطاع (A)",
-      "status": "approved",
-      "approvedBy": "مدير القطاعات",
-      "notes": "تجربة إرسال التقرير لمدير القطاعات",
-      "imageUrl": null,
-      "parsedData": null,
-      "approvedAt": "2026-09-08T00:54:39.222Z"
-    },
-    {
-      "id": 1,
-      "reportNumber": "REP-2026-0818-01",
-      "date": "2026-09-08T00:08:21.108Z",
-      "sector": "القطعة A",
-      "reportType": "تقرير إنتاج كسارة",
-      "crusherName": "الكسارة الرئيسية - أوباري",
-      "materialName": "ركام طبقة أساس (0-37.5 مم)",
-      "productionAmount": 850,
-      "salesAmount": 510,
-      "uploadedBy": "م. عبدالرحمن",
-      "status": "approved",
-      "notes": "استقرار الإنتاج وجودة عالية في التكسير"
-    },
-    {
-      "id": 2,
-      "reportNumber": "REP-2026-0818-02",
-      "date": "2026-09-08T00:08:21.111Z",
-      "sector": "القطعة B",
-      "reportType": "تقرير تزويد وقود",
-      "crusherName": "الكسارة الشمالية",
-      "materialName": "سولار تشغيل كسارة ومعدات",
-      "productionAmount": 1800,
-      "salesAmount": 0,
-      "uploadedBy": "م. عبدالسلام",
-      "status": "approved",
-      "notes": "تفريغ صهريج ديزل سعة 20,000 لتر"
-    },
-    {
-      "id": 3,
-      "reportNumber": "REP-2026-0818-03",
-      "date": "2026-09-08T00:08:21.111Z",
-      "sector": "القطعة A",
-      "reportType": "تقرير توريد شرشور",
-      "crusherName": "الكسارة 1",
-      "materialName": "شرشور ناعم (0-5 مم)",
-      "productionAmount": 510,
-      "salesAmount": 480,
-      "uploadedBy": "سالم التاورغي",
-      "status": "approved",
-      "notes": "توريد لموقع خلطة الأسفلت بالمحطة 45+200"
-    }
-  ],
+  "reports": [],
   "plans": [
     {
       "id": 1,
@@ -675,7 +499,7 @@
       "title": "صيانة هيدروليكية وتبديل سكينة",
       "description": "توقف الجريدر لإجراء صيانة عاجلة للسكينة وتبديل فلاتر الزيت الهيدروليكي.",
       "severity": "danger",
-      "status": "in_progress",
+      "status": "resolved",
       "suggestedAction": "توجيه الورشة الميدانية لإنهاء الصيانة خلال 4 ساعات."
     },
     {
@@ -687,8 +511,9 @@
       "title": "ارتفاع حرارة الزيت عند الحمل العالي",
       "description": "لوحظ ارتفاع حرارة سائل التبريد بعد 6 ساعات تشغيل متواصل في المقلع الصخري.",
       "severity": "warning",
-      "status": "open",
+      "status": "resolved",
       "suggestedAction": "تنظيف رادياتير التبريد وفحص مستوى سائل التبريد."
     }
-  ]
+  ],
+  "savedPeriodicReports": []
 }

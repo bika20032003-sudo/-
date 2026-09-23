@@ -44,4 +44,15 @@ router.put('/read-all', (req, res) => {
   }
 });
 
+// Delete alert
+router.delete('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    store.deleteAlert(id);
+    res.json({ success: true, message: 'تم حذف التنبيه بنجاح' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'خطأ أثناء حذف التنبيه' });
+  }
+});
+
 export default router;

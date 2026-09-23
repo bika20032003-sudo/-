@@ -28,9 +28,13 @@ export const AlertsView = () => {
             console.error('Failed to mark all as read', error);
         }
     };
-    const clearAlert = (id) => {
-        // In a real app we'd delete it, for now just filter locally or implement a delete endpoint
-        setAlerts(alerts.filter(a => a.id !== id));
+    const clearAlert = async (id) => {
+        try {
+            await fetch(`http://localhost:5000/api/alerts/${id}`, { method: 'DELETE' });
+        } catch (error) {
+            console.warn('Offline, deleting alert locally');
+        }
+        setAlerts(prev => prev.filter(a => a.id !== id));
     };
     return (<div className="view-content">
       <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

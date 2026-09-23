@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mountain, Plus, FileSpreadsheet, TrendingUp, Layers, X, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Mountain, Plus, FileSpreadsheet, TrendingUp, Layers, X, RefreshCw, Pencil, Trash2, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
 export const SharshoorView = () => {
     const [sharshoorLogs, setSharshoorLogs] = useState([]);
@@ -7,6 +7,8 @@ export const SharshoorView = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [editingLog, setEditingLog] = useState(null);
+    const [viewDetailsLog, setViewDetailsLog] = useState(null);
+    const [logToDelete, setLogToDelete] = useState(null);
     const [form, setForm] = useState({
         sector: 'القطعة A',
         crusher: 'الكسارة 1',
@@ -58,7 +60,7 @@ export const SharshoorView = () => {
             }
         }
         catch (error) {
-            alert('فشل الاتصال بالخادم. يرجى التأكد من تشغيله.');
+            console.error('Failed to save sharshoor record', error);
         }
     };
     const handleEdit = (log) => {
@@ -73,18 +75,21 @@ export const SharshoorView = () => {
         });
         setIsModalOpen(true);
     };
-    const handleDelete = async (id) => {
-        if (!confirm('هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.'))
-            return;
+    const handleDelete = (log) => {
+        setLogToDelete(log);
+    };
+    const confirmDeleteSharshoor = async () => {
+        if (!logToDelete) return;
+        const targetId = logToDelete.id;
+        // Optimistic UI update
+        setSharshoorLogs(prev => prev.filter(s => s.id !== targetId && String(s.id) !== String(targetId)));
+        setLogToDelete(null);
         try {
-            const res = await fetch(`http://localhost:5000/api/sharshoor/${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success)
-                fetchLogs();
+            await fetch(`http://localhost:5000/api/sharshoor/${targetId}`, { method: 'DELETE' });
+        } catch (error) {
+            console.error('Failed to delete sharshoor record from backend', error);
         }
-        catch (error) {
-            alert('فشل حذف السجل');
-        }
+        fetchLogs();
     };
     const openAddModal = () => {
         setEditingLog(null);
@@ -205,11 +210,15 @@ export const SharshoorView = () => {
                 <td><strong>{s.destination}</strong></td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    <button onClick={() => setViewDetailsLog(s)} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#334155', fontWeight: 700 }} title="عرض التفاصيل">
+                      <Eye size={13}/>
+                      <span>عرض</span>
+                    </button>
                     <button onClick={() => handleEdit(s)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#2563eb', fontWeight: 700 }} title="تعديل">
                       <Pencil size={13}/>
                       <span>تعديل</span>
                     </button>
-                    <button onClick={() => handleDelete(s.id)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
+                    <button onClick={() => handleDelete(s)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} title="حذف">
                       <Trash2 size={13}/>
                       <span>حذف</span>
                     </button>
@@ -289,5 +298,152 @@ export const SharshoorView = () => {
             </form>
           </div>
         </div>)}
+
+      {/* View Sharshoor Details Modal */}
+      {viewDetailsLog && (
+        <div className="modal-backdrop" onClick={() => setViewDetailsLog(null)}>
+          <div className="modal-card" style={{ maxWidth: '540px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Mountain size={20} color="#059669" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                  تفاصيل سجل توريد الشرشور (#SHR-0{viewDetailsLog.id})
+                </h3>
+              </div>
+              <button onClick={() => setViewDetailsLog(null)} className="close-btn">
+                <X size={20}/>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem 0', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>القطاع الميداني:</span>
+                <span style={{ fontWeight: 800 }}>{viewDetailsLog.sector}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>الكسارة المصدر:</span>
+                <span style={{ fontWeight: 800 }}>{viewDetailsLog.crusher}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>الكمية الموردة:</span>
+                <span style={{ fontWeight: 800, color: '#059669' }}>+{viewDetailsLog.amountTons} طن</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>كود الشاحنة:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.truckCode || '-'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>وجهة التوريد:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.destination || '-'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#64748b' }}>التاريخ:</span>
+                <span style={{ fontWeight: 700 }}>{viewDetailsLog.date ? viewDetailsLog.date.split('T')[0] : 'اليوم'}</span>
+              </div>
+              {viewDetailsLog.imageUrl && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#64748b' }}>بوليصة الميزان:</span>
+                  <button 
+                    onClick={() => {
+                      const img = viewDetailsLog.imageUrl;
+                      setViewDetailsLog(null);
+                      setSelectedImage(img);
+                    }}
+                    style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    عرض البوليصة
+                  </button>
+                </div>
+              )}
+              {viewDetailsLog.notes && (
+                <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '0.25rem' }}>
+                  <div style={{ fontWeight: 700, color: '#475569', marginBottom: '0.25rem' }}>ملاحظات:</div>
+                  <div style={{ color: '#334155' }}>{viewDetailsLog.notes}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="secondary-action-btn" 
+                onClick={() => {
+                  const log = viewDetailsLog;
+                  setViewDetailsLog(null);
+                  handleEdit(log);
+                }}
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                <Pencil size={14} />
+                <span>تعديل هذا السجل</span>
+              </button>
+              <button 
+                type="button" 
+                className="primary-action-btn" 
+                onClick={() => setViewDetailsLog(null)}
+                style={{ height: '42px', padding: '0 1.5rem' }}
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {logToDelete && (
+        <div className="modal-backdrop" style={{ zIndex: 99999 }}>
+          <div className="modal-card" style={{ maxWidth: '440px', textAlign: 'center', padding: '1.75rem' }}>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف شحنة الشرشور
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: '#64748b', marginBottom: '1.25rem' }}>
+              هل أنت متأكد من حذف هذا السجل (شاحنة {logToDelete.truckCode} - كمية {logToDelete.amountTons} طن)؟ سيتم خصم الكمية وتحديث الإحصائيات فوراً.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={confirmDeleteSharshoor}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.65rem 1.25rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                تأكيد الحذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogToDelete(null)}
+                className="secondary-action-btn"
+                style={{ height: '42px', padding: '0 1.25rem' }}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>);
 };

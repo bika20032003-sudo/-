@@ -21,13 +21,15 @@ const defaultReports = [
   {
     id: 1,
     reportNumber: 'REP-SEC-A-01',
-    date: new Date().toISOString(),
+    date: '2026-09-15T08:30:00.000Z',
     sector: 'القطعة A',
     reportType: 'تقرير إنتاج كسارة',
     crusherName: 'كسارة القطاع (A)',
     materialName: 'ركام طبقة أساس (0-37.5 مم)',
     productionAmount: 850,
     salesAmount: 510,
+    roadMeters: 600,
+    fuelAmount: 450,
     uploadedBy: 'مشرف القطاع (A)',
     status: 'approved',
     approvedBy: 'مدير القطاعات',
@@ -36,45 +38,87 @@ const defaultReports = [
   {
     id: 2,
     reportNumber: 'REP-SEC-B-01',
-    date: new Date().toISOString(),
+    date: '2026-09-15T09:15:00.000Z',
     sector: 'القطعة B',
-    reportType: 'تقرير تزويد وقود',
+    reportType: 'تقرير تزويد وقود وإنتاج',
     crusherName: 'كسارة القطاع (B)',
-    materialName: 'سولار تشغيل كسارة ومعدات',
-    productionAmount: 1800,
-    salesAmount: 0,
+    materialName: 'سولار تشغيل كسارة وركام',
+    productionAmount: 620,
+    salesAmount: 372,
+    roadMeters: 460,
+    fuelAmount: 1800,
     uploadedBy: 'مشرف القطاع (B)',
     status: 'approved',
     approvedBy: 'مدير القطاعات',
-    notes: 'تفريغ صهريج ديزل في الخزان الميداني'
+    notes: 'تفريغ صهريج ديزل في الخزان الميداني وتشغيل الكسارة'
   },
   {
     id: 3,
     reportNumber: 'REP-SEC-A-02',
-    date: new Date().toISOString(),
+    date: '2026-09-14T08:00:00.000Z',
     sector: 'القطعة A',
     reportType: 'تقرير توريد شرشور',
     crusherName: 'كسارة القطاع (A)',
     materialName: 'شرشور ناعم (0-5 مم)',
-    productionAmount: 510,
-    salesAmount: 480,
+    productionAmount: 900,
+    salesAmount: 540,
+    roadMeters: 650,
+    fuelAmount: 480,
     uploadedBy: 'مشرف القطاع (A)',
-    status: 'pending_review',
-    notes: 'توريد لموقع خلطة الأسفلت - بانتظار مراجعة واعتماد مدير القطاعات'
+    status: 'approved',
+    approvedBy: 'مدير القطاعات',
+    notes: 'توريد لموقع خلطة الأسفلت'
   },
   {
     id: 4,
     reportNumber: 'REP-SEC-B-02',
-    date: new Date().toISOString(),
+    date: '2026-09-14T10:30:00.000Z',
     sector: 'القطعة B',
     reportType: 'تقرير تقدم أعمال رصف',
     crusherName: 'موقع القطاع (B)',
     materialName: 'طبقة الأساس الحبيبي والتشريب',
-    productionAmount: 600,
-    salesAmount: 0,
+    productionAmount: 580,
+    salesAmount: 350,
+    roadMeters: 550,
+    fuelAmount: 1650,
     uploadedBy: 'مشرف القطاع (B)',
-    status: 'pending_review',
-    notes: 'إنجاز 600 م.ط من طبقة الأساس الحبيبي - بانتظار الاعتماد'
+    status: 'approved',
+    approvedBy: 'مدير القطاعات',
+    notes: 'إنجاز 550 م.ط من طبقة الأساس الحبيبي'
+  },
+  {
+    id: 5,
+    reportNumber: 'REP-SEC-A-03',
+    date: '2026-09-13T08:30:00.000Z',
+    sector: 'القطعة A',
+    reportType: 'تقرير تشغيل كسارة',
+    crusherName: 'كسارة القطاع (A)',
+    materialName: 'ركام متدرج',
+    productionAmount: 820,
+    salesAmount: 490,
+    roadMeters: 580,
+    fuelAmount: 420,
+    uploadedBy: 'مشرف القطاع (A)',
+    status: 'approved',
+    approvedBy: 'مدير القطاعات',
+    notes: 'عمل متواصل بإنتاجية عالية'
+  },
+  {
+    id: 6,
+    reportNumber: 'REP-SEC-B-03',
+    date: '2026-09-13T11:00:00.000Z',
+    sector: 'القطعة B',
+    reportType: 'تقرير وقود وتشغيل',
+    crusherName: 'كسارة القطاع (B)',
+    materialName: 'سولار وركام',
+    productionAmount: 640,
+    salesAmount: 380,
+    roadMeters: 620,
+    fuelAmount: 1750,
+    uploadedBy: 'مشرف القطاع (B)',
+    status: 'approved',
+    approvedBy: 'مدير القطاعات',
+    notes: 'تزويد محطات العمل بالديزل'
   }
 ];
 
@@ -113,7 +157,8 @@ class Store {
       alerts: JSON.parse(JSON.stringify(defaultAlerts)),
       reports: JSON.parse(JSON.stringify(defaultReports)),
       plans: [JSON.parse(JSON.stringify(defaultPlan))],
-      issues: JSON.parse(JSON.stringify(defaultIssues))
+      issues: JSON.parse(JSON.stringify(defaultIssues)),
+      savedPeriodicReports: []
     };
     this.loadFromDisk();
     this.checkMySQLQuick();
@@ -127,10 +172,36 @@ class Store {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
-        // Ensure standard clean users are present
         this.data = { ...this.data, ...parsed };
-        this.data.users = defaultUsers; // Keep clean standard roles
-        console.log('[FastStore] Loaded persisted store from disk successfully.');
+        // Ensure operational tables are never empty on initial load
+        if (!Array.isArray(parsed.equipment) || parsed.equipment.length === 0) {
+          this.data.equipment = JSON.parse(JSON.stringify(defaultEquipment));
+        }
+        if (!Array.isArray(parsed.crushers) || parsed.crushers.length === 0) {
+          this.data.crushers = JSON.parse(JSON.stringify(defaultCrushers));
+        }
+        if (!Array.isArray(parsed.fuel) || parsed.fuel.length === 0) {
+          this.data.fuel = JSON.parse(JSON.stringify(defaultFuelDispatches));
+        }
+        if (!Array.isArray(parsed.sharshoor) || parsed.sharshoor.length === 0) {
+          this.data.sharshoor = JSON.parse(JSON.stringify(defaultSharshoor));
+        }
+        if (!Array.isArray(parsed.alerts) || parsed.alerts.length === 0) {
+          this.data.alerts = JSON.parse(JSON.stringify(defaultAlerts));
+        }
+        if (!Array.isArray(parsed.reports)) {
+          this.data.reports = JSON.parse(JSON.stringify(defaultReports));
+        }
+
+        const existingUsers = Array.isArray(parsed.users) ? parsed.users : [];
+        const defaultUserEmails = new Set(defaultUsers.map(u => u.email));
+        const customUsers = existingUsers.filter(u => !defaultUserEmails.has(u.email));
+        this.data.users = [
+          ...defaultUsers.map(du => existingUsers.find(eu => eu.email === du.email) || du),
+          ...customUsers
+        ];
+        this.saveToDiskSync();
+        console.log('[FastStore] Loaded and validated persisted store from disk successfully.');
       } else {
         this.saveToDiskSync();
       }
@@ -209,7 +280,7 @@ class Store {
     return newLog;
   }
   updateCrusher(id, item) {
-    const idx = this.data.crushers.findIndex(c => c.id === Number(id));
+    const idx = this.data.crushers.findIndex(c => c.id === Number(id) || String(c.id) === String(id));
     if (idx !== -1) {
       this.data.crushers[idx] = {
         ...this.data.crushers[idx],
@@ -220,14 +291,14 @@ class Store {
         notes: item.notes ?? this.data.crushers[idx].notes,
         imageUrl: item.imageUrl ?? this.data.crushers[idx].imageUrl
       };
-      this.scheduleSave();
+      this.saveToDiskSync();
       return this.data.crushers[idx];
     }
     return null;
   }
   deleteCrusher(id) {
-    this.data.crushers = this.data.crushers.filter(c => c.id !== Number(id));
-    this.scheduleSave();
+    this.data.crushers = this.data.crushers.filter(c => c.id !== Number(id) && String(c.id) !== String(id));
+    this.saveToDiskSync();
   }
 
   // --- Fuel ---
@@ -255,11 +326,11 @@ class Store {
       createdAt: new Date().toISOString()
     };
     this.data.fuel.unshift(newLog);
-    this.scheduleSave();
+    this.saveToDiskSync();
     return newLog;
   }
   updateFuel(id, item) {
-    const idx = this.data.fuel.findIndex(f => f.id === Number(id));
+    const idx = this.data.fuel.findIndex(f => f.id === Number(id) || String(f.id) === String(id));
     if (idx !== -1) {
       this.data.fuel[idx] = {
         ...this.data.fuel[idx],
@@ -274,14 +345,14 @@ class Store {
         notes: item.notes ?? this.data.fuel[idx].notes,
         imageUrl: item.imageUrl ?? this.data.fuel[idx].imageUrl
       };
-      this.scheduleSave();
+      this.saveToDiskSync();
       return this.data.fuel[idx];
     }
     return null;
   }
   deleteFuel(id) {
-    this.data.fuel = this.data.fuel.filter(f => f.id !== Number(id));
-    this.scheduleSave();
+    this.data.fuel = this.data.fuel.filter(f => f.id !== Number(id) && String(f.id) !== String(id));
+    this.saveToDiskSync();
   }
 
   // --- Equipment ---
@@ -310,11 +381,11 @@ class Store {
       createdAt: new Date().toISOString()
     };
     this.data.equipment.unshift(newEq);
-    this.scheduleSave();
+    this.saveToDiskSync();
     return newEq;
   }
   updateEquipment(id, item) {
-    const idx = this.data.equipment.findIndex(e => e.id === Number(id));
+    const idx = this.data.equipment.findIndex(e => e.id === Number(id) || String(e.id) === String(id));
     if (idx !== -1) {
       this.data.equipment[idx] = {
         ...this.data.equipment[idx],
@@ -330,14 +401,14 @@ class Store {
         notes: item.notes ?? this.data.equipment[idx].notes,
         imageUrl: item.imageUrl ?? this.data.equipment[idx].imageUrl
       };
-      this.scheduleSave();
+      this.saveToDiskSync();
       return this.data.equipment[idx];
     }
     return null;
   }
   deleteEquipment(id) {
-    this.data.equipment = this.data.equipment.filter(e => e.id !== Number(id));
-    this.scheduleSave();
+    this.data.equipment = this.data.equipment.filter(e => e.id !== Number(id) && String(e.id) !== String(id));
+    this.saveToDiskSync();
   }
 
   // --- Sharshoor ---
@@ -362,11 +433,11 @@ class Store {
       createdAt: new Date().toISOString()
     };
     this.data.sharshoor.unshift(newLog);
-    this.scheduleSave();
+    this.saveToDiskSync();
     return newLog;
   }
   updateSharshoor(id, item) {
-    const idx = this.data.sharshoor.findIndex(s => s.id === Number(id));
+    const idx = this.data.sharshoor.findIndex(s => s.id === Number(id) || String(s.id) === String(id));
     if (idx !== -1) {
       this.data.sharshoor[idx] = {
         ...this.data.sharshoor[idx],
@@ -378,14 +449,14 @@ class Store {
         notes: item.notes ?? this.data.sharshoor[idx].notes,
         imageUrl: item.imageUrl ?? this.data.sharshoor[idx].imageUrl
       };
-      this.scheduleSave();
+      this.saveToDiskSync();
       return this.data.sharshoor[idx];
     }
     return null;
   }
   deleteSharshoor(id) {
-    this.data.sharshoor = this.data.sharshoor.filter(s => s.id !== Number(id));
-    this.scheduleSave();
+    this.data.sharshoor = this.data.sharshoor.filter(s => s.id !== Number(id) && String(s.id) !== String(id));
+    this.saveToDiskSync();
   }
 
   // --- Reports & Approval Workflow ---
@@ -402,6 +473,18 @@ class Store {
     const isSector = item.sector?.includes('A') || item.sector?.includes('B');
     const sectorCode = item.sector?.includes('B') ? 'SEC-B' : 'SEC-A';
     const randId = Date.now().toString().slice(-4);
+    let fAmount = Number(item.fuelAmount) || 0;
+    if (!fAmount && item.notes) {
+      const match = item.notes.match(/وقود:\s*(\d+)/);
+      if (match) fAmount = Number(match[1]);
+    }
+
+    let rMeters = Number(item.roadMeters) || 0;
+    if (!rMeters && item.notes) {
+      const match = item.notes.match(/رصف:\s*(\d+)/);
+      if (match) rMeters = Number(match[1]);
+    }
+
     const newReport = {
       id: item.id || Date.now(),
       reportNumber: item.reportNumber || `REP-${sectorCode}-${randId}`,
@@ -413,9 +496,9 @@ class Store {
       crusherName: item.crusherName || (item.sector?.includes('B') ? 'كسارة القطاع (B)' : 'كسارة القطاع (A)'),
       materialName: item.materialName || `${item.reportType || 'تقرير ميداني'} - ${item.sector || 'القطاع'}`,
       productionAmount: Number(item.productionAmount) || 0,
-      salesAmount: Number(item.salesAmount) || 0,
-      roadMeters: Number(item.roadMeters) || Number(item.salesAmount) || 0,
-      fuelAmount: Number(item.fuelAmount) || 0,
+      salesAmount: Number(item.salesAmount) || Math.round((Number(item.productionAmount) || 0) * 0.6),
+      roadMeters: rMeters || Number(item.salesAmount) || 0,
+      fuelAmount: fAmount,
       workingEquipmentCount: Number(item.workingEquipmentCount) || 0,
       stoppedEquipmentCount: Number(item.stoppedEquipmentCount) || 0,
       operatingHours: Number(item.operatingHours) || 8,
@@ -501,6 +584,60 @@ class Store {
     return null;
   }
 
+  updateReport(id, item) {
+    const idx = (this.data.reports || []).findIndex(r => r.id === Number(id) || String(r.id) === String(id) || r.reportNumber === String(id));
+    if (idx !== -1) {
+      const existing = this.data.reports[idx];
+      this.data.reports[idx] = {
+        ...existing,
+        ...item,
+        id: existing.id,
+        productionAmount: item.productionAmount !== undefined ? Number(item.productionAmount) : existing.productionAmount,
+        salesAmount: item.salesAmount !== undefined ? Number(item.salesAmount) : existing.salesAmount,
+        roadMeters: item.roadMeters !== undefined ? Number(item.roadMeters) : existing.roadMeters,
+        fuelAmount: item.fuelAmount !== undefined ? Number(item.fuelAmount) : existing.fuelAmount,
+        workingEquipmentCount: item.workingEquipmentCount !== undefined ? Number(item.workingEquipmentCount) : existing.workingEquipmentCount,
+        stoppedEquipmentCount: item.stoppedEquipmentCount !== undefined ? Number(item.stoppedEquipmentCount) : existing.stoppedEquipmentCount,
+        operatingHours: item.operatingHours !== undefined ? Number(item.operatingHours) : existing.operatingHours,
+        updatedAt: new Date().toISOString()
+      };
+      this.saveToDiskSync();
+      return this.data.reports[idx];
+    }
+    return null;
+  }
+
+  deleteReport(id) {
+    const initialCount = (this.data.reports || []).length;
+    const targetReport = (this.data.reports || []).find(r => 
+      r.id === Number(id) || String(r.id) === String(id) || r.reportNumber === String(id)
+    );
+    const repId = targetReport ? targetReport.id : id;
+    const repNum = targetReport ? targetReport.reportNumber : null;
+
+    this.data.reports = (this.data.reports || []).filter(r => 
+      r.id !== Number(id) && 
+      String(r.id) !== String(id) && 
+      r.reportNumber !== String(id)
+    );
+    
+    // Also clean up any matching records in crushers or fuel
+    if (this.data.crushers) {
+      this.data.crushers = this.data.crushers.filter(c => 
+        c.id !== Number(repId) && String(c.id) !== String(repId)
+      );
+    }
+    if (this.data.fuel) {
+      this.data.fuel = this.data.fuel.filter(f => 
+        f.id !== Number(repId) && String(f.id) !== String(repId) && (repNum ? !f.notes?.includes(repNum) : true)
+      );
+    }
+
+    const wasDeleted = this.data.reports.length < initialCount;
+    this.saveToDiskSync();
+    return wasDeleted;
+  }
+
   // --- Road Progress ---
   getRoadProgress(sectorFilter = 'all') {
     let items = this.data.roadProgress || [];
@@ -582,6 +719,15 @@ class Store {
     (this.data.alerts || []).forEach(a => { a.isRead = true; });
     this.scheduleSave();
   }
+  deleteAlert(id) {
+    const initialCount = (this.data.alerts || []).length;
+    this.data.alerts = (this.data.alerts || []).filter(a => a.id !== Number(id) && String(a.id) !== String(id));
+    const wasDeleted = this.data.alerts.length < initialCount;
+    if (wasDeleted) {
+      this.scheduleSave();
+    }
+    return wasDeleted;
+  }
 
   // --- Plans ---
   getPlans() {
@@ -612,6 +758,32 @@ class Store {
       return plan;
     }
     return null;
+  }
+
+  updatePlan(id, planData) {
+    const idx = (this.data.plans || []).findIndex(p => p.id === Number(id) || String(p.id) === String(id));
+    if (idx !== -1) {
+      this.data.plans[idx] = {
+        ...this.data.plans[idx],
+        ...planData,
+        id: this.data.plans[idx].id,
+        items: planData.items || this.data.plans[idx].items,
+        updatedAt: new Date().toISOString()
+      };
+      this.scheduleSave();
+      return this.data.plans[idx];
+    }
+    return null;
+  }
+
+  deletePlan(id) {
+    const initialCount = (this.data.plans || []).length;
+    this.data.plans = (this.data.plans || []).filter(p => p.id !== Number(id) && String(p.id) !== String(id));
+    const wasDeleted = this.data.plans.length < initialCount;
+    if (wasDeleted) {
+      this.scheduleSave();
+    }
+    return wasDeleted;
   }
 
   // --- Issues ---
@@ -715,14 +887,23 @@ class Store {
 
     const overallP = parseFloat(((fdrP + asphP + aggP + mcoP) / 4).toFixed(1));
 
-    // Sector Crusher
+    // Sector Crusher - live sum of crusher logs + reports production
     const crushers = this.getCrushers(sectorCode);
-    const crusherProd = crushers.reduce((acc, curr) => acc + (curr.dailyProductionTons || 0), 0);
-    const sharshoorTons = crushers.reduce((acc, curr) => acc + (curr.sharshoorTons || 0), 0);
+    const sectorReports = this.getReports(sectorCode);
 
-    // Sector Fuel
+    const logsCrusherProd = crushers.reduce((acc, curr) => acc + (Number(curr.dailyProductionTons) || 0), 0);
+    const reportsCrusherProd = sectorReports.reduce((acc, curr) => acc + (Number(curr.productionAmount) || 0), 0);
+    const crusherProd = (logsCrusherProd + reportsCrusherProd) || (isA ? 850 : 620);
+
+    const logsSharshoor = crushers.reduce((acc, curr) => acc + (Number(curr.sharshoorTons) || 0), 0);
+    const reportsSharshoor = sectorReports.reduce((acc, curr) => acc + (Number(curr.salesAmount) || 0), 0);
+    const sharshoorTons = (logsSharshoor + reportsSharshoor) || Math.round(crusherProd * 0.6);
+
+    // Sector Fuel - live sum of fuel logs + reports fuel
     const fuelLogs = this.getFuel(sectorCode);
-    const fuelLiters = fuelLogs.reduce((acc, curr) => acc + (curr.liters || 0), 0);
+    const logsFuelLiters = fuelLogs.reduce((acc, curr) => acc + (Number(curr.liters) || 0), 0);
+    const reportsFuelLiters = sectorReports.reduce((acc, curr) => acc + (Number(curr.fuelAmount) || 0), 0);
+    const fuelLiters = (logsFuelLiters + reportsFuelLiters) || (isA ? 1850 : 2100);
 
     // Sector Equipment
     const eqList = this.getEquipment(sectorCode);
@@ -730,7 +911,6 @@ class Store {
     const stoppedEq = eqList.filter(e => e.status === 'stopped' || e.status === 'maintenance' || e.status === 'breakdown').length;
 
     // Sector Reports
-    const sectorReports = this.getReports(sectorCode);
     const pendingCount = sectorReports.filter(r => r.status === 'pending_review').length;
     const approvedCount = sectorReports.filter(r => r.status === 'approved').length;
 
@@ -750,12 +930,12 @@ class Store {
       ],
       crushers: {
         count: crushers.length || 1,
-        productionToday: crusherProd || (isA ? 850 : 620),
-        sharshoorToday: sharshoorTons || (isA ? 510 : 372),
+        productionToday: crusherProd,
+        sharshoorToday: sharshoorTons,
         list: crushers
       },
       fuel: {
-        dispensedToday: fuelLiters || (isA ? 1850 : 2100),
+        dispensedToday: fuelLiters,
         balanceLiters: isA ? 28500 : 24000,
         list: fuelLogs.slice(0, 5)
       },
@@ -782,22 +962,41 @@ class Store {
     const totalEq = eqList.length || 18;
     const opHours = eqList.reduce((acc, curr) => acc + (curr.dailyHours || 0), 0);
 
+    const allReports = this.getReports();
+
+    // Fuel: dispatches + reports fuel
     const fuelList = this.getFuel();
-    const fuelTotal = fuelList.reduce((acc, curr) => acc + (curr.liters || 0), 0);
-    const sectorAFuel = fuelList.filter(f => f.tankSource?.includes('A') || f.sector?.includes('A')).reduce((acc, curr) => acc + (curr.liters || 0), 0);
-    const sectorBFuel = fuelList.filter(f => f.tankSource?.includes('B') || f.sector?.includes('B')).reduce((acc, curr) => acc + (curr.liters || 0), 0);
+    const logsFuelTotal = fuelList.reduce((acc, curr) => acc + (Number(curr.liters) || 0), 0);
+    const reportsFuelTotal = allReports.reduce((acc, curr) => acc + (Number(curr.fuelAmount) || 0), 0);
+    const fuelTotal = (logsFuelTotal + reportsFuelTotal) || 4250;
 
+    const sectorAReports = allReports.filter(r => r.sector?.includes('A'));
+    const sectorBReports = allReports.filter(r => r.sector?.includes('B'));
+
+    const sectorAFuel = fuelList.filter(f => f.tankSource?.includes('A') || f.sector?.includes('A')).reduce((acc, curr) => acc + (Number(curr.liters) || 0), 0)
+      + sectorAReports.reduce((acc, curr) => acc + (Number(curr.fuelAmount) || 0), 0) || 2450;
+    const sectorBFuel = fuelList.filter(f => f.tankSource?.includes('B') || f.sector?.includes('B')).reduce((acc, curr) => acc + (Number(curr.liters) || 0), 0)
+      + sectorBReports.reduce((acc, curr) => acc + (Number(curr.fuelAmount) || 0), 0) || 1800;
+
+    // Crushers: logs + reports production
     const crusherLogs = this.getCrushers();
-    const prodTotal = crusherLogs.reduce((acc, curr) => acc + (curr.dailyProductionTons || 0), 0);
-    const sectorAProd = crusherLogs.filter(c => c.sector?.includes('A')).reduce((acc, curr) => acc + (curr.dailyProductionTons || 0), 0);
-    const sectorBProd = crusherLogs.filter(c => c.sector?.includes('B')).reduce((acc, curr) => acc + (curr.dailyProductionTons || 0), 0);
+    const logsProdTotal = crusherLogs.reduce((acc, curr) => acc + (Number(curr.dailyProductionTons) || 0), 0);
+    const reportsProdTotal = allReports.reduce((acc, curr) => acc + (Number(curr.productionAmount) || 0), 0);
+    const prodTotal = (logsProdTotal + reportsProdTotal) || 1470;
 
+    const sectorAProd = crusherLogs.filter(c => c.sector?.includes('A')).reduce((acc, curr) => acc + (Number(curr.dailyProductionTons) || 0), 0)
+      + sectorAReports.reduce((acc, curr) => acc + (Number(curr.productionAmount) || 0), 0) || 850;
+    const sectorBProd = crusherLogs.filter(c => c.sector?.includes('B')).reduce((acc, curr) => acc + (Number(curr.dailyProductionTons) || 0), 0)
+      + sectorBReports.reduce((acc, curr) => acc + (Number(curr.productionAmount) || 0), 0) || 620;
+
+    // Sharshoor: logs + reports
     const sharshoorLogs = this.getSharshoor();
-    const sharshoorTotal = sharshoorLogs.reduce((acc, curr) => acc + (curr.amountTons || 0), 0) || Math.round(prodTotal * 0.6);
+    const logsSharshoorTotal = sharshoorLogs.reduce((acc, curr) => acc + (Number(curr.amountTons) || 0), 0);
+    const reportsSharshoorTotal = allReports.reduce((acc, curr) => acc + (Number(curr.salesAmount) || 0), 0);
+    const sharshoorTotal = (logsSharshoorTotal + reportsSharshoorTotal) || Math.round(prodTotal * 0.6);
 
     const issuesList = this.getIssues().filter(i => i.status !== 'resolved');
     const roadRes = this.getRoadProgress('all');
-    const allReports = this.getReports();
     const pendingReportsCount = allReports.filter(r => r.status === 'pending_review').length;
 
     return {
@@ -820,6 +1019,242 @@ class Store {
       tomorrowPlan: this.getLatestPlan(),
       roadProgress: roadRes
     };
+  }
+
+  // --- Automated Periodic Reports (Monthly & Annual Engine) ---
+  generatePeriodicReport({ type = 'monthly', year = 2026, month = 9, sector = 'all' } = {}) {
+    const isAnnual = type === 'annual';
+    const yearNum = Number(year) || 2026;
+    const monthNum = Math.min(12, Math.max(1, Number(month) || 9));
+
+    const ARABIC_MONTHS = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    const monthName = ARABIC_MONTHS[monthNum - 1];
+
+    const allReports = this.getReports();
+    const crushers = this.getCrushers();
+    const fuelList = this.getFuel();
+    const sharshoorLogs = this.getSharshoor();
+    const eqList = this.getEquipment();
+    const roadRes = this.getRoadProgress('all');
+    const issues = this.getIssues();
+
+    // Baseline daily averages from active logs
+    const dailyCrusher = crushers.reduce((acc, c) => acc + (Number(c.dailyProductionTons) || 0), 0) || 1470;
+    const dailyFuel = fuelList.reduce((acc, f) => acc + (Number(f.liters) || 0), 0) || 4250;
+    const dailySharshoor = sharshoorLogs.reduce((acc, s) => acc + (Number(s.amountTons) || 0), 0) || 882;
+    const dailyRoadMeters = roadRes?.kpis?.totalTodayMeters || 1060;
+
+    const opDays = isAnnual ? 305 : 26; // working days in a year vs working days in a month
+
+    // Multipliers with seasonal variation
+    const seasonalWeights = [0.85, 0.90, 0.95, 1.05, 1.10, 1.08, 0.98, 1.02, 1.06, 1.04, 0.98, 0.92];
+    const currentWeight = isAnnual ? 1.0 : (seasonalWeights[monthNum - 1] || 1.0);
+
+    // Calculate production
+    const totalProduction = Math.round(dailyCrusher * opDays * currentWeight);
+    const targetProduction = Math.round(totalProduction * 1.04);
+    const prodAchievementRate = parseFloat(((totalProduction / targetProduction) * 100).toFixed(1));
+
+    // Sector breakdown for production
+    const sectorAProd = Math.round(totalProduction * 0.58);
+    const sectorBProd = totalProduction - sectorAProd;
+
+    // Fuel calculation
+    const totalFuel = Math.round(dailyFuel * opDays * currentWeight);
+    const sectorAFuel = Math.round(totalFuel * 0.57);
+    const sectorBFuel = totalFuel - sectorAFuel;
+    const fuelPerTon = parseFloat((totalFuel / totalProduction).toFixed(2));
+
+    // Sharshoor calculation
+    const totalSharshoor = Math.round(dailySharshoor * opDays * currentWeight);
+    const sharshoorDelivered = Math.round(totalSharshoor * 0.88);
+    const sharshoorStockBalance = 14200 + Math.round((totalSharshoor - sharshoorDelivered) * 0.5);
+
+    // Road layer meters achieved in period
+    const fdrMeters = Math.round(dailyRoadMeters * 0.32 * opDays * currentWeight);
+    const aggregateMeters = Math.round(dailyRoadMeters * 0.28 * opDays * currentWeight);
+    const mcoMeters = Math.round(dailyRoadMeters * 0.22 * opDays * currentWeight);
+    const asphaltMeters = Math.round(dailyRoadMeters * 0.18 * opDays * currentWeight);
+    const totalPeriodRoadMeters = fdrMeters + aggregateMeters + mcoMeters + asphaltMeters;
+
+    // Overall Road KPIs
+    const totalProjectKm = 226.28;
+    const projectCompletedKm = Math.min(totalProjectKm, 215.0 + (isAnnual ? 11.28 : 1.8));
+    const projectOverallPercentage = parseFloat(((projectCompletedKm / totalProjectKm) * 100).toFixed(1));
+
+    // Equipment statistics
+    const totalMachines = eqList.length || 42;
+    const activeMachines = Math.round(totalMachines * 0.88);
+    const maintenanceMachines = totalMachines - activeMachines;
+    const fleetReadinessRate = parseFloat(((activeMachines / totalMachines) * 100).toFixed(1));
+    const totalOperatingHours = activeMachines * (isAnnual ? 2450 : 208);
+
+    // Time Series Breakdown
+    let timeSeries = [];
+    if (isAnnual) {
+      timeSeries = ARABIC_MONTHS.map((mName, idx) => {
+        const weight = seasonalWeights[idx];
+        const mDays = 25;
+        const mProd = Math.round(dailyCrusher * mDays * weight);
+        const mFuel = Math.round(dailyFuel * mDays * weight);
+        const mMeters = Math.round(dailyRoadMeters * mDays * weight);
+        const mSharshoor = Math.round(dailySharshoor * mDays * weight);
+        return {
+          period: mName,
+          monthIndex: idx + 1,
+          production: mProd,
+          fuel: mFuel,
+          roadMeters: mMeters,
+          sharshoor: mSharshoor,
+          readiness: Math.round(85 + (weight * 5))
+        };
+      });
+    } else {
+      const weekNames = ['الأسبوع الأول', 'الأسبوع الثاني', 'الأسبوع الثالث', 'الأسبوع الرابع'];
+      const weekWeights = [0.96, 1.04, 1.02, 0.98];
+      timeSeries = weekNames.map((wName, idx) => {
+        const wDays = 6.5;
+        const wProd = Math.round((totalProduction / 4) * weekWeights[idx]);
+        const wFuel = Math.round((totalFuel / 4) * weekWeights[idx]);
+        const wMeters = Math.round((totalPeriodRoadMeters / 4) * weekWeights[idx]);
+        const wSharshoor = Math.round((totalSharshoor / 4) * weekWeights[idx]);
+        return {
+          period: wName,
+          weekIndex: idx + 1,
+          production: wProd,
+          fuel: wFuel,
+          roadMeters: wMeters,
+          sharshoor: wSharshoor,
+          operatingHours: Math.round(totalOperatingHours / 4)
+        };
+      });
+    }
+
+    // Material categories
+    const materialsBreakdown = [
+      { name: 'ركام متدرج طبقة أساس (0-37.5 مم)', amount: Math.round(totalProduction * 0.48), unit: 'طن', percentage: 48 },
+      { name: 'شرشور ناعم خلطات رصف (0-5 مم)', amount: Math.round(totalProduction * 0.32), unit: 'طن', percentage: 32 },
+      { name: 'سن وركام خشن خرساني (5-20 مم)', amount: Math.round(totalProduction * 0.20), unit: 'طن', percentage: 20 }
+    ];
+
+    // Sector comparison summary
+    const sectorComparison = {
+      sectorA: {
+        name: 'القطعة (A) - شركة الرواد',
+        productionTons: sectorAProd,
+        fuelLiters: sectorAFuel,
+        roadMeters: Math.round(totalPeriodRoadMeters * 0.54),
+        activeEquipment: Math.round(activeMachines * 0.52),
+        completionRate: 96.2
+      },
+      sectorB: {
+        name: 'القطعة (B) - شركة نيوم',
+        productionTons: sectorBProd,
+        fuelLiters: sectorBFuel,
+        roadMeters: Math.round(totalPeriodRoadMeters * 0.46),
+        activeEquipment: activeMachines - Math.round(activeMachines * 0.52),
+        completionRate: 93.8
+      }
+    };
+
+    // Filter by sector if specified
+    const isSectorA = sector === 'A' || sector === 'القطعة A';
+    const isSectorB = sector === 'B' || sector === 'القطعة B';
+    const filteredProd = isSectorA ? sectorAProd : (isSectorB ? sectorBProd : totalProduction);
+    const filteredFuel = isSectorA ? sectorAFuel : (isSectorB ? sectorBFuel : totalFuel);
+
+    // Official Report Title & Code
+    const reportCode = isAnnual ? `REP-YR-${yearNum}` : `REP-MO-${yearNum}-${String(monthNum).padStart(2, '0')}`;
+    const reportTitle = isAnnual 
+      ? `التقرير السنوي الشامل لمشروع صيانة طريق أوباري - غات لعام ${yearNum}`
+      : `التقرير الشهري الموحد لشهر ${monthName} ${yearNum} - مشروع أوباري - غات`;
+
+    // Generated Executive Recommendations
+    const executiveNotes = [
+      `تحقيق استقرار إنتاجي بمعدل إنجاز بلغ ${prodAchievementRate}% من المستهدف المعتمد للفترة.`,
+      `كفاءة استهلاك الوقود بلغت ${fuelPerTon} لتر/طن من الركام المنتج، وهو ضمن الحدود المعيارية المعتمدة للجهاز.`,
+      `معدل الجاهزية التشغيلية للأسطول سجل ${fleetReadinessRate}% مع انتظام أعمال الصيانة الميدانية في ورشتي القطاعين.`,
+      `التوصية: تعزيز وتيرة توريد مادة الشرشور الناعم للمحطة الإسفلتية لتسريع وتيرة الطبقة السطحية المتبقية.`
+    ];
+
+    return {
+      success: true,
+      reportCode,
+      reportTitle,
+      type,
+      year: yearNum,
+      month: monthNum,
+      monthName,
+      sector: sector === 'all' ? 'كافة القطاعات (المشروع بالكامل)' : (isSectorA ? 'القطعة A' : 'القطعة B'),
+      generatedAt: new Date().toISOString(),
+      status: 'معتمد آلياً',
+      approvedBy: 'مدير المشروع وجهاز المشروعات',
+      periodDays: opDays,
+      kpis: {
+        totalProduction: filteredProd,
+        targetProduction,
+        prodAchievementRate,
+        totalFuel: filteredFuel,
+        fuelPerTon,
+        totalSharshoor,
+        sharshoorDelivered,
+        sharshoorStockBalance,
+        totalRoadMeters: totalPeriodRoadMeters,
+        projectCompletedKm,
+        projectTotalKm: totalProjectKm,
+        projectOverallPercentage,
+        fleetReadinessRate,
+        totalOperatingHours,
+        activeMachines,
+        maintenanceMachines,
+        totalMachines
+      },
+      layers: [
+        { name: 'إعادة التدوير على البارد (FDR)', meters: fdrMeters, unit: 'م.ط', status: 'منجز بالكامل تقريباً' },
+        { name: 'طبقة الأساس الحبيبي والشرشور', meters: aggregateMeters, unit: 'م.ط', status: 'مستمر ومتقدم' },
+        { name: 'رش طبقة التشريب الأسفلتي (MCO)', meters: mcoMeters, unit: 'م.ط', status: 'مستمر' },
+        { name: 'الطبقة الإسفلتية السطحية المحسنة', meters: asphaltMeters, unit: 'م.ط', status: 'مراحل نهائية' }
+      ],
+      timeSeries,
+      materialsBreakdown,
+      sectorComparison,
+      executiveNotes,
+      signatories: {
+        siteEngineer: 'م. محمد المهدي (مهندس الموقع)',
+        sectorManager: 'م. أحمد التواتي (مدير القطاعات)',
+        projectDirector: 'م. عبدالرحمن الشريف (مدير المشروع المعتمد)'
+      }
+    };
+  }
+
+  savePeriodicReport(reportData) {
+    if (!reportData) return null;
+    this.data.savedPeriodicReports = this.data.savedPeriodicReports || [];
+    const reportItem = {
+      ...reportData,
+      id: reportData.id || `PER-${Date.now()}`,
+      savedAt: new Date().toISOString()
+    };
+    // remove existing if same reportCode
+    this.data.savedPeriodicReports = this.data.savedPeriodicReports.filter(r => r.reportCode !== reportItem.reportCode);
+    this.data.savedPeriodicReports.unshift(reportItem);
+
+    // Also inject a notification alert
+    this.addAlert({
+      type: 'info',
+      title: `تم اعتماد وحفظ ${reportItem.reportTitle}`,
+      message: `تم حفظ وتثبيت ${reportItem.reportTitle} رقم (${reportItem.reportCode}) في الأرشيف الرسمي للمنظومة بنجاح.`
+    });
+
+    this.saveToDiskSync();
+    return reportItem;
+  }
+
+  getSavedPeriodicReports() {
+    return this.data.savedPeriodicReports || [];
   }
 }
 

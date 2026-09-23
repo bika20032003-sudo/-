@@ -18,8 +18,7 @@ export default defineConfig({
             if (id.includes('jspdf') || id.includes('html2canvas')) return 'vendor-export';
             if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
             if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
-            return 'vendor-libs';
+            return 'vendor-core';
           }
         }
       }
@@ -28,6 +27,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
-    open: true
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
   }
 });

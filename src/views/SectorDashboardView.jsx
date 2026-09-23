@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  UploadCloud, CheckCircle2, Clock, AlertTriangle, 
-  FileText, Camera, RefreshCw, Eye, Check, Send, 
-  Sparkles, X, Shield, Lock, TrendingUp, Layers, 
+import {
+  UploadCloud, CheckCircle2, Clock, AlertTriangle,
+  FileText, Camera, RefreshCw, Eye, Check, Send,
+  Sparkles, X, Shield, Lock, TrendingUp, Layers,
   Factory, Fuel, Truck, Milestone, Calendar, ChevronRight,
   Printer, Plus, Download
 } from 'lucide-react';
@@ -74,14 +74,14 @@ export const SectorDashboardView = ({ currentUser }) => {
       } else if (Array.isArray(res)) {
         list = res;
       }
-      
+
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
         const matchingLocal = local.filter(r => (r.sectorCode === sectorCode || (r.sector || '').includes(sectorCode)));
         const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
         const newOnes = matchingLocal.filter(r => !existingIds.has(String(r.id || r.reportNumber)));
         list = [...newOnes, ...list];
-      } catch (e) {}
+      } catch (e) { }
 
       setReports(list);
     } catch (err) {
@@ -121,7 +121,9 @@ export const SectorDashboardView = ({ currentUser }) => {
         crusherName: `موقع ${sectorName}`,
         materialName: `${reportType} - ${sectorName}`,
         productionAmount: Number(productionAmount) || 0,
-        salesAmount: Number(todayMeters) || 0,
+        salesAmount: Math.round((Number(productionAmount) || 0) * 0.6) || Number(todayMeters) || 0,
+        roadMeters: Number(todayMeters) || 0,
+        fuelAmount: Number(fuelAmount) || 0,
         imageUrl: attachedFile,
         fileName,
         reportType,
@@ -170,11 +172,11 @@ export const SectorDashboardView = ({ currentUser }) => {
 
   return (
     <div className="sector-portal-container" style={{ maxWidth: '1360px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '3.5rem' }}>
-      
+
       {/* ================= 1. Top Executive Banner ================= */}
       <div style={{
-        background: isSectorA 
-          ? 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)' 
+        background: isSectorA
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)'
           : 'linear-gradient(135deg, #0f172a 0%, #7c2d12 50%, #0f172a 100%)',
         borderRadius: '16px',
         padding: '1.75rem 2.25rem',
@@ -371,7 +373,7 @@ export const SectorDashboardView = ({ currentUser }) => {
 
       {/* ================= 2. Sector KPI Operational Cards ================= */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
-        
+
         {/* Card 1: Today Paving Meters */}
         <div style={{
           background: '#ffffff',
@@ -564,7 +566,7 @@ export const SectorDashboardView = ({ currentUser }) => {
               قم بإدخال بيانات اليومية الميدانية للقطاع وارفق صورة الوثيقة؛ سيتم توجيه التقرير مباشرة إلى مدير القطاعات للاعتماد الرسمي
             </p>
           </div>
-          
+
           <div style={{
             background: isSectorA ? '#eff6ff' : '#fff7ed',
             color: isSectorA ? '#1d4ed8' : '#c2410c',

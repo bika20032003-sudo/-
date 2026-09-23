@@ -45,6 +45,24 @@ export const DailyAnalysisView: React.FC<DailyAnalysisViewProps> = ({ onNavigate
 
   useEffect(() => {
     fetchAnalysis();
+
+    const handleLiveUpdate = () => {
+      fetchAnalysis();
+    };
+
+    window.addEventListener('report-created', handleLiveUpdate);
+    window.addEventListener('report-updated', handleLiveUpdate);
+    window.addEventListener('report-deleted', handleLiveUpdate);
+    window.addEventListener('fuel-dispensed', handleLiveUpdate);
+    window.addEventListener('production-recorded', handleLiveUpdate);
+
+    return () => {
+      window.removeEventListener('report-created', handleLiveUpdate);
+      window.removeEventListener('report-updated', handleLiveUpdate);
+      window.removeEventListener('report-deleted', handleLiveUpdate);
+      window.removeEventListener('fuel-dispensed', handleLiveUpdate);
+      window.removeEventListener('production-recorded', handleLiveUpdate);
+    };
   }, [selectedDate, selectedSector]);
 
   const handleResolveIssue = async (id: number) => {
@@ -80,7 +98,7 @@ export const DailyAnalysisView: React.FC<DailyAnalysisViewProps> = ({ onNavigate
             تحليل اليومية والأداء التشغيلي الميداني
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', marginTop: '0.2rem' }}>
-            مقارنة المؤشرات مع آخر 7 أيام، رصد الانحرافات، وتصنيف المشاكل لدعم قرار خطة الغد
+            مقارنة المؤشرات مع آخر 7 أيام، رصد الانحرافات، ودعم قرار خطة الغد
           </p>
         </div>
 
@@ -265,81 +283,6 @@ export const DailyAnalysisView: React.FC<DailyAnalysisViewProps> = ({ onNavigate
             <span className="kpi-green-badge">مستقر</span>
           </div>
         </div>
-      </div>
-
-      {/* Classified Issues and Stoppages Table */}
-      <div className="dashboard-white-card" style={{ padding: '1.5rem', marginBottom: '1.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-          <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
-              سجل تصنيف المشاكل والأعطال المستخرجة
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.15rem' }}>
-              المشاكل التشغيلية المستخلصة آلياً من ملاحظات التقارير الميدانية
-            </p>
-          </div>
-        </div>
-
-        {analysisData?.issues && analysisData.issues.length > 0 ? (
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>التاريخ والقطعة</th>
-                <th>التصنيف</th>
-                <th>عنوان المشكلة</th>
-                <th>تفاصيل البيان</th>
-                <th>الإجراء المقترح لخطة الغد</th>
-                <th>الحالة</th>
-                <th>الإجراء</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analysisData.issues.map((iss: any) => (
-                <tr key={iss.id}>
-                  <td>
-                    <div>{iss.date?.split('T')[0]}</div>
-                    <span className="sector-tag" style={{ fontSize: '0.72rem' }}>{iss.sector}</span>
-                  </td>
-                  <td>
-                    <span style={{ 
-                      padding: '0.2rem 0.55rem', 
-                      borderRadius: '6px', 
-                      fontSize: '0.78rem', 
-                      fontWeight: 800,
-                      background: iss.category === 'عطل' ? '#fee2e2' : iss.category === 'صيانة' ? '#fef3c7' : '#eff6ff',
-                      color: iss.category === 'عطل' ? '#dc2626' : iss.category === 'صيانة' ? '#d97706' : '#2563eb'
-                    }}>
-                      {iss.category}
-                    </span>
-                  </td>
-                  <td><strong>{iss.title}</strong></td>
-                  <td style={{ fontSize: '0.82rem', color: '#475569' }}>{iss.description}</td>
-                  <td style={{ fontSize: '0.82rem', color: '#047857', fontWeight: 600 }}>{iss.suggestedAction || 'مراجعة وتضمين في خطة الغد'}</td>
-                  <td>
-                    <span className={`status-pill ${iss.status === 'resolved' ? 'approved' : 'pending'}`}>
-                      {iss.status === 'resolved' ? 'تمت المعالجة' : 'مفتوحة'}
-                    </span>
-                  </td>
-                  <td>
-                    {iss.status !== 'resolved' && (
-                      <button 
-                        onClick={() => handleResolveIssue(iss.id)}
-                        style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', padding: '0.3rem 0.6rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
-                      >
-                        إغلاق المشكلة
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b' }}>
-            <CheckCircle2 size={36} color="#16a34a" style={{ margin: '0 auto 0.4rem', opacity: 0.5 }} />
-            <p style={{ fontSize: '0.85rem' }}>كافة العمليات منتظمة ولا توجد أعطال أو مشاكل مسجلة لليومية المحددة.</p>
-          </div>
-        )}
       </div>
     </div>
   );

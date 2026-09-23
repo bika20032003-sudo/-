@@ -15,6 +15,7 @@ import {
   MapPin
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { fastFetch, clearApiCache } from '../utils/apiCache';
 
 export const DailyReportsView: React.FC = () => {
   const [reports, setReports] = useState<any[]>([]);
@@ -39,11 +40,25 @@ export const DailyReportsView: React.FC = () => {
   const fetchReports = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/api/reports');
-      const data = await response.json();
-      if (data.success && data.reports) {
-        setReports(data.reports);
+      const data: any = await fastFetch('http://localhost:5000/api/reports');
+      let list = data && data.reports ? data.reports : (Array.isArray(data) ? data : []);
+
+      try {
+        const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const existingIds = new Set(list.map((r: any) => String(r.id || r.reportNumber)));
+        const newOnes = local.filter((r: any) => 
+          !deletedSet.has(String(r.id)) && 
+          !deletedSet.has(String(r.reportNumber)) && 
+          !existingIds.has(String(r.id || r.reportNumber))
+        );
+        list = [...newOnes, ...list];
+        list = list.filter((r: any) => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+      } catch (storageErr) {
+        console.warn('Storage error in DailyReportsView.tsx:', storageErr);
       }
+
+      setReports(list);
     } catch (error) {
       console.error('Failed to fetch daily reports', error);
     } finally {
@@ -53,6 +68,18 @@ export const DailyReportsView: React.FC = () => {
 
   useEffect(() => {
     fetchReports();
+    const handleSync = () => {
+      fetchReports();
+    };
+    window.addEventListener('report-created', handleSync);
+    window.addEventListener('report-updated', handleSync);
+    window.addEventListener('report-deleted', handleSync);
+
+    return () => {
+      window.removeEventListener('report-created', handleSync);
+      window.removeEventListener('report-updated', handleSync);
+      window.removeEventListener('report-deleted', handleSync);
+    };
   }, []);
 
   // Handle Edit Submit
@@ -61,38 +88,84 @@ export const DailyReportsView: React.FC = () => {
     if (!editModalReport) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/reports/${editModalReport.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFormData)
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setReports(reports.map(r => r.id === editModalReport.id ? { ...r, ...editFormData } : r));
-        setEditModalReport(null);
-      } else {
-        alert('حدث خطأ أثناء تعديل التقرير.');
+      const targetId = editModalReport.id;
+      const targetNum = editModalReport.reportNumber;
+      try {
+        await fetch(`http://localhost:5000/api/reports/${targetId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editFormData)
+        });
+      } catch (err) {
+        console.warn('API update offline, persisting locally');
       }
+
+      setReports(reports.map((r: any) => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...editFormData } : r));
+
+      try {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const updatedLocal = local.map((r: any) => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...editFormData } : r);
+        localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+      } catch (storageErr) {}
+
+      window.dispatchEvent(new CustomEvent('report-updated', { detail: { id: targetId, ...editFormData } }));
+      setEditModalReport(null);
     } catch (error) {
-      alert('تعذر الاتصال بالخادم.');
+      alert('تعذر تحديث بيانات التقرير.');
     }
   };
 
   // Handle Delete
-  const handleDeleteReport = async (id: number, title: string) => {
-    if (!window.confirm(`هل أنت متأكد من حذف التقرير (${title}) نهائياً؟`)) return;
+  const handleDeleteReport = async (id: any, reportNumber: any, title?: string) => {
+    const targetId = String(id || '');
+    const targetNum = String(reportNumber || '');
+    const displayName = targetNum ? `${targetNum} (${title || ''})` : (title || targetId);
+
+    if (!window.confirm(`هل أنت متأكد من حذف التقرير (${displayName}) نهائياً؟`)) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/reports/${id}`, { method: 'DELETE' });
-      const data = await response.json();
-      if (data.success) {
-        setReports(reports.filter(r => r.id !== id));
-      } else {
-        alert('حدث خطأ أثناء حذف التقرير.');
+      // 1. Remove from state immediately
+      setReports((prev: any[]) => prev.filter(r => {
+        const rId = String(r.id || '');
+        const rNum = String(r.reportNumber || '');
+        if (targetId && rId === targetId) return false;
+        if (targetNum && rNum === targetNum) return false;
+        if (targetNum && rId === targetNum) return false;
+        if (targetId && rNum === targetId) return false;
+        return true;
+      }));
+
+      // 2. Persist in localStorage
+      try {
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
+        if (targetNum && !deleted.includes(targetNum)) deleted.push(targetNum);
+        localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const updatedLocal = local.filter((r: any) => {
+          const rId = String(r.id || '');
+          const rNum = String(r.reportNumber || '');
+          return rId !== targetId && rNum !== targetNum && (targetNum ? rId !== targetNum : true) && (targetId ? rNum !== targetId : true);
+        });
+        localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+      } catch (storageErr) {}
+
+      // 3. Clear Cache
+      clearApiCache();
+
+      // 4. Send API DELETE
+      const delParam = targetId || targetNum;
+      if (delParam) {
+        try {
+          await fetch(`http://localhost:5000/api/reports/${delParam}`, { method: 'DELETE' });
+        } catch (err) {}
       }
+
+      // 5. Global sync event
+      window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
     } catch (error) {
-      alert('تعذر الاتصال بالخادم.');
+      alert('حدث خطأ أثناء حذف التقرير.');
     }
   };
 
@@ -245,7 +318,7 @@ export const DailyReportsView: React.FC = () => {
 
                       {/* Delete Button */}
                       <button 
-                        onClick={() => handleDeleteReport(r.id, r.materialName)}
+                        onClick={() => handleDeleteReport(r.id, r.reportNumber, r.materialName || r.reportType)}
                         style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', padding: '0.35rem 0.6rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.78rem', fontWeight: 700 }}
                         title="حذف التقرير"
                       >

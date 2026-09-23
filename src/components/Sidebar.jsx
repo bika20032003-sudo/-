@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Home, Milestone, UploadCloud, FileText, 
-  Layers, CalendarDays, Truck, Factory, 
+  Layers, CalendarDays, CalendarRange, Truck, Factory, 
   Mountain, Fuel, Bell, Users, LogOut, ShieldCheck, Plus
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
@@ -29,6 +29,7 @@ export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobi
 
     const menuItems = [
         { id: 'dashboard', label: 'الرئيسية (لوحة التحكم العامة)', icon: Home },
+        { id: 'periodic-reports', label: 'التقارير الدورية (شهرية وسنوية)', icon: CalendarRange, badge: 'تلقائي' },
         { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: Plus },
         { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText, badge: pendingReportsCount > 0 ? `${pendingReportsCount} قيد الاعتماد` : undefined },
         { id: 'daily-reports', label: 'اعتماد ومراجعة التقارير', icon: ShieldCheck },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Milestone, RefreshCw, FileSpreadsheet, MapPin, Edit3, Check, X, Layers } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { fastFetch } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 
 export const RoadProgressView = ({ onNavigateTab }) => {
     const [projectData, setProjectData] = useState(null);
@@ -41,8 +41,9 @@ export const RoadProgressView = ({ onNavigateTab }) => {
                     notes: editNotes
                 })
             });
-            if (data.success) {
+            if (data && data.success) {
                 setEditingId(null);
+                clearApiCache();
                 fetchRoadProgress();
             }
         }

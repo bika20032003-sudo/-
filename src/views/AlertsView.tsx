@@ -41,9 +41,13 @@ export const AlertsView: React.FC = () => {
     }
   };
 
-  const clearAlert = (id: string) => {
-    // In a real app we'd delete it, for now just filter locally or implement a delete endpoint
-    setAlerts(alerts.filter(a => a.id !== id));
+  const clearAlert = async (id: any) => {
+    try {
+      await fetch(`http://localhost:5000/api/alerts/${id}`, { method: 'DELETE' });
+    } catch (error) {
+      console.warn('Offline, deleting alert locally');
+    }
+    setAlerts(prev => prev.filter(a => a.id !== id));
   };
 
   return (
