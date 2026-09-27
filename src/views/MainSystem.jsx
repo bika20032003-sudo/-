@@ -3,6 +3,7 @@ import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
 
 import { DashboardView } from './DashboardView';
+import { SectorDashboardView } from './SectorDashboardView';
 import { UploadReportsView } from './UploadReportsView';
 import { RoadProgressView } from './RoadProgressView';
 import { DailyAnalysisView } from './DailyAnalysisView';
@@ -20,8 +21,27 @@ import { PeriodicReportsView } from './PeriodicReportsView';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 
+/**
+ * Determines if the user is a Sector Supervisor (A or B)
+ * Sector supervisors get a restricted, sector-specific dashboard
+ */
+function isSectorSupervisor(user) {
+    if (!user || !user.role) return false;
+    return user.role.includes('مشرف القطاع');
+}
+
+/**
+ * Determines if the user is an admin-level user (مدير المشروع or مدير القطاعات)
+ */
+function isAdminUser(user) {
+    if (!user || !user.role) return false;
+    return user.role.includes('مدير المشروع') || user.role.includes('مدير القطاعات');
+}
+
 export const MainSystem = ({ onLogout, currentUser }) => {
-    const [activeTab, setActiveTab] = useState('dashboard');
+    // Sector supervisors default to their sector dashboard
+    const defaultTab = isSectorSupervisor(currentUser) ? 'sector-dashboard' : 'dashboard';
+    const [activeTab, setActiveTab] = useState(defaultTab);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
@@ -38,6 +58,7 @@ export const MainSystem = ({ onLogout, currentUser }) => {
 
     const tabTitles = {
         'dashboard': 'لوحة التحكم والمتابعة التنفيذية الشاملة',
+        'sector-dashboard': `لوحة العمليات الميدانية - ${currentUser?.role || 'القطاع'}`,
         'periodic-reports': 'مركز التقارير الدورية (الشهرية والسنوية التلقائية)',
         'reports-archive': 'أرشيف تقارير المشروع ونظام الطباعة',
         'create-report': 'إنشاء تقرير ميداني جديد',
@@ -79,13 +100,18 @@ export const MainSystem = ({ onLogout, currentUser }) => {
         <Navbar 
           currentTabName={tabTitles[activeTab] || 'لوحة التحكم'} 
           onBellClick={() => setActiveTab('alerts')} 
-          onProfileClick={() => setActiveTab('users')}
+          onProfileClick={() => isAdminUser(currentUser) ? setActiveTab('users') : null}
           currentUser={currentUser}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
         />
 
         <main className="custom-page-container">
+          {/* Admin Dashboard (مدير المشروع + مدير القطاعات) */}
           {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
+
+          {/* Sector-Specific Dashboard (مشرف القطاع A / B) */}
+          {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} />}
+
           {activeTab === 'periodic-reports' && <PeriodicReportsView currentUser={currentUser} />}
           {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} onNavigateTab={handleTabChange} />}
           {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
@@ -98,7 +124,7 @@ export const MainSystem = ({ onLogout, currentUser }) => {
           {activeTab === 'sharshoor' && <SharshoorView />}
           {activeTab === 'fuel' && <FuelView />}
           {activeTab === 'equipment' && <EquipmentView />}
-          {activeTab === 'users' && <UsersView />}
+          {activeTab === 'users' && <UsersView currentUser={currentUser} />}
           {activeTab === 'alerts' && <AlertsView />}
         </main>
       </div>
