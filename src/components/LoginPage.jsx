@@ -124,119 +124,66 @@ export function deleteCustomUser(userId) {
 }
 
 export const LoginPage = ({ onLoginSuccess }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [loadingRole, setLoadingRole] = useState(null);
-    const [showCustomLogin, setShowCustomLogin] = useState(false);
-    const [customName, setCustomName] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
 
-    const systemUsers = getSystemUsers();
+    const handleLogin = (e) => {
+        e.preventDefault();
+        setErrorMsg('');
+        const trimmedUser = username.trim();
+        const trimmedPass = password.trim();
 
-    // Default 4 main roles for instant direct login
-    const quickRoles = [
-      {
-        id: 1,
-        username: 'admin',
-        name: 'مدير المشروع',
-        role: 'مدير المشروع',
-        sector: 'all',
-        description: 'صلاحيات تنفيذية كاملة ولوحة المتابعة الشاملة',
-        badgeColor: '#2563eb',
-        bgHover: '#eff6ff',
-        borderHover: '#93c5fd',
-        icon: '🛡️'
-      },
-      {
-        id: 2,
-        username: 'admin_sectors',
-        name: 'مدير القطاعات',
-        role: 'مدير القطاعات',
-        sector: 'all',
-        description: 'إشراف ومتابعة كافة القطاعات واعتماد التقارير',
-        badgeColor: '#16a34a',
-        bgHover: '#f0fdf4',
-        borderHover: '#86efac',
-        icon: '🏢'
-      },
-      {
-        id: 3,
-        username: 'sector_a',
-        name: 'مشرف القطاع (A)',
-        role: 'مشرف القطاع (A)',
-        sector: 'القطعة A',
-        description: 'لوحة العمليات الميدانية والتقارير للقطعة A',
-        badgeColor: '#ea580c',
-        bgHover: '#fff7ed',
-        borderHover: '#fdba74',
-        icon: '🚧'
-      },
-      {
-        id: 4,
-        username: 'sector_b',
-        name: 'مشرف القطاع (B)',
-        role: 'مشرف القطاع (B)',
-        sector: 'القطعة B',
-        description: 'لوحة العمليات الميدانية والتقارير للقطعة B',
-        badgeColor: '#7c3aed',
-        bgHover: '#faf5ff',
-        borderHover: '#d8b4fe',
-        icon: '🚧'
-      }
-    ];
-
-    const handleRoleLogin = (roleItem) => {
-      setLoadingRole(roleItem.id);
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        setLoadingRole(null);
-        onLoginSuccess({
-          id: roleItem.id,
-          username: roleItem.username,
-          name: roleItem.name,
-          role: roleItem.role,
-          sector: roleItem.sector || 'all'
-        });
-      }, 250);
-    };
-
-    const handleCustomSubmit = (e) => {
-      e.preventDefault();
-      const trimmed = customName.trim();
-      if (!trimmed) {
-        setErrorMsg('يرجى إدخال اسم المستخدم أو الدور');
-        return;
-      }
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        const matched = systemUsers.find(
-          u => u.username.toLowerCase() === trimmed.toLowerCase() ||
-               u.name.toLowerCase().includes(trimmed.toLowerCase())
-        );
-        if (matched) {
-          onLoginSuccess({
-            id: matched.id,
-            username: matched.username,
-            name: matched.name,
-            role: matched.role,
-            sector: matched.sector || 'all'
-          });
-        } else {
-          onLoginSuccess({
-            id: Date.now(),
-            username: trimmed,
-            name: trimmed,
-            role: 'مدير المشروع',
-            sector: 'all'
-          });
+        if (!trimmedUser) {
+            setErrorMsg('يرجى إدخال اسم المستخدم');
+            return;
         }
-      }, 250);
+        if (!trimmedPass) {
+            setErrorMsg('يرجى إدخال كلمة المرور');
+            return;
+        }
+
+        setIsLoading(true);
+        setTimeout(() => {
+            const systemUsers = getSystemUsers();
+
+            // Find matching user by username or email or name
+            const matchedUser = systemUsers.find(
+              u => u.username.toLowerCase() === trimmedUser.toLowerCase() ||
+                   (u.email && u.email.toLowerCase() === trimmedUser.toLowerCase()) ||
+                   u.name.toLowerCase() === trimmedUser.toLowerCase()
+            );
+
+            if (!matchedUser) {
+                setErrorMsg('اسم المستخدم غير مسجل في النظام');
+                setIsLoading(false);
+                return;
+            }
+
+            // Validate password
+            if (matchedUser.password && matchedUser.password !== trimmedPass) {
+                setErrorMsg('كلمة المرور غير صحيحة');
+                setIsLoading(false);
+                return;
+            }
+
+            // Success - pass user data with role and sector
+            setIsLoading(false);
+            onLoginSuccess({
+                id: matchedUser.id,
+                username: matchedUser.username,
+                name: matchedUser.name,
+                role: matchedUser.role,
+                sector: matchedUser.sector || 'all'
+            });
+        }, 300);
     };
 
     return (
       <div className="login-page-screen">
-        <div className="portal-wrapper" style={{ height: 'auto', minHeight: '560px', maxHeight: '92vh' }}>
+        <div className="portal-wrapper">
           {/* ================= Left Side: Visual Promo Banner ================= */}
           <div className="promo-column" style={{
               backgroundImage: `url('${import.meta.env.BASE_URL}road-work.jpg')`
@@ -273,193 +220,112 @@ export const LoginPage = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          {/* ================= Right Side: One-Click Role Selection ================= */}
-          <div className="login-column" style={{ padding: '2rem 2.5rem', overflowY: 'auto' }}>
+          {/* ================= Right Side: Login Card Form ================= */}
+          <div className="login-column">
             {/* Form Header with Logo */}
-            <div className="form-header" style={{ marginBottom: '1.25rem' }}>
-              <div className="form-logo-box" style={{ width: '48px', height: '48px', marginBottom: '0.75rem' }}>
+            <div className="form-header">
+              <div className="form-logo-box">
                 <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" className="form-logo-img"/>
               </div>
+
               <div className="form-brand">
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.25rem 0' }}>
-                  جهاز تنفيذ مشروعات المواصلات
-                </h2>
-                <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>
-                  بوابة تسجيل الدخول والمتابعة الميدانية
-                </p>
+                <h2>جهاز تنفيذ مشروعات المواصلات</h2>
+                <p>تسجيل الدخول إلى منظومة المتابعة</p>
               </div>
             </div>
 
+            <div className="form-divider"/>
+
             {/* Error Alert */}
             {errorMsg && (
-              <div className="alert-box error" style={{ marginBottom: '1rem' }}>
+              <div className="alert-box error">
                 <AlertCircle size={18}/>
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            {/* Main Action: Primary Instant Entry Button */}
-            <button
-              onClick={() => handleRoleLogin(quickRoles[0])}
-              disabled={isLoading}
-              className="submit-btn crimson"
-              style={{
-                width: '100%',
-                height: '48px',
-                fontSize: '0.95rem',
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.6rem',
-                marginBottom: '1.25rem',
-                boxShadow: '0 6px 18px rgba(185, 28, 28, 0.25)',
-                cursor: 'pointer'
-              }}
-            >
-              {isLoading && loadingRole === 1 ? (
-                <>
-                  <div className="spinner"/>
-                  <span>جاري الدخول...</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck size={20} />
-                  <span>الدخول المباشر للمنظومة (كامل الصلاحيات)</span>
-                </>
-              )}
-            </button>
-
-            {/* Section Subtitle */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '0.85rem'
-            }}>
-              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                أو اختر الدور الوظيفي للمتابعة المباشرة:
-              </span>
-              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-            </div>
-
-            {/* Role Cards Grid (No passwords, No username hassle) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem', marginBottom: '1.25rem' }}>
-              {quickRoles.map((roleItem) => (
-                <div
-                  key={roleItem.id}
-                  onClick={() => !isLoading && handleRoleLogin(roleItem)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem 1rem',
-                    background: '#ffffff',
-                    border: '1.5px solid #e2e8f0',
-                    borderRadius: '12px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = roleItem.borderHover;
-                    e.currentTarget.style.background = roleItem.bgHover;
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.06)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.background = '#ffffff';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.03)';
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '10px',
-                      background: `${roleItem.badgeColor}15`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.2rem'
-                    }}>
-                      {roleItem.icon}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1e293b' }}>
-                        {roleItem.name}
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.1rem' }}>
-                        {roleItem.description}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: roleItem.badgeColor,
-                    background: `${roleItem.badgeColor}12`,
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '8px',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {isLoading && loadingRole === roleItem.id ? 'جاري الدخول...' : 'دخول فوري ➔'}
-                  </span>
+            {/* Form Fields */}
+            <form onSubmit={handleLogin} style={{ marginTop: '0.5rem' }}>
+              <div className="form-group">
+                <label className="form-label">اسم المستخدم</label>
+                <div className="input-container">
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    value={username} 
+                    onChange={(e) => setUsername(e.target.value)} 
+                    placeholder="أدخل اسم المستخدم" 
+                    dir="ltr"
+                    autoComplete="username"
+                  />
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Optional Custom User Dropdown Toggle */}
-            <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setShowCustomLogin(!showCustomLogin)}
-                style={{
-                  background: 'none',
+              <div className="form-group">
+                <label className="form-label">كلمة المرور</label>
+                <div className="input-container">
+                  <input 
+                    type={showPassword ? 'text' : 'password'} 
+                    className="form-input" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    placeholder="أدخل كلمة المرور" 
+                    dir="ltr"
+                    autoComplete="current-password"
+                  />
+                  <button 
+                    type="button" 
+                    className="input-icon-btn" 
+                    onClick={() => setShowPassword(!showPassword)} 
+                    title={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                  >
+                    {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Action Button */}
+              <button 
+                type="submit" 
+                className="submit-btn" 
+                disabled={isLoading} 
+                style={{ 
+                  marginTop: '1.5rem',
+                  background: '#2563eb',
+                  color: '#ffffff',
                   border: 'none',
-                  color: '#64748b',
-                  fontSize: '0.75rem',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  height: '46px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
                   cursor: 'pointer',
-                  textDecoration: 'underline'
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
                 }}
               >
-                {showCustomLogin ? 'إخفاء الدخول المخصص' : 'أو الدخول باسم مستخدم آخر'}
+                {isLoading ? (
+                  <>
+                    <div className="spinner"/>
+                    <span>جاري التحقق...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>تسجيل الدخول للمنظومة</span>
+                  </>
+                )}
               </button>
-
-              {showCustomLogin && (
-                <form onSubmit={handleCustomSubmit} style={{ marginTop: '0.75rem' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ height: '38px', fontSize: '0.82rem' }}
-                      placeholder="أدخل الاسم أو المسمى الوظيفي"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                    />
-                    <button
-                      type="submit"
-                      className="primary-action-btn"
-                      style={{ height: '38px', padding: '0 1rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
-                    >
-                      دخول
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
+            </form>
 
             {/* Footer Support Social Icon */}
-            <div className="portal-footer-actions" style={{ marginTop: '1.25rem' }}>
+            <div className="portal-footer-actions">
               <button className="social-circle-btn" title="صفحتنا على فيسبوك" onClick={(e) => {
                 e.preventDefault();
                 window.open('https://facebook.com', '_blank');
               }}>
-                <Facebook size={18} color="#1877f2"/>
+                <Facebook size={20} color="#1877f2"/>
               </button>
             </div>
           </div>
