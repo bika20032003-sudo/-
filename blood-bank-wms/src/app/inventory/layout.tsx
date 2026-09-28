@@ -1,0 +1,18 @@
+// تخطيط مشترك للصفحات الداخلية (أصناف، مخازن، حركات، إلخ)
+// منظومة إدارة مخازن الهيئة العامة لخدمات نقل الدم
+import Sidebar from '@/components/layout/Sidebar';
+
+export default function InnerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <div className="main-content">
+        {children}
+      </div>
+    </div>
+  );
+}
