@@ -1967,7 +1967,7 @@ function TransactionsContent() {
                   <img
                     src="./logo.png"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/-/logo.png';
+                      (e.target as HTMLImageElement).src = './logo.png';
                     }}
                     alt="شعار الهيئة"
                     style={{ width: '80px', height: '80px', objectFit: 'contain' }}

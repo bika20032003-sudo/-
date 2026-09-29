@@ -29,16 +29,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install dependencies (Crusher System)
         run: npm ci || npm install
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Build project
+      - name: Build Crusher System
         run: npm run build
+
+      - name: Build Blood Bank WMS
+        run: |
+          cd blood-bank-wms
+          npm install
+          npm run build
+          mkdir -p ../dist/blood-bank
+          cp -r out/. ../dist/blood-bank/
+          touch ../dist/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
