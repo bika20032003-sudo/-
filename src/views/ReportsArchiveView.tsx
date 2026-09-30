@@ -5,7 +5,7 @@ import {
   Building2, Milestone, Factory, Fuel, Truck, Layers, Filter, Calendar, Download
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { fastFetch } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
@@ -1157,6 +1157,124 @@ export const ReportsArchiveView = ({ currentUser }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      {/* Delete Confirmation Modal */}
+      {reportToDelete && (
+        <div className="modal-backdrop" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '460px',
+            padding: '2rem 1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            textAlign: 'center',
+            border: '1px solid #fee2e2'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              border: '2px solid #fecaca'
+            }}>
+              <Trash2 size={26} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+              تأكيد حذف التقرير نهائياً
+            </h3>
+            
+            <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              هل أنت متأكد من رغبتك في حذف هذا التقرير من أرشيف المنظومة؟ سيتم حذفه وتحديث الإحصائيات فوراً.
+            </p>
+
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '0.85rem 1.1rem',
+              marginBottom: '1.5rem',
+              textAlign: 'right',
+              fontSize: '0.82rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ color: '#64748b' }}>كود التقرير:</span>
+                <span style={{ fontWeight: 800, color: '#1e293b' }}>{reportToDelete.reportNumber || `#REP-${reportToDelete.id}`}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ color: '#64748b' }}>بيان التقرير:</span>
+                <span style={{ fontWeight: 700, color: '#2563eb' }}>{reportToDelete.materialName || reportToDelete.reportType || 'تقرير يومي'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>القطاع:</span>
+                <span style={{ fontWeight: 700, color: '#059669' }}>{reportToDelete.sector || 'القطاع الرئيسي'}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setReportToDelete(null)}
+                disabled={isDeleting}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem 1rem',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  color: '#475569',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                إلغاء الأمر
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteReport}
+                disabled={isDeleting}
+                style={{
+                  flex: 1.2,
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>{isDeleting ? 'جاري الحذف...' : 'نعم، حذف التقرير'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@
 ---
 
 ## 🌐 روابط المنظومة المباشرة
+- 🛣️ **رابط موقع مشروع طريق أوباري – غات (360 كم)**: [https://bika20032003-sudo.github.io/-/road/](https://bika20032003-sudo.github.io/-/road/)
 - 🚀 **رابط تشغيل المنظومة المباشر (GitHub Pages)**: [https://bika20032003-sudo.github.io/-/](https://bika20032003-sudo.github.io/-/)
 - 📦 **مستودع الكود المصدري على GitHub**: [https://github.com/bika20032003-sudo/-](https://github.com/bika20032003-sudo/-)
 

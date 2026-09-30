@@ -48,6 +48,17 @@ jobs:
           cp -r out/. ../dist/blood-bank/
           touch ../dist/.nojekyll
 
+      - name: Build Ubari-Ghat Road Portal
+        run: |
+          cd ubari-ghat-road
+          npm install
+          npm run build
+          mkdir -p ../dist/road
+          mkdir -p ../dist/ubari-ghat
+          cp -r dist/. ../dist/road/
+          cp -r dist/. ../dist/ubari-ghat/
+          touch ../dist/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
