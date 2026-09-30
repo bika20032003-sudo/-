@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0a0a0b;
+  --bone: #f5f2ec;
+  --mute: #9a968e;
+  --amber: #e8932c;
+  --gold: #cd9b1f;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  background: var(--ink);
+  color: var(--bone);
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  overflow-x: hidden;
+  user-select: none;
+  cursor: default;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--ink);
+}
+/* شريط التمرير العصري المتناسق مع تصميم الموقع */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0f;
+  border-left: 1px solid rgba(245, 242, 236, 0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e8932c 0%, #b26c14 100%);
+  border-radius: 9999px;
+  border: 2px solid #0d0d0f;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f5a94e 0%, #e8932c 100%);
+  box-shadow: 0 0 10px rgba(232, 147, 44, 0.6);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #e8932c #0d0d0f;
+}
+
+.font-display {
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  font-weight: 900;
+}
+
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(245, 242, 236, 0.35);
+  color: transparent;
+}
+
+.text-stroke-amber {
+  -webkit-text-stroke: 1px rgba(232, 147, 44, 0.55);
+  color: transparent;
+}
+
+/* خط أفقي متحرك مربوط بالتمرير */
+.marquee-track {
+  width: max-content;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* طبقة الصورة السينمائية المحسنة للأداء العالي */
+.cine-bg {
+  position: absolute;
+  inset: -12% 0;
+  background-size: cover;
+  background-position: center;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.cine-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 10, 11, 0.92) 0%, rgba(10, 10, 11, 0.25) 45%, rgba(10, 10, 11, 0.55) 100%);
+  pointer-events: none;
+}
+
+/* طبقة الحبيبات السينمائية العامة والمحسنة لتشغيل GPU سلس بدون استنزاف الذاكرة */
+.cine-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transform: translateZ(0);
+}
+
+.reveal-line {
+  overflow: hidden;
+  display: block;
+}
+
+.reveal-line > span {
+  display: block;
+  will-change: transform;
+}
+
+.hairline {
+  height: 1px;
+  background: rgba(245, 242, 236, 0.14);
+}
+
+.num-latin {
+  font-feature-settings: 'lnum' 1;
+  letter-spacing: -0.02em;
+}
+
+/* مؤشر التمرير */
+.scroll-cue {
+  width: 1px;
+  height: 72px;
+  background: rgba(245, 242, 236, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-cue::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: var(--amber);
+  animation: cueDrop 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes cueDrop {
+  0% { top: -40%; }
+  60%, 100% { top: 110%; }
+}
+
+/* نبضة نقطة المسار */
+.route-dot {
+  box-shadow: 0 0 0 0 rgba(232, 147, 44, 0.5);
+  animation: dotPulse 2.4s ease-out infinite;
+}
+
+@keyframes dotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(232, 147, 44, 0.45); }
+  100% { box-shadow: 0 0 0 22px rgba(232, 147, 44, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue::after,
+  .route-dot {
+    animation: none;
+  }
+}
