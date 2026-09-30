@@ -1,10 +1,18 @@
+import { assetUrl } from '@/lib/utils';
+
 export default function Footer() {
   return (
     <footer id="footer" className="relative border-t border-[var(--bone)]/10 bg-[var(--ink)] px-6 py-14 md:px-12">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 md:flex-row md:justify-between">
         <div className="flex items-center gap-4">
           <img
-            src="/images/logo.webp"
+            src={assetUrl('images/logo.webp')}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.src.endsWith('.png')) {
+                target.src = assetUrl('images/logo.png');
+              }
+            }}
             alt="شعار الجهاز"
             width="64"
             height="64"

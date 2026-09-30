@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Menu, X } from 'lucide-react';
 import { scrollToSection, scrollToProgress, scrollToTop } from '@/lib/scroll';
+import { assetUrl } from '@/lib/utils';
 
 const NAV_LINKS = [
   { id: 'hero', label: 'الرئيسية', num: '٠٠' },
@@ -121,7 +122,13 @@ export default function Nav() {
         >
           <div className="relative flex h-11 w-11 md:h-12 md:w-12 items-center justify-center rounded-xl border border-white/15 bg-white/5 p-1 transition-all group-hover:border-[var(--amber)] group-hover:shadow-[0_0_15px_rgba(232,147,44,0.3)]">
             <img
-              src="/images/logo.webp"
+              src={assetUrl('images/logo.webp')}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith('.png')) {
+                  target.src = assetUrl('images/logo.png');
+                }
+              }}
               alt="شعار جهاز تنفيذ مشروعات الموصلات"
               width="48"
               height="48"

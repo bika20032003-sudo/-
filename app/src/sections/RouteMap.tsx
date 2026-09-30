@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { assetUrl } from '@/lib/utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -46,7 +47,7 @@ export default function RouteMap() {
 
   return (
     <section ref={root} id="route" className="relative h-screen overflow-hidden">
-      <div className="cine-bg route-bg" style={{ backgroundImage: 'url(/images/acacus.webp)' }} />
+      <div className="cine-bg route-bg" style={{ backgroundImage: `url(${assetUrl('images/acacus.webp')})` }} />
       <div className="cine-veil" />
 
       <div className="relative z-10 flex h-full flex-col justify-center px-5 md:px-12">

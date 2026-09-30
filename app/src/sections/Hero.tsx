@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { assetUrl } from '@/lib/utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -43,7 +44,7 @@ export default function Hero() {
 
   return (
     <section ref={root} id="hero" className="relative h-screen overflow-hidden">
-      <div className="cine-bg hero-bg" style={{ backgroundImage: 'url(/images/hero.webp)' }} />
+      <div className="cine-bg hero-bg" style={{ backgroundImage: `url(${assetUrl('images/hero.webp')})` }} />
       <div className="cine-veil" />
       <div className="hero-veil-dark absolute inset-0 bg-[var(--ink)] opacity-[0.82]" />
 
