@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { assetUrl } from '@/lib/utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -46,7 +47,7 @@ export default function Partners() {
 
   return (
     <section ref={root} id="partners" className="relative overflow-hidden py-28 md:py-40">
-      <div className="cine-bg partners-bg" style={{ backgroundImage: 'url(/images/machinery.webp)' }} />
+      <div className="cine-bg partners-bg" style={{ backgroundImage: `url(${assetUrl('images/machinery.webp')})` }} />
       <div className="absolute inset-0 bg-[var(--ink)]/82" />
       <div className="cine-veil" />
 
