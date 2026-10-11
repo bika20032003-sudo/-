@@ -3,8 +3,7 @@ import {
   MapPin, 
   Globe, 
   ArrowUp,
-  ShieldCheck,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 
@@ -38,9 +37,8 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
             </div>
             <div>
               <h3 className={`font-black text-base ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>{t.footerAgencyTitle}</h3>
-              <span className="text-[11px] text-amber-500 font-extrabold flex items-center gap-1.5 mt-0.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t.footerInitiative}</span>
+              <span className="text-[11px] text-amber-500 font-bold block mt-0.5">
+                {t.footerInitiative}
               </span>
             </div>
           </div>
@@ -54,7 +52,7 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
 
         {/* Col 2: Quick Links */}
         <div className="md:col-span-3 space-y-3.5 text-start">
-          <h4 className={`font-black text-sm tracking-tight ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
+          <h4 className={`font-black text-sm leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
             {lang === 'ar' ? 'أقسام البوابة' : 'Quick Navigation'}
           </h4>
           <ul className="space-y-2.5 font-medium">
@@ -90,14 +88,14 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
                 onClick={() => {
                   setActiveTab('hero');
                   setTimeout(() => {
-                    const el = document.getElementById('contractors-section');
+                    const el = document.getElementById('about-section');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }, 60);
                 }} 
                 className="hover:text-amber-500 transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <span className="text-amber-500">›</span>
-                <span>{t.navContractors}</span>
+                <span>{lang === 'ar' ? 'نبذة عن المشروع' : 'Project Overview'}</span>
               </button>
             </li>
             <li>
@@ -105,14 +103,14 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
                 onClick={() => {
                   setActiveTab('hero');
                   setTimeout(() => {
-                    const el = document.getElementById('media-section');
+                    const el = document.getElementById('map-section');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }, 60);
                 }} 
                 className="hover:text-amber-500 transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <span className="text-amber-500">›</span>
-                <span>{lang === 'ar' ? 'التوثيق البصري والتقارير' : 'Visual Media & Reports'}</span>
+                <span>{lang === 'ar' ? 'الخريطة والموقع الجغرافي' : 'Interactive Map'}</span>
               </button>
             </li>
           </ul>
@@ -120,7 +118,7 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
 
         {/* Col 3: Official Info */}
         <div className="md:col-span-4 space-y-3.5 text-start">
-          <h4 className={`font-black text-sm tracking-tight ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
+          <h4 className={`font-black text-sm leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
             {lang === 'ar' ? 'بيانات الاتصال والتواصل' : 'Contact & Headquarters'}
           </h4>
           <p className="flex items-center gap-2.5 font-medium">

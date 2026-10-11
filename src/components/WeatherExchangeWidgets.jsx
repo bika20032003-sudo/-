@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, RefreshCw, MapPin, Wind, Droplets, CheckCircle2, Sparkles } from 'lucide-react';
+import { Sun, RefreshCw, MapPin, Wind, Droplets, CheckCircle2 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 
 export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
@@ -53,101 +53,73 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
   }, [lang]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6 relative z-20 animate-fadeIn select-none">
-      {/* ── 2026 Sleek Glassmorphic Live Weather Telemetry Bar ── */}
-      <div className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 border shadow-xl backdrop-blur-2xl transition-all duration-300 ${
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-1.5 relative z-20 animate-fadeIn select-none">
+      {/* ── 2026 Compact Slim Live Weather Telemetry Ribbon ── */}
+      <div className={`relative overflow-hidden rounded-xl py-1.5 sm:py-2 px-3 sm:px-4 border shadow-sm backdrop-blur-md transition-all duration-300 ${
         theme === 'light'
-          ? 'bg-white/95 border-amber-200/80 text-slate-900 shadow-slate-200/70'
-          : 'bg-[#0a0f1d]/90 border-amber-500/25 text-slate-100 shadow-black/60'
+          ? 'bg-white/95 border-amber-200/80 text-slate-900 shadow-slate-200/50'
+          : 'bg-[#0a0f1d]/90 border-amber-500/25 text-slate-100 shadow-black/40'
       }`}>
         
-        {/* Subtle Ambient Glow */}
-        <div 
-          className="absolute -top-12 -right-12 w-36 h-36 rounded-full pointer-events-none blur-2xl opacity-20"
-          style={{ background: 'radial-gradient(circle, rgba(255,171,0,0.5) 0%, transparent 70%)' }}
-        />
-
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 relative z-10">
+        <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10">
           
-          {/* Left / Start: Title, Location & Weather Icon */}
-          <div className="flex items-center gap-3 w-full lg:w-auto justify-between sm:justify-start">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <Sun className="w-4 h-4 text-amber-500 animate-spin" style={{ animationDuration: '30s' }} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-xs sm:text-sm tracking-tight">{t.weatherTitle}</h3>
-                  <span className="flex items-center gap-1 text-[11px] text-slate-400">
-                    <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
-                    <span className="font-medium">{weather.location}</span>
-                  </span>
-                </div>
-                <p className={`text-[11px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {t.weatherDesc}
-                </p>
-              </div>
+          {/* Start: Location & Icon */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0">
+              <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin" style={{ animationDuration: '30s' }} />
             </div>
-
-            {/* Mobile Refresh Button */}
-            <button
-              onClick={fetchLiveWeather}
-              title={lang === 'ar' ? 'تحديث بيانات الطقس' : 'Refresh Weather'}
-              className={`lg:hidden p-1.5 rounded-lg transition-all border cursor-pointer ${
-                theme === 'light' 
-                  ? 'hover:bg-slate-100 text-slate-600 border-slate-200' 
-                  : 'hover:bg-white/10 text-slate-300 border-white/10'
-              }`}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${weather.loading ? 'animate-spin text-amber-500' : ''}`} />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-xs">{lang === 'ar' ? 'طقس أوباري' : 'Ubari Weather'}</span>
+              <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-slate-400 font-medium">
+                <MapPin className="w-2.5 h-2.5 text-red-500 flex-shrink-0" />
+                <span>{weather.location}</span>
+              </span>
+            </div>
           </div>
 
-          {/* Center: Live Temperature & Condition */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-1">
-            {/* Temp */}
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black font-mono text-amber-500 tracking-tight">
+          {/* Center: Live Temperature & Condition (Inline) */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm sm:text-base font-black font-mono text-amber-500 tracking-tight">
                 {weather.temp}°
               </span>
-              <span className="text-sm font-bold text-slate-400 font-mono">C</span>
-              <div className="text-xs font-bold text-cyan-600 dark:text-cyan-300 flex items-center gap-1 ms-1">
-                <Sparkles className="w-3 h-3 text-cyan-500" />
-                <span>{weather.condition}</span>
-              </div>
+              <span className="text-[11px] font-bold text-slate-400 font-mono">C</span>
             </div>
+
+            <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 whitespace-nowrap">
+              {weather.condition}
+            </span>
 
             {/* Metrics: Wind & Humidity */}
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] font-bold text-cyan-700 dark:text-cyan-300 font-mono">
-                <Wind className="w-3 h-3 text-cyan-500" />
-                <span>{t.weatherWind}: {weather.windSpeed}</span>
-              </span>
-              <span className="flex items-center gap-1 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 text-[11px] font-bold text-amber-700 dark:text-amber-400 font-mono">
-                <Droplets className="w-3 h-3 text-amber-500" />
-                <span>{t.weatherHumidity}: {weather.humidity}</span>
-              </span>
-            </div>
+            <span className="hidden md:inline-flex items-center gap-1 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 font-mono">
+              <Wind className="w-2.5 h-2.5 text-cyan-500" />
+              <span>{weather.windSpeed}</span>
+            </span>
+
+            <span className="hidden lg:inline-flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 text-[10px] font-semibold text-amber-700 dark:text-amber-400 font-mono">
+              <Droplets className="w-2.5 h-2.5 text-amber-500" />
+              <span>{weather.humidity}</span>
+            </span>
           </div>
 
-          {/* Right / End: Live Status Tag, Last Update & Refresh Button */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 w-full lg:w-auto text-[11px] text-slate-400 border-t lg:border-t-0 pt-2 lg:pt-0 border-slate-200/50 dark:border-white/5">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
-              <span>{t.weatherUpdated}: {weather.updatedAt}</span>
+          {/* End: Sync Status & Refresh Button */}
+          <div className="flex items-center gap-2 flex-shrink-0 text-[10px] text-slate-400">
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 font-mono">
+              <CheckCircle2 className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="hidden sm:inline">{t.weatherUpdated}:</span>
+              <span>{weather.updatedAt}</span>
             </span>
 
             <button
               onClick={fetchLiveWeather}
               title={lang === 'ar' ? 'تحديث بيانات الطقس' : 'Refresh Weather'}
-              className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all border cursor-pointer text-xs font-semibold ${
+              className={`p-1 rounded-md transition-all border cursor-pointer ${
                 theme === 'light' 
-                  ? 'hover:bg-slate-100 text-slate-700 border-slate-200 shadow-sm' 
+                  ? 'hover:bg-slate-100 text-slate-700 border-slate-200' 
                   : 'hover:bg-white/10 text-slate-300 border-white/10'
               }`}
             >
               <RefreshCw className={`w-3 h-3 ${weather.loading ? 'animate-spin text-amber-500' : ''}`} />
-              <span className="text-[11px]">{lang === 'ar' ? 'تحديث' : 'Sync'}</span>
             </button>
           </div>
 

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
+
 @theme {
   --color-gold-400: #FFD56B;
   --color-gold-500: #FFAB00;
@@ -9,9 +11,13 @@
   --color-libya-red: #E70013;
   --color-libya-green: #239E46;
   --color-libya-dark: #07090E;
-  --font-arabic: 'Tajawal', 'Cairo', sans-serif;
+
+  /* Unified Prestigious Font Stack */
+  --font-arabic: 'Cairo', 'Tajawal', sans-serif;
   --font-cairo: 'Cairo', sans-serif;
-  --font-outfit: 'Outfit', sans-serif;
+  --font-sans: 'Cairo', 'Tajawal', sans-serif;
+  --font-display: 'Cairo', 'Tajawal', sans-serif;
+  --font-outfit: 'Outfit', 'Cairo', sans-serif;
 }
 
 /* ============================================================
@@ -21,12 +27,11 @@
 [data-theme="light"] {
   --primary-amber: #D97706;
   --primary-amber-hover: #B45309;
-  --primary-glow: rgba(217, 119, 6, 0.30);
+  --primary-glow: rgba(217, 119, 6, 0.25);
   --cyan-accent: #0891B2;
-  --cyan-glow: rgba(8, 145, 178, 0.30);
+  --cyan-glow: rgba(8, 145, 178, 0.25);
   --emerald-accent: #059669;
-  --emerald-glow: rgba(5, 150, 105, 0.25);
-  --violet-glow: rgba(109, 40, 217, 0.22);
+  --emerald-glow: rgba(5, 150, 105, 0.20);
 
   /* Crisp Daylight Canvas */
   --bg-base:       #F8FAFC;
@@ -57,25 +62,25 @@
   /* Scrollbar */
   --scrollbar-track: #F1F5F9;
 
-  /* Light Radial Glows */
-  --body-glow1: rgba(217, 119, 6, 0.10);
-  --body-glow2: rgba(109, 40, 217, 0.06);
-  --body-glow3: rgba(8, 145, 178, 0.06);
-  --body-glow4: rgba(5, 150, 105, 0.05);
+  /* Cohesive Warm Daylight Glows */
+  --body-glow1: rgba(217, 119, 6, 0.08);
+  --body-glow2: rgba(8, 145, 178, 0.05);
+  --body-glow3: rgba(5, 150, 105, 0.04);
+  --body-glow4: rgba(217, 119, 6, 0.03);
 }
 
 /* ============================================================
    2026 ULTRA-LUXURY DESIGN SYSTEM – Dark Mode (Override)
    ============================================================ */
-[data-theme="dark"] {
+[data-theme="dark"],
+.dark {
   --primary-amber: #FFAB00;
   --primary-amber-hover: #FFC400;
-  --primary-glow: rgba(255, 171, 0, 0.45);
+  --primary-glow: rgba(255, 171, 0, 0.40);
   --cyan-accent: #00F5D4;
-  --cyan-glow: rgba(0, 245, 212, 0.35);
+  --cyan-glow: rgba(0, 245, 212, 0.30);
   --emerald-accent: #10B981;
-  --emerald-glow: rgba(16, 185, 129, 0.35);
-  --violet-glow: rgba(139, 92, 246, 0.35);
+  --emerald-glow: rgba(16, 185, 129, 0.30);
 
   /* Deep Space Canvas */
   --bg-base:       #06080E;
@@ -106,15 +111,15 @@
   /* Scrollbar */
   --scrollbar-track: #06080E;
 
-  /* 2026 Cosmic Aurora Mesh Lights */
-  --body-glow1: rgba(255, 171, 0, 0.16);
-  --body-glow2: rgba(139, 92, 246, 0.14);
-  --body-glow3: rgba(0, 245, 212, 0.12);
-  --body-glow4: rgba(16, 185, 129, 0.08);
+  /* Unified Golden Amber & Desert Night Glows */
+  --body-glow1: rgba(255, 171, 0, 0.14);
+  --body-glow2: rgba(0, 245, 212, 0.08);
+  --body-glow3: rgba(16, 185, 129, 0.06);
+  --body-glow4: rgba(255, 171, 0, 0.04);
 }
 
 /* ============================================================
-   GLOBAL RESET & 4K PRECISION SMOOTHING
+   GLOBAL RESET & ARABIC TYPOGRAPHY HARMONY ENGINE
    ============================================================ */
 html {
   scroll-behavior: smooth;
@@ -125,8 +130,11 @@ html {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
+html, body {
+  font-family: 'Cairo', 'Tajawal', sans-serif !important;
+}
+
 body {
-  font-family: 'Tajawal', 'Cairo', sans-serif;
   background-color: var(--bg-base);
   color: var(--text-primary);
   min-height: 100vh;
@@ -136,6 +144,41 @@ body {
     radial-gradient(circle at 85% 30%, var(--body-glow2) 0%, transparent 40%),
     radial-gradient(circle at 50% 65%, var(--body-glow3) 0%, transparent 45%);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Prevent Arabic text/font overlapping issues ── */
+html[dir="rtl"],
+html[dir="rtl"] *,
+[dir="rtl"],
+[dir="rtl"] * {
+  letter-spacing: normal !important; /* Disables harmful negative tracking on Arabic script */
+}
+
+/* Generous line-height for headings to give diacritics and ascenders full breathing room */
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] h4,
+html[dir="rtl"] h5,
+html[dir="rtl"] h6,
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6 {
+  line-height: 1.38 !important;
+  font-family: 'Cairo', 'Tajawal', sans-serif !important;
+}
+
+html[dir="rtl"] p,
+[dir="rtl"] p {
+  line-height: 1.75;
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+}
+
+button, input, select, textarea {
+  font-family: 'Cairo', 'Tajawal', sans-serif;
 }
 
 /* 4K Tech Grid Overlay */
@@ -275,6 +318,44 @@ body {
 
 .animate-scaleUp {
   animation: scaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Marquee Ticker Infinite Scrolling */
+@keyframes marqueeScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marqueeScrollReverse {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex !important;
+  width: max-content !important;
+  animation: marqueeScroll 35s linear infinite !important;
+  will-change: transform;
+}
+
+.animate-marquee-reverse {
+  display: flex !important;
+  width: max-content !important;
+  animation: marqueeScrollReverse 35s linear infinite !important;
+  will-change: transform;
+}
+
+.animate-marquee:hover,
+.animate-marquee-reverse:hover {
+  animation-play-state: paused !important;
 }
 
 /* Scrollbar */

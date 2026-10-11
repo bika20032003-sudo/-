@@ -5,8 +5,7 @@ import {
   Building2, 
   Search, 
   CheckCircle2, 
-  Sparkles, 
-  ShieldCheck,
+  ShieldCheck, 
   Award
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
@@ -36,7 +35,7 @@ export default function ContractorsFleet({ contractors = [], theme, lang = 'ar' 
             <Truck className="w-4 h-4 text-purple-500" />
             <span>{t.contractorsBadge}</span>
           </div>
-          <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${
+          <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
             theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
             {t.contractorsTitle}

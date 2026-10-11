@@ -3,11 +3,8 @@ import {
   MapPin, 
   CheckCircle, 
   Sun, 
-  Truck, 
   ShieldCheck, 
-  Info,
-  Sparkles,
-  Layers,
+  Layers, 
   Award
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
@@ -15,7 +12,6 @@ import { translations } from '../i18n/translations';
 export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
   const t = translations[lang] || translations.ar;
   const [selectedSector, setSelectedSector] = useState(sectors[0] || null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedSector && sectors && sectors.length > 0) {
@@ -38,7 +34,7 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
           <MapPin className="w-4 h-4 text-cyan-500" />
           <span>{t.sectorsBadge}</span>
         </div>
-        <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${
+        <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
           theme === 'light' ? 'text-slate-950' : 'text-white'
         }`}>
           {t.sectorsTitle}
@@ -83,7 +79,7 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
               <h3 className={`font-black text-base mb-1 line-clamp-1 ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
                 {sec.name.split(':')[1] || sec.name}
               </h3>
-              <p className={`text-[11px] mb-4 line-clamp-1 font-medium ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{sec.contractor}</p>
+              <p className={`text-[11px] mb-4 line-clamp-1 font-medium ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{sec.residentEngineer}</p>
 
               {/* Progress Bar with Shimmer */}
               <div className="space-y-1.5">
@@ -105,7 +101,7 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
 
       {/* Selected Sector 4K Showcase Panel */}
       {activeSector && (
-        <div className={`p-6 sm:p-10 rounded-[32px] border shadow-2xl relative overflow-hidden backdrop-blur-3xl transition-all ${
+        <div className={`p-6 sm:p-10 rounded-[32px] border shadow-2xl relative overflow-hidden transition-all ${
           theme === 'light' ? 'bg-white border-amber-300/60 shadow-slate-200/90' : 'bg-[#0a0f1d]/95 border-amber-500/35 shadow-black/80'
         }`}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -121,7 +117,7 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
                     {activeSector.status}
                   </span>
                 </div>
-                <h3 className={`text-2xl sm:text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
+                <h3 className={`text-2xl sm:text-4xl font-black leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
                   {activeSector.name}
                 </h3>
                 <p className={`text-xs sm:text-sm mt-2.5 leading-relaxed font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
@@ -142,31 +138,22 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${theme === 'light' ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-white/[0.04] border-white/10 shadow-md'}`}>
-                  <span className={`text-[11px] font-bold block mb-1 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{t.sectorMachinery}</span>
-                  <span className="text-xl font-black text-cyan-500 font-mono">{activeSector.machineryCount} {lang === 'ar' ? 'آليّة' : 'Units'}</span>
+                  <span className={`text-[11px] font-bold block mb-1 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{t.sectorWorkers}</span>
+                  <span className="text-xl font-black text-cyan-500 font-mono">{activeSector.activeWorkers} {lang === 'ar' ? 'كادر' : 'Staff'}</span>
                 </div>
               </div>
 
-              {/* Resident Engineer & Contractor details */}
+              {/* Resident Engineer & Supervision details */}
               <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/90 border-white/10'}`}>
                 <div>
-                  <span className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>{t.sectorContractor}: </span>
-                  <strong className={theme === 'light' ? 'text-slate-950 font-bold' : 'text-white font-bold'}>{activeSector.contractor}</strong>
+                  <span className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>الجهة المشرفة: </span>
+                  <strong className={theme === 'light' ? 'text-slate-950 font-bold' : 'text-white font-bold'}>جهاز تنفيذ مشروعات المواصلات</strong>
                 </div>
                 <div>
                   <span className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>{t.sectorEngineer}: </span>
                   <strong className="text-amber-500 font-black">{activeSector.residentEngineer}</strong>
                 </div>
               </div>
-
-              {/* Detail Trigger Button */}
-              <button
-                onClick={() => setModalOpen(true)}
-                className="px-6 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/25 flex items-center gap-2.5 transition-all hover:scale-105 cursor-pointer"
-              >
-                <Info className="w-4 h-4" />
-                <span>{lang === 'ar' ? 'التفاصيل والتقرير الفني للقطاع' : 'Sector Technical Details & Report'}</span>
-              </button>
             </div>
 
             {/* Photo Thumbnail */}
@@ -175,6 +162,8 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
                 <img 
                   src={activeSector.image} 
                   alt={activeSector.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-84 object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
@@ -190,40 +179,6 @@ export default function SectorsRoadmap({ sectors = [], theme, lang = 'ar' }) {
               </div>
             </div>
 
-          </div>
-        </div>
-      )}
-
-      {/* Modal Popup with Full Sector Specs */}
-      {modalOpen && activeSector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
-          <div className="glass-panel-ultra p-6 sm:p-10 rounded-[32px] max-w-2xl w-full border border-amber-500/40 bg-[#0c101d] space-y-6 animate-scaleUp shadow-2xl text-start text-white">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-xl sm:text-2xl font-black text-white">{activeSector.name}</h3>
-              <button 
-                onClick={() => setModalOpen(false)}
-                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-normal">
-              <p><strong className="text-white font-bold">{t.sectorContractor}:</strong> {activeSector.contractor}</p>
-              <p><strong className="text-white font-bold">{t.sectorEngineer}:</strong> {activeSector.residentEngineer}</p>
-              <p><strong className="text-white font-bold">{t.sectorThickness}:</strong> {activeSector.asphaltThicknessCm} {lang === 'ar' ? 'سم مقسم على طبقتين (رابطة وسطحية).' : 'cm dual layer (binder & wearing course).'}</p>
-              <p><strong className="text-white font-bold">{lang === 'ar' ? 'أعمال السلامة والإنارة:' : 'Safety & Lighting:'}</strong> {activeSector.solarPolesInstalled} {lang === 'ar' ? 'عمود طاقة شمسية وعواكس ليلية.' : 'solar poles and night cat-eye reflectors.'}</p>
-              <p><strong className="text-white font-bold">{t.sectorWorkers}:</strong> {activeSector.activeWorkers} {lang === 'ar' ? 'مهندساً وفنياً وسائق آليات.' : 'engineers, technicians, and heavy equipment operators.'}</p>
-            </div>
-
-            <div className="pt-4 flex justify-end border-t border-white/10">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="px-6 py-3 rounded-2xl bg-amber-500 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/20 cursor-pointer hover:bg-amber-400"
-              >
-                {lang === 'ar' ? 'إغلاق النافذة' : 'Close Window'}
-              </button>
-            </div>
           </div>
         </div>
       )}

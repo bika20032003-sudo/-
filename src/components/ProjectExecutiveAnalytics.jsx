@@ -19,7 +19,6 @@ import {
   Users,
   ShieldCheck,
   Award,
-  Sparkles,
   MapPin,
   Clock,
   ArrowUpRight,
@@ -100,7 +99,7 @@ export default function ProjectExecutiveAnalytics({
             <span>{lang === 'ar' ? 'التحليلات والمؤشرات الاستراتيجية 2026' : 'Strategic Executive Analytics 2026'}</span>
           </div>
 
-          <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${
+          <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
             theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
             {lang === 'ar' ? 'مؤشرات الإنجاز والبيانات الحية للمشروع' : 'Live Project KPIs & Real-Time Analytics'}

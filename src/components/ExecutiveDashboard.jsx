@@ -47,7 +47,6 @@ import {
   FileBox,
   Eye,
   ShieldCheck,
-  Sparkles,
   ExternalLink,
   ChevronLeft,
   X,
@@ -70,9 +69,13 @@ import {
   ShieldAlert,
   FileCheck2,
   FileClock,
-  ImagePlus
+  ImagePlus,
+  Newspaper
 } from 'lucide-react';
-import { initialFieldPhotos, initialDocuments, initialSectors, initialContractors, initialSummary } from '../services/api';
+import { initialFieldPhotos, initialDocuments, initialSectors, initialContractors, initialSummary, nationalProjects, initialTickerNews } from '../services/api';
+import DocumentReportsHub from './DocumentReportsHub';
+import MarqueeTicker from './MarqueeTicker';
+import { compressImageFile, safeStorageSet, safeStorageGet } from '../utils/imageCompressor';
 
 // S-Curve Progress Data (Planned vs Actual)
 const progressCurveData2026 = [
@@ -122,6 +125,46 @@ const sectorsStatusData = [
   { name: 'ضعيفة / متأخرة', value: 1, color: '#EF4444' }
 ];
 
+// Preset High-Resolution Project Documentation Images
+const PRESET_PROJECT_PHOTOS = [
+  {
+    title: 'آليات رصف الأسفلت الساخن ومتابعة درجات الحرارة',
+    category: 'رصف الأسفلت',
+    url: '/road-asphalt-paver.jpg',
+    desc: 'عمليات مد ورصف الطبقة السطحية الرابطة ومتابعة درجة حرارة الخلطة الإسفلتية المعتمدة (160°C).'
+  },
+  {
+    title: 'دمك الأسفلت بالمداحل الأسطوانية والمطاطية',
+    category: 'الدمك وضبط المناسيب',
+    url: '/road-rollers-compaction.jpg',
+    desc: 'تشغيل أسطول المداحل الاهتزازية Dynapac & CAT للدمك النهائي وتحديد المناسيب عبر التوتال ستيشن.'
+  },
+  {
+    title: 'تسوية الأساس الحجري بالكاشطات الموتورية',
+    category: 'كشط وتأسيس',
+    url: '/road-grader-earthwork.jpg',
+    desc: 'تسوية وضبط سمك طبقة الأساس الحجرية المكسورة وتوزيع الشاحنات وصهاريج رش المياه قبل الرصف.'
+  },
+  {
+    title: 'تركيب وتشغيل منظومة الإنارة الذكية بالطاقة الشمسية',
+    category: 'الطاقة الشمسية والإنارة',
+    url: '/road-solar-lighting.jpg',
+    desc: 'تثبيت أعمدة الإنارة المزدوجة بالطاقة الشمسية المقاومة للرياح الصحراوية وتخطيط مسارات الطريق.'
+  },
+  {
+    title: 'فحص عينات الكور الإسفلتي ومطابقة الجودة المعملية',
+    category: 'ضبط الجودة المعملي',
+    url: '/road-qa-testing-core.jpg',
+    desc: 'سحب وفحص عينات الكور الإسفلتي باستخدام أجهزة القياس الرقمية والمختبر الميداني المتنقل.'
+  },
+  {
+    title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي المعبد',
+    category: 'بانوراما جوية',
+    url: '/road-aerial-desert-highway.jpg',
+    desc: 'توثيق جوي شامل لحركة قطار الرصف والآليات والشاحنات على امتداد الطريق الصحراوي الدولي.'
+  }
+];
+
 // Extended 12 Sectors Dataset for complete Road Management
 const default12Sectors = [
   { id: 'SEC-01', name: 'القطاع 01: أوباري - الفيوات', lengthKm: 30, progress: 84.0, contractor: 'شركة السهل الصحراوي', residentEngineer: 'م. عبد السلام الفزاني', status: 'متقدم جداً', statusColor: 'emerald', thickness: 12, machinery: 38, workers: 115 },
@@ -153,11 +196,31 @@ export default function ExecutiveDashboard({
   user,
   onOpenGoogleAuth,
   onLogout,
-  onBackToPortal
+  onBackToPortal,
+  tickerNews,
+  setTickerNews
 }) {
-  const [activeSidebarItem, setActiveSidebarItem] = useState('home');
+  const [activeSidebarItem, setActiveSidebarItem] = useState('media');
   const [yearFilter, setYearFilter] = useState('2026');
   const [toastMessage, setToastMessage] = useState(null);
+
+  // News ticker management state
+  const [localNews, setLocalNews] = useState(() => {
+    if (tickerNews && tickerNews.length > 0) return tickerNews;
+    try {
+      const saved = localStorage.getItem('portal_ticker_news');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return initialTickerNews;
+  });
+  const [isAddNewsModalOpen, setIsAddNewsModalOpen] = useState(false);
+  const [selectedNewsEditModal, setSelectedNewsEditModal] = useState(null);
+  const [newsToDelete, setNewsToDelete] = useState(null);
+  const [newsForm, setNewsForm] = useState({
+    text: '',
+    tag: 'تحديث حي',
+    active: true
+  });
 
   // Modals state
   const [selectedReportModal, setSelectedReportModal] = useState(null);
@@ -255,7 +318,20 @@ export default function ExecutiveDashboard({
   const [newReport, setNewReport] = useState({ title: '', contractor: '', sector: 'القطاع 01', type: 'PDF' });
   const [newSector, setNewSector] = useState({ name: '', lengthKm: 30, progress: 50, contractor: '', residentEngineer: '', thickness: 10 });
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'مهندس إشراف موقعي', permissions: 'إدارة وتعديل القطاعات', phone: '', sectorsAssigned: 'القطاع 01' });
-  const [newMedia, setNewMedia] = useState({ title: '', sector: 'القطاع 01', category: 'رصف الأسفلت', img: '/road-asphalt-paver.jpg', photographer: '' });
+  const [newMedia, setNewMedia] = useState({
+    title: '',
+    sector: 'القطاع 01: أوباري - الفيوات',
+    category: 'رصف الأسفلت',
+    img: '/road-asphalt-paver.jpg',
+    src: '/road-asphalt-paver.jpg',
+    photographer: '',
+    desc: '',
+    date: new Date().toISOString().split('T')[0],
+    targetProject: 'new'
+  });
+  const [mediaUploadTab, setMediaUploadTab] = useState('upload'); // 'upload' | 'gallery' | 'url'
+  const photoFileInputRef = useRef(null);
+  const editPhotoFileInputRef = useRef(null);
 
   // Data Ingestion Form in data_io tab
   const [importReportForm, setImportReportForm] = useState({
@@ -267,17 +343,87 @@ export default function ExecutiveDashboard({
     size: '3.4 MB'
   });
 
-  // Sidebar navigation menu definition (streamlined per user request)
+  const [demoPmAccess, setDemoPmAccess] = useState(false);
+
+  // Role-Based Access Control: Check if current user is the Project Manager
+  // Defaults to true when inside Executive Dashboard, or checks credentials
+  const isProjectManager = Boolean(
+    demoPmAccess ||
+    !user || 
+    (user && (
+      (user.role && (
+        user.role.includes('مدير') || 
+        user.role.includes('Manager') || 
+        user.role.includes('مسؤول')
+      )) ||
+      user.email === 'eng.ahmed@trans.gov.ly' ||
+      user.email === 'yahi.alhafiz@transport.gov.ly' ||
+      user.type === 'حساب رسمي معتمد'
+    ))
+  );
+
+  // Sidebar navigation menu definition (only media and news per user request)
   const sidebarNavItems = [
-    { id: 'home', label: 'الرئيسية', icon: Home },
-    { id: 'sectors', label: 'القطاعات ومراحل التنفيذ', icon: Layers },
-    { id: 'contractors', label: 'الشركات والمقاولون', icon: Building2 },
-    { id: 'fleet', label: 'المعدات والآليات', icon: Truck },
-    { id: 'reports', label: 'التقارير والمستخلصات', icon: FileText },
     { id: 'media', label: 'الصور والفيديو', icon: ImageIcon },
-    { id: 'users', label: 'المستخدمون والصلاحيات', icon: Users },
-    { id: 'site_mgmt', label: 'إدارة الموقع التعريفي', icon: Globe }
+    { id: 'news', label: 'أخبار الشريط العلوي', icon: Newspaper, badge: 'الشريط الإخباري' }
   ];
+
+  // ── Handlers: News Ticker Management ──
+  const handleSaveNews = (e) => {
+    e.preventDefault();
+    if (!newsForm.text.trim()) return;
+
+    let updated;
+    if (selectedNewsEditModal) {
+      updated = localNews.map(item =>
+        item.id === selectedNewsEditModal.id
+          ? { ...item, text: newsForm.text.trim(), tag: newsForm.tag, active: newsForm.active }
+          : item
+      );
+      showToast('تم تحديث الخبر في الشريط العلوي بنجاح');
+      setSelectedNewsEditModal(null);
+    } else {
+      const newItem = {
+        id: `NEWS-${Date.now()}`,
+        text: newsForm.text.trim(),
+        tag: newsForm.tag || 'تحديث حي',
+        active: newsForm.active,
+        date: new Date().toISOString().split('T')[0]
+      };
+      updated = [newItem, ...localNews];
+      showToast('تمت إضافة الخبر ونشره في الشريط العلوي بنجاح');
+    }
+
+    setLocalNews(updated);
+    localStorage.setItem('portal_ticker_news', JSON.stringify(updated));
+    if (setTickerNews) setTickerNews(updated);
+    setIsAddNewsModalOpen(false);
+    setNewsForm({ text: '', tag: 'تحديث حي', active: true });
+  };
+
+  const handleToggleNewsActive = (id) => {
+    const updated = localNews.map(item => {
+      if (item.id === id) {
+        const nextActive = !item.active;
+        showToast(nextActive ? 'تم تفعيل ظهور الخبر في الشريط العلوي' : 'تم إيقاف ظهور الخبر من الشريط العلوي');
+        return { ...item, active: nextActive };
+      }
+      return item;
+    });
+    setLocalNews(updated);
+    localStorage.setItem('portal_ticker_news', JSON.stringify(updated));
+    if (setTickerNews) setTickerNews(updated);
+  };
+
+  const handleDeleteNews = () => {
+    if (!newsToDelete) return;
+    const updated = localNews.filter(item => item.id !== newsToDelete.id);
+    setLocalNews(updated);
+    localStorage.setItem('portal_ticker_news', JSON.stringify(updated));
+    if (setTickerNews) setTickerNews(updated);
+    showToast('تم حذف الخبر من الشريط العلوي');
+    setNewsToDelete(null);
+  };
 
   // Contractors ranking list
   const contractorsRanking = [
@@ -320,7 +466,7 @@ export default function ExecutiveDashboard({
     const updated = localReports.map(r => {
       if (r.id === id) {
         const nextState = !r.isPublic;
-        showToast(nextState ? `تم نشر التقرير (${r.title}) على البوابة العامة 🌐` : `تم حجب التقرير (${r.title}) عن البوابة (داخلي فقط) 🔒`);
+        showToast(nextState ? `تم نشر التقرير (${r.title}) على البوابة العامة` : `تم حجب التقرير (${r.title}) عن البوابة (داخلي فقط)`);
         return { ...r, isPublic: nextState };
       }
       return r;
@@ -367,36 +513,146 @@ export default function ExecutiveDashboard({
     setLocalReports(updated);
     localStorage.setItem('portal-dashboard-reports', JSON.stringify(updated));
     setImportReportForm({ title: '', contractor: '', sector: 'القطاع 01', category: 'تقارير الإنجاز', type: 'PDF', size: '3.4 MB' });
-    showToast('تم استيراد التقرير وإدراجه بقسم التقارير! بانتظار قرار مدير المحتوى للنشر 🌐');
+    showToast('تم استيراد التقرير وإدراجه بقسم التقارير! بانتظار قرار مدير المحتوى للنشر');
     setActiveSidebarItem('reports');
   };
 
   // ── Handlers: Photos / Media ──
+  const handlePhotoFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      showToast('جاري ضغط ومعالجة الصورة بجودة 4K...');
+      const dataUrl = await compressImageFile(file, 1600, 1100, 0.82);
+      setNewMedia(prev => ({
+        ...prev,
+        img: dataUrl,
+        src: dataUrl,
+        title: prev.title || file.name.replace(/\.[^/.]+$/, "")
+      }));
+      showToast('تم رفع الصورة من جهازك ومعالجتها بدقة 4K بنجاح');
+    } catch (err) {
+      showToast(err.message || 'تعذر قراءة ملف الصورة، يرجى المحاولة مرة أخرى');
+    }
+  };
+
+  const handleEditPhotoFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      showToast('جاري ضغط ومعالجة الصورة...');
+      const dataUrl = await compressImageFile(file, 1600, 1100, 0.82);
+      setSelectedPhotoEditModal(prev => ({
+        ...prev,
+        img: dataUrl,
+        src: dataUrl
+      }));
+      showToast('تم تحديث ملف الصورة ومعالجته بنجاح');
+    } catch (err) {
+      showToast(err.message || 'تعذر قراءة ملف الصورة');
+    }
+  };
+
   const handleAddPhoto = (e) => {
     e.preventDefault();
-    if (!newMedia.title) return;
+    if (!newMedia.title.trim()) {
+      showToast('يرجى إدخال عنوان الصورة أو موضوع التوثيق');
+      return;
+    }
+    const finalImg = newMedia.img || newMedia.src || '/road-asphalt-paver.jpg';
     const item = {
-      id: `P-${String(localPhotos.length + 1).padStart(2, '0')}`,
-      title: newMedia.title,
-      sector: newMedia.sector,
-      category: newMedia.category,
-      date: new Date().toISOString().split('T')[0],
-      img: newMedia.img || '/road-asphalt-paver.jpg',
-      photographer: newMedia.photographer || 'م. الموقع'
+      id: `PH-${Date.now().toString().slice(-4)}`,
+      title: newMedia.title.trim(),
+      titleEn: newMedia.title.trim(),
+      sector: newMedia.sector || 'القطاع 01: أوباري - الفيوات',
+      category: newMedia.category || 'رصف الأسفلت',
+      desc: newMedia.desc?.trim() || `توثيق ميداني فوتوغرافي عالي الدقة لأعمال ${newMedia.category} في ${newMedia.sector}.`,
+      date: newMedia.date || new Date().toISOString().split('T')[0],
+      img: finalImg,
+      src: finalImg,
+      photographer: newMedia.photographer?.trim() || 'م. الموقع الميداني',
+      author: newMedia.photographer?.trim() || 'م. الموقع الميداني'
     };
     const updated = [item, ...localPhotos];
     setLocalPhotos(updated);
-    localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
+    safeStorageSet('portal-field-photos-v2', updated);
+
+    // Sync with executive projects list (portal-national-projects):
+    let projects = [...nationalProjects];
+    try {
+      const savedCustom = safeStorageGet('portal-national-projects', null);
+      if (savedCustom && Array.isArray(savedCustom)) {
+        projects = savedCustom;
+      }
+    } catch (err) {}
+
+    if (newMedia.targetProject === 'new') {
+      const newProj = {
+        id: `PRJ-EXEC-${Date.now().toString().slice(-4)}`,
+        title: newMedia.title.trim(),
+        titleEn: newMedia.title.trim(),
+        region: newMedia.sector || 'القطاع الأول (أوباري - الفيوات)',
+        regionEn: newMedia.sector || 'Corridor Sector',
+        lengthKm: 35,
+        progress: 88,
+        status: 'in_progress',
+        statusLabel: 'توثيق تنفيذي ميداني 4K',
+        statusLabelEn: 'Field Execution',
+        statusColor: 'amber',
+        budget: 'معتمد وموثق',
+        contractor: newMedia.photographer?.trim() || 'م. الموقع الميداني',
+        startDate: newMedia.date || new Date().toISOString().split('T')[0],
+        targetDate: '2026-12-31',
+        image: finalImg,
+        desc: newMedia.desc?.trim() || `توثيق تنفيذي ميداني عالي الدقة لأعمال ${newMedia.category} بطريق أوباري - غات.`,
+        isFieldDoc: true,
+        isCustomUploaded: true,
+        specs: {
+          thickness: '10-12 سم',
+          paved: 'منجز وموثق',
+          solarPoles: 'معتمد',
+          fleet: 'آليات عاملة',
+          qualityScore: '100% مطابقة'
+        }
+      };
+      const updatedProjects = [newProj, ...projects];
+      safeStorageSet('portal-national-projects', updatedProjects);
+    } else if (newMedia.targetProject) {
+      const updatedProjects = projects.map(p => {
+        if (p.id === newMedia.targetProject) {
+          return { ...p, image: finalImg };
+        }
+        return p;
+      });
+      safeStorageSet('portal-national-projects', updatedProjects);
+    }
+
+    window.dispatchEvent(new Event('storage'));
     setIsAddMediaModalOpen(false);
-    setNewMedia({ title: '', sector: 'القطاع 01', category: 'رصف الأسفلت', img: '/road-asphalt-paver.jpg', photographer: '' });
-    showToast('تمت إضافة الصورة الميدانية بنجاح!');
+    setNewMedia({
+      title: '',
+      sector: 'القطاع 01: أوباري - الفيوات',
+      category: 'رصف الأسفلت',
+      img: '/road-asphalt-paver.jpg',
+      src: '/road-asphalt-paver.jpg',
+      photographer: '',
+      desc: '',
+      date: new Date().toISOString().split('T')[0],
+      targetProject: 'new'
+    });
+    showToast('تمت إضافة الصورة بنجاح وربطها بالمشروعات التنفيذية والمعرض 4K!');
   };
 
   const handleConfirmDeletePhoto = () => {
     if (!photoToDelete) return;
     const updated = localPhotos.filter(p => p.id !== photoToDelete.id);
     setLocalPhotos(updated);
-    localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
+    try {
+      localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {}
     showToast(`تم حذف الصورة (${photoToDelete.title}) من المعرض`);
     setPhotoToDelete(null);
   };
@@ -404,9 +660,19 @@ export default function ExecutiveDashboard({
   const handleSaveEditPhoto = (e) => {
     e.preventDefault();
     if (!selectedPhotoEditModal) return;
-    const updated = localPhotos.map(p => p.id === selectedPhotoEditModal.id ? selectedPhotoEditModal : p);
+    const finalImg = selectedPhotoEditModal.src || selectedPhotoEditModal.img || '/road-asphalt-paver.jpg';
+    const updatedItem = {
+      ...selectedPhotoEditModal,
+      img: finalImg,
+      src: finalImg,
+      author: selectedPhotoEditModal.photographer || selectedPhotoEditModal.author || 'م. الموقع الميداني'
+    };
+    const updated = localPhotos.map(p => p.id === selectedPhotoEditModal.id ? updatedItem : p);
     setLocalPhotos(updated);
-    localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
+    try {
+      localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {}
     setSelectedPhotoEditModal(null);
     showToast('تم حفظ بيانات الصورة بنجاح');
   };
@@ -646,7 +912,18 @@ export default function ExecutiveDashboard({
                     <Icon className={`w-4 h-4 ${isActive ? 'text-slate-950' : 'text-slate-400'}`} />
                     <span>{item.label}</span>
                   </div>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-slate-950"></span>}
+                  <div className="flex items-center gap-1.5">
+                    {item.badge && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border ${
+                        isActive
+                          ? 'bg-slate-950 text-amber-300 border-slate-800'
+                          : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-slate-950"></span>}
+                  </div>
                 </button>
               );
             })}
@@ -676,30 +953,34 @@ export default function ExecutiveDashboard({
             <div className="text-start space-y-0.5">
               <div className="flex items-center gap-2 text-slate-800">
                 <h2 className="text-xl sm:text-2xl font-black">
-                  {sidebarNavItems.find(i => i.id === activeSidebarItem)?.label || 'الرئيسية'}
+                  {sidebarNavItems.find(i => i.id === activeSidebarItem)?.label || 'الصور والفيديو'}
                 </h2>
                 <div className="w-7 h-7 rounded-lg bg-[#0A1128] text-white flex items-center justify-center">
-                  <Home className="w-4 h-4" />
+                  {activeSidebarItem === 'news' ? <Newspaper className="w-4 h-4 text-amber-400" /> : <ImageIcon className="w-4 h-4 text-amber-400" />}
                 </div>
               </div>
               <div className="text-xs text-slate-500 font-medium flex items-center gap-1">
                 <span>لوحة التحكم</span>
                 <ChevronLeft className="w-3 h-3 text-slate-400" />
                 <span className="text-slate-800 font-bold">
-                  {sidebarNavItems.find(i => i.id === activeSidebarItem)?.label || 'الرئيسية'}
+                  {sidebarNavItems.find(i => i.id === activeSidebarItem)?.label || 'الصور والفيديو'}
                 </span>
               </div>
             </div>
 
             {/* Actions Bar per active view */}
             <div className="flex items-center gap-2">
-              {activeSidebarItem === 'reports' && (
+              {activeSidebarItem === 'news' && (
                 <button
-                  onClick={() => setIsAddReportModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-[#0A1128] hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  onClick={() => {
+                    setNewsForm({ text: '', tag: 'تحديث حي', active: true });
+                    setSelectedNewsEditModal(null);
+                    setIsAddNewsModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 text-amber-400" />
-                  <span>رفع تقرير جديد</span>
+                  <Plus className="w-4 h-4" />
+                  <span>إضافة خبر جديد للشريط العلوي</span>
                 </button>
               )}
               {activeSidebarItem === 'media' && (
@@ -709,33 +990,6 @@ export default function ExecutiveDashboard({
                 >
                   <ImagePlus className="w-4 h-4" />
                   <span>إضافة صورة جديدة</span>
-                </button>
-              )}
-              {activeSidebarItem === 'sectors' && (
-                <button
-                  onClick={() => setIsAddSectorModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>إضافة قطاع جديد</span>
-                </button>
-              )}
-              {activeSidebarItem === 'users' && (
-                <button
-                  onClick={() => setIsAddUserModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>إضافة مستخدم جديد</span>
-                </button>
-              )}
-              {activeSidebarItem === 'data_io' && (
-                <button
-                  onClick={handleExportBackup}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>تصدير نسخة احتياطية (JSON)</span>
                 </button>
               )}
 
@@ -879,7 +1133,7 @@ export default function ExecutiveDashboard({
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${rep.isPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                              {rep.isPublic ? 'معروض 🌐' : 'مسودة 🔒'}
+                              {rep.isPublic ? 'معروض' : 'مسودة'}
                             </span>
                             {rep.type === 'PDF' ? (
                               <FileText className="w-4 h-4 text-red-500" />
@@ -1263,116 +1517,191 @@ export default function ExecutiveDashboard({
           )}
 
           {/* ══════════════════════════════════════════════════════════════════════════════
-              VIEW 3: REPORTS & CLAIMS (التقارير وقرار مدير المحتوى بالعرض أو الحجب)
+              VIEW 3: REPORTS & TRANSPARENCY (الشفافية والتقارير - خاص بمدير المشروع فقط)
           ══════════════════════════════════════════════════════════════════════════════ */}
           {activeSidebarItem === 'reports' && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6 animate-fadeIn text-start">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-slate-100">
-                <div>
-                  <h3 className="text-lg font-black text-slate-900">مركز التقارير وقرار النشر في البوابة</h3>
-                  <p className="text-xs text-slate-500">إدارة التقارير المرفوعة والتحكم بقرار مدير المحتوى في عرضها على البوابة العامة أو حجبها</p>
+            !isProjectManager ? (
+              /* Access Denied for Non-Project-Manager users */
+              <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-sm text-center max-w-xl mx-auto my-12 space-y-5 animate-fadeIn">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 mx-auto shadow-sm">
+                  <Lock className="w-8 h-8" />
                 </div>
-                <button
-                  onClick={() => setIsAddReportModalOpen(true)}
-                  className="px-4 py-2.5 rounded-xl bg-[#0A1128] hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm cursor-pointer self-start"
-                >
-                  <Plus className="w-4 h-4 text-amber-400" />
-                  <span>رفع تقرير جديد</span>
-                </button>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-slate-900">
+                    صلاحية مقيدة: خاص بمدير المشروع فقط
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
+                    تم نقل منظومة الشفافية والمتابعة، وتقارير الإنجاز الشهرية، وكشوفات المستخلصات المالية، وكراسات ضبط الجودة إلى هذا القسم، وهي مخصصة حصرياً لاطلاع واعتماد <strong>مدير المشروع</strong>.
+                  </p>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 inline-block">
+                  <span>الحساب المسجل حالياً: </span>
+                  <strong className="text-slate-900">{user?.name || 'مستخدم غير محدد'}</strong>
+                  <span className="mx-2">•</span>
+                  <span className="text-amber-700 font-bold">{user?.role || 'مستخدم عام'}</span>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDemoPmAccess(true);
+                      showToast('تم التبديل بنجاح إلى صلاحية مدير المشروع المعتمدة');
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs inline-flex items-center gap-2 cursor-pointer shadow-md transition-transform hover:scale-105"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>التبديل إلى صلاحية مدير المشروع وعرض منظومة الشفافية</span>
+                  </button>
+                </div>
               </div>
+            ) : (
+              /* Full Reports & Transparency Hub for Project Manager */
+              <div className="space-y-8 animate-fadeIn text-start">
+                
+                {/* Executive Header Banner */}
+                <div className="bg-gradient-to-r from-[#0A1128] via-[#0E1A38] to-[#1E293B] text-white rounded-3xl p-6 sm:p-8 border border-white/10 shadow-lg relative overflow-hidden">
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 mb-2">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>منظومة الشفافية والمتابعة الرسمية • صلاحية مدير المشروع المعتمدة</span>
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-black">
+                        قسم الشفافية والمتابعة والتقارير التنفيذية
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                        الاطلاع الحصري لمدير المشروع على تقارير الإنجاز الشهرية الشاملة، المستخلصات المالية، نتائج الفحوصات المعملية لعينات الأسفلت والدمك، والتوثيق البصري الميداني لطريق أوباري – غات (360 كم).
+                      </p>
+                    </div>
 
-              {/* Reports Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-start">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-                      <th className="p-3">كود التقرير</th>
-                      <th className="p-3">عنوان التقرير</th>
-                      <th className="p-3">القطاع</th>
-                      <th className="p-3">الجهة المصدرة</th>
-                      <th className="p-3">تاريخ الإيداع</th>
-                      <th className="p-3">قرار النشر في البوابة 🌐</th>
-                      <th className="p-3">الإجراءات (عرض / تعديل / حذف)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {localReports.map((rep) => (
-                      <tr key={rep.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 font-mono font-bold text-amber-600">{rep.id}</td>
-                        <td className="p-3 font-bold text-slate-900">
-                          <div className="flex items-center gap-1.5">
-                            {rep.type === 'PDF' ? <FileText className="w-4 h-4 text-red-500 flex-shrink-0" /> : <FileSpreadsheet className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
-                            <span>{rep.title}</span>
-                          </div>
-                        </td>
-                        <td className="p-3 text-slate-600">{rep.sector}</td>
-                        <td className="p-3 text-slate-700">{rep.contractor}</td>
-                        <td className="p-3 font-mono text-slate-500">{rep.date}</td>
-                        
-                        {/* Content Manager Decision Toggle */}
-                        <td className="p-3">
-                          <button
-                            onClick={() => handleToggleReportPublic(rep.id)}
-                            className={`px-3 py-1.5 rounded-xl font-black text-[10px] flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
-                              rep.isPublic
-                                ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                                : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
-                            }`}
-                            title="انقر لتبديل حالة العرض في البوابة العامة"
-                          >
-                            {rep.isPublic ? (
-                              <>
-                                <Globe2 className="w-3.5 h-3.5" />
-                                <span>معروض في البوابة</span>
-                              </>
-                            ) : (
-                              <>
-                                <Lock className="w-3.5 h-3.5" />
-                                <span>داخلي فقط (حجب)</span>
-                              </>
-                            )}
-                          </button>
-                        </td>
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        onClick={() => setIsAddReportModalOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>إيداع تقرير جديد</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                        {/* Actions (View, Edit, Delete, Download) */}
-                        <td className="p-3">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => setSelectedReportModal(rep)}
-                              className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors cursor-pointer"
-                              title="عرض التفاصيل"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setSelectedReportEditModal({ ...rep })}
-                              className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer"
-                              title="تعديل التقرير"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setReportToDelete(rep)}
-                              className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
-                              title="حذف التقرير"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => showToast(`جاري تحميل الملف: ${rep.title}`)}
-                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
-                              title="تحميل الملف"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {/* Section A: Integrated Document Reports & Transparency Hub */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                  <DocumentReportsHub documents={documents} theme="light" lang={lang} />
+                </div>
+
+                {/* Section B: Reports Management & Ledger Table */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-slate-100">
+                    <div>
+                      <h3 className="text-base font-black text-slate-900">سجل التقارير الإدارية والتنفيذية المودعة</h3>
+                      <p className="text-xs text-slate-500">إدارة التقارير المرفوعة والتحكم بقرار مدير المشروع في تصنيفها داخلياً أو إتاحتها</p>
+                    </div>
+                    <button
+                      onClick={() => setIsAddReportModalOpen(true)}
+                      className="px-4 py-2.5 rounded-xl bg-[#0A1128] hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm cursor-pointer self-start"
+                    >
+                      <Plus className="w-4 h-4 text-amber-400" />
+                      <span>رفع تقرير جديد</span>
+                    </button>
+                  </div>
+
+                  {/* Reports Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-start">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                          <th className="p-3">كود التقرير</th>
+                          <th className="p-3">عنوان التقرير</th>
+                          <th className="p-3">القطاع</th>
+                          <th className="p-3">الجهة المصدرة</th>
+                          <th className="p-3">تاريخ الإيداع</th>
+                          <th className="p-3">حالة الإتاحة</th>
+                          <th className="p-3">الإجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {localReports.map((rep) => (
+                          <tr key={rep.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3 font-mono font-bold text-amber-600">{rep.id}</td>
+                            <td className="p-3 font-bold text-slate-900">
+                              <div className="flex items-center gap-1.5">
+                                {rep.type === 'PDF' ? <FileText className="w-4 h-4 text-red-500 flex-shrink-0" /> : <FileSpreadsheet className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+                                <span>{rep.title}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-slate-600">{rep.sector}</td>
+                            <td className="p-3 text-slate-700">{rep.contractor}</td>
+                            <td className="p-3 font-mono text-slate-500">{rep.date}</td>
+                            
+                            {/* Toggle */}
+                            <td className="p-3">
+                              <button
+                                onClick={() => handleToggleReportPublic(rep.id)}
+                                className={`px-3 py-1.5 rounded-xl font-black text-[10px] flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                  rep.isPublic
+                                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                                }`}
+                                title="تبديل تصنيف التقرير"
+                              >
+                                {rep.isPublic ? (
+                                  <>
+                                    <Globe2 className="w-3.5 h-3.5" />
+                                    <span>متاح بالمنظومة</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock className="w-3.5 h-3.5" />
+                                    <span>داخلي خاص</span>
+                                  </>
+                                )}
+                              </button>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="p-3">
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => setSelectedReportModal(rep)}
+                                  className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors cursor-pointer"
+                                  title="عرض التفاصيل"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => setSelectedReportEditModal({ ...rep })}
+                                  className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer"
+                                  title="تعديل التقرير"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => setReportToDelete(rep)}
+                                  className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
+                                  title="حذف التقرير"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => showToast(`جاري تحميل الملف: ${rep.title}`)}
+                                  className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                                  title="تحميل الملف"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
               </div>
-            </div>
+            )
           )}
 
           {/* ══════════════════════════════════════════════════════════════════════════════
@@ -1400,7 +1729,7 @@ export default function ExecutiveDashboard({
                   <div key={photo.id} className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 shadow-sm hover:border-amber-400 transition-all group flex flex-col justify-between">
                     <div>
                       <div className="relative h-44 overflow-hidden bg-black cursor-pointer" onClick={() => setSelectedPhotoModal(photo)}>
-                        <img src={photo.img} alt={photo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={photo.src || photo.img || '/road-asphalt-paver.jpg'} alt={photo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-amber-300 text-[10px] font-bold font-mono">
                           {photo.sector}
                         </div>
@@ -1412,7 +1741,7 @@ export default function ExecutiveDashboard({
                       <div className="p-4 space-y-1.5 text-start">
                         <h4 className="font-black text-xs text-slate-900 line-clamp-1">{photo.title}</h4>
                         <div className="text-[10px] text-slate-500 flex items-center justify-between">
-                          <span>المصور: {photo.photographer || 'م. الموقع'}</span>
+                          <span>المصور: {photo.photographer || photo.author || 'م. الموقع'}</span>
                           <span className="font-mono">{photo.date}</span>
                         </div>
                       </div>
@@ -1444,6 +1773,130 @@ export default function ExecutiveDashboard({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════════════════
+              VIEW: NEWS & TOP BAR TICKER (أخبار ومستجدات الشريط العلوي)
+          ══════════════════════════════════════════════════════════════════════════════ */}
+          {activeSidebarItem === 'news' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6 animate-fadeIn text-start">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-slate-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Newspaper className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-lg font-black text-slate-900">إدارة أخبار ومستجدات الشريط العلوي</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    إضافة وتعديل وحذف الأخبار الميدانية العاجلة التي تُعرض مباشرة في الشريط المتحرك بأعلى البوابة
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setNewsForm({ text: '', tag: 'تحديث حي', active: true });
+                    setSelectedNewsEditModal(null);
+                    setIsAddNewsModalOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-sm cursor-pointer self-start transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>إضافة خبر جديد للشريط العلوي</span>
+                </button>
+              </div>
+
+              {/* Live Preview Box */}
+              <div className="rounded-2xl border border-amber-500/30 bg-slate-950 p-4 text-white space-y-2 shadow-inner">
+                <div className="flex items-center justify-between text-xs font-bold text-amber-400 border-b border-white/10 pb-2">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span>معاينة حية: كيف يظهر الشريط العلوي للمواطنين والزوار</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    الأخبار المفعلة: {localNews.filter(n => n.active).length} من {localNews.length}
+                  </span>
+                </div>
+                <div className="overflow-hidden py-1 rounded-xl">
+                  <MarqueeTicker 
+                    items={localNews.filter(n => n.active)} 
+                    theme="dark" 
+                    variant="hero" 
+                  />
+                </div>
+              </div>
+
+              {/* News Items Table / List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-700">قائمة الأخبار المسجلة في الشريط ({localNews.length})</h4>
+                  <span className="text-[11px] text-slate-400">يمكنك تفعيل أو إيقاف أي خبر بنقرة واحدة</span>
+                </div>
+
+                <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                  <table className="w-full text-xs text-start">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <th className="p-3 text-start">الوسم / التصنيف</th>
+                        <th className="p-3 text-start">نص الخبر الميداني</th>
+                        <th className="p-3 text-start">تاريخ الإضافة</th>
+                        <th className="p-3 text-center">حالة العرض بالشريط</th>
+                        <th className="p-3 text-center">الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {localNews.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3 whitespace-nowrap">
+                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-500/15 text-amber-700 border border-amber-500/30">
+                              {item.tag || 'أخبار المشروع'}
+                            </span>
+                          </td>
+                          <td className="p-3 font-bold text-slate-900 max-w-md">
+                            {item.text}
+                          </td>
+                          <td className="p-3 text-slate-400 font-mono whitespace-nowrap">
+                            {item.date || '2026-08-20'}
+                          </td>
+                          <td className="p-3 text-center whitespace-nowrap">
+                            <button
+                              onClick={() => handleToggleNewsActive(item.id)}
+                              className={`px-3 py-1 rounded-xl text-[10px] font-bold border transition-all cursor-pointer ${
+                                item.active
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                  : 'bg-slate-100 text-slate-500 border-slate-200'
+                              }`}
+                            >
+                              {item.active ? 'معروض في الشريط' : 'متوقف مؤقتاً'}
+                            </button>
+                          </td>
+                          <td className="p-3 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  setSelectedNewsEditModal(item);
+                                  setNewsForm({ text: item.text, tag: item.tag || 'تحديث حي', active: item.active });
+                                  setIsAddNewsModalOpen(true);
+                                }}
+                                className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 cursor-pointer"
+                                title="تعديل الخبر"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setNewsToDelete(item)}
+                                className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                                title="حذف الخبر"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1529,51 +1982,7 @@ export default function ExecutiveDashboard({
 
 
 
-          {/* ══════════════════════════════════════════════════════════════════════════════
-              VIEW 7: CONTRACTORS
-          ══════════════════════════════════════════════════════════════════════════════ */}
-          {activeSidebarItem === 'contractors' && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6 animate-fadeIn text-start">
-              <div className="border-b pb-4 border-slate-100">
-                <h3 className="text-lg font-black text-slate-900">الشركات والائتلافات الهندسية المنفذة</h3>
-                <p className="text-xs text-slate-500">كشوفات عقود الشركات ونسب الإنجاز والتقييم الفني الميداني</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {[
-                  { name: 'شركة السهل الصحراوي للمقاولات', sector: 'القطاع 01 و 02 (أوباري - القرقيبة)', contract: '38,500,000 د.ل', progress: 84.0, score: '98.5%', fleet: 70 },
-                  { name: 'شركة الهضبة لإعادة الإعمار والطرق', sector: 'القطاع 03 و 05 (بيسان - العوينات)', contract: '42,000,000 د.ل', progress: 72.0, score: '96.2%', fleet: 77 },
-                  { name: 'شركة الطريق السريع للإنشاءات', sector: 'القطاع 04 (بيسان - تين الوه)', contract: '35,000,000 د.ل', progress: 68.0, score: '97.0%', fleet: 55 },
-                  { name: 'شركة الأفق الوطني للهندسة', sector: 'القطاع 06 و 08 (العوينات - أيسين)', contract: '39,000,000 د.ل', progress: 61.0, score: '95.8%', fleet: 62 },
-                  { name: 'شركة الجنوب للمشاريع والجسور', sector: 'القطاع 11 (مدخل غات التاريخي)', contract: '25,500,000 د.ل', progress: 55.0, score: '94.5%', fleet: 38 },
-                  { name: 'شركة المستقبل للمقاولات العامة', sector: 'القطاع 10 (البركت - غات)', contract: '28,000,000 د.ل', progress: 35.4, score: '92.0%', fleet: 40 }
-                ].map((c) => (
-                  <div key={c.name} className="p-5 rounded-2xl border border-slate-200 hover:border-amber-400 space-y-3 transition-all">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-black text-sm text-slate-900">{c.name}</h4>
-                      <span className="font-mono font-black text-sm text-emerald-600">{c.progress}%</span>
-                    </div>
-                    <div className="text-xs text-slate-500 space-y-1">
-                      <div>نطاق العمل: <strong className="text-slate-800">{c.sector}</strong></div>
-                      <div>قيمة العقد: <strong className="text-amber-600 font-mono">{c.contract}</strong></div>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-500" style={{ width: `${c.progress}%` }} />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                      <span>تقييم الجودة: <strong className="text-slate-700">{c.score}</strong></span>
-                      <span>الآليات: <strong className="text-slate-700">{c.fleet} آلية</strong></span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════════════════
-              VIEW 8: OTHER ESSENTIAL VIEWS (Fallback)
-          ══════════════════════════════════════════════════════════════════════════════ */}
-          {!['home', 'sectors', 'reports', 'media', 'contractors', 'users'].includes(activeSidebarItem) && (
+          {!['home', 'sectors', 'reports', 'media', 'users'].includes(activeSidebarItem) && (
             <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-4 text-center animate-fadeIn">
               <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
                 <LayoutGrid className="w-8 h-8" />
@@ -1746,8 +2155,8 @@ export default function ExecutiveDashboard({
                     onChange={(e) => setSelectedReportEditModal({ ...selectedReportEditModal, isPublic: e.target.value === 'true' })}
                     className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 bg-white"
                   >
-                    <option value="true">معروض في البوابة العامة 🌐</option>
-                    <option value="false">داخلي فقط (مخفي) 🔒</option>
+                    <option value="true">معروض في البوابة العامة</option>
+                    <option value="false">داخلي فقط (مخفي)</option>
                   </select>
                 </div>
               </div>
@@ -1772,10 +2181,10 @@ export default function ExecutiveDashboard({
         </div>
       )}
 
-      {/* ── MODAL 3: ADD PHOTO MODAL ── */}
+      {/* ── MODAL 3: ADD & UPLOAD PHOTO MODAL ── */}
       {isAddMediaModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <form onSubmit={handleAddPhoto} className="relative max-w-lg w-full rounded-3xl p-6 bg-white border border-slate-200 shadow-2xl space-y-4 text-start animate-scaleUp">
+          <form onSubmit={handleAddPhoto} className="relative max-w-xl w-full rounded-3xl p-6 bg-white border border-slate-200 shadow-2xl space-y-4 text-start animate-scaleUp max-h-[92vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => setIsAddMediaModalOpen(false)}
@@ -1784,20 +2193,191 @@ export default function ExecutiveDashboard({
               <X className="w-4 h-4" />
             </button>
 
-            <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
-              <ImagePlus className="w-5 h-5 text-amber-500" />
-              <span>إضافة صورة فوتوغرافية 4K للمعرض</span>
-            </h3>
+            <div>
+              <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                <ImagePlus className="w-5 h-5 text-amber-500" />
+                <span>إضافة ورفع صورة جديدة للتوثيق البصري (4K)</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                ارفع صورة حية من جهازك أو هاتفك أو اختر من مكتبة صور المشروع المعتمدة
+              </p>
+            </div>
 
-            <div className="space-y-3 text-xs">
+            {/* Media Source Tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200/80">
+              <button
+                type="button"
+                onClick={() => setMediaUploadTab('upload')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  mediaUploadTab === 'upload'
+                    ? 'bg-white text-slate-950 shadow-sm font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <UploadCloud className="w-3.5 h-3.5 text-amber-500" />
+                <span>رفع من الجهاز</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMediaUploadTab('gallery')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  mediaUploadTab === 'gallery'
+                    ? 'bg-white text-slate-950 shadow-sm font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
+                <span>صور المشروع</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMediaUploadTab('url')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  mediaUploadTab === 'url'
+                    ? 'bg-white text-slate-950 shadow-sm font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-500" />
+                <span>رابط خارجي</span>
+              </button>
+            </div>
+
+            {/* Tab 1: Upload from device */}
+            {mediaUploadTab === 'upload' && (
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  ref={photoFileInputRef}
+                  accept="image/*"
+                  onChange={handlePhotoFileUpload}
+                  className="hidden"
+                />
+
+                {newMedia.img && newMedia.img.startsWith('data:') ? (
+                  <div className="relative rounded-2xl overflow-hidden border-2 border-amber-500/50 bg-slate-950">
+                    <img
+                      src={newMedia.img}
+                      alt="معاينة الصورة المرفوعة"
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end justify-between p-3">
+                      <span className="text-[11px] font-bold text-emerald-400 bg-black/60 px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>تم اختيار الصورة وجاهزة للتوثيق</span>
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => photoFileInputRef.current?.click()}
+                          className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+                        >
+                          تغيير
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewMedia(prev => ({ ...prev, img: '/road-asphalt-paver.jpg', src: '/road-asphalt-paver.jpg' }))}
+                          className="px-3 py-1 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold cursor-pointer"
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => photoFileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-300 hover:border-amber-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 hover:bg-amber-50/30 transition-all group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                      <UploadCloud className="w-6 h-6" />
+                    </div>
+                    <div className="font-bold text-xs text-slate-800">
+                      اضغط لاختيار صورة من جهازك أو هاتفك
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                      يدعم صيغ JPG, PNG, WEBP بدقة 4K عالية الوضوح
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-3 px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold"
+                    >
+                      استعراض الصور
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Project Gallery Preset */}
+            {mediaUploadTab === 'gallery' && (
+              <div className="space-y-2">
+                <span className="text-[11px] text-slate-500 block">اختر صورة من آليات وأعمال المشروع المسجلة:</span>
+                <div className="grid grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1">
+                  {PRESET_PROJECT_PHOTOS.map((p) => {
+                    const isSelected = (newMedia.img === p.url);
+                    return (
+                      <div
+                        key={p.url}
+                        onClick={() => {
+                          setNewMedia(prev => ({
+                            ...prev,
+                            img: p.url,
+                            src: p.url,
+                            category: p.category,
+                            title: prev.title || p.title,
+                            desc: prev.desc || p.desc
+                          }));
+                        }}
+                        className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
+                          isSelected ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        <img src={p.url} alt={p.title} className="w-full h-16 object-cover" />
+                        <div className="p-1 bg-white text-[10px] font-bold text-slate-800 truncate">
+                          {p.category}
+                        </div>
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center shadow-sm">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Direct URL */}
+            {mediaUploadTab === 'url' && (
+              <div className="space-y-2">
+                <label className="font-bold text-slate-700 block text-xs">رابط الصورة المباشر (URL):</label>
+                <input
+                  type="url"
+                  value={newMedia.img.startsWith('data:') ? '' : newMedia.img}
+                  onChange={(e) => setNewMedia({ ...newMedia, img: e.target.value, src: e.target.value })}
+                  placeholder="https://... أو /road-asphalt-paver.jpg"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 text-xs"
+                />
+                {newMedia.img && !newMedia.img.startsWith('data:') && (
+                  <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-black">
+                    <img src={newMedia.img} alt="معاينة" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Metadata Fields */}
+            <div className="space-y-3 text-xs pt-1 border-t border-slate-100">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">عنوان الصورة / وصف العمل:</label>
+                <label className="font-bold text-slate-700 block mb-1">عنوان الصورة / وصف العمل الميداني:</label>
                 <input
                   type="text"
                   required
                   value={newMedia.title}
                   onChange={(e) => setNewMedia({ ...newMedia, title: e.target.value })}
-                  placeholder="مثال: رصف الأسفلت بالفرادة Vögele"
+                  placeholder="مثال: رصف الأسفلت الساخن بالفرادة Vögele وضبط درجات الحرارة"
                   className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
                 />
               </div>
@@ -1821,38 +2401,79 @@ export default function ExecutiveDashboard({
                     className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 bg-white"
                   >
                     <option value="رصف الأسفلت">رصف الأسفلت</option>
-                    <option value="الأعمال الترابية">الأعمال الترابية والتسوية</option>
+                    <option value="الدمك وضبط المناسيب">الدمك وضبط المناسيب</option>
+                    <option value="كشط وتأسيس">الأعمال الترابية والتسوية</option>
                     <option value="العبارات والجسور">العبارات وتصريف السيول</option>
-                    <option value="الإنارة والسلامة">الإنارة بالطاقة الشمسية</option>
+                    <option value="الطاقة الشمسية والإنارة">الإنارة بالطاقة الشمسية</option>
+                    <option value="ضبط الجودة المعملي">ضبط الجودة المعملي</option>
+                    <option value="بانوراما جوية">مشاهد وتوثيق جوي</option>
                   </select>
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">اسم المصور / المهندس:</label>
+                  <input
+                    type="text"
+                    value={newMedia.photographer}
+                    onChange={(e) => setNewMedia({ ...newMedia, photographer: e.target.value })}
+                    placeholder="م. عبد السلام الفزاني"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">تاريخ التوثيق:</label>
+                  <input
+                    type="date"
+                    value={newMedia.date}
+                    onChange={(e) => setNewMedia({ ...newMedia, date: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 bg-white"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="font-bold text-slate-700 block mb-1">اسم المصور / المهندس:</label>
-                <input
-                  type="text"
-                  value={newMedia.photographer}
-                  onChange={(e) => setNewMedia({ ...newMedia, photographer: e.target.value })}
-                  placeholder="م. فلان الفلاني"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
+                <label className="font-bold text-slate-700 block mb-1">المشروع التنفيذي بالمنصة الرئيسية:</label>
+                <select
+                  value={newMedia.targetProject || 'new'}
+                  onChange={(e) => setNewMedia({ ...newMedia, targetProject: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 bg-white"
+                >
+                  <option value="new">إدراج كحزمة عمل وصورة جديدة في المشروعات التنفيذية (تظهر فوراً في المقدمة)</option>
+                  <option value="PRJ-UBG-360">تحديث الصورة الرئيسية: مشروع صيانة ورصف طريق أوباري – غات</option>
+                  <option value="PRJ-UBG-SOL-1100">تحديث الصورة الرئيسية: مشروع إنارة مسار أوباري – غات بالطاقة الشمسية</option>
+                  <option value="PRJ-UBG-CUL-028">تحديث الصورة الرئيسية: مشروع عبّارات تصريف السيول</option>
+                  <option value="PRJ-UBG-DUN-120">تحديث الصورة الرئيسية: مشروع تثبيت الكثبان الرملية وتوسعة الأكتاف</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">تفاصيل وملاحظات العمل الميداني:</label>
+                <textarea
+                  rows="2"
+                  value={newMedia.desc}
+                  onChange={(e) => setNewMedia({ ...newMedia, desc: e.target.value })}
+                  placeholder="ملاحظات حول سير الأعمال، الآليات المشغلة، درجات الحرارة أو نتائج الفحص الموقعي..."
+                  className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 resize-none"
                 />
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-end gap-2">
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsAddMediaModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 إلغاء
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer shadow-md"
+                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                إضافة الصورة
+                <ImagePlus className="w-4 h-4" />
+                <span>حفظ ورفع الصورة للتوثيق البصري</span>
               </button>
             </div>
           </form>
@@ -1862,7 +2483,7 @@ export default function ExecutiveDashboard({
       {/* ── MODAL 4: EDIT PHOTO MODAL ── */}
       {selectedPhotoEditModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <form onSubmit={handleSaveEditPhoto} className="relative max-w-lg w-full rounded-3xl p-6 bg-white border border-slate-200 shadow-2xl space-y-4 text-start animate-scaleUp">
+          <form onSubmit={handleSaveEditPhoto} className="relative max-w-lg w-full rounded-3xl p-6 bg-white border border-slate-200 shadow-2xl space-y-4 text-start animate-scaleUp max-h-[92vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => setSelectedPhotoEditModal(null)}
@@ -1875,6 +2496,32 @@ export default function ExecutiveDashboard({
               <Edit2 className="w-5 h-5 text-amber-500" />
               <span>تعديل بيانات الصورة ({selectedPhotoEditModal.id})</span>
             </h3>
+
+            {/* Current Image Preview & Change */}
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-black h-36">
+              <img
+                src={selectedPhotoEditModal.src || selectedPhotoEditModal.img || '/road-asphalt-paver.jpg'}
+                alt={selectedPhotoEditModal.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <input
+                  type="file"
+                  ref={editPhotoFileInputRef}
+                  accept="image/*"
+                  onChange={handleEditPhotoFileUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => editPhotoFileInputRef.current?.click()}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                >
+                  <UploadCloud className="w-3.5 h-3.5" />
+                  <span>تغيير ملف الصورة من الجهاز</span>
+                </button>
+              </div>
+            </div>
 
             <div className="space-y-3 text-xs">
               <div>
@@ -1908,9 +2555,29 @@ export default function ExecutiveDashboard({
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">المصور / المهندس المشرف:</label>
+                <input
+                  type="text"
+                  value={selectedPhotoEditModal.photographer || selectedPhotoEditModal.author || ''}
+                  onChange={(e) => setSelectedPhotoEditModal({ ...selectedPhotoEditModal, photographer: e.target.value, author: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">الوصف التفصيلي:</label>
+                <textarea
+                  rows="2"
+                  value={selectedPhotoEditModal.desc || ''}
+                  onChange={(e) => setSelectedPhotoEditModal({ ...selectedPhotoEditModal, desc: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 resize-none"
+                />
+              </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-end gap-2">
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setSelectedPhotoEditModal(null)}
@@ -2079,7 +2746,7 @@ export default function ExecutiveDashboard({
               <div>الشركة المنفذة: <strong className="text-slate-800">{selectedReportModal.contractor}</strong></div>
               <div>القطاع الهندسي: <strong className="text-slate-800">{selectedReportModal.sector || 'القطاع 01'}</strong></div>
               <div>حالة الاعتماد: <span className="font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">معتمد رسمياً من الإدارة</span></div>
-              <div>حالة النشر على البوابة: <strong className={selectedReportModal.isPublic ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>{selectedReportModal.isPublic ? 'معروض في البوابة 🌐' : 'داخلي فقط (مخفي) 🔒'}</strong></div>
+              <div>حالة النشر على البوابة: <strong className={selectedReportModal.isPublic ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>{selectedReportModal.isPublic ? 'معروض في البوابة' : 'داخلي فقط (مخفي)'}</strong></div>
               <div>صيغة الملف والحجم: <strong className="font-mono text-blue-600">{selectedReportModal.type} • {selectedReportModal.size || '2.4 MB'}</strong></div>
             </div>
 
@@ -2093,7 +2760,7 @@ export default function ExecutiveDashboard({
                   selectedReportModal.isPublic ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                 }`}
               >
-                {selectedReportModal.isPublic ? 'حجب عن البوابة 🔒' : 'عرض في البوابة 🌐'}
+                {selectedReportModal.isPublic ? 'حجب عن البوابة' : 'عرض في البوابة'}
               </button>
               <button
                 onClick={() => {
@@ -2122,7 +2789,7 @@ export default function ExecutiveDashboard({
             </button>
 
             <div className="h-72 overflow-hidden bg-black">
-              <img src={selectedPhotoModal.img} alt={selectedPhotoModal.title} className="w-full h-full object-contain" />
+              <img src={selectedPhotoModal.src || selectedPhotoModal.img || '/road-asphalt-paver.jpg'} alt={selectedPhotoModal.title} className="w-full h-full object-contain" />
             </div>
 
             <div className="p-5 space-y-2">
@@ -2131,7 +2798,10 @@ export default function ExecutiveDashboard({
                 <span>{selectedPhotoModal.date}</span>
               </div>
               <h4 className="font-black text-base text-slate-900">{selectedPhotoModal.title}</h4>
-              <p className="text-xs text-slate-500">تم التوثيق بواسطة: {selectedPhotoModal.photographer || 'م. الموقع'}</p>
+              {selectedPhotoModal.desc && (
+                <p className="text-xs text-slate-600 leading-relaxed">{selectedPhotoModal.desc}</p>
+              )}
+              <p className="text-xs text-slate-500">تم التوثيق بواسطة: {selectedPhotoModal.photographer || selectedPhotoModal.author || 'م. الموقع'}</p>
             </div>
           </div>
         </div>
@@ -2453,6 +3123,132 @@ export default function ExecutiveDashboard({
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs cursor-pointer shadow-md"
               >
                 نعم، حذف التقرير
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: ADD / EDIT NEWS MODAL (إدارة أخبار الشريط العلوي) ── */}
+      {isAddNewsModalOpen && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 text-start space-y-4 animate-scaleUp">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <div className="flex items-center gap-2">
+                <Newspaper className="w-5 h-5 text-amber-500" />
+                <h3 className="font-black text-base text-slate-900">
+                  {selectedNewsEditModal ? 'تعديل خبر الشريط العلوي' : 'إضافة خبر جديد للشريط العلوي'}
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setIsAddNewsModalOpen(false);
+                  setSelectedNewsEditModal(null);
+                }}
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNews} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">
+                  نص الخبر الميداني (يُعرض في الشريط المتحرك):
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={newsForm.text}
+                  onChange={(e) => setNewsForm({ ...newsForm, text: e.target.value })}
+                  placeholder="مثال: وصول شحنات الأسفلت والمباشرة في فرش الطبقة السطحية بالقطاع 02..."
+                  className="w-full p-3 rounded-xl border border-slate-200 outline-none focus:border-amber-500 text-xs leading-relaxed"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">تصنيف / وسم الخبر:</label>
+                  <select
+                    value={newsForm.tag}
+                    onChange={(e) => setNewsForm({ ...newsForm, tag: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 bg-white text-xs font-bold"
+                  >
+                    <option value="تحديث حي">تحديث حي</option>
+                    <option value="مشروع وطني">مشروع وطني</option>
+                    <option value="سير الأعمال">سير الأعمال</option>
+                    <option value="متابعة دورية">متابعة دورية</option>
+                    <option value="السلامة والإنارة">السلامة والإنارة</option>
+                    <option value="ضبط الجودة">ضبط الجودة</option>
+                    <option value="الإشراف الهندسي">الإشراف الهندسي</option>
+                    <option value="إشعار عاجل">إشعار عاجل</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={newsForm.active}
+                      onChange={(e) => setNewsForm({ ...newsForm, active: e.target.checked })}
+                      className="w-4 h-4 accent-amber-500 cursor-pointer"
+                    />
+                    <span className="font-bold text-slate-800">تفعيل فوري في الشريط</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddNewsModalOpen(false);
+                    setSelectedNewsEditModal(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer shadow-md"
+                >
+                  {selectedNewsEditModal ? 'حفظ التعديلات' : 'نشر في الشريط العلوي'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: DELETE NEWS CONFIRMATION MODAL ── */}
+      {newsToDelete && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-start space-y-4 animate-scaleUp">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-black text-base text-slate-900">تأكيد حذف الخبر</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                هل أنت متأكد من حذف هذا الخبر نهائياً من الشريط العلوي؟
+              </p>
+              <p className="text-xs font-bold text-slate-800 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                "{newsToDelete.text}"
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setNewsToDelete(null)}
+                className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 cursor-pointer"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleDeleteNews}
+                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs cursor-pointer shadow-md"
+              >
+                تأكيد الحذف
               </button>
             </div>
           </div>

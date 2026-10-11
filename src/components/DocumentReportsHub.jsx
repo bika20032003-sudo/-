@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileText, 
   Download, 
@@ -10,16 +10,26 @@ import {
   Eye, 
   ShieldCheck,
   FileCheck,
-  Sparkles,
   DollarSign,
   Search,
   Clock,
   Layers,
   ArrowUpRight,
-  X
+  X,
+  Plus,
+  ImagePlus
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 import { fetchFieldPhotos, initialFieldPhotos, initialFinancialReports } from '../services/api';
+
+const HUB_PRESET_PHOTOS = [
+  { title: 'آليات رصف الأسفلت الساخن ومتابعة درجات الحرارة', category: 'رصف الأسفلت', src: '/road-asphalt-paver.jpg' },
+  { title: 'دمك الأسفلت بالمداحل الأسطوانية والمطاطية', category: 'الدمك وضبط المناسيب', src: '/road-rollers-compaction.jpg' },
+  { title: 'تسوية الأساس الحجري بالكاشطات الموتورية', category: 'كشط وتأسيس', src: '/road-grader-earthwork.jpg' },
+  { title: 'تركيب وتشغيل منظومة الإنارة الذكية بالطاقة الشمسية', category: 'الطاقة الشمسية والإنارة', src: '/road-solar-lighting.jpg' },
+  { title: 'فحص عينات الكور الإسفلتي ومطابقة الجودة المعملية', category: 'ضبط الجودة المعملي', src: '/road-qa-testing-core.jpg' },
+  { title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي (360 كم)', category: 'بانوراما جوية', src: '/road-aerial-desert-highway.jpg' }
+];
 
 const DEFAULT_DOCS = [
   {
@@ -119,6 +129,82 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
     return initialFieldPhotos || [];
   });
 
+  const [isUploadPhotoModalOpen, setIsUploadPhotoModalOpen] = useState(false);
+  const [photoUploadSuccess, setPhotoUploadSuccess] = useState(null);
+  const photoUploadInputRef = useRef(null);
+  const [uploadTab, setUploadTab] = useState('file'); // 'file' | 'presets' | 'url'
+  const [newUploadPhoto, setNewUploadPhoto] = useState({
+    title: '',
+    sector: 'القطاع الأول (أوباري - الفيوات)',
+    category: 'رصف الأسفلت',
+    src: '/road-asphalt-paver.jpg',
+    img: '/road-asphalt-paver.jpg',
+    author: '',
+    desc: ''
+  });
+
+  const handlePhotoFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 12 * 1024 * 1024) {
+      alert('حجم الصورة كبير جداً، يرجى اختيار ملف أقل من 12 ميجابايت');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result;
+      if (dataUrl) {
+        setNewUploadPhoto(prev => ({
+          ...prev,
+          src: dataUrl,
+          img: dataUrl,
+          title: prev.title || file.name.replace(/\.[^/.]+$/, "")
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveUploadedPhoto = (e) => {
+    e.preventDefault();
+    if (!newUploadPhoto.title.trim()) return;
+
+    const finalImage = newUploadPhoto.src || newUploadPhoto.img || '/road-asphalt-paver.jpg';
+    const item = {
+      id: `PH-${Date.now().toString().slice(-4)}`,
+      title: newUploadPhoto.title.trim(),
+      titleEn: newUploadPhoto.title.trim(),
+      sector: newUploadPhoto.sector || 'القطاع الأول (أوباري - الفيوات)',
+      category: newUploadPhoto.category || 'رصف الأسفلت',
+      desc: newUploadPhoto.desc?.trim() || `توثيق ميداني فوتوغرافي لأعمال ${newUploadPhoto.category} في ${newUploadPhoto.sector}.`,
+      date: new Date().toISOString().split('T')[0],
+      src: finalImage,
+      img: finalImage,
+      author: newUploadPhoto.author?.trim() || 'م. الموقع الميداني',
+      photographer: newUploadPhoto.author?.trim() || 'م. الموقع الميداني'
+    };
+
+    const updated = [item, ...fieldPhotos];
+    setFieldPhotos(updated);
+    try {
+      localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {}
+
+    setIsUploadPhotoModalOpen(false);
+    setPhotoUploadSuccess(item.title);
+    setTimeout(() => setPhotoUploadSuccess(null), 4000);
+    setNewUploadPhoto({
+      title: '',
+      sector: 'القطاع الأول (أوباري - الفيوات)',
+      category: 'رصف الأسفلت',
+      src: '/road-asphalt-paver.jpg',
+      img: '/road-asphalt-paver.jpg',
+      author: '',
+      desc: ''
+    });
+  };
+
   useEffect(() => {
     const handleStorage = () => {
       try {
@@ -183,7 +269,7 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
   });
 
   return (
-    <section id="media-section" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 animate-fadeIn select-none">
+    <section id="transparency-reports-hub" className="py-4 sm:py-6 max-w-7xl mx-auto space-y-8 animate-fadeIn select-none">
       
       {/* ── Section Title & Verified Timestamp ── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b pb-6 border-slate-200 dark:border-white/10">
@@ -194,9 +280,9 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
               : 'bg-amber-500/10 border-amber-500/35 text-amber-300'
           }`}>
             <ShieldCheck className="w-4 h-4 text-amber-500" />
-            <span>{lang === 'ar' ? 'منظومة الشفافية والمتابعة الرسمية 🇱🇾' : 'Official Transparency & Field Oversight 🇱🇾'}</span>
+            <span>{lang === 'ar' ? 'منظومة الشفافية والمتابعة الرسمية' : 'Official Transparency & Field Oversight'}</span>
           </div>
-          <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${
+          <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
             theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
             {lang === 'ar' ? 'الشفافية والمتابعة الميدانية' : 'Transparency & Field Oversight'}
@@ -241,10 +327,10 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
           theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#0a0f1d] border-white/10'
         }`}>
           {[
-            { id: 'progress', label: lang === 'ar' ? '📊 تقارير الإنجاز' : '📊 Progress Reports' },
-            { id: 'financial', label: lang === 'ar' ? '💰 التقارير المالية' : '💰 Financial Reports' },
-            { id: 'photos', label: lang === 'ar' ? '📸 التوثيق البصري 4K' : '📸 Visual Media' },
-            { id: 'specs', label: lang === 'ar' ? '📋 كراسات وضبط الجودة' : '📋 QA Specs' }
+            { id: 'progress', label: lang === 'ar' ? 'تقارير الإنجاز' : 'Progress Reports' },
+            { id: 'financial', label: lang === 'ar' ? 'التقارير المالية' : 'Financial Reports' },
+            { id: 'photos', label: lang === 'ar' ? 'التوثيق البصري' : 'Visual Media' },
+            { id: 'specs', label: lang === 'ar' ? 'كراسات وضبط الجودة' : 'QA Specifications' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -374,22 +460,40 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
       {/* ── TAB 3: 4K FIELD VISUAL MEDIA ── */}
       {activeMainTab === 'photos' && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Sub Categories for Photos */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {photoCategories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setPhotoFilter(cat.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  photoFilter === cat.id
-                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
-                    : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+          {/* Sub Categories for Photos & Upload Action */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {photoCategories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setPhotoFilter(cat.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    photoFilter === cat.id
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                      : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setIsUploadPhotoModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer self-start sm:self-auto transition-transform hover:scale-105"
+            >
+              <ImagePlus className="w-4 h-4" />
+              <span>إضافة ورفع صورة للتوثيق</span>
+            </button>
           </div>
+
+          {/* Photo Upload Success Toast Alert */}
+          {photoUploadSuccess && (
+            <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>تمت إضافة الصورة بنجاح وعرضها في التوثيق البصري: {photoUploadSuccess}</span>
+            </div>
+          )}
 
           {/* Photo Gallery Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -403,8 +507,10 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
               >
                 <div className="h-56 overflow-hidden relative">
                   <img
-                    src={photo.src}
+                    src={photo.src || photo.img || '/road-asphalt-paver.jpg'}
                     alt={photo.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -423,7 +529,7 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
                   <h4 className={`font-black text-xs sm:text-sm line-clamp-1 ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
                     {photo.title}
                   </h4>
-                  <p className="text-[11px] text-slate-400 line-clamp-2">{photo.desc}</p>
+                  <p className="text-[11px] text-slate-400 line-clamp-2">{photo.desc || 'توثيق ميداني فوتوغرافي عالي الدقة'}</p>
                 </div>
               </div>
             ))}
@@ -489,18 +595,259 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
             </button>
 
             <div className="max-h-[65vh] overflow-hidden relative bg-black flex items-center justify-center">
-              <img src={selectedPhoto.src} alt={selectedPhoto.title} className="w-full h-full object-contain" />
+              <img src={selectedPhoto.src || selectedPhoto.img || '/road-asphalt-paver.jpg'} alt={selectedPhoto.title} className="w-full h-full object-contain" />
             </div>
 
             <div className="p-6 space-y-2">
               <div className="flex items-center justify-between text-xs font-mono text-amber-500">
                 <span>{selectedPhoto.sector}</span>
-                <span>{selectedPhoto.date} • {selectedPhoto.author}</span>
+                <span>{selectedPhoto.date} • {selectedPhoto.author || selectedPhoto.photographer || 'م. الموقع'}</span>
               </div>
               <h3 className="font-black text-lg">{selectedPhoto.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">{selectedPhoto.desc}</p>
+              <p className="text-xs text-slate-400 leading-relaxed">{selectedPhoto.desc || 'توثيق هندسي ميداني عالي الدقة'}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Visual Documentation Upload Modal ── */}
+      {isUploadPhotoModalOpen && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <form onSubmit={handleSaveUploadedPhoto} className={`relative max-w-xl w-full rounded-3xl p-6 border shadow-2xl space-y-4 text-start animate-scaleUp max-h-[92vh] overflow-y-auto ${
+            theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0a0f1d] border-white/10 text-white'
+          }`}>
+            <button
+              type="button"
+              onClick={() => setIsUploadPhotoModalOpen(false)}
+              className="absolute top-4 left-4 p-2 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-slate-200 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <h3 className="font-black text-base flex items-center gap-2">
+                <ImagePlus className="w-5 h-5 text-amber-500" />
+                <span>إضافة ورفع صورة جديدة للتوثيق البصري (4K)</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                ارفع صورة ميدانية عالية الدقة من هاتفك أو جهازك لتضمينها في أرشيف التوثيق البصري
+              </p>
+            </div>
+
+            {/* Upload Method Tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setUploadTab('file')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  uploadTab === 'file'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
+                }`}
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span>رفع من الجهاز</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadTab('presets')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  uploadTab === 'presets'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>صور المشروع المعتمدة</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadTab('url')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  uploadTab === 'url'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
+                }`}
+              >
+                <span>رابط خارجي</span>
+              </button>
+            </div>
+
+            {/* File Upload Zone */}
+            {uploadTab === 'file' && (
+              <div>
+                <input
+                  type="file"
+                  ref={photoUploadInputRef}
+                  accept="image/*"
+                  onChange={handlePhotoFileUpload}
+                  className="hidden"
+                />
+                {newUploadPhoto.src && newUploadPhoto.src.startsWith('data:') ? (
+                  <div className="relative rounded-2xl overflow-hidden border-2 border-amber-500/50 bg-black">
+                    <img src={newUploadPhoto.src} alt="معاينة" className="w-full h-44 object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end justify-between p-3">
+                      <span className="text-[11px] font-bold text-emerald-400 bg-black/60 px-2 py-0.5 rounded-lg backdrop-blur-md flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>تم اختيار الصورة</span>
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => photoUploadInputRef.current?.click()}
+                          className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 text-xs font-bold cursor-pointer"
+                        >
+                          تغيير
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewUploadPhoto(prev => ({ ...prev, src: '/road-asphalt-paver.jpg', img: '/road-asphalt-paver.jpg' }))}
+                          className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold cursor-pointer"
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => photoUploadInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-amber-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50 dark:bg-white/5 hover:bg-amber-500/10 transition-all group"
+                  >
+                    <UploadCloud className="w-9 h-9 text-amber-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                      اضغط لاختيار صورة من جهاز الكمبيوتر أو الهاتف
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                      يدعم صيغ JPG, PNG, WEBP بدقة عالية
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Presets */}
+            {uploadTab === 'presets' && (
+              <div className="grid grid-cols-3 gap-2 max-h-44 overflow-y-auto p-1">
+                {HUB_PRESET_PHOTOS.map(p => {
+                  const isSel = newUploadPhoto.src === p.src;
+                  return (
+                    <div
+                      key={p.src}
+                      onClick={() => setNewUploadPhoto(prev => ({ ...prev, src: p.src, img: p.src, category: p.category, title: prev.title || p.title }))}
+                      className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
+                        isSel ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-slate-200 dark:border-white/10'
+                      }`}
+                    >
+                      <img src={p.src} alt={p.title} className="w-full h-16 object-cover" />
+                      <div className="p-1 bg-black/60 text-[10px] font-bold text-white truncate text-center">
+                        {p.category}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* URL input */}
+            {uploadTab === 'url' && (
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  value={newUploadPhoto.src.startsWith('data:') ? '' : newUploadPhoto.src}
+                  onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, src: e.target.value, img: e.target.value })}
+                  placeholder="https://... أو /road-asphalt-paver.jpg"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-transparent text-xs"
+                />
+              </div>
+            )}
+
+            {/* Form Fields */}
+            <div className="space-y-3 text-xs pt-1 border-t border-slate-200 dark:border-white/10">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">عنوان وتفاصيل التوثيق:</label>
+                <input
+                  type="text"
+                  required
+                  value={newUploadPhoto.title}
+                  onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, title: e.target.value })}
+                  placeholder="مثال: رصف الأسفلت ومتابعة الدمك بدرجات الحرارة"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">القطاع:</label>
+                  <select
+                    value={newUploadPhoto.sector}
+                    onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, sector: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white"
+                  >
+                    <option value="القطاع الأول (أوباري - الفيوات)">القطاع الأول (أوباري - الفيوات)</option>
+                    <option value="القطاع الثاني (الفيوات - العوينات)">القطاع الثاني (الفيوات - العوينات)</option>
+                    <option value="القطاع الثالث (العوينات - البركت)">القطاع الثالث (العوينات - البركت)</option>
+                    <option value="القطاع الرابع (البركت - غات)">القطاع الرابع (البركت - غات)</option>
+                    <option value="مسار طريق أوباري – غات الدولي (360 كم)">كافة مسار المشروع (360 كم)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">التصنيف الفني:</label>
+                  <select
+                    value={newUploadPhoto.category}
+                    onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, category: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white"
+                  >
+                    <option value="رصف الأسفلت">رصف الأسفلت</option>
+                    <option value="الدمك وضبط المناسيب">الدمك وضبط المناسيب</option>
+                    <option value="كشط وتأسيس">الأعمال الترابية والتسوية</option>
+                    <option value="الطاقة الشمسية والإنارة">الإنارة بالطاقة الشمسية</option>
+                    <option value="ضبط الجودة المعملي">ضبط الجودة المعملي</option>
+                    <option value="بانوراما جوية">مشاهد وتوثيق جوي</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">المصور / المهندس المشرف:</label>
+                <input
+                  type="text"
+                  value={newUploadPhoto.author}
+                  onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, author: e.target.value })}
+                  placeholder="م. عبد السلام الفزاني"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">وصف العمل وملاحظات الجودة:</label>
+                <textarea
+                  rows="2"
+                  value={newUploadPhoto.desc}
+                  onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, desc: e.target.value })}
+                  placeholder="تفاصيل التوثيق الميداني والمعدات المشغلة..."
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-transparent resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setIsUploadPhotoModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs cursor-pointer shadow-md flex items-center gap-1.5"
+              >
+                <ImagePlus className="w-4 h-4" />
+                <span>حفظ وإدراج في التوثيق البصري</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

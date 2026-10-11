@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, ExternalLink, Compass, Sparkles, Layers, ShieldCheck, CheckCircle2, AlertTriangle, Clock, ArrowUpRight, X } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, Compass, Layers, ShieldCheck, CheckCircle2, AlertTriangle, Clock, ArrowUpRight, X } from 'lucide-react';
 import { nationalProjects } from '../services/api';
 
 export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
@@ -24,9 +24,9 @@ export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
               : 'bg-amber-500/10 border-amber-500/35 text-amber-300'
           }`}>
             <MapPin className="w-4 h-4 text-amber-500" />
-            <span>{lang === 'ar' ? 'المنظومة الجغرافية التفاعلية 🇱🇾' : 'Interactive Geographic GIS Map 🇱🇾'}</span>
+            <span>{lang === 'ar' ? 'المنظومة الجغرافية التفاعلية' : 'Interactive Geographic GIS Map'}</span>
           </div>
-          <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${
+          <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
             theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
             {lang === 'ar' ? 'خريطة مشروعات الطرق الاستراتيجية في ليبيا' : 'Libya Strategic Highway Projects Network'}
@@ -47,9 +47,9 @@ export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
           }`}>
             {[
               { id: 'all', label: lang === 'ar' ? 'جميع المشروعات (6)' : 'All (6)', color: 'text-slate-700 dark:text-slate-300' },
-              { id: 'completed', label: lang === 'ar' ? '🟢 متقدم / مكتمل' : '🟢 Near Completion', color: 'text-emerald-500' },
-              { id: 'in_progress', label: lang === 'ar' ? '🟠 جاري التنفيذ' : '🟠 In Progress', color: 'text-amber-500' },
-              { id: 'under_study', label: lang === 'ar' ? '🔴 قيد الدراسة' : '🔴 Study Phase', color: 'text-rose-500' }
+              { id: 'completed', label: lang === 'ar' ? 'متقدم / مكتمل' : 'Near Completion', color: 'text-emerald-500' },
+              { id: 'in_progress', label: lang === 'ar' ? 'جاري التنفيذ' : 'In Progress', color: 'text-amber-500' },
+              { id: 'under_study', label: lang === 'ar' ? 'قيد الدراسة' : 'Study Phase', color: 'text-rose-500' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -76,7 +76,7 @@ export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>{mapMode === 'tactical' ? (lang === 'ar' ? 'القمر الصناعي 🛰️' : 'Satellite 🛰️') : (lang === 'ar' ? 'خريطة 3D 🗺️' : '3D Vector 🗺️')}</span>
+            <span>{mapMode === 'tactical' ? (lang === 'ar' ? 'القمر الصناعي' : 'Satellite') : (lang === 'ar' ? 'خريطة رقمية' : 'Digital Map')}</span>
           </button>
         </div>
       </div>

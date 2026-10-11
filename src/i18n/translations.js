@@ -1,5 +1,5 @@
 // Comprehensive Bilingual Translations for Ubari - Ghat 360km Highway Project Portal
-// جهاز تنفيذ مشروعات المواصلات - دولة ليبيا 🇱🇾
+// جهاز تنفيذ مشروعات المواصلات - دولة ليبيا
 
 export const translations = {
   ar: {
@@ -17,23 +17,24 @@ export const translations = {
     switchThemeNight: 'التبديل إلى وضع الليل',
 
     // Hero Section
-    initiativeBadge: 'جهاز تنفيذ مشروعات المواصلات 🇱🇾',
-    initiativeSubBadge: 'خطة عودة الحياة 🇱🇾',
-    heroMainTitle1: 'مشروع صيانة',
+    initiativeBadge: 'مشروع وطني استراتيجي',
+    initiativeSubBadge: 'خطة عودة الحياة',
+    heroMainTitle1: 'مشروع صيانة وتأهيل',
     heroMainTitle2: 'طريق أوباري – غات',
     heroDistanceBadge: '360 كم',
-    heroDesc: 'إعادة إعمار وتطوير الشريان الحيوي الرابط بين مدن الجنوب الغربي الليبي، وفق أحدث المواصفات الهندسية العالمية ومعايير السلامة المرورية.',
-    btnExploreSectors: 'استكشف الخدمات والقطاعات',
-    btnExecutiveDashboard: 'لوحة التحكم القيادية',
+    heroSubtitle: 'الشريان البري الاستراتيجي لربط وتنمية مدن وقرى الجنوب الغربي',
+    heroDesc: 'إعادة إعمار وتطوير الطريق الشرياني الرابط بين أوباري وغات عبر 4 قطاعات تنفيذية متكاملة، وفق أعلى المواصفات الهندسية المعتمدة ومعايير السلامة المرورية والإنارة بالطاقة المتجددة.',
+    btnExploreSectors: 'استكشف قطاعات المشروع',
+    btnExecutiveDashboard: 'لوحة المتابعة القيادية',
     heroPavedAsphalt: 'مسافة الرصف المنجزة',
-    heroTotalSectors: 'القطاعات المنفذة',
+    heroTotalSectors: 'القطاعات التنفيذية',
     heroOverallProgress: 'نسبة الإنجاز الفعلي',
-    heroSolarLighting: 'الإنارة بالطاقة الشمسية',
+    heroSolarLighting: 'أعمدة الإنارة الشمسية',
     heroScrollDown: 'مرر لأسفل للاستكشاف',
 
     // Weather & Exchange
     weatherTitle: 'الطقس الميداني في أوباري',
-    weatherDesc: 'تحديثات الأرصاد والرياح على طول المسار 360 كم',
+    weatherDesc: 'تحديثات الأرصاد والرياح على طول مسار 360 كم',
     weatherCondition: 'مشمس وصافٍ',
     weatherWind: 'سرعة الرياح',
     weatherHumidity: 'نسبة الرطوبة',
@@ -47,9 +48,9 @@ export const translations = {
     currencyOfficial: 'سعر الصرف الرسمي',
 
     // Ubari - Ghat Road Project Showcase
-    ubariBadge: 'المسار الحيوي 360 كم 🛣️',
-    ubariRegionBadge: 'شريان الجنوب الغربي 🇱🇾',
-    ubariTitle: 'نبذة عن مشروع طريق أوباري – غات (360 كم)',
+    ubariBadge: 'المسار التنفيذي (360 كم)',
+    ubariRegionBadge: 'المنطقة الجنوبية الغربية',
+    ubariTitle: 'مشروع صيانة وتأهيل طريق أوباري – غات (360 كم)',
     ubariSub: 'الشريان البري الاستراتيجي الرابط بين حوض وادي الحياة والمثلث الحدودي غات',
     ubariParagraph: 'يمتد طريق أوباري – غات على مسافة 360 كيلومتراً كأحد أضخم وأهم المشاريع الاستراتيجية للبنية التحتية في الجنوب الليبي تحت إشراف جهاز تنفيذ مشروعات المواصلات. يشكل هذا الطريق شرياناً حيوياً يربط مدن وقرى الجنوب الغربي، ويسهم في فك العزلة الجغرافية وتسهيل حركة التجارة ونقل المحروقات والإمدادات الطبية والغذائية، مع تطبيق أحدث معايير السلامة المرورية، والإنارة بالطاقة الشمسية، والحماية الهندسية من زحف الرمال ومجاري السيول.',
     ubariLakesTitle: 'المواصفات الفنية والرصف',
@@ -58,7 +59,7 @@ export const translations = {
     ubariTransportDesc: 'تثبيت وتشغيل أكثر من 1,100 عمود إنارة ذكي بالطاقة الشمسية لإنارة التقاطعات والمنحنيات الميدانية ليلاً.',
     ubariEnergyTitle: 'العبّارات وتصريف السيول',
     ubariEnergyDesc: 'تنفيذ عبّارات خرسانية صندوقية وأنبوبية متطورة في تقاطعات الأودية لحماية جسم الطريق من الانجراف الموسمي.',
-    ubariHeritageTitle: 'الربط الاقتصادي والأمني',
+    ubariHeritageTitle: 'الربط الاقتصادي والتنموي',
     ubariHeritageDesc: 'شريان تجاري واستراتيجي متكامل يربط واحات فزان بالمثلث الحدودي في غات ويسرع عجلة التنمية في الجنوب.',
 
     // Map Section
@@ -94,8 +95,8 @@ export const translations = {
 
     // Footer
     footerAgencyTitle: 'جهاز تنفيذ مشروعات المواصلات',
-    footerProjectName: 'مشروع صيانة طريق أوباري – غات (360 كم)',
-    footerInitiative: 'خطة عودة الحياة 🇱🇾',
+    footerProjectName: 'مشروع صيانة وتأهيل طريق أوباري – غات (360 كم)',
+    footerInitiative: 'خطة عودة الحياة',
     footerSupervision: 'الإشراف الفني والرقابة الميدانية',
     footerContact: 'العنوان: طرابلس / أوباري – ليبيا',
     footerRights: '© 2026 جهاز تنفيذ مشروعات المواصلات - جميع الحقوق محفوظة.'
@@ -115,17 +116,18 @@ export const translations = {
     switchThemeNight: 'Switch to Dark Mode',
 
     // Hero Section
-    initiativeBadge: 'Transportation Projects Authority 🇱🇾',
-    initiativeSubBadge: 'Return to Life Initiative 🇱🇾',
-    heroMainTitle1: 'Maintenance & Upgrading of',
+    initiativeBadge: 'National Strategic Project',
+    initiativeSubBadge: 'Return to Life Initiative',
+    heroMainTitle1: 'Rehabilitation & Modernization of',
     heroMainTitle2: 'Ubari – Ghat Highway',
     heroDistanceBadge: '360 KM',
-    heroDesc: 'Rebuilding and upgrading the strategic lifeline connecting southwestern Libyan cities, adhering to international engineering standards and modern road safety specifications.',
-    btnExploreSectors: 'Explore Sectors & Roadmap',
+    heroSubtitle: 'Strategic Arterial Lifeline Connecting Southwestern Libyan Communities',
+    heroDesc: 'Comprehensive reconstruction and modernization of the 360km corridor across 4 integrated sectors, adhering to international engineering standards, road safety, and solar lighting.',
+    btnExploreSectors: 'Explore Corridor Projects',
     btnExecutiveDashboard: 'Executive Command Center',
     heroPavedAsphalt: 'Paved Distance',
     heroTotalSectors: 'Active Sectors',
-    heroOverallProgress: 'Overall Completion',
+    heroOverallProgress: 'Actual Progress',
     heroSolarLighting: 'Solar Lighting Poles',
     heroScrollDown: 'Scroll Down to Explore',
 
@@ -145,8 +147,8 @@ export const translations = {
     currencyOfficial: 'Official Rate',
 
     // Ubari - Ghat Road Project Showcase
-    ubariBadge: 'Strategic Corridor 360km 🛣️',
-    ubariRegionBadge: 'Southwestern Lifeline 🇱🇾',
+    ubariBadge: 'Strategic Corridor 360km',
+    ubariRegionBadge: 'Southwestern Lifeline',
     ubariTitle: 'About Ubari – Ghat Highway Project (360 km)',
     ubariSub: 'The strategic overland artery connecting Wadi Al-Haya with the border triangle in Ghat',
     ubariParagraph: 'Spanning 360 kilometers, the Ubari – Ghat Highway is one of the largest and most strategic infrastructure endeavors in southern Libya, supervised by the Transportation Projects Execution Authority. Serving as a crucial lifeline linking southwestern cities and desert communities, the project eliminates geographical isolation, facilitates commerce, secures energy and medical logistics, and incorporates advanced road safety standards, solar illumination, and flood protection culverts.',
@@ -193,7 +195,7 @@ export const translations = {
     // Footer
     footerAgencyTitle: 'Transportation Projects Execution Authority',
     footerProjectName: 'Ubari – Ghat Highway Maintenance & Upgrade (360 km)',
-    footerInitiative: 'Return to Life Initiative 🇱🇾',
+    footerInitiative: 'Return to Life Initiative',
     footerSupervision: 'Technical Supervision & Field Monitoring',
     footerContact: 'Headquarters: Tripoli / Ubari – Libya',
     footerRights: '© 2026 Transportation Projects Execution Authority - All Rights Reserved.'

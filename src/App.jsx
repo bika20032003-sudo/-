@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Hero3D from './components/Hero3D';
-import ExecutiveDashboard from './components/ExecutiveDashboard';
 import FeaturedProjects from './components/FeaturedProjects';
 import InteractiveProjectMap from './components/InteractiveProjectMap';
 import SectorsRoadmap from './components/SectorsRoadmap';
-import ContractorsFleet from './components/ContractorsFleet';
 import Footer from './components/Footer';
 import GoogleAuthModal from './components/GoogleAuthModal';
 import WeatherExchangeWidgets from './components/WeatherExchangeWidgets';
 import UbariCityShowcase from './components/UbariCityShowcase';
-import DocumentReportsHub from './components/DocumentReportsHub';
-import ProjectExecutiveAnalytics from './components/ProjectExecutiveAnalytics';
+import CustomGoldenCursor from './components/CustomGoldenCursor';
+import useGsapScrollAnimations from './components/GsapScrollAnimations';
+import MarqueeTicker from './components/MarqueeTicker';
+
+// Code split heavy dashboard for faster initial page load
+const ExecutiveDashboard = lazy(() => import('./components/ExecutiveDashboard'));
 
 import { 
   fetchProjectSummary, 
@@ -19,7 +21,9 @@ import {
   fetchContractors,
   initialSectors,
   initialSummary,
-  initialContractors
+  initialContractors,
+  initialTickerNews,
+  getSavedTickerNews
 } from './services/api';
 
 const DEFAULT_DOCUMENTS = [
@@ -96,127 +100,140 @@ const DEFAULT_USERS = [
     email: 'f.werfalli@finance.gov.ly',
     role: 'مدقق مالي ومستخلصات',
     status: 'نشط',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
   }
 ];
 
-export default function App() {
+function App() {
+  useGsapScrollAnimations();
+
+  // Navigation tab state: 'hero' | 'sectors' | 'contractors' | 'media' | 'dashboard'
   const [activeTab, setActiveTab] = useState('hero');
 
-  // ── User Google Authentication State ───────────────────────
+  // Theme state: 'light' | 'dark'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('portal_theme') || 'light';
+  });
+
+  // Language state: 'ar' | 'en'
+  const [lang, setLang] = useState(() => {
+    return localStorage.getItem('portal_lang') || 'ar';
+  });
+
+  // User state
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('google-portal-user');
+    const saved = localStorage.getItem('portal_user');
     return saved ? JSON.parse(saved) : null;
   });
+
+  // Google Auth modal state
   const [isGoogleAuthModalOpen, setIsGoogleAuthModalOpen] = useState(false);
 
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
-    localStorage.setItem('google-portal-user', JSON.stringify(userData));
-    setActiveTab('dashboard');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('google-portal-user');
-    setActiveTab('hero');
-  };
-  // ────────────────────────────────────────────────────────────
-
-  // ── Theme: day / night ──────────────────────────────────────
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('portal-theme') || 'light';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('portal-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
-  // ────────────────────────────────────────────────────────────
-
-  // ── Language: ar / en ───────────────────────────────────────
-  const [lang, setLang] = useState(() => {
-    return localStorage.getItem('portal-lang') || 'ar';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('lang', lang);
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    localStorage.setItem('portal-lang', lang);
-  }, [lang]);
-
-  const toggleLang = () => setLang(l => l === 'ar' ? 'en' : 'ar');
-  // ────────────────────────────────────────────────────────────
-  
-  // Data States with persistent LocalStorage
+  // Dynamic project data
   const [summaryData, setSummaryData] = useState(initialSummary);
-  
+
   const [sectors, setSectors] = useState(() => {
-    try {
-      const saved = localStorage.getItem('portal-sectors-data');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return initialSectors;
+    const saved = localStorage.getItem('portal_sectors');
+    return saved ? JSON.parse(saved) : initialSectors;
   });
 
   const [contractors, setContractors] = useState(() => {
-    try {
-      const saved = localStorage.getItem('portal-contractors-data');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return initialContractors;
+    const saved = localStorage.getItem('portal_contractors');
+    return saved ? JSON.parse(saved) : initialContractors;
   });
 
   const [documents, setDocuments] = useState(() => {
-    try {
-      const saved = localStorage.getItem('portal-documents-data');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_DOCUMENTS;
+    const saved = localStorage.getItem('portal_documents');
+    return saved ? JSON.parse(saved) : DEFAULT_DOCUMENTS;
   });
 
   const [authorizedUsers, setAuthorizedUsers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('portal-authorized-users');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_USERS;
+    const saved = localStorage.getItem('portal_authorized_users');
+    return saved ? JSON.parse(saved) : DEFAULT_USERS;
   });
 
-  const [loading, setLoading] = useState(false);
+  // Top Bar Ticker News State (managed from Dashboard)
+  const [tickerNews, setTickerNews] = useState(getSavedTickerNews);
 
   useEffect(() => {
-    const loadAllData = async () => {
-      try {
-        const [sum, sec, cont] = await Promise.all([
-          fetchProjectSummary(),
-          fetchSectors(),
-          fetchContractors()
-        ]);
-        if (sum) setSummaryData(sum);
-        if (sec && sec.length > 0) setSectors(sec);
-        if (cont && cont.length > 0) setContractors(cont);
-      } catch (e) {
-        console.error('Error loading background data:', e);
-      }
+    const handleStorageChange = () => {
+      setTickerNews(getSavedTickerNews());
     };
-
-    loadAllData();
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Apply theme & dir attribute to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('portal_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('lang', lang);
+    localStorage.setItem('portal_lang', lang);
+  }, [lang]);
+
+  // Fetch real data from backend on mount (graceful fallback to initial)
+  useEffect(() => {
+    fetchProjectSummary()
+      .then(res => {
+        if (res.success && res.data) {
+          setSummaryData(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback already in state
+      });
+
+    fetchSectors()
+      .then(res => {
+        if (res.success && res.data && res.data.length > 0) {
+          setSectors(res.data);
+        }
+      })
+      .catch(() => {});
+
+    fetchContractors()
+      .then(res => {
+        if (res.success && res.data && res.data.length > 0) {
+          setContractors(res.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Theme toggle
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  // Language toggle
+  const toggleLang = () => {
+    setLang(prev => prev === 'ar' ? 'en' : 'ar');
+  };
+
+  // Login handler
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    localStorage.setItem('portal_user', JSON.stringify(userData));
+    setIsGoogleAuthModalOpen(false);
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('portal_user');
+    if (activeTab === 'dashboard') {
+      setActiveTab('hero');
+    }
+  };
 
   return (
     <div className={`min-h-screen font-arabic selection:bg-amber-500 selection:text-black transition-colors duration-500 ${
@@ -225,7 +242,22 @@ export default function App() {
         : 'bg-[#06080E] text-slate-100'
     }`}>
       
-      {/* Header (Rendered on Public Portal mode) */}
+      {/* 1. Custom Golden Cursor Engine */}
+      <CustomGoldenCursor />
+      
+      {/* 2. Top News Bar (الشريط العلوي) */}
+      {activeTab !== 'dashboard' && (
+        <div className="w-full select-none z-50">
+          <MarqueeTicker 
+            items={tickerNews?.filter(n => n.active !== false)} 
+            theme={theme} 
+            variant="hero"
+            direction={lang === 'ar' ? 'rtl' : 'ltr'} 
+          />
+        </div>
+      )}
+
+      {/* 3. Header (Rendered on Public Portal mode) */}
       {activeTab !== 'dashboard' && (
         <Header 
           activeTab={activeTab}
@@ -245,23 +277,31 @@ export default function App() {
         
         {/* Tab: Exclusive Executive Project Manager Dashboard & CMS */}
         {activeTab === 'dashboard' && (
-          <ExecutiveDashboard 
-            summaryData={summaryData} 
-            sectors={sectors} 
-            setSectors={setSectors}
-            contractors={contractors} 
-            setContractors={setContractors}
-            documents={documents}
-            setDocuments={setDocuments}
-            authorizedUsers={authorizedUsers}
-            setAuthorizedUsers={setAuthorizedUsers}
-            theme={theme}
-            lang={lang}
-            user={user}
-            onOpenGoogleAuth={() => setIsGoogleAuthModalOpen(true)}
-            onLogout={handleLogout}
-            onBackToPortal={() => setActiveTab('hero')}
-          />
+          <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground font-medium">
+              جارٍ تحميل لوحة التحكم التنفيذية...
+            </div>
+          }>
+            <ExecutiveDashboard 
+              summaryData={summaryData} 
+              sectors={sectors} 
+              setSectors={setSectors}
+              contractors={contractors} 
+              setContractors={setContractors}
+              documents={documents}
+              setDocuments={setDocuments}
+              authorizedUsers={authorizedUsers}
+              setAuthorizedUsers={setAuthorizedUsers}
+              theme={theme}
+              lang={lang}
+              user={user}
+              onOpenGoogleAuth={() => setIsGoogleAuthModalOpen(true)}
+              onLogout={handleLogout}
+              onBackToPortal={() => setActiveTab('hero')}
+              tickerNews={tickerNews}
+              setTickerNews={setTickerNews}
+            />
+          </Suspense>
         )}
 
         {/* All Main Portal Sections */}
@@ -276,27 +316,27 @@ export default function App() {
                 lang={lang}
                 user={user}
                 onOpenGoogleAuth={() => setIsGoogleAuthModalOpen(true)}
+                tickerNews={tickerNews}
               />
 
-              {/* Live Weather & Currency Exchange Widget */}
-              <WeatherExchangeWidgets theme={theme} lang={lang} />
+              {/* Live Weather Telemetry Ribbon */}
+              <div className="w-full">
+                <WeatherExchangeWidgets theme={theme} lang={lang} />
+              </div>
             </div>
 
-            {/* Section 2: National Strategic Featured Projects */}
+            {/* Section: Ubari - Ghat 360km Project Overview (نبذة خاصة بالمشروع) */}
+            <div id="about-section" className="gsap-scale-in">
+              <UbariCityShowcase theme={theme} lang={lang} />
+            </div>
+
+            {/* Section: National Strategic Featured Projects */}
             <div id="projects-section">
               <FeaturedProjects theme={theme} lang={lang} />
             </div>
 
-            {/* Section 3: Interactive Ubari - Ghat Project Map */}
-            <div id="map-section">
-              <InteractiveProjectMap theme={theme} lang={lang} />
-            </div>
-
-            {/* Section 4: Ubari - Ghat 360km Corridor Strategic Showcase */}
-            <UbariCityShowcase theme={theme} lang={lang} />
-
-            {/* Section 5: Sectors Roadmap */}
-            <div id="sectors-section">
+            {/* Section: Sectors Roadmap */}
+            <div id="sectors-section" className="gsap-header">
               <SectorsRoadmap 
                 sectors={sectors} 
                 theme={theme}
@@ -304,22 +344,9 @@ export default function App() {
               />
             </div>
 
-            {/* Section 6: Executing Contractors Fleet */}
-            <div id="contractors-section">
-              <ContractorsFleet 
-                contractors={contractors} 
-                theme={theme}
-                lang={lang}
-              />
-            </div>
-
-            {/* Section 7: Official Transparency & Field Oversight Hub */}
-            <div id="media-section">
-              <DocumentReportsHub 
-                documents={documents}
-                theme={theme}
-                lang={lang}
-              />
+            {/* Section: Interactive Ubari - Ghat Project Map */}
+            <div id="map-section" className="gsap-header">
+              <InteractiveProjectMap theme={theme} lang={lang} />
             </div>
           </>
         )}
@@ -342,3 +369,5 @@ export default function App() {
     </div>
   );
 }
+
+export default App;

@@ -19,11 +19,11 @@ const pool = mysql.createPool({
 export const testDbConnection = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ تم الاتصال بقاعدة بيانات MySQL بنجاح:', process.env.DB_NAME || 'ubari_ghat_portal');
+    console.log('[MySQL] تم الاتصال بقاعدة بيانات MySQL بنجاح:', process.env.DB_NAME || 'ubari_ghat_portal');
     connection.release();
     return true;
   } catch (error) {
-    console.warn('⚠️ تعذر الاتصال بـ MySQL (تأكد من تشغيل خادم MySQL وإنشاء قاعدة البيانات عبر schema.sql):', error.message);
+    console.warn('[MySQL] تعذر الاتصال بـ MySQL (تأكد من تشغيل خادم MySQL وإنشاء قاعدة البيانات عبر schema.sql):', error.message);
     return false;
   }
 };

@@ -4,8 +4,8 @@ import {
   Navigation, 
   ExternalLink, 
   Compass,
-  Sparkles,
-  Layers
+  Layers,
+  X
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 
@@ -14,10 +14,8 @@ const getMapLocations = (lang) => [
     id: 'ubari',
     title: lang === 'ar' ? 'أوباري (نقطة الانطلاق)' : 'Ubari (Starting Point)',
     coords: '26.5925,12.7803',
-    mapUrl: 'https://maps.google.com/maps?q=Ubari,Libya&t=&z=11&ie=UTF8&iwloc=&output=embed',
-    directUrl: 'https://maps.google.com/?q=26.5925,12.7803',
     sector: lang === 'ar' ? 'المحطة 000+00' : 'Station 000+00',
-    contractor: lang === 'ar' ? 'شركة أوباري الوطنية للمقاولات' : 'Ubari National Contracting Co.',
+    stage: lang === 'ar' ? 'طبقة الرصف السطحية وأعمال الأكتاف' : 'Surface Paving & Shoulders',
     progress: 82,
     desc: lang === 'ar' 
       ? 'منطقة انطلاق المشروع والمجمع الإداري الرئيسي لجهاز تنفيذ مشروعات المواصلات.'
@@ -27,10 +25,8 @@ const getMapLocations = (lang) => [
     id: 'alfuroos',
     title: lang === 'ar' ? 'قطاع الفروض - بيسان' : 'Al-Furoos – Bisan Sector',
     coords: '26.2100,12.1500',
-    mapUrl: 'https://maps.google.com/maps?q=Al+Furoos,Libya&t=&z=10&ie=UTF8&iwloc=&output=embed',
-    directUrl: 'https://maps.google.com/?q=26.2100,12.1500',
     sector: lang === 'ar' ? 'المحطة 085+00' : 'Station 085+00',
-    contractor: lang === 'ar' ? 'شركة الفروض العامة للإنشاءات' : 'Al-Furoos General Construction Co.',
+    stage: lang === 'ar' ? 'طبقة الأساس والعبّارات الخرسانية' : 'Base Course & Box Culverts',
     progress: 74,
     desc: lang === 'ar'
       ? 'أعمال طبقة الأسفلت الرابطة وإنجاز العبارات الخرسانية الصندوقية.'
@@ -40,10 +36,8 @@ const getMapLocations = (lang) => [
     id: 'aluwaynat',
     title: lang === 'ar' ? 'قطاع العوينات - البركت' : 'Al-Uwaynat – Barkat Sector',
     coords: '25.3500,10.6800',
-    mapUrl: 'https://maps.google.com/maps?q=Al+Uwaynat,Libya&t=&z=10&ie=UTF8&iwloc=&output=embed',
-    directUrl: 'https://maps.google.com/?q=25.3500,10.6800',
     sector: lang === 'ar' ? 'المحطة 215+00' : 'Station 215+00',
-    contractor: lang === 'ar' ? 'ائتلاف شركات الطرق الأفريقية' : 'African Roads Consortium',
+    stage: lang === 'ar' ? 'أعمال التوسعة وإنارة الطاقة الشمسية' : 'Road Widening & Solar Lighting',
     progress: 65,
     desc: lang === 'ar'
       ? 'إنجاز أعمال التوسعة والفرش والتجهيز لإنارة أعمدة الطاقة الشمسية.'
@@ -53,10 +47,8 @@ const getMapLocations = (lang) => [
     id: 'ghat',
     title: lang === 'ar' ? 'مدينة غات (نهاية الطريق 360 كم)' : 'Ghat City (Route End 360 km)',
     coords: '24.9647,10.1764',
-    mapUrl: 'https://maps.google.com/maps?q=Ghat,Libya&t=&z=11&ie=UTF8&iwloc=&output=embed',
-    directUrl: 'https://maps.google.com/?q=24.9647,10.1764',
     sector: lang === 'ar' ? 'المحطة 360+00' : 'Station 360+00',
-    contractor: lang === 'ar' ? 'شركة غات الدولية للمقاولات' : 'Ghat International Contracting Co.',
+    stage: lang === 'ar' ? 'تأهيل المداخل واللوحات المرورية' : 'Entry Boulevards & Signage',
     progress: 58,
     desc: lang === 'ar'
       ? 'المنفذ الحدودي الجنوبي الغربي وتأهيل مداخل المدينة التاريخية.'
@@ -68,11 +60,15 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
   const t = translations[lang] || translations.ar;
   const locations = getMapLocations(lang);
   const [selectedLocId, setSelectedLocId] = useState('ubari');
+  const [mapType, setMapType] = useState('m'); // 'm' = Roadmap, 'k' = Satellite
+  const [isMapTouchActive, setIsMapTouchActive] = useState(false);
 
   const selectedLoc = locations.find(l => l.id === selectedLocId) || locations[0];
+  const embedUrl = `https://maps.google.com/maps?q=${selectedLoc.coords}&hl=${lang}&t=${mapType}&z=11&ie=UTF8&iwloc=&output=embed`;
+  const directUrl = `https://maps.google.com/?q=${selectedLoc.coords}`;
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-fadeIn select-none">
+    <section id="map-section" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-fadeIn select-none">
       
       {/* Section Header */}
       <div className="space-y-3 text-start">
@@ -85,7 +81,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
           <span>{t.mapBadge}</span>
         </div>
 
-        <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${
+        <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
           theme === 'light' ? 'text-slate-950' : 'text-white'
         }`}>
           {t.mapTitle}
@@ -106,9 +102,9 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
             <button
               key={loc.id}
               onClick={() => setSelectedLocId(loc.id)}
-              className={`px-5 py-3 rounded-2xl text-xs font-black transition-all duration-300 flex items-center gap-2.5 border shadow-sm cursor-pointer ${
+              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs font-bold transition-all duration-200 flex items-center gap-2 border shadow-sm cursor-pointer ${
                 isSelected
-                  ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black border-amber-300 shadow-xl shadow-amber-500/30 scale-[1.03]'
+                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-lg shadow-amber-500/25 scale-[1.02]'
                   : theme === 'light'
                     ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-slate-100'
                     : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
@@ -122,27 +118,27 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
       </div>
 
       {/* Main 4K Map Container */}
-      <div className={`relative overflow-hidden rounded-[32px] border shadow-2xl transition-all duration-400 ${
+      <div className={`relative overflow-hidden rounded-[28px] sm:rounded-[32px] border shadow-2xl transition-all duration-300 ${
         theme === 'light'
           ? 'bg-white border-slate-200/90 shadow-slate-300/80'
           : 'bg-[#0a0f1d] border-white/15 shadow-black/80'
       }`}>
         
         {/* Map Header Card Info Overlay */}
-        <div className={`p-5 sm:p-7 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+        <div className={`p-4 sm:p-7 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
           theme === 'light' ? 'bg-slate-50/90 border-slate-200' : 'bg-black/40 border-white/10'
         }`}>
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/35 flex items-center justify-center text-amber-500 shadow-md flex-shrink-0">
-              <MapPin className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/15 border border-amber-500/35 flex items-center justify-center text-amber-500 shadow-md flex-shrink-0">
+              <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className={`font-black text-base sm:text-lg ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
                   {selectedLoc.title}
                 </h3>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-500 font-extrabold border border-emerald-500/30">
-                  {t.mapLive} 2026
+                <span className="text-[10px] px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/30">
+                  {t.mapLive}
                 </span>
               </div>
               <p className={`text-xs mt-0.5 font-medium leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -151,14 +147,40 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Toggle: Roadmap vs Satellite */}
+            <div className={`p-1 rounded-xl border flex items-center gap-1 ${
+              theme === 'light' ? 'bg-slate-200/80 border-slate-300' : 'bg-white/10 border-white/15'
+            }`}>
+              <button
+                onClick={() => setMapType('m')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  mapType === 'm'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {lang === 'ar' ? 'خريطة الطرق' : 'Roadmap'}
+              </button>
+              <button
+                onClick={() => setMapType('k')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  mapType === 'k'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {lang === 'ar' ? 'قمر صناعي' : 'Satellite'}
+              </button>
+            </div>
+
             <a
-              href={selectedLoc.directUrl}
+              href={directUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-2.5 transition-all shadow-xl shadow-amber-500/25 hover:scale-105"
+              className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-amber-500/20 active:scale-95"
             >
-              <Navigation className="w-4 h-4" />
+              <Navigation className="w-3.5 h-3.5" />
               <span>{t.btnOpenGoogleMaps}</span>
               <ExternalLink className="w-3.5 h-3.5 opacity-70" />
             </a>
@@ -166,10 +188,11 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
         </div>
 
         {/* Map Frame */}
-        <div className="relative w-full h-[400px] sm:h-[480px] bg-slate-950">
+        <div className="relative w-full h-[360px] sm:h-[480px] bg-slate-950">
           <iframe
+            key={`${selectedLoc.id}-${mapType}`}
             title={selectedLoc.title}
-            src={selectedLoc.mapUrl}
+            src={embedUrl}
             width="100%"
             height="100%"
             style={{ 
@@ -179,11 +202,40 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
             allowFullScreen=""
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            className="w-full h-full"
+            className={`w-full h-full transition-opacity ${
+              isMapTouchActive ? 'pointer-events-auto' : 'pointer-events-none sm:pointer-events-auto'
+            }`}
           />
 
+          {/* Mobile Tap-To-Interact Protection Overlay */}
+          {!isMapTouchActive && (
+            <div 
+              onClick={() => setIsMapTouchActive(true)}
+              className="sm:hidden absolute inset-0 bg-black/30 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 text-center cursor-pointer z-10"
+            >
+              <div className="px-4 py-2.5 rounded-2xl bg-amber-500 text-slate-950 font-black text-xs shadow-xl flex items-center gap-2">
+                <Navigation className="w-4 h-4" />
+                <span>{lang === 'ar' ? 'انقر لتفعيل تحريك وتكبير الخريطة' : 'Tap to interact with map'}</span>
+              </div>
+              <p className="text-[10px] text-white/80 mt-2 font-medium">
+                {lang === 'ar' ? 'أو تابع التمرير لتصفح الصفحة بسلاسة' : 'Or keep scrolling past this section'}
+              </p>
+            </div>
+          )}
+
+          {/* Mobile Re-Lock Button when Map is active */}
+          {isMapTouchActive && (
+            <button
+              onClick={() => setIsMapTouchActive(false)}
+              className="sm:hidden absolute top-3 right-3 z-20 px-3 py-1.5 rounded-xl bg-slate-900/90 text-white border border-white/20 text-xs font-bold shadow-lg flex items-center gap-1.5"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>{lang === 'ar' ? 'قفل الخريطة للمتابعة' : 'Lock Map'}</span>
+            </button>
+          )}
+
           {/* Floating Telemetry HUD Overlay */}
-          <div className={`absolute bottom-5 left-5 p-4 rounded-2xl border backdrop-blur-2xl shadow-2xl max-w-xs text-xs space-y-2 hidden sm:block ${
+          <div className={`absolute bottom-4 left-4 sm:bottom-5 sm:left-5 p-3.5 sm:p-4 rounded-2xl border shadow-xl max-w-xs text-xs space-y-2 hidden sm:block ${
             theme === 'light' ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300' : 'bg-[#06080E]/95 border-white/25 text-slate-100 shadow-black'
           }`}>
             <div className="flex items-center justify-between font-extrabold">
@@ -191,7 +243,8 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
               <span className="text-amber-500 font-mono font-black">{selectedLoc.sector}</span>
             </div>
             <div className={`text-[11px] font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-              {t.mapContractor} {selectedLoc.contractor}
+              <span className="text-slate-500">{lang === 'ar' ? 'المرحلة الفنية: ' : 'Technical Stage: '}</span>
+              <span className="font-bold">{selectedLoc.stage}</span>
             </div>
             <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-white/10 mt-1">
               <div className="bg-gradient-to-r from-amber-500 to-amber-300 h-full rounded-full shimmer-active" style={{ width: `${selectedLoc.progress}%` }} />

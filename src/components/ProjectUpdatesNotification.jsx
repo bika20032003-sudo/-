@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, CheckCircle2, Clock, Info, ShieldCheck, Sparkles, ChevronRight, X } from 'lucide-react';
+import { Bell, CheckCircle2, Clock, Info, ShieldCheck, ChevronRight, X } from 'lucide-react';
 import { initialFieldDispatches } from '../services/api';
 
 export default function ProjectUpdatesNotification({ theme, lang = 'ar' }) {
@@ -40,9 +40,8 @@ export default function ProjectUpdatesNotification({ theme, lang = 'ar' }) {
       >
         <Bell className="w-4 h-4" />
         {hasUnread && (
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 border border-slate-900 text-[8px] font-black text-slate-950 items-center justify-center">
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500 text-[8px] font-bold text-slate-950 items-center justify-center">
               4
             </span>
           </span>
@@ -60,7 +59,7 @@ export default function ProjectUpdatesNotification({ theme, lang = 'ar' }) {
           <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10 mb-3">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
+                <Bell className="w-4 h-4" />
               </div>
               <h4 className="font-black text-xs sm:text-sm">
                 {lang === 'ar' ? 'تحديثات المشاريع والأوامر الحية' : 'Live Project Field Updates'}

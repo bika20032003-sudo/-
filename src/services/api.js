@@ -6,14 +6,11 @@ const initialSectors = [
     name: 'القطاع الأول: أوباري - الفيوات',
     lengthKm: 85,
     progress: 84,
-    contractor: 'شركة السهل الصحراوي للمقاولات العامة',
-    contractorLogo: '🏗️',
     residentEngineer: 'م. عبد السلام الفزاني',
     status: 'متقدم جداً',
     statusColor: 'emerald',
     asphaltThicknessCm: 12,
     solarPolesInstalled: 640,
-    machineryCount: 38,
     activeWorkers: 115,
     notes: 'تم الانتهاء من الطبقة الرابطة وجاري استكمال الرصف النهائي للطبقة السطحية.',
     image: '/road-asphalt-paver.jpg'
@@ -23,14 +20,11 @@ const initialSectors = [
     name: 'القطاع الثاني: الفيوات - العوينات',
     lengthKm: 95,
     progress: 72,
-    contractor: 'شركة الهضبة لإعادة الإعمار والطرق',
-    contractorLogo: '🛣️',
     residentEngineer: 'م. طارق المحجوب',
     status: 'وفق الجدول الزمني',
     statusColor: 'amber',
     asphaltThicknessCm: 10,
     solarPolesInstalled: 480,
-    machineryCount: 42,
     activeWorkers: 130,
     notes: 'أعمال دمك الأسفلت وتوسعة الأكتاف وقنوات تصريف مياه الأمطار في أودية العوينات.',
     image: '/road-rollers-compaction.jpg'
@@ -40,14 +34,11 @@ const initialSectors = [
     name: 'القطاع الثالث: العوينات - البركت',
     lengthKm: 100,
     progress: 61,
-    contractor: 'شركة الأفق الوطني للإنشاءات الهندسية',
-    contractorLogo: '🚧',
     residentEngineer: 'م. سالم التواتي',
     status: 'جار الرصف والتأسيس',
     statusColor: 'blue',
     asphaltThicknessCm: 8,
     solarPolesInstalled: 320,
-    machineryCount: 36,
     activeWorkers: 98,
     notes: 'تسوية الأساس الحجري بالكاشطات الموتورية وإزالة الرمال الزاحفة وإعادة التأسيس.',
     image: '/road-grader-earthwork.jpg'
@@ -57,14 +48,11 @@ const initialSectors = [
     name: 'القطاع الرابع: البركت - غات (المدخل التاريخي)',
     lengthKm: 80,
     progress: 55,
-    contractor: 'شركة الجنوب للمشاريع الكبرى والجسور',
-    contractorLogo: '🏛️',
     residentEngineer: 'م. علي الغاتي',
     status: 'تحت التنفيذ المكثف',
     statusColor: 'purple',
     asphaltThicknessCm: 7,
     solarPolesInstalled: 290,
-    machineryCount: 26,
     activeWorkers: 85,
     notes: 'تركيب أعمدة الإنارة بالطاقة الشمسية واستكمال رصف المسارات المزدوجة بمدخل غات.',
     image: '/road-solar-lighting.jpg'
@@ -74,73 +62,19 @@ const initialSectors = [
 const initialSummary = {
   projectTitle: 'مشروع صيانة طريق أوباري - غات',
   agency: 'جهاز تنفيذ مشروعات المواصلات',
-  initiative: 'خطة عودة الحياة 🇱🇾',
+  initiative: 'خطة عودة الحياة',
   totalLengthKm: 360,
   overallProgress: 68.5,
   plannedProgress: 70.0,
   totalBudgetLyd: 145000000,
   spentBudgetLyd: 99325000,
-  activeContractorsCount: 4,
-  totalFleetMachinery: 142,
   totalWorkforce: 428,
   asphaltPavedKm: 246.6,
   solarPolesTotal: 1730,
   lastUpdated: new Date().toISOString()
 };
 
-const initialContractors = [
-  {
-    id: 'CONT-101',
-    name: 'شركة السهل الصحراوي للمقاولات العامة',
-    sector: 'القطاع الأول (أوباري - الفيوات)',
-    contractValue: '38,500,000 د.ل',
-    completion: 84,
-    machinery: [
-      { type: 'فرادة أسفلت Vögele Super 1800', count: 4, status: 'عمليات رصف' },
-      { type: 'دكّاكات أسفلت Dynapac & CAT', count: 12, status: 'عمليات رصف' },
-      { type: 'شاحنات نقل أسفلت حامي', count: 18, status: 'نقل مستمر' }
-    ],
-    qualityScore: '98.5%'
-  },
-  {
-    id: 'CONT-102',
-    name: 'شركة الهضبة لإعادة الإعمار والطرق',
-    sector: 'القطاع الثاني (الفيوات - العوينات)',
-    contractValue: '42,000,000 د.ل',
-    completion: 72,
-    machinery: [
-      { type: 'جريـدرات كاترپيلار CAT 140K', count: 6, status: 'تسوية وتمهيد' },
-      { type: 'فرادات أسفلت ألمانية', count: 3, status: 'رصف' },
-      { type: 'شاحنات خلط وإرشادات', count: 20, status: 'عمليات ميدانية' }
-    ],
-    qualityScore: '96.2%'
-  },
-  {
-    id: 'CONT-103',
-    name: 'شركة الأفق الوطني للإنشاءات الهندسية',
-    sector: 'القطاع الثالث (العوينات - البركت)',
-    contractValue: '39,000,000 د.ل',
-    completion: 61,
-    machinery: [
-      { type: 'كشاطات أسفلت Wirtgen Cold Milling', count: 3, status: 'إزالة أسفلت متهالك' },
-      { type: 'محطة خلط أسفلت مركزية', count: 1, status: 'إنتاج 240 طن/ساعة' },
-      { type: 'دكّاكات وشاحنات', count: 24, status: 'شغال' }
-    ],
-    qualityScore: '95.8%'
-  },
-  {
-    id: 'CONT-104',
-    name: 'شركة الجنوب للمشاريع الكبرى والجسور',
-    sector: 'القطاع الرابع (البركت - غات)',
-    contractValue: '25,500,000 د.ل',
-    completion: 55,
-    machinery: [
-      { type: 'حفارات ورافعات جسور', count: 8, status: 'بناء عبّارات السيول' },
-      { type: 'فرادة أسفلت ومعدات إنارة', count: 12, status: 'تركيب أعمدة شمسية' }
-    ],
-    qualityScore: '97.0%'
-  }
-];
+const initialContractors = [];
 
 const initialDocuments = [
   {
@@ -559,3 +493,21 @@ export const fetchMonthlyProgressHistory = async () => {
     { month: 'يوليو', planned: 70, actual: 68.5, plannedProgress: 70, actualProgress: 68.5, budget: 99.3 }
   ];
 };
+
+export const initialTickerNews = [
+  { id: 'NEWS-01', text: 'مشروع صيانة ورصف طريق أوباري – غات الاستراتيجي بطول 360 كم', tag: 'مشروع وطني', active: true, date: '2026-08-20' },
+  { id: 'NEWS-02', text: 'نسبة الإنجاز الفعلي الإجمالية تتجاوز 68.5% عبر القطاعات الأربعة', tag: 'متابعة دورية', active: true, date: '2026-08-19' },
+  { id: 'NEWS-03', text: 'تواصل أعمال طبقات الرصف والأسفلت وفق أعلى المواصفات الفنية المعتمدة', tag: 'سير الأعمال', active: true, date: '2026-08-18' },
+  { id: 'NEWS-04', text: 'توريد وتركيب أعمدة الإنارة الذكية بالطاقة الشمسية على امتداد المسار', tag: 'السلامة والإنارة', active: true, date: '2026-08-17' },
+  { id: 'NEWS-05', text: 'فحص جودة خلطات الأسفلت والدمك عبر المعامل الجيوتقنية المعتمدة', tag: 'ضبط الجودة', active: true, date: '2026-08-16' },
+  { id: 'NEWS-06', text: 'إشراف هندسي ميداني متواصل ومتابعة مستمرة لمعايير السلامة المرورية', tag: 'الإشراف الهندسي', active: true, date: '2026-08-15' }
+];
+
+export const getSavedTickerNews = () => {
+  try {
+    const saved = localStorage.getItem('portal_ticker_news');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return initialTickerNews;
+};
+
