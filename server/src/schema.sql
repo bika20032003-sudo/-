@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(150) NOT NULL,
     badge_number VARCHAR(50) DEFAULT 'MOI-001',
-    rank_title VARCHAR(100) DEFAULT 'عميد / مدير النظام',
+    rank_title VARCHAR(100) DEFAULT 'لواء / مدير النظام',
     department VARCHAR(100) DEFAULT 'الإدارة العامة للعمليات والاتصالات',
     role ENUM('super_admin', 'officer', 'operator', 'auditor') DEFAULT 'super_admin',
     status ENUM('active', 'suspended', 'inactive') DEFAULT 'active',

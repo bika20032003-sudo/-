@@ -1,0 +1,127 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { getDb } from '../config/db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const jsonPath = path.resolve(__dirname, '../data/force_data.json');
+let memoryForce = [];
+
+try {
+  if (fs.existsSync(jsonPath)) {
+    memoryForce = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    console.log(`✅ تم تحميل ${memoryForce.length} سجل للقوة العمومية في ذاكرة المخدم`);
+  }
+} catch (e) {
+  console.error('Error loading force json:', e);
+}
+
+export async function getForceList(req, res) {
+  try {
+    const { search, type, limit, page } = req.query;
+    let list = [...memoryForce];
+
+    if (type && (type === 'شرطي' || type === 'مدني')) {
+      list = list.filter(item => item.type === type);
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(item =>
+        (item.name && item.name.toLowerCase().includes(q)) ||
+        (item.financial_number && item.financial_number.includes(q)) ||
+        (item.national_id && item.national_id.includes(q)) ||
+        (item.job_title && item.job_title.toLowerCase().includes(q)) ||
+        (item.department && item.department.toLowerCase().includes(q)) ||
+        (item.bank_name && item.bank_name.toLowerCase().includes(q))
+      );
+    }
+
+    const total = list.length;
+    const policeCount = memoryForce.filter(m => m.type === 'شرطي').length;
+    const civilCount = memoryForce.filter(m => m.type === 'مدني').length;
+
+    return res.json({
+      success: true,
+      total,
+      policeCount,
+      civilCount,
+      data: list
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+export async function createForceMember(req, res) {
+  try {
+    const newMember = {
+      id: Date.now(),
+      ...req.body
+    };
+    memoryForce.unshift(newMember);
+
+    // Save to file
+    try {
+      fs.writeFileSync(jsonPath, JSON.stringify(memoryForce, null, 2), 'utf8');
+    } catch (e) {}
+
+    return res.status(201).json({
+      success: true,
+      message: 'تم إضافة المنتسب بنجاح',
+      data: newMember
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+export async function updateForceMember(req, res) {
+  try {
+    const id = Number(req.params.id);
+    const index = memoryForce.findIndex(m => m.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'السجل غير موجود' });
+    }
+
+    memoryForce[index] = {
+      ...memoryForce[index],
+      ...req.body,
+      id
+    };
+
+    // Save to file
+    try {
+      fs.writeFileSync(jsonPath, JSON.stringify(memoryForce, null, 2), 'utf8');
+    } catch (e) {}
+
+    return res.json({
+      success: true,
+      message: 'تم تحديث بيانات المنتسب بنجاح',
+      data: memoryForce[index]
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+export async function deleteForceMember(req, res) {
+  try {
+    const id = Number(req.params.id);
+    memoryForce = memoryForce.filter(m => m.id !== id);
+
+    try {
+      fs.writeFileSync(jsonPath, JSON.stringify(memoryForce, null, 2), 'utf8');
+    } catch (e) {}
+
+    return res.json({
+      success: true,
+      message: 'تم حذف القيد بنجاح'
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}

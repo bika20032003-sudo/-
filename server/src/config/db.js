@@ -14,9 +14,9 @@ const memoryUsers = [
     username: 'admin',
     email: 'admin@moi.gov.ly',
     password_hash: bcrypt.hashSync('admin', 10),
-    full_name: 'سيادة العميد / أحمد المهدوي',
+    full_name: 'سيادة اللواء / موسى سعد محمد البدين',
     badge_number: 'MOI-10492',
-    rank_title: 'عميد شرطة / رئيس مركز العمليات والتحكم',
+    rank_title: 'لواء شرطة / رئيس مركز العمليات والتحكم',
     department: 'غرفة العمليات المركزية - ديوان الوزارة',
     role: 'super_admin',
     status: 'active',
@@ -65,7 +65,7 @@ export async function initDatabase() {
         password_hash VARCHAR(255) NOT NULL,
         full_name VARCHAR(150) NOT NULL,
         badge_number VARCHAR(50) DEFAULT 'MOI-001',
-        rank_title VARCHAR(100) DEFAULT 'عميد شرطة / مدير النظام',
+        rank_title VARCHAR(100) DEFAULT 'لواء شرطة / مدير النظام',
         department VARCHAR(100) DEFAULT 'الإدارة العامة للعمليات والأمن',
         role ENUM('super_admin', 'officer', 'operator', 'auditor') DEFAULT 'super_admin',
         status ENUM('active', 'suspended', 'inactive') DEFAULT 'active',
@@ -100,14 +100,21 @@ export async function initDatabase() {
         'admin',
         'admin@moi.gov.ly',
         defaultHash,
-        'سيادة العميد / أحمد المهدوي',
+        'سيادة اللواء / موسى سعد محمد البدين',
         'MOI-10492',
-        'عميد شرطة / رئيس مركز العمليات والتحكم',
+        'لواء شرطة / رئيس مركز العمليات والتحكم',
         'غرفة العمليات المركزية - ديوان الوزارة',
         'super_admin',
         'active'
       ]);
       console.log('✅ تم إنشاء الحساب الافتراضي للمسؤول في قاعدة بيانات MySQL: admin / admin');
+    } else {
+      await pool.query(`
+        UPDATE users 
+        SET full_name = 'سيادة اللواء / موسى سعد محمد البدين',
+            rank_title = 'لواء شرطة / رئيس مركز العمليات والتحكم'
+        WHERE username = 'admin' OR email = 'admin@moi.gov.ly'
+      `);
     }
 
     isMySqlConnected = true;
