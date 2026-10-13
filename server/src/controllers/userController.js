@@ -109,7 +109,7 @@ export let inMemoryUsers = [
     department: 'مديرية أمن أوباري',
     role: 'force_manager',
     role_label: 'مسؤول القوة العمومية والصلاحيات',
-    allowed_sections: ['force', 'user_management', 'mail'],
+    allowed_sections: ['force', 'user_management', 'mail', 'letters'],
     phone: '091-3043754',
     status: 'active',
     avatar: '',

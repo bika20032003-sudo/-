@@ -56,6 +56,7 @@ import {
 
 import importedForceData from './data/force_data.json';
 import MailSection from './components/MailSection';
+import TemplatesSection from './components/TemplatesSection';
 
 // Normalize Arabic text for accurate search matching regardless of diacritics, alef forms, and taa marbuta
 const normalizeArabicText = (text) => {
@@ -251,7 +252,7 @@ const DEFAULT_SYSTEM_USERS = [
     department: 'مديرية أمن أوباري',
     role: 'force_manager',
     role_label: 'مسؤول القوة العمومية والصلاحيات',
-    allowed_sections: ['force', 'user_management', 'mail'],
+    allowed_sections: ['force', 'user_management', 'mail', 'letters'],
     phone: '091-3043754',
     status: 'active',
     avatar: '',
@@ -322,7 +323,7 @@ export default function App() {
             (parsed.full_name && parsed.full_name.includes('عبدالصمد'));
 
           if (isAbdulSamad) {
-            parsed.allowed_sections = ['force', 'user_management', 'mail'];
+            parsed.allowed_sections = ['force', 'user_management', 'mail', 'letters'];
           }
         }
         localStorage.setItem('moi_user', JSON.stringify(parsed));
@@ -402,7 +403,7 @@ export default function App() {
         (updated.full_name && updated.full_name.includes('عبدالصمد'));
 
       if (isAbdulSamad) {
-        updated.allowed_sections = ['force', 'user_management', 'mail'];
+        updated.allowed_sections = ['force', 'user_management', 'mail', 'letters'];
         if (updated.avatar === generalAvatar) {
           updated.avatar = '';
         }
@@ -587,7 +588,7 @@ export default function App() {
           (data.user.full_name && data.user.full_name.includes('عبدالصمد'));
 
         const userSections = isAbdulSamad
-          ? ['force', 'user_management', 'mail']
+          ? ['force', 'user_management', 'mail', 'letters']
           : ((Array.isArray(data.user.allowed_sections) && data.user.allowed_sections.length > 0)
               ? data.user.allowed_sections
               : ['force']);
@@ -680,7 +681,7 @@ export default function App() {
           (foundUser.full_name && foundUser.full_name.includes('عبدالصمد'));
 
         const userSections = isAbdulSamad
-          ? ['force', 'user_management', 'mail']
+          ? ['force', 'user_management', 'mail', 'letters']
           : ((Array.isArray(foundUser.allowed_sections) && foundUser.allowed_sections.length > 0)
               ? foundUser.allowed_sections
               : ['force']);
@@ -2681,6 +2682,10 @@ export default function App() {
       return <MailSection user={user} />;
     }
 
+    if (activeSection === 'letters') {
+      return <TemplatesSection user={user} forceMembers={forceMembers} />;
+    }
+
     // Generic View for other sections
     const currentSectionObj = SECTIONS.find(s => s.id === activeSection) || SECTIONS[0];
     const IconComponent = currentSectionObj.icon;
@@ -2829,6 +2834,8 @@ export default function App() {
               return (
                 <div
                   key={sec.id}
+                  id={`nav-item-${sec.id}`}
+                  data-section={sec.id}
                   className={`nav-item ${isActive ? 'active' : ''}`}
                   onClick={() => {
                     setActiveSection(sec.id);
@@ -2882,6 +2889,20 @@ export default function App() {
             </div>
 
             <div className="topbar-left">
+              {/* Official Facebook Link for Directorate */}
+              <a
+                href="https://www.facebook.com/share/1CYt5jTzG7/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="topbar-facebook-link"
+                title="الصفحة الرسمية لمديرية أمن أوباري على فيسبوك"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+                <span>صفحة مديرية الأمن</span>
+              </a>
+
               {/* Officer Profile Quick Button */}
               <button
                 type="button"
@@ -3914,6 +3935,21 @@ export default function App() {
                 )}
               </button>
             </form>
+
+            {/* Official Facebook Link for Directorate */}
+            <div className="auth-footer">
+              <a
+                href="https://www.facebook.com/share/1CYt5jTzG7/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-circle-btn"
+                title="الصفحة الرسمية لمديرية أمن أوباري على فيسبوك"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </div>

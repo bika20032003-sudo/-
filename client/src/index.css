@@ -931,6 +931,36 @@ body {
   background: #fee2e2;
 }
 
+/* Official Security Directorate Facebook Topbar Button */
+.topbar-facebook-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #eff6ff;
+  color: #1877f2;
+  border: 1px solid #bfdbfe;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 4px rgba(24, 119, 242, 0.08);
+  font-family: inherit;
+}
+
+.topbar-facebook-link:hover {
+  background: #1877f2;
+  color: #ffffff;
+  border-color: #1877f2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(24, 119, 242, 0.28);
+}
+
+.topbar-facebook-link svg {
+  flex-shrink: 0;
+}
+
 /* Dashboard Content */
 .dashboard-content {
   padding: 30px;
@@ -1842,6 +1872,14 @@ body {
 
   .topbar-date-text {
     display: none;
+  }
+
+  .topbar-facebook-link span {
+    display: none;
+  }
+
+  .topbar-facebook-link {
+    padding: 6px 9px;
   }
 
   .dashboard-content {
@@ -3899,12 +3937,15 @@ body {
 
   #official-letter-to-print,
   #official-letter-to-print *,
+  #official-template-to-print,
+  #official-template-to-print *,
   #printable-register-area,
   #printable-register-area * {
     visibility: visible;
   }
 
-  #official-letter-to-print {
+  #official-letter-to-print,
+  #official-template-to-print {
     position: absolute;
     left: 0;
     top: 0;
@@ -3932,5 +3973,350 @@ body {
   }
 }
 
+/* ========================================================================= */
+/* TEMPLATES & ADMINISTRATIVE LETTERS SECTION (Matching Photos 1, 2, 3, 4)   */
+/* ========================================================================= */
+.templates-section-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
+.templates-official-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
 
+.templates-card-header {
+  margin-bottom: 22px;
+}
+
+.templates-title-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.templates-title-text {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0;
+}
+
+/* The 3 Inputs Horizontal Row (Matching Photo 1 & 2) */
+.templates-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .templates-inputs-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.template-field-wrap {
+  width: 100%;
+}
+
+.field-input-box {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.template-text-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 13.5px;
+  color: #0f172a;
+  font-family: var(--font-family);
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s ease;
+  text-align: right;
+}
+
+.template-text-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+.ref-number-input {
+  border-color: #cbd5e1;
+}
+
+.ref-number-input:focus {
+  border-color: #3b82f6 !important;
+}
+
+.btn-clear-emp {
+  position: absolute;
+  left: 10px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-emp:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Template Select Box (Matching Photo 3) */
+.field-select-box {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.template-dropdown-select {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px 0 36px;
+  border-radius: 9px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 13.5px;
+  color: #0f172a;
+  font-family: var(--font-family);
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+  text-align: right;
+}
+
+.template-dropdown-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.select-arrow-icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* Smart Autocomplete Dropdown Popup (Matching Photo 4) */
+.employee-suggestions-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  margin-top: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.popup-scroll-indicator {
+  text-align: center;
+  font-size: 9px;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 2px 0;
+  user-select: none;
+}
+
+.popup-items-container {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.suggestion-item-row {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.suggestion-item-row:hover,
+.suggestion-item-row.selected {
+  background: #eff6ff;
+}
+
+.suggestion-name-line {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.suggestion-role-line {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.suggestion-no-results {
+  padding: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Action Button: [ إنشاء وطباعة النموذج 🖨️ ] (Matching Photo 1 & 2) */
+.templates-actions-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 6px;
+}
+
+.btn-create-template-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0a192f 0%, #1e3a8a 100%);
+  color: #ffffff;
+  border: 1px solid #1e3a8a;
+  padding: 11px 26px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(10, 25, 47, 0.22);
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+.btn-create-template-print:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(30, 58, 138, 0.32);
+}
+
+/* Templates Archive Card & Table */
+.templates-archive-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.archive-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.archive-title-group h4 {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0a192f;
+  margin: 0;
+}
+
+.archive-title-group span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.archive-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 280px;
+}
+
+.archive-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 12.5px;
+  width: 100%;
+  font-family: var(--font-family);
+}
+
+.archive-table-wrapper {
+  overflow-x: auto;
+}
+
+.templates-official-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+}
+
+.templates-official-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 800;
+  padding: 12px 14px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.templates-official-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.templates-official-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.code-pill-blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+}
+
+.ref-pill-slate {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.table-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
