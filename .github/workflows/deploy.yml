@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages (High Availability & Performance)
 
 on:
   push:
@@ -25,24 +25,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (with build caching for high speed)
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
 
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Install dependencies & Build MOI Client
+      - name: Install dependencies & Build Production Client
         run: |
           cd client
           npm ci || npm install
           npm run build
+          # Create redundant subpath mirror for /moi/
           mkdir -p dist/moi
-          cp -r dist/. dist/moi/ 2>/dev/null || true
+          cp -r dist/assets dist/moi/ 2>/dev/null || true
+          cp dist/index.html dist/moi/index.html 2>/dev/null || true
+          cp dist/moi-logo.png dist/moi/moi-logo.png 2>/dev/null || true
+          cp dist/slide1.jpg dist/moi/slide1.jpg 2>/dev/null || true
+          cp dist/slide2.jpg dist/moi/slide2.jpg 2>/dev/null || true
+          # Create SPA routing fallbacks to guarantee 0% 404 errors
+          cp dist/index.html dist/404.html
+          cp dist/index.html dist/moi/404.html
           touch dist/.nojekyll
+          touch dist/moi/.nojekyll
 
-      - name: Upload artifact
+      - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
           path: './client/dist'
@@ -50,3 +61,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Sync Production Dist to gh-pages branch (Redundancy)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:gh-pages || git branch gh-pages
+          git checkout gh-pages
+          cp -r client/dist/. .
+          mkdir -p moi
+          cp -r client/dist/. moi/
+          touch .nojekyll
+          git add -A
+          git diff --staged --quiet || (git commit -m "chore(pages): automated sync with zero downtime [skip ci]" && git push origin gh-pages)

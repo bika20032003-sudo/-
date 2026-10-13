@@ -1308,7 +1308,7 @@ export default function MailSection({ user }) {
                   <p>مديرية أمن أوباري</p>
                 </div>
                 <div className="header-logo-center">
-                  <img src="/moi-logo.png" alt="شعار وزارة الداخلية" />
+                  <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="شعار وزارة الداخلية" />
                 </div>
                 <div className="header-side-left">
                   <p>تاريخ الاستخراج: {new Date().toLocaleDateString('ar-LY')}</p>
@@ -1422,7 +1422,7 @@ function OfficialLetterSheet({ letter, qrUrl }) {
         </div>
 
         <div className="header-emblem-center">
-          <img src="/moi-logo.png" alt="شعار مديرية أمن أوباري" className="emblem-img" />
+          <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="شعار مديرية أمن أوباري" className="emblem-img" />
         </div>
 
         <div className="header-lang-left">

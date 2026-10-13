@@ -743,7 +743,7 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
         </div>
 
         <div className="header-emblem-center">
-          <img src="/moi-logo.png" alt="شعار مديرية أمن أوباري" className="emblem-img" />
+          <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="شعار مديرية أمن أوباري" className="emblem-img" />
         </div>
 
         <div className="header-lang-left">

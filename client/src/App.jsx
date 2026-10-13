@@ -277,13 +277,13 @@ const EMPTY_USER_FORM = {
 
 const SLIDES = [
   {
-    image: '/slide1.jpg',
+    image: './slide1.jpg',
     badge: 'إمداد أمني وجاهزية تامة',
     title: 'ربط المنظومة الأمنية بالشبكة.\nسرعة استجابة للحالات الطارئة.',
     desc: 'تيسير عمليات التنسيق وتبادل البلاغات بين غرف العمليات ومراكز الشرطة لضمان وصول الدعم والتعامل الفوري مع أي طارئ.'
   },
   {
-    image: '/slide2.jpg',
+    image: './slide2.jpg',
     badge: 'السيادة والأمن الوطني',
     title: 'منظومة مركزية متكاملة.\nلحماية الوطن وخدمة المواطن.',
     desc: 'توحيد قواعد البيانات وميكنة الإجراءات بين كافة الإدارات والمديريات لرفع كفاءة العمل الأمني وحفظ النظام العام بأحدث التقنيات الرقمية.'
@@ -2811,7 +2811,7 @@ export default function App() {
           <div className="sidebar-header">
             <div className="sidebar-brand">
               <div className="sidebar-logo">
-                <img src="/moi-logo.png" alt="وزارة الداخلية" />
+                <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="وزارة الداخلية" />
               </div>
               <div className="sidebar-title">
                 <h2>وزارة الداخلية</h2>
@@ -3813,7 +3813,7 @@ export default function App() {
 
           <div className="visual-content-top">
             <div className="visual-logo-badge">
-              <img src="/moi-logo.png" alt="شعار وزارة الداخلية" />
+              <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="شعار وزارة الداخلية" />
             </div>
             <div className="visual-title-wrap">
               <h2>وزارة الداخلية</h2>

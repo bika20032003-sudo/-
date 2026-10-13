@@ -5,6 +5,8 @@ server/node_modules/
 
 # Production build
 client/dist/
+.vite/
+client/.vite/
 
 # Logs
 *.log

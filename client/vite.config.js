@@ -15,5 +15,20 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  build: {
+    target: 'esnext',
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'vendor-react';
+          if (id.includes('node_modules/lucide-react')) return 'vendor-icons';
+          if (id.includes('node_modules/qrcode')) return 'vendor-qrcode';
+          if (id.includes('force_data.json')) return 'data-force-db';
+        }
+      }
+    }
   }
 });
