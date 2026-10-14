@@ -64,15 +64,15 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
         {/* Multi-Layer Gradient Overlays for High-Contrast Readability */}
         <div className={`hero-overlay-left absolute inset-0 ${
           theme === 'light'
-            ? 'bg-gradient-to-r from-white/95 via-white/85 to-white/30'
+            ? 'bg-gradient-to-r from-[#F8FAFC]/80 via-[#F8FAFC]/40 to-transparent'
             : 'bg-gradient-to-r from-[#06080E]/95 via-[#06080E]/70 to-transparent'
         }`} />
         <div className={`hero-overlay-top absolute inset-0 ${
           theme === 'light'
-            ? 'bg-gradient-to-t from-[#F8FAFC]/95 via-transparent to-white/50'
+            ? 'bg-gradient-to-t from-[#F8FAFC] via-transparent to-[#F8FAFC]/25'
             : 'bg-gradient-to-t from-[#06080E] via-transparent to-[#06080E]/40'
         }`} />
-        <div className={`absolute bottom-0 left-0 right-0 h-44 ${
+        <div className={`absolute bottom-0 left-0 right-0 h-36 ${
           theme === 'light'
             ? 'bg-gradient-to-t from-[#F8FAFC] to-transparent'
             : 'bg-gradient-to-t from-[#06080E] to-transparent'
