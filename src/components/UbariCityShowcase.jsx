@@ -15,13 +15,13 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
           : 'bg-gradient-to-br from-[#0c1222]/95 via-[#0f172a]/95 to-[#0c1222]/95 border-amber-500/25 text-white shadow-black/90'
       }`}>
         
-        {/* Ambient Top Glow Orbs */}
+        {/* Ambient Top Glow Orbs (GPU-friendly zero-blur) */}
         <div 
-          className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none blur-3xl opacity-40"
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none opacity-40"
           style={{ background: 'radial-gradient(circle, rgba(255,171,0,0.3) 0%, transparent 70%)' }}
         />
         <div 
-          className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none blur-3xl opacity-30"
+          className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none opacity-30"
           style={{ background: 'radial-gradient(circle, rgba(0,245,212,0.2) 0%, transparent 70%)' }}
         />
 

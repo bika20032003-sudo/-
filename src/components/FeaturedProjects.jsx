@@ -267,20 +267,20 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-75" />
 
               {/* Status Badge */}
-              <span className={`absolute top-3.5 right-3.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-lg backdrop-blur-md border ${
+              <span className={`absolute top-3.5 right-3.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-lg border ${
                 project.isFieldDoc
                   ? 'bg-amber-500 text-slate-950 border-amber-300'
                   : project.status === 'completed'
-                    ? 'bg-emerald-500/90 text-slate-950 border-emerald-400'
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-400'
                     : project.status === 'in_progress'
-                      ? 'bg-amber-500/90 text-slate-950 border-amber-400'
-                      : 'bg-rose-500/90 text-white border-rose-400'
+                      ? 'bg-amber-500 text-slate-950 border-amber-400'
+                      : 'bg-rose-500 text-white border-rose-400'
                 }`}>
                 {project.statusLabel}
               </span>
 
               {/* Distance / Sector Tag */}
-              <span className="absolute bottom-3.5 right-3.5 px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md text-amber-400 font-mono font-black text-xs border border-white/10">
+              <span className="absolute bottom-3.5 right-3.5 px-3 py-1.5 rounded-xl bg-black/85 text-amber-400 font-mono font-black text-xs border border-white/10">
                 {project.lengthKm ? `${project.lengthKm} ${lang === 'ar' ? 'كم' : 'KM'} • ` : ''}{project.region}
               </span>
             </div>

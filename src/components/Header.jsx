@@ -168,14 +168,14 @@ export default function Header({
         ? 'py-2 px-2 sm:px-4 lg:px-8 border-b border-amber-500/20' 
         : 'py-3 px-2 sm:px-4 lg:px-8 bg-transparent'
     }`}>
-      <div className={`max-w-7xl mx-auto rounded-2xl px-3 sm:px-4 py-2 border transition-all duration-200 flex items-center justify-between backdrop-blur-md ${
+      <div className={`max-w-7xl mx-auto rounded-2xl px-3 sm:px-4 py-2 border transition-all duration-200 flex items-center justify-between shadow-lg ${
         theme === 'dark'
           ? isScrolled 
-            ? 'bg-[#060a14]/95 border-amber-500/30 text-slate-100 shadow-2xl shadow-black/80' 
-            : 'bg-[#090d18]/90 border-white/15 text-slate-100 shadow-xl shadow-black/60'
+            ? 'bg-[#060a14] border-amber-500/30 text-slate-100 shadow-black/80' 
+            : 'bg-[#090d18] border-white/15 text-slate-100 shadow-black/60'
           : isScrolled
-            ? 'bg-white/95 border-amber-500/30 text-slate-900 shadow-xl shadow-slate-200/90'
-            : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-lg shadow-slate-200/60'
+            ? 'bg-white border-amber-500/30 text-slate-900 shadow-slate-200/90'
+            : 'bg-white border-slate-200 text-slate-900 shadow-slate-200/60'
       }`}>
         
         {/* ── Left Side: Official Agency Logo & Title ── */}
@@ -243,9 +243,9 @@ export default function Header({
             target="_blank"
             rel="noopener noreferrer"
             title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Ubari-Ghat Highway Showcase Website'}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-1.5 border shadow-sm backdrop-blur-md cursor-pointer hover:scale-105 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
               theme === 'light'
-                ? 'bg-orange-50/90 hover:bg-orange-100/90 border-orange-300/80 shadow-orange-500/10'
+                ? 'bg-orange-50 hover:bg-orange-100 border-orange-300/80 shadow-orange-500/10'
                 : 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 hover:border-orange-400/60 shadow-orange-500/10'
             }`}
           >
@@ -259,9 +259,9 @@ export default function Header({
           {!user ? (
             <button
               onClick={onOpenGoogleAuth}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center border shadow-sm backdrop-blur-md cursor-pointer hover:scale-105 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all duration-200 flex items-center justify-center border shadow-sm cursor-pointer hover:scale-105 ${
                 theme === 'light'
-                  ? 'bg-slate-100/90 hover:bg-slate-200/90 text-slate-800 border-slate-300'
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                   : 'bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-amber-400/50'
               }`}
             >

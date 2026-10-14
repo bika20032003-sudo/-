@@ -133,18 +133,16 @@ export default function MarqueeTicker({
             : 'linear-gradient(to right, transparent 0%, rgba(245, 158, 11, 0.05) 5%, rgba(254, 243, 199, 0.22) 14%, rgba(254, 243, 199, 0.3) 20%, rgba(255, 255, 255, 0.25) 45%, rgba(255, 255, 255, 0.2) 75%, transparent 100%)'
           : isRtl
             ? 'linear-gradient(to left, transparent 0%, rgba(245, 158, 11, 0.08) 5%, rgba(245, 158, 11, 0.04) 14%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.45) 75%, transparent 100%)'
-            : 'linear-gradient(to right, transparent 0%, rgba(245, 158, 11, 0.08) 5%, rgba(245, 158, 11, 0.04) 14%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.45) 75%, transparent 100%)',
-        maskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)',
+            : 'linear-gradient(to right, transparent 0%, rgba(245, 158, 11, 0.08) 5%, rgba(245, 158, 11, 0.04) 14%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.45) 75%, transparent 100%)'
       }}
     >
       <div className="max-w-7xl mx-auto flex items-center gap-3 sm:gap-4 relative">
         
         {/* ── Ambient Warm Golden Glow behind & beside the Badge on Right (RTL) ── */}
         <div 
-          className="absolute -end-3 top-1/2 -translate-y-1/2 w-48 h-12 pointer-events-none rounded-full blur-xl opacity-60 z-10"
+          className="absolute -end-3 top-1/2 -translate-y-1/2 w-48 h-12 pointer-events-none rounded-full opacity-60 z-10"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(245, 158, 11, 0.45) 0%, rgba(251, 191, 36, 0.18) 50%, transparent 80%)'
+            background: 'radial-gradient(ellipse at center, rgba(245, 158, 11, 0.3) 0%, rgba(251, 191, 36, 0.1) 50%, transparent 80%)'
           }}
         />
 

@@ -61,23 +61,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
   const locations = getMapLocations(lang);
   const [selectedLocId, setSelectedLocId] = useState('ubari');
   const [mapType, setMapType] = useState('m'); // 'm' = Roadmap, 'k' = Satellite
-  const [isMapTouchActive, setIsMapTouchActive] = useState(false);
-  const [isMapInView, setIsMapInView] = useState(false);
-  const mapContainerRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsMapInView(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: '300px' });
-
-    if (mapContainerRef.current) {
-      observer.observe(mapContainerRef.current);
-    }
-    return () => observer.disconnect();
-  }, []);
+  const [isMapActivated, setIsMapActivated] = useState(false);
 
   const selectedLoc = locations.find(l => l.id === selectedLocId) || locations[0];
   const embedUrl = `https://maps.google.com/maps?q=${selectedLoc.coords}&hl=${lang}&t=${mapType}&z=11&ie=UTF8&iwloc=&output=embed`;
@@ -117,7 +101,10 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
           return (
             <button
               key={loc.id}
-              onClick={() => setSelectedLocId(loc.id)}
+              onClick={() => {
+                setSelectedLocId(loc.id);
+                setIsMapActivated(true);
+              }}
               className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs font-bold transition-all duration-200 flex items-center gap-2 border shadow-sm cursor-pointer ${
                 isSelected
                   ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-lg shadow-amber-500/25 scale-[1.02]'
@@ -206,8 +193,8 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
         </div>
 
         {/* Map Frame */}
-        <div className="relative w-full h-[360px] sm:h-[480px] bg-slate-950">
-          {isMapInView ? (
+        <div className="relative w-full h-[360px] sm:h-[480px] bg-slate-950 overflow-hidden">
+          {isMapActivated ? (
             <iframe
               key={`${selectedLoc.id}-${mapType}`}
               title={selectedLoc.title}
@@ -218,24 +205,61 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
               allowFullScreen=""
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className={`w-full h-full transition-opacity ${
-                isMapTouchActive ? 'pointer-events-auto' : 'pointer-events-none sm:pointer-events-auto'
-              }`}
+              className="w-full h-full"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-3">
-              <Compass className="w-8 h-8 text-amber-500 animate-spin" />
-              <div className="text-sm font-bold text-slate-200">
-                {lang === 'ar' ? 'جاري تجهيز الخريطة الميدانية...' : 'Loading field map...'}
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden">
+              {/* Background Road Image Texture */}
+              <img 
+                src="/road-aerial-highway.jpg" 
+                alt="Map Background" 
+                className="absolute inset-0 w-full h-full object-cover opacity-25 filter brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#06080E] via-slate-950/80 to-[#06080E]/90" />
+
+              {/* Central Trigger Card */}
+              <div className="relative z-10 max-w-md p-6 rounded-3xl bg-slate-900/90 border border-amber-500/30 shadow-2xl space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 mx-auto flex items-center justify-center shadow-lg">
+                  <Compass className="w-7 h-7 animate-pulse text-amber-500" />
+                </div>
+                <div>
+                  <h4 className="text-base sm:text-lg font-black text-white">
+                    {lang === 'ar' ? 'خريطة مسار طريق أوباري – غات (360 كم)' : 'Ubari – Ghat Route Interactive Map'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {lang === 'ar' 
+                      ? 'إحداثيات مباشرة بالأقمار الصناعية لجميع قطاعات ومحطات المشروع.' 
+                      : 'Live satellite & roadmap telemetry for all project sectors.'}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    onClick={() => setIsMapActivated(true)}
+                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-xl shadow-amber-500/30 flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    <span>{lang === 'ar' ? 'عرض الخريطة التفاعلية الحية' : 'Activate Live Map'}</span>
+                  </button>
+                  <a
+                    href={directUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors border border-white/10"
+                  >
+                    <span>{lang === 'ar' ? 'فتح في Google Maps' : 'Open in Google Maps'}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Mobile Tap-To-Interact Protection Overlay */}
-          {!isMapTouchActive && (
+          {/* Mobile Tap-To-Interact Protection Overlay (Only when Map is Active) */}
+          {isMapActivated && !isMapTouchActive && (
             <div 
               onClick={() => setIsMapTouchActive(true)}
-              className="sm:hidden absolute inset-0 bg-black/30 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 text-center cursor-pointer z-10"
+              className="sm:hidden absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4 text-center cursor-pointer z-10"
             >
               <div className="px-4 py-2.5 rounded-2xl bg-amber-500 text-slate-950 font-black text-xs shadow-xl flex items-center gap-2">
                 <Navigation className="w-4 h-4" />
@@ -248,7 +272,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
           )}
 
           {/* Mobile Re-Lock Button when Map is active */}
-          {isMapTouchActive && (
+          {isMapActivated && isMapTouchActive && (
             <button
               onClick={() => setIsMapTouchActive(false)}
               className="sm:hidden absolute top-3 right-3 z-20 px-3 py-1.5 rounded-xl bg-slate-900/90 text-white border border-white/20 text-xs font-bold shadow-lg flex items-center gap-1.5"

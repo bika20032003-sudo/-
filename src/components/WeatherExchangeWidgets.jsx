@@ -55,10 +55,10 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-2 relative z-20 animate-fadeIn select-none">
       {/* ── 2026 Compact Slim Live Weather Telemetry Ribbon ── */}
-      <div className={`relative overflow-hidden rounded-2xl py-2 px-3 sm:px-5 border shadow-sm backdrop-blur-md transition-all duration-300 ${
+      <div className={`relative overflow-hidden rounded-2xl py-2 px-3 sm:px-5 border shadow-sm transition-colors duration-200 ${
         theme === 'light'
-          ? 'bg-white/95 border-amber-200/80 text-slate-900 shadow-slate-200/50'
-          : 'bg-[#0a0f1d]/90 border-amber-500/25 text-slate-100 shadow-black/40'
+          ? 'bg-white border-amber-200/80 text-slate-900 shadow-slate-200/50'
+          : 'bg-[#0a0f1d] border-amber-500/25 text-slate-100 shadow-black/40'
       }`}>
         
         <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10">
@@ -66,7 +66,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
           {/* Start: Location & Icon */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <Sun className="w-4 h-4 text-amber-500 animate-spin" style={{ animationDuration: '30s' }} />
+              <Sun className="w-4 h-4 text-amber-500" />
             </div>
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-xs sm:text-sm">{lang === 'ar' ? 'طقس أوباري' : 'Ubari Weather'}</span>

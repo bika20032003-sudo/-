@@ -21,9 +21,9 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
         : 'bg-[#05070c] text-slate-400 border-white/10'
     }`}>
       
-      {/* Top Ambient Light for Footer */}
+      {/* Top Ambient Light for Footer (GPU-friendly) */}
       <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 pointer-events-none blur-3xl opacity-20"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 pointer-events-none opacity-20"
         style={{ background: 'radial-gradient(circle, rgba(255,171,0,0.3) 0%, transparent 70%)' }}
       />
 

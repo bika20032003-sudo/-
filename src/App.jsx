@@ -8,8 +8,6 @@ import GoogleAuthModal from './components/GoogleAuthModal';
 import WeatherExchangeWidgets from './components/WeatherExchangeWidgets';
 import UbariCityShowcase from './components/UbariCityShowcase';
 import NewsPostCarousel from './components/NewsPostCarousel';
-import CustomGoldenCursor from './components/CustomGoldenCursor';
-import useGsapScrollAnimations from './components/GsapScrollAnimations';
 
 // Code split heavy dashboard for faster initial page load
 const ExecutiveDashboard = lazy(() => import('./components/ExecutiveDashboard'));
@@ -104,8 +102,6 @@ const DEFAULT_USERS = [
 ];
 
 function App() {
-  useGsapScrollAnimations();
-
   // Navigation tab state: 'hero' | 'sectors' | 'contractors' | 'media' | 'dashboard'
   const [activeTab, setActiveTab] = useState('hero');
 
@@ -235,14 +231,11 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen font-arabic selection:bg-amber-500 selection:text-black transition-colors duration-500 ${
+    <div className={`min-h-screen font-arabic selection:bg-amber-500 selection:text-black transition-colors duration-300 ${
       theme === 'light' 
         ? 'bg-[#F8FAFC] text-slate-900' 
         : 'bg-[#06080E] text-slate-100'
     }`}>
-      
-      {/* 1. Custom Golden Cursor Engine */}
-      <CustomGoldenCursor />
       
       {/* Header (Rendered on Public Portal mode) */}
       {activeTab !== 'dashboard' && (

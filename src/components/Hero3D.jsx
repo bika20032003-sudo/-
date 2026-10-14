@@ -40,106 +40,20 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progressVal / 100) * circumference;
 
-  // ── High-Performance Parallax Engine (Zero React Re-renders & Battery-Safe) ──
-  const heroRef = useRef(null);
-  const bgImageRef = useRef(null);
-  const cardTiltRef = useRef(null);
-
-  // High-Performance Parallax Engine (Zero Layout Thrashing & Scoped)
-
-  useEffect(() => {
-    // Disable heavy parallax only on narrow mobile viewports (< 768px)
-    if (window.innerWidth < 768) return;
-
-    let animFrame = null;
-    let targetX = 0;
-    let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
-    let isTicking = false;
-    let isVisible = true;
-
-    // Pause parallax loop completely when hero is out of viewport
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-      if (!isVisible && animFrame) {
-        cancelAnimationFrame(animFrame);
-        isTicking = false;
-      }
-    }, { threshold: 0.05 });
-
-    if (heroRef.current) observer.observe(heroRef.current);
-
-    const updateTransforms = () => {
-      if (!isVisible) {
-        isTicking = false;
-        return;
-      }
-
-      // Smooth lerp
-      currentX += (targetX - currentX) * 0.12;
-      currentY += (targetY - currentY) * 0.12;
-
-      if (bgImageRef.current) {
-        bgImageRef.current.style.transform = `translate3d(${currentX * -14}px, ${currentY * -10}px, 0) scale(1.06)`;
-      }
-
-      // Continue animating while moving
-      if (Math.abs(targetX - currentX) > 0.005 || Math.abs(targetY - currentY) > 0.005) {
-        animFrame = requestAnimationFrame(updateTransforms);
-      } else {
-        isTicking = false;
-      }
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isVisible) return;
-
-      const halfW = window.innerWidth / 2;
-      const halfH = window.innerHeight / 2;
-      targetX = Math.max(-1, Math.min(1, (e.clientX - halfW) / halfW));
-      targetY = Math.max(-1, Math.min(1, (e.clientY - halfH) / halfH));
-
-      if (!isTicking) {
-        isTicking = true;
-        animFrame = requestAnimationFrame(updateTransforms);
-      }
-    };
-
-    const heroEl = heroRef.current;
-    if (heroEl) {
-      heroEl.addEventListener('pointermove', handleMouseMove, { passive: true });
-    }
-
-    return () => {
-      if (heroEl) heroEl.removeEventListener('pointermove', handleMouseMove);
-      if (animFrame) cancelAnimationFrame(animFrame);
-      observer.disconnect();
-    };
-  }, []);
-
   return (
     <section 
-      ref={heroRef}
       id="hero-section" 
       className="relative min-h-[90vh] lg:min-h-screen w-full flex flex-col justify-between overflow-hidden bg-grid-pattern select-none pt-20 sm:pt-24 pb-4"
     >
       
-      {/* ── 4K Cinematic Background Road Photo with GPU Parallax ── */}
+      {/* ── 4K Cinematic Background Road Photo (Direct GPU Hardware Texture) ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img 
-          ref={bgImageRef}
           src="/road-aerial-highway.jpg" 
           alt="أعمال رصف وصيانة طريق أوباري غات الميدانية 4K" 
           fetchpriority="high"
           decoding="async"
-          className="w-full h-full object-cover object-center will-change-transform"
-          style={{ 
-            transform: 'scale(1.06)',
-            filter: theme === 'light' 
-              ? 'brightness(1.04) saturate(1.1) contrast(1.02)' 
-              : 'brightness(0.85) saturate(1.15) contrast(1.08)' 
-          }}
+          className="w-full h-full object-cover object-center"
         />
 
         {/* 3D Glowing Road Horizon Guide Trajectory */}
@@ -165,9 +79,9 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
         }`} />
       </div>
 
-      {/* ── Ambient Radial Glows (Optimized blur for smooth GPU rendering) ── */}
+      {/* ── Ambient Radial Glows (GPU-friendly zero-blur radial gradients) ── */}
       <div 
-        className="absolute z-[1] rounded-full pointer-events-none blur-2xl opacity-60"
+        className="absolute z-[1] rounded-full pointer-events-none opacity-60"
         style={{
           width: '420px', height: '420px',
           right: '5%', top: '10%',
@@ -175,7 +89,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
         }}
       />
       <div 
-        className="absolute z-[1] rounded-full pointer-events-none blur-2xl opacity-50"
+        className="absolute z-[1] rounded-full pointer-events-none opacity-50"
         style={{
           width: '360px', height: '360px',
           left: '8%', bottom: '12%',
