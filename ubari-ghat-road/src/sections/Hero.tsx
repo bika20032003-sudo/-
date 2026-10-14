@@ -49,18 +49,21 @@ export default function Hero() {
       <div className="hero-veil-dark absolute inset-0 bg-[var(--ink)] opacity-[0.82]" />
 
       <div className="hero-content relative z-10 flex h-full flex-col items-center justify-center px-4 sm:px-6 text-center max-w-5xl mx-auto">
-        <p className="hero-kicker mb-3 md:mb-5 text-[11px] sm:text-xs md:text-sm font-semibold tracking-[0.35em] md:tracking-[0.5em] text-[var(--amber)]">
-          حكومة الوحدة الوطنية — خطة عودة الحياة
-        </p>
+        <div className="hero-kicker mb-3 md:mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--amber)]/35 bg-[#0a0a0b]/80 px-3 py-1.5 sm:px-3.5 backdrop-blur-md shadow-[0_2px_12px_rgba(232,147,44,0.18)] max-w-[92vw]">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--amber)] animate-pulse" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-bold text-[var(--amber)] tracking-normal text-center leading-normal">
+            حكومة الوحدة الوطنية — خطة عودة الحياة
+          </span>
+        </div>
 
-        {/* العنوان الرئيسي: "طريق" بالسطر الأول، و"أوباري — غات" بالسطر الثاني كوحدة واحدة دون انكسار */}
-        <div className="hero-title-wrap w-full">
-          <h1 className="font-display text-[clamp(2.5rem,7.2vw,6.8rem)] leading-[1.15] md:leading-[1.08] tracking-tight">
+        {/* العنوان الرئيسي: "طريق" بالسطر الأول، و"أوباري — غات" بالسطر الثاني كوحدة واحدة دون انكسار أو قص */}
+        <div className="hero-title-wrap w-full py-1">
+          <h1 className="font-display text-[clamp(2.5rem,7.2vw,6.8rem)] leading-[1.22] md:leading-[1.12] tracking-normal">
             <span className="hero-title-1 block text-[var(--bone)]">
-              <span className="reveal-line pb-1 md:pb-2"><span>طريق</span></span>
+              <span className="reveal-line py-1 md:py-2"><span>طريق</span></span>
             </span>
             <span className="hero-title-2 block text-[var(--amber)] whitespace-nowrap">
-              <span className="reveal-line pb-1 md:pb-2"><span>أوباري — غات</span></span>
+              <span className="reveal-line py-1 md:py-2"><span>أوباري — غات</span></span>
             </span>
           </h1>
         </div>
@@ -71,7 +74,7 @@ export default function Hero() {
       </div>
 
       <div className="hero-cue absolute bottom-5 md:bottom-8 left-1/2 z-10 -translate-x-1/2 flex flex-col items-center gap-2 md:gap-3">
-        <span className="text-[9px] md:text-[10px] tracking-[0.3em] md:tracking-[0.4em] text-[var(--mute)]">مرّر للأسفل</span>
+        <span className="text-[10px] md:text-xs font-medium tracking-normal text-[var(--mute)]">مرّر للأسفل</span>
         <div className="scroll-cue" />
       </div>
     </section>

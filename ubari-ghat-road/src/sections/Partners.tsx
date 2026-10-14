@@ -52,13 +52,17 @@ export default function Partners() {
       <div className="cine-veil" />
 
       <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-12">
-        <p className="mb-16 text-[11px] font-semibold tracking-[0.5em] text-[var(--amber)]">٠٥ — الشركاء</p>
+        <p className="mb-14 text-xs md:text-sm font-bold tracking-normal text-[var(--amber)] flex items-center gap-2">
+          <span>٠٥</span>
+          <span className="opacity-40">—</span>
+          <span>الشركاء</span>
+        </p>
 
         {(() => {
           let counter = 0;
           return GROUPS.map((g, gi) => (
             <div key={gi} className="mb-14 last:mb-0">
-              <p className="mb-5 text-xs font-bold tracking-[0.35em] text-[var(--mute)]">{g.role}</p>
+              <p className="mb-5 text-xs font-bold tracking-normal text-[var(--mute)]">{g.role}</p>
               {g.items.map((item, ii) => {
                 counter += 1;
                 const num = String(counter).padStart(2, '0');
