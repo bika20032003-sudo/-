@@ -53,9 +53,9 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
   }, [lang]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-1.5 relative z-20 animate-fadeIn select-none">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-2 relative z-20 animate-fadeIn select-none">
       {/* ── 2026 Compact Slim Live Weather Telemetry Ribbon ── */}
-      <div className={`relative overflow-hidden rounded-xl py-1.5 sm:py-2 px-3 sm:px-4 border shadow-sm backdrop-blur-md transition-all duration-300 ${
+      <div className={`relative overflow-hidden rounded-2xl py-2 px-3 sm:px-5 border shadow-sm backdrop-blur-md transition-all duration-300 ${
         theme === 'light'
           ? 'bg-white/95 border-amber-200/80 text-slate-900 shadow-slate-200/50'
           : 'bg-[#0a0f1d]/90 border-amber-500/25 text-slate-100 shadow-black/40'
@@ -64,12 +64,12 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
         <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10">
           
           {/* Start: Location & Icon */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0">
-              <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin" style={{ animationDuration: '30s' }} />
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Sun className="w-4 h-4 text-amber-500 animate-spin" style={{ animationDuration: '30s' }} />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-xs">{lang === 'ar' ? 'طقس أوباري' : 'Ubari Weather'}</span>
+              <span className="font-bold text-xs sm:text-sm">{lang === 'ar' ? 'طقس أوباري' : 'Ubari Weather'}</span>
               <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-slate-400 font-medium">
                 <MapPin className="w-2.5 h-2.5 text-red-500 flex-shrink-0" />
                 <span>{weather.location}</span>
@@ -78,7 +78,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
           </div>
 
           {/* Center: Live Temperature & Condition (Inline) */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-baseline gap-1">
               <span className="text-sm sm:text-base font-black font-mono text-amber-500 tracking-tight">
                 {weather.temp}°
@@ -113,7 +113,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
             <button
               onClick={fetchLiveWeather}
               title={lang === 'ar' ? 'تحديث بيانات الطقس' : 'Refresh Weather'}
-              className={`p-1 rounded-md transition-all border cursor-pointer ${
+              className={`p-1.5 rounded-lg transition-all border cursor-pointer ${
                 theme === 'light' 
                   ? 'hover:bg-slate-100 text-slate-700 border-slate-200' 
                   : 'hover:bg-white/10 text-slate-300 border-white/10'

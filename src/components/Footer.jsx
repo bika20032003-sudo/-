@@ -73,14 +73,14 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
                 onClick={() => {
                   setActiveTab('hero');
                   setTimeout(() => {
-                    const el = document.getElementById('sectors-section');
+                    const el = document.getElementById('projects-section');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }, 60);
                 }} 
                 className="hover:text-amber-500 transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <span className="text-amber-500">›</span>
-                <span>{t.navSectors}</span>
+                <span>{lang === 'ar' ? 'المشاريع الاستراتيجية' : 'Strategic Projects'}</span>
               </button>
             </li>
             <li>

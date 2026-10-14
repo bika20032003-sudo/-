@@ -28,7 +28,7 @@ const PROJECT_PRESET_IMAGES = [
   { title: 'تسوية الأساس الحجري بالكاشطات الموتورية', category: 'كشط وتأسيس', src: '/road-grader-earthwork.jpg' },
   { title: 'تركيب وتشغيل منظومة الإنارة الذكية بالطاقة الشمسية', category: 'الطاقة الشمسية والإنارة', src: '/road-solar-lighting.jpg' },
   { title: 'فحص عينات الكور الإسفلتي ومطابقة الجودة المعملية', category: 'ضبط الجودة المعملي', src: '/road-qa-testing-core.jpg' },
-  { title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي (360 كم)', category: 'بانوراما جوية', src: '/road-aerial-desert-highway.jpg' }
+  { title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي (360 كم)', category: 'بانوراما جوية', src: '/road-aerial-highway.jpg' }
 ];
 
 export default function FeaturedProjects({ theme, lang = 'ar' }) {
@@ -199,6 +199,23 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
     return true;
   });
 
+  const handleCardMouseMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -6;
+    const rotateY = ((x - centerX) / centerX) * 6;
+    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-8px) scale(1.012)`;
+  };
+
+  const handleCardMouseLeave = (e) => {
+    const card = e.currentTarget;
+    card.style.transform = '';
+  };
+
   return (
     <section id="projects-section" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 select-none">
 
@@ -228,51 +245,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         <MarqueeTicker variant="selected-work" theme={theme} direction={lang === 'ar' ? 'rtl' : 'ltr'} />
       </div>
 
-      {/* ── Filter Tabs & Add Photo Action Button ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setProjectFilter('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              projectFilter === 'all'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300'
-            }`}
-          >
-            {lang === 'ar' ? `كافة المشروعات والتوثيقات (${projectsList.length})` : `All Projects (${projectsList.length})`}
-          </button>
-          <button
-            onClick={() => setProjectFilter('field')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              projectFilter === 'field'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300'
-            }`}
-          >
-            {lang === 'ar' ? 'أحدث صور التوثيق الميداني 4K' : '4K Field Visuals'}
-          </button>
-          <button
-            onClick={() => setProjectFilter('strategic')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              projectFilter === 'strategic'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300'
-            }`}
-          >
-            {lang === 'ar' ? 'المشاريع الاستراتيجية الكبرى' : 'Major Strategic Projects'}
-          </button>
-        </div>
 
-        {/* Quick Upload Action Button in Featured Projects */}
-        <button
-          onClick={() => setIsUploadModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center gap-2 cursor-pointer self-start sm:self-auto transition-transform hover:scale-105"
-        >
-          <ImagePlus className="w-4 h-4" />
-          <span>{lang === 'ar' ? 'إضافة / رفع صورة للمشروعات التنفيذية' : 'Upload Project Photo'}</span>
-        </button>
-      </div>
 
       {/* Upload Success Alert */}
       {uploadSuccessAlert && (
@@ -287,7 +260,9 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            className={`p-6 sm:p-8 rounded-[36px] border shadow-2xl space-y-6 transition-all duration-400 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
+            onMouseMove={handleCardMouseMove}
+            onMouseLeave={handleCardMouseLeave}
+            className={`p-6 sm:p-8 rounded-[36px] border shadow-2xl space-y-6 transition-transform duration-300 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
               project.isFieldDoc ? 'border-amber-500/40 ring-1 ring-amber-500/20' : ''
             } ${theme === 'light'
                 ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/80'
@@ -295,15 +270,20 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               }`}
           >
             {/* Top 4K Photo Box with Live Overlay */}
-            <div className="h-64 sm:h-72 rounded-[26px] overflow-hidden relative border border-slate-200 dark:border-white/10 group cursor-pointer" onClick={() => setSelectedModalProject(project)}>
+            <div 
+              className="h-64 sm:h-72 rounded-[26px] overflow-hidden relative border border-slate-200 dark:border-white/10 group cursor-pointer" 
+              onClick={() => setSelectedModalProject(project)}
+              data-cursor-image="true"
+              data-cursor-label={lang === 'ar' ? 'عرض 4K ↗' : 'View 4K ↗'}
+            >
               <img
                 src={project.image}
                 alt={project.title}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
+                className="w-full h-full object-cover photo-hover-zoom group-hover:scale-110 transition-transform duration-700 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-75" />
 
               {/* Status Badge */}
               <span className={`absolute top-3.5 right-3.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-lg backdrop-blur-md border ${
@@ -365,13 +345,13 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                 </div>
                 <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>{project.budget}</span>
+                  <span>{project.statusLabel || (project.status === 'completed' ? 'مشروع مكتمل' : 'جاري التنفيذ')}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {/* Delete Button for Custom Uploaded Projects */}
-                {(project.isCustomUploaded || project.id?.startsWith('PRJ-EXEC-')) && (
+              {/* Optional Delete Button for Custom Uploaded Projects */}
+              {(project.isCustomUploaded || project.id?.startsWith('PRJ-EXEC-')) && (
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={(e) => handleDeleteCustomProject(project.id, e)}
@@ -380,20 +360,8 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                )}
-
-                {/* View Full Specs Modal Button */}
-                <button
-                  onClick={() => setSelectedModalProject(project)}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-1.5 border cursor-pointer hover:scale-105 ${theme === 'light'
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300'
-                      : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
-                    }`}
-                >
-                  <span>{lang === 'ar' ? 'عرض المواصفات والصورة 4K' : 'View Specs & 4K Photo'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+                </div>
+              )}
             </div>
 
           </div>
@@ -448,8 +416,8 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                 <strong className="text-emerald-400 font-mono text-base">{selectedModalProject.progress}%</strong>
               </div>
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'الميزانية:' : 'Budget:'}</span>
-                <strong className="text-amber-300 font-mono text-sm">{selectedModalProject.budget}</strong>
+                <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'الجهة المشرفة:' : 'Authority:'}</span>
+                <strong className="text-amber-300 text-xs">جهاز مشروعات المواصلات</strong>
               </div>
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
                 <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'الحالة:' : 'Status:'}</span>

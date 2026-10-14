@@ -496,8 +496,8 @@ export const fetchMonthlyProgressHistory = async () => {
 
 export const initialTickerNews = [
   { id: 'NEWS-01', text: 'مشروع صيانة ورصف طريق أوباري – غات الاستراتيجي بطول 360 كم', tag: 'مشروع وطني', active: true, date: '2026-08-20' },
-  { id: 'NEWS-02', text: 'نسبة الإنجاز الفعلي الإجمالية تتجاوز 68.5% عبر القطاعات الأربعة', tag: 'متابعة دورية', active: true, date: '2026-08-19' },
-  { id: 'NEWS-03', text: 'تواصل أعمال طبقات الرصف والأسفلت وفق أعلى المواصفات الفنية المعتمدة', tag: 'سير الأعمال', active: true, date: '2026-08-18' },
+  { id: 'NEWS-02', text: 'نسبة الإنجاز الفعلي الإجمالية تتجاوز 68.5% على امتداد مسار الطريق', tag: 'متابعة دورية', active: true, date: '2026-08-19' },
+  { id: 'NEWS-03', text: 'تواصل أعمال طبقات الرصف والأسفلت بأعلى معايير الجودة المعتمدة', tag: 'سير الأعمال', active: true, date: '2026-08-18' },
   { id: 'NEWS-04', text: 'توريد وتركيب أعمدة الإنارة الذكية بالطاقة الشمسية على امتداد المسار', tag: 'السلامة والإنارة', active: true, date: '2026-08-17' },
   { id: 'NEWS-05', text: 'فحص جودة خلطات الأسفلت والدمك عبر المعامل الجيوتقنية المعتمدة', tag: 'ضبط الجودة', active: true, date: '2026-08-16' },
   { id: 'NEWS-06', text: 'إشراف هندسي ميداني متواصل ومتابعة مستمرة لمعايير السلامة المرورية', tag: 'الإشراف الهندسي', active: true, date: '2026-08-15' }
@@ -510,4 +510,182 @@ export const getSavedTickerNews = () => {
   } catch (e) {}
   return initialTickerNews;
 };
+
+export const initialNewsPosts = [
+  {
+    id: 'POST-01',
+    title: 'تواصل أعمال فرش ورصف الطبقة الأسفلتية الساخنة بمتابعة معملية دقيقة',
+    titleEn: 'Hot Asphalt Paving Operations Under Strict Laboratory & Field Supervision',
+    desc: 'تواصل الكوادر الفنية الميدانية لجهاز تنفيذ مشروعات المواصلات أعمال رصف الطبقة السطحية الرابطة ومتابعة درجة حرارة الخلطة الإسفلتية المعتمدة (160°C) في الموقع لضمان أعلى معايير الجودة والمتانة ومقاومة الحمولات الثقيلة على طول الشريان الصحراوي.',
+    descEn: 'Field engineering teams continue hot mix asphalt laying operations with strict temperature control (160°C) ensuring highway longevity and durability.',
+    category: 'رصف الأسفلت',
+    categoryEn: 'Asphalt Paving',
+    image: '/road-asphalt-paver.jpg',
+    timeAgo: 'منذ ساعتين',
+    timeAgoEn: '2 hours ago',
+    location: 'مسار طريق أوباري – غات',
+    locationEn: 'Ubari – Ghat Highway Corridor',
+    author: 'المكتب الإعلامي - جهاز مشروعات المواصلات',
+    authorEn: 'Media Office – Transportation Projects Authority',
+    viewsCount: '1,420'
+  },
+  {
+    id: 'POST-02',
+    title: 'تشغيل أسطول المداحل الاهتزازية وضبط المناسيب عبر الأجهزة المساحية الرقمية',
+    titleEn: 'Heavy Rollers Compaction & Total Station Survey Slope Verification',
+    desc: 'تنفيذ أعمال الدمك النهائي لطبقات الرصف باستخدام أسطول المداحل الأسطوانية والمطاطية الحديثة، مع استمرار أعمال الرفع الطبوغرافي لضبط المناسيب الهندسية وميول تصريف مياه الأمطار بدقة عالية.',
+    descEn: 'Deploying heavy vibratory & pneumatic rollers for final compaction and surveying slope verification.',
+    category: 'الدمك والمساحة',
+    categoryEn: 'Compaction & Survey',
+    image: '/road-rollers-compaction.jpg',
+    timeAgo: 'منذ 5 ساعات',
+    timeAgoEn: '5 hours ago',
+    location: 'القطاع الميداني الثاني',
+    locationEn: 'Second Field Sector',
+    author: 'إدارة المشروعات بالمنطقة الجنوبية',
+    authorEn: 'Southern Region Projects Administration',
+    viewsCount: '1,180'
+  },
+  {
+    id: 'POST-03',
+    title: 'تسوية الأساس الحجري بالكاشطات الموتورية وتجهيز مسارات حماية الطريق',
+    titleEn: 'Motor Grader Sub-base Grading & Sand Drift Protection Berms',
+    desc: 'أعمال تسوية وضبط سمك طبقة الأساس الحجرية المكسورة بالكاشطات الموتورية الثقيلة وتوزيع صهاريج رش المياه، بالتزامن مع إزالة الرمال الزاحفة وتثبيت الحواجز الترابية الجانبية.',
+    descEn: 'Motor graders leveling sub-base crushed aggregate while clearing desert sanddrifts and setting up road stabilization.',
+    category: 'كشط وتأسيس',
+    categoryEn: 'Earthwork & Grading',
+    image: '/road-grader-earthwork.jpg',
+    timeAgo: 'أمس',
+    timeAgoEn: 'Yesterday',
+    location: 'حوض وادي الحياة',
+    locationEn: 'Wadi Al-Haya Basin',
+    author: 'فريق الإشراف الموقعي',
+    authorEn: 'Site Supervision Team',
+    viewsCount: '960'
+  },
+  {
+    id: 'POST-04',
+    title: 'تركيب وتشغيل منظومة الإنارة الذكية بالطاقة الشمسية على المنعطفات الحيوية',
+    titleEn: 'Installation of Smart Solar Lighting Along Critical Highway Curves',
+    desc: 'استكمال تثبيت أعمدة الإنارة المزدوجة المقاومة للرياح الصحراوية والمزودة بألواح شمسية ذكية وبطاريات ليثيوم متطورة، لضمان أعلى مستويات الأمان المروري والرؤية الليلية لسائقي الشاحنات والمسافرين.',
+    descEn: 'Installing wind-resistant dual-arm solar LED lighting poles with smart sensors for nighttime driving safety.',
+    category: 'الطاقة الشمسية والإنارة',
+    categoryEn: 'Solar Lighting',
+    image: '/road-solar-lighting.jpg',
+    timeAgo: 'منذ يومين',
+    timeAgoEn: '2 days ago',
+    location: 'المدخل الجنوبي للمسار',
+    locationEn: 'Southern Corridor Entrance',
+    author: 'وحدة الطاقة المتجددة والسلامة',
+    authorEn: 'Renewable Energy & Safety Unit',
+    viewsCount: '1,850'
+  },
+  {
+    id: 'POST-05',
+    title: 'فحص عينات الكور الإسفلتي واختبارات الكثافة بالمختبر الميداني المتنقل',
+    titleEn: 'Field Asphalt Core Sampling & Mobile Laboratory Density Verification',
+    desc: 'سحب واختبار عينات الكور الإسفلتي دورياً بأجهزة القياس المعملية المتقدمة للتأكد من مطابقة نسب الدمك، والسمك الفعلي، ومقاومة الضغط لأعلى معايير الجودة العالمية المعتمدة.',
+    descEn: 'Core sampling and geotechnical testing in the mobile field laboratory confirming compaction density compliance.',
+    category: 'ضبط الجودة المعملي',
+    categoryEn: 'Quality Control',
+    image: '/road-qa-testing-core.jpg',
+    timeAgo: 'منذ 3 أيام',
+    timeAgoEn: '3 days ago',
+    location: 'المختبر الميداني المركزي',
+    locationEn: 'Central Field Laboratory',
+    author: 'قسم ضبط الجودة والمختبرات',
+    authorEn: 'Quality Control & Labs Dept.',
+    viewsCount: '1,340'
+  },
+  {
+    id: 'POST-06',
+    title: 'مشهد جوي بانورامي 4K يوثق تقدم رصف الشريان البري الاستراتيجي بالجنوب',
+    titleEn: 'Panoramic 4K Aerial Drone View of Progress Across Desert Dunes',
+    desc: 'توثيق جوي شامل يرصد قطار الرصف وحركة الشاحنات والآليات على امتداد الطريق المخترق للكثبان الرملية الذهبية، مجسداً شريان التنمية الرابط بين مدن وواحات فزان بالمثلث الحدودي في غات.',
+    descEn: 'Aerial drone footage capturing the newly paved highway corridor advancing through desert dunes.',
+    category: 'توثيق جوي 4K',
+    categoryEn: '4K Aerial Drone',
+    image: '/road-aerial-highway.jpg',
+    timeAgo: 'منذ 4 أيام',
+    timeAgoEn: '4 days ago',
+    location: 'مسار الـ 360 كم',
+    locationEn: '360km Highway Route',
+    author: 'وحدة التوثيق والإنتاج الإعلامي',
+    authorEn: 'Media Production & Drone Unit',
+    viewsCount: '2,100'
+  }
+];
+
+export const getSavedNewsPosts = () => {
+  try {
+    const saved = localStorage.getItem('portal-news-posts');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return initialNewsPosts;
+};
+
+export const saveNewsPosts = (posts) => {
+  try {
+    localStorage.setItem('portal-news-posts', JSON.stringify(posts));
+    window.dispatchEvent(new Event('storage'));
+  } catch (e) {}
+};
+
+export const getSavedExecutiveProjects = () => {
+  try {
+    const saved = localStorage.getItem('portal-national-projects');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return nationalProjects;
+};
+
+export const saveExecutiveProjects = (projects) => {
+  try {
+    localStorage.setItem('portal-national-projects', JSON.stringify(projects));
+    window.dispatchEvent(new Event('storage'));
+  } catch (e) {}
+};
+
+// ── Hero 3D Showcase Card State Management ──
+export const initialHeroCard = {
+  tag: 'الموقف التنفيذي الميداني المعتمد',
+  tagEn: 'Field Operations Status',
+  title: 'أعمال رصف وتأهيل مسار 360 كم',
+  titleEn: '360km Highway Paving Operations',
+  image: '/road-asphalt-paver.jpg',
+  progress: 68.5,
+  distance: '360 كيلومتراً',
+  distanceEn: '360 km',
+  supervisor: 'مشروعات المواصلات',
+  supervisorEn: 'Transport Projects',
+  startDate: 'يناير 2025',
+  startDateEn: 'Jan 2025',
+  completionDate: 'ديسمبر 2026',
+  completionDateEn: 'Dec 2026'
+};
+
+export const getSavedHeroCard = () => {
+  try {
+    const saved = localStorage.getItem('portal-hero-showcase-card');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') return { ...initialHeroCard, ...parsed };
+    }
+  } catch (e) {}
+  return initialHeroCard;
+};
+
+export const saveHeroCard = (heroCard) => {
+  try {
+    localStorage.setItem('portal-hero-showcase-card', JSON.stringify(heroCard));
+    window.dispatchEvent(new Event('storage'));
+  } catch (e) {}
+};
+
 

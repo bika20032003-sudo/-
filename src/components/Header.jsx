@@ -136,7 +136,6 @@ export default function Header({
     { id: 'hero', targetId: 'hero-section', label: lang === 'ar' ? 'الرئيسية' : 'Home' },
     { id: 'about', targetId: 'about-section', label: lang === 'ar' ? 'نبذة عن المشروع' : 'About Project' },
     { id: 'projects', targetId: 'projects-section', label: lang === 'ar' ? 'المشاريع' : 'Projects' },
-    { id: 'sectors', targetId: 'sectors-section', label: lang === 'ar' ? 'القطاعات' : 'Sectors' },
     { id: 'map', targetId: 'map-section', label: lang === 'ar' ? 'الخريطة' : 'Interactive Map' }
   ];
 

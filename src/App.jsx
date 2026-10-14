@@ -3,14 +3,13 @@ import Header from './components/Header';
 import Hero3D from './components/Hero3D';
 import FeaturedProjects from './components/FeaturedProjects';
 import InteractiveProjectMap from './components/InteractiveProjectMap';
-import SectorsRoadmap from './components/SectorsRoadmap';
 import Footer from './components/Footer';
 import GoogleAuthModal from './components/GoogleAuthModal';
 import WeatherExchangeWidgets from './components/WeatherExchangeWidgets';
 import UbariCityShowcase from './components/UbariCityShowcase';
+import NewsPostCarousel from './components/NewsPostCarousel';
 import CustomGoldenCursor from './components/CustomGoldenCursor';
 import useGsapScrollAnimations from './components/GsapScrollAnimations';
-import MarqueeTicker from './components/MarqueeTicker';
 
 // Code split heavy dashboard for faster initial page load
 const ExecutiveDashboard = lazy(() => import('./components/ExecutiveDashboard'));
@@ -245,19 +244,7 @@ function App() {
       {/* 1. Custom Golden Cursor Engine */}
       <CustomGoldenCursor />
       
-      {/* 2. Top News Bar (الشريط العلوي) */}
-      {activeTab !== 'dashboard' && (
-        <div className="w-full select-none z-50">
-          <MarqueeTicker 
-            items={tickerNews?.filter(n => n.active !== false)} 
-            theme={theme} 
-            variant="hero"
-            direction={lang === 'ar' ? 'rtl' : 'ltr'} 
-          />
-        </div>
-      )}
-
-      {/* 3. Header (Rendered on Public Portal mode) */}
+      {/* Header (Rendered on Public Portal mode) */}
       {activeTab !== 'dashboard' && (
         <Header 
           activeTab={activeTab}
@@ -325,6 +312,9 @@ function App() {
               </div>
             </div>
 
+            {/* Section: News Post Carousel (بوست أخبار المشروع المصور مع التنقل ونقاط العرض) */}
+            <NewsPostCarousel theme={theme} lang={lang} />
+
             {/* Section: Ubari - Ghat 360km Project Overview (نبذة خاصة بالمشروع) */}
             <div id="about-section" className="gsap-scale-in">
               <UbariCityShowcase theme={theme} lang={lang} />
@@ -333,15 +323,6 @@ function App() {
             {/* Section: National Strategic Featured Projects */}
             <div id="projects-section">
               <FeaturedProjects theme={theme} lang={lang} />
-            </div>
-
-            {/* Section: Sectors Roadmap */}
-            <div id="sectors-section" className="gsap-header">
-              <SectorsRoadmap 
-                sectors={sectors} 
-                theme={theme}
-                lang={lang}
-              />
             </div>
 
             {/* Section: Interactive Ubari - Ghat Project Map */}

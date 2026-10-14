@@ -18,10 +18,22 @@ import {
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 import MarqueeTicker from './MarqueeTicker';
+import { getSavedHeroCard } from '../services/api';
 
 export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenGoogleAuth, lang = 'ar', tickerNews }) {
   const t = translations[lang] || translations.ar;
   const progressVal = summaryData?.overallProgress ?? 68.5;
+
+  // Dynamic Hero Showcase Card State (Controllable from Dashboard)
+  const [heroCard, setHeroCard] = useState(getSavedHeroCard);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setHeroCard(getSavedHeroCard());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Circular progress calculation for SVG
   const radius = 38;
@@ -33,10 +45,27 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
   const bgImageRef = useRef(null);
   const cardTiltRef = useRef(null);
 
+  // Local card tilt handlers for tactile 3D perspective response
+  const handleCardMouseMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -8;
+    const rotateY = ((x - centerX) / centerX) * 8;
+    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-8px) scale(1.015)`;
+  };
+
+  const handleCardMouseLeave = (e) => {
+    const card = e.currentTarget;
+    card.style.transform = '';
+  };
+
   useEffect(() => {
-    // Disable parallax on mobile/touch devices or narrow viewports (< 1024px) for 100% native smooth scrolling
-    const isTouchOrMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024 || 'ontouchstart' in window;
-    if (isTouchOrMobile) return;
+    // Disable heavy parallax only on narrow mobile viewports (< 768px)
+    if (window.innerWidth < 768) return;
 
     let animFrame = null;
     let targetX = 0;
@@ -69,10 +98,6 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
       if (bgImageRef.current) {
         bgImageRef.current.style.transform = `translate3d(${currentX * -14}px, ${currentY * -10}px, 0) scale(1.06)`;
-      }
-
-      if (cardTiltRef.current) {
-        cardTiltRef.current.style.transform = `perspective(1000px) rotateY(${currentX * 5}deg) rotateX(${-currentY * 5}deg) translateZ(8px)`;
       }
 
       // Continue animating while moving
@@ -171,6 +196,17 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
         }}
       />
 
+      {/* ── Single Moving Live Marquee Ticker Directly Under Header ── */}
+      <div className="w-full relative z-30 mb-3 sm:mb-5 select-none">
+        <MarqueeTicker 
+          variant="hero" 
+          theme={theme} 
+          lang={lang}
+          direction={lang === 'ar' ? 'rtl' : 'ltr'} 
+          items={tickerNews?.filter(n => n.active !== false)}
+        />
+      </div>
+
       {/* ── Main Hero Content ── */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 w-full space-y-10 my-auto">
         
@@ -222,54 +258,45 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                 }}
                 className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-colors shadow-lg shadow-amber-500/20 cursor-pointer text-center"
               >
-                {t.btnExploreSectors}
-              </button>
-
-              {/* Login / Auth Button */}
-              <button
-                onClick={user ? () => setActiveTab('dashboard') : onOpenGoogleAuth}
-                className={`w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-sm border transition-colors cursor-pointer text-center ${
-                  theme === 'light'
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300'
-                    : 'bg-white/10 hover:bg-white/15 text-white border-white/20'
-                }`}
-              >
-                {user ? t.btnExecutiveDashboard : (lang === 'ar' ? 'تسجيل الدخول للنظام' : 'Portal Sign In')}
+                {lang === 'ar' ? 'استكشف المشاريع' : 'Explore Projects'}
               </button>
             </div>
 
           </div>
 
-          {/* ── Left Column: Dignified Project Showcase Card ── */}
+          {/* ── Left Column: Dignified Project Showcase Card with 3D Tilt & Micro-Interactions ── */}
           <div 
             ref={cardTiltRef}
-            className="w-full lg:w-5/12 flex flex-col items-center lg:items-end animate-scaleUp gsap-scale-in will-change-transform"
-            style={{
-              transform: 'perspective(1000px) rotateY(0deg) rotateX(0deg) translateZ(0px)',
-            }}
+            onMouseMove={handleCardMouseMove}
+            onMouseLeave={handleCardMouseLeave}
+            className="w-full lg:w-5/12 flex flex-col items-center lg:items-end animate-scaleUp gsap-scale-in will-change-transform transition-transform duration-300 ease-out"
           >
             
-            <div className={`w-full max-w-md rounded-3xl overflow-hidden border shadow-2xl text-start ${
+            <div className={`w-full max-w-md rounded-3xl overflow-hidden border shadow-2xl text-start glass-card-hover cursor-pointer ${
               theme === 'light' 
-                ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/80' 
-                : 'bg-[#0b101e] border-white/15 text-white shadow-black/80'
+                ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-200/80' 
+                : 'bg-[#0b101e]/95 border-white/15 text-white shadow-black/80'
             }`}>
               
               {/* Photo with clean caption */}
-              <div className="h-56 sm:h-64 relative overflow-hidden">
+              <div 
+                className="h-56 sm:h-64 relative overflow-hidden group cursor-pointer"
+                data-cursor-image="true"
+                data-cursor-label={lang === 'ar' ? 'معاينة 4K ↗' : 'View 4K ↗'}
+              >
                 <img 
-                  src="/road-asphalt-paver.jpg" 
-                  alt="أعمال رصف وتأهيل طريق أوباري غات" 
-                  className="w-full h-full object-cover"
+                  src={heroCard.image || "/road-asphalt-paver.jpg"} 
+                  alt={heroCard.title || "أعمال رصف وتأهيل طريق أوباري غات"} 
+                  className="w-full h-full object-cover photo-hover-zoom group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
                 
                 <div className="absolute bottom-4 start-5 end-5 text-white">
                   <span className="text-[11px] font-bold text-amber-400 block mb-1">
-                    {lang === 'ar' ? 'الموقف التنفيذي الميداني المعتمد' : 'Field Operations Status'}
+                    {lang === 'ar' ? (heroCard.tag || 'الموقف التنفيذي الميداني المعتمد') : (heroCard.tagEn || heroCard.tag || 'Field Operations Status')}
                   </span>
                   <h3 className="text-base sm:text-lg font-black leading-snug">
-                    {lang === 'ar' ? 'أعمال رصف وتأهيل مسار 360 كم' : '360km Highway Paving Operations'}
+                    {lang === 'ar' ? (heroCard.title || 'أعمال رصف وتأهيل مسار 360 كم') : (heroCard.titleEn || heroCard.title || '360km Highway Paving Operations')}
                   </h3>
                 </div>
               </div>
@@ -284,13 +311,13 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                       {lang === 'ar' ? 'نسبة الإنجاز الإجمالي الفعلي:' : 'Overall Progress:'}
                     </span>
                     <span className="font-mono text-base font-black text-amber-500">
-                      {progressVal}%
+                      {heroCard.progress ?? progressVal}%
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-2 overflow-hidden">
                     <div 
                       className="bg-amber-500 h-full rounded-full transition-all duration-1000" 
-                      style={{ width: `${progressVal}%` }} 
+                      style={{ width: `${heroCard.progress ?? progressVal}%` }} 
                     />
                   </div>
                 </div>
@@ -304,15 +331,15 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                       {lang === 'ar' ? 'المسافة الإجمالية:' : 'Total Distance:'}
                     </span>
                     <strong className="font-bold text-slate-800 dark:text-slate-100">
-                      {lang === 'ar' ? '360 كيلومتراً' : '360 km'}
+                      {lang === 'ar' ? (heroCard.distance || '360 كيلومتراً') : (heroCard.distanceEn || heroCard.distance || '360 km')}
                     </strong>
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-400 block">
-                      {lang === 'ar' ? 'القطاعات المنفذة:' : 'Active Sectors:'}
+                      {lang === 'ar' ? 'الجهة المشرفة:' : 'Supervising Agency:'}
                     </span>
                     <strong className="font-bold text-slate-800 dark:text-slate-100">
-                      {lang === 'ar' ? '4 قطاعات متزامنة' : '4 Sectors'}
+                      {lang === 'ar' ? (heroCard.supervisor || 'مشروعات المواصلات') : (heroCard.supervisorEn || heroCard.supervisor || 'Transport Projects')}
                     </strong>
                   </div>
                   <div>
@@ -320,7 +347,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                       {lang === 'ar' ? 'تاريخ البدء المعتمد:' : 'Start Date:'}
                     </span>
                     <strong className="font-mono font-bold text-slate-800 dark:text-slate-100">
-                      {lang === 'ar' ? 'يناير 2025' : 'Jan 2025'}
+                      {lang === 'ar' ? (heroCard.startDate || 'يناير 2025') : (heroCard.startDateEn || heroCard.startDate || 'Jan 2025')}
                     </strong>
                   </div>
                   <div>
@@ -328,7 +355,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                       {lang === 'ar' ? 'الموعد المخطط للإنجاز:' : 'Target Completion:'}
                     </span>
                     <strong className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {lang === 'ar' ? 'ديسمبر 2026' : 'Dec 2026'}
+                      {lang === 'ar' ? (heroCard.completionDate || 'ديسمبر 2026') : (heroCard.completionDateEn || heroCard.completionDate || 'Dec 2026')}
                     </strong>
                   </div>
                 </div>
@@ -343,15 +370,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
       </div>
 
-      {/* ── Moving Live Marquee Ticker in Hero Section ── */}
-      <div className="w-full mt-6">
-        <MarqueeTicker 
-          variant="hero" 
-          theme={theme} 
-          direction={lang === 'ar' ? 'rtl' : 'ltr'} 
-          items={tickerNews?.filter(n => n.active !== false)}
-        />
-      </div>
+
 
     </section>
   );
