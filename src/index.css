@@ -383,14 +383,14 @@ button, input, select, textarea {
 .animate-marquee {
   display: flex !important;
   width: max-content !important;
-  animation: marqueeScroll 42s linear infinite !important;
+  animation: marqueeScroll 75s linear infinite;
   will-change: transform;
 }
 
 .animate-marquee-reverse {
   display: flex !important;
   width: max-content !important;
-  animation: marqueeScrollReverse 42s linear infinite !important;
+  animation: marqueeScrollReverse 75s linear infinite;
   will-change: transform;
 }
 

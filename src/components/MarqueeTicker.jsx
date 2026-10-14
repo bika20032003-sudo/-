@@ -38,9 +38,9 @@ export default function MarqueeTicker({
   // Calculate speed: calm, comfortable reading velocity with continuous 0s delay
   const getDuration = () => {
     if (typeof speed === 'number') return `${speed}s`;
-    if (speed === 'fast') return '25s';
-    if (speed === 'slow') return '55s';
-    return '42s'; // Comfortable, steady reading tempo (loops seamlessly with 0 delay)
+    if (speed === 'fast') return '50s';
+    if (speed === 'slow') return '100s';
+    return '75s'; // Calm, comfortable, slower tempo as requested by user
   };
   const animDuration = getDuration();
 
