@@ -52,8 +52,10 @@ export default function RouteMap() {
 
       <div className="relative z-10 flex h-full flex-col justify-center px-5 md:px-12">
         <div className="mx-auto w-full max-w-6xl">
-          <p className="mb-2 md:mb-4 text-[11px] font-semibold tracking-[0.4em] md:tracking-[0.5em] text-[var(--amber)]">
-            ٠٣ — المسار
+          <p className="mb-2 md:mb-4 text-xs md:text-sm font-bold tracking-normal text-[var(--amber)] flex items-center gap-2">
+            <span>٠٣</span>
+            <span className="opacity-40">—</span>
+            <span>المسار</span>
           </p>
           <h2 className="font-display mb-6 md:mb-20 text-2xl sm:text-3xl md:text-6xl text-[var(--bone)] leading-tight">
             من واحة أوباري إلى سفوح أكاكوس

@@ -51,7 +51,11 @@ export default function Phases() {
       <div className="cine-veil" />
 
       <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-center px-5 md:px-12">
-        <p className="mb-2 md:mb-4 text-[11px] font-semibold tracking-[0.4em] md:tracking-[0.5em] text-[var(--amber)]">٠٤ — مراحل التنفيذ</p>
+        <p className="mb-2 md:mb-4 text-xs md:text-sm font-bold tracking-normal text-[var(--amber)] flex items-center gap-2">
+          <span>٠٤</span>
+          <span className="opacity-40">—</span>
+          <span>مراحل التنفيذ</span>
+        </p>
         <h2 className="font-display mb-5 md:mb-12 text-2xl sm:text-3xl md:text-6xl text-[var(--bone)]">محطات المشروع</h2>
 
         <div className="relative max-w-3xl">

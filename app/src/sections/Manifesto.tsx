@@ -40,7 +40,11 @@ export default function Manifesto() {
   return (
     <section ref={root} id="manifesto" className="relative flex h-screen items-center overflow-hidden bg-[var(--ink)]">
       <div className="mx-auto w-full max-w-6xl px-6 md:px-12">
-        <p className="mb-6 md:mb-10 text-[11px] font-semibold tracking-[0.4em] md:tracking-[0.5em] text-[var(--mute)]">٠١ — الفكرة</p>
+        <p className="mb-6 md:mb-10 text-xs md:text-sm font-bold tracking-normal text-[var(--mute)] flex items-center gap-2">
+          <span className="text-[var(--amber)]">٠١</span>
+          <span className="opacity-40">—</span>
+          <span>الفكرة</span>
+        </p>
         <h2 className="font-display text-[7.5vw] sm:text-[8vw] md:text-[5.2vw] leading-[1.38] md:leading-[1.3]">
           {LINES.map((l, i) => (
             <span key={i} className={`m-line block py-0.5 ${l.cls}`}>{l.text}</span>

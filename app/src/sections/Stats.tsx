@@ -60,7 +60,11 @@ export default function Stats() {
       </div>
 
       <div className="relative mx-auto max-w-6xl px-5 md:px-12">
-        <p className="mb-10 md:mb-16 text-[11px] font-semibold tracking-[0.4em] md:tracking-[0.5em] text-[var(--mute)]">٠٢ — بالأرقام</p>
+        <p className="mb-10 md:mb-16 text-xs md:text-sm font-bold tracking-normal text-[var(--mute)] flex items-center gap-2">
+          <span className="text-[var(--amber)]">٠٢</span>
+          <span className="opacity-40">—</span>
+          <span>بالأرقام</span>
+        </p>
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-x-20 md:gap-y-24">
           {STATS.map((s, i) => (
             <div key={i} className="stat-item border-t border-[var(--bone)]/15 pt-5 md:pt-6">

@@ -139,7 +139,7 @@ export default function Nav() {
           </div>
           <div className="leading-tight">
             <div className="flex items-center gap-2">
-              <p className="text-xs md:text-sm font-bold tracking-wide text-[var(--bone)] group-hover:text-[var(--amber)] transition-colors">
+              <p className="text-xs md:text-sm font-bold tracking-normal text-[var(--bone)] group-hover:text-[var(--amber)] transition-colors">
                 جهاز تنفيذ مشروعات الموصلات
               </p>
               <span className="hidden lg:inline-flex items-center gap-1 rounded-full border border-[var(--amber)]/30 bg-[var(--amber)]/10 px-2 py-0.5 text-[9px] font-medium text-[var(--amber)]">
@@ -164,7 +164,7 @@ export default function Nav() {
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`relative rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all ${
+                className={`relative rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-normal transition-all ${
                   isActive
                     ? 'bg-[var(--amber)] text-black font-bold shadow-[0_0_12px_rgba(232,147,44,0.4)]'
                     : 'text-[var(--bone)]/80 hover:text-white hover:bg-white/10'
