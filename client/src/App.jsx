@@ -51,7 +51,9 @@ import {
   UserPlus,
   Key,
   ShieldCheck,
-  User
+  User,
+  Compass,
+  ExternalLink
 } from 'lucide-react';
 
 import importedForceData from './data/force_data.json';
@@ -2847,6 +2849,36 @@ export default function App() {
                 </div>
               );
             })}
+
+            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <a
+                href="./road/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-item"
+                style={{
+                  color: '#fbbf24',
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  margin: '6px 8px',
+                  fontWeight: 700,
+                  fontSize: '12.5px'
+                }}
+                title="مشروع صيانة وتطوير طريق أوباري – غات (جهاز تنفيذ مشروعات المواصلات)"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Compass size={16} />
+                  <span>طريق أوباري – غات</span>
+                </div>
+                <ExternalLink size={13} style={{ opacity: 0.7 }} />
+              </a>
+            </div>
           </nav>
 
           <div
@@ -3936,8 +3968,31 @@ export default function App() {
               </button>
             </form>
 
-            {/* Official Facebook Link for Directorate */}
-            <div className="auth-footer">
+            {/* Links and Directorate Social */}
+            <div className="auth-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <a
+                href="./road/"
+                className="road-project-badge-link"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#b45309',
+                  background: '#fef3c7',
+                  border: '1px solid #fde68a',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                title="الانتقال إلى موقع مشروع طريق أوباري – غات (جهاز تنفيذ مشروعات المواصلات)"
+              >
+                <span>🛣️</span>
+                <span>طريق أوباري – غات</span>
+              </a>
+
               <a
                 href="https://www.facebook.com/share/1CYt5jTzG7/?mibextid=wwXIfr"
                 target="_blank"

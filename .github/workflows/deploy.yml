@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages (High Availability & Performance)
+name: Deploy to GitHub Pages (High Availability & Multi-Project Portal)
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Install dependencies & Build Production Client
+      - name: Install dependencies & Build Ministry of Interior System
         run: |
           cd client
           npm ci || npm install
@@ -53,6 +53,21 @@ jobs:
           touch dist/.nojekyll
           touch dist/moi/.nojekyll
 
+      - name: Install dependencies & Build Ubari-Ghat Road Portal
+        run: |
+          cd ubari-ghat-road
+          npm ci || npm install
+          npm run build
+          # Deploy to subpaths /road/ and /ubari-ghat/
+          mkdir -p ../client/dist/road
+          mkdir -p ../client/dist/ubari-ghat
+          cp -r dist/. ../client/dist/road/
+          cp -r dist/. ../client/dist/ubari-ghat/
+          cp dist/index.html ../client/dist/road/404.html
+          cp dist/index.html ../client/dist/ubari-ghat/404.html
+          touch ../client/dist/road/.nojekyll
+          touch ../client/dist/ubari-ghat/.nojekyll
+
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
@@ -69,8 +84,10 @@ jobs:
           git fetch origin gh-pages:gh-pages || git branch gh-pages
           git checkout gh-pages
           cp -r client/dist/. .
-          mkdir -p moi
-          cp -r client/dist/. moi/
+          mkdir -p moi road ubari-ghat
+          cp -r client/dist/moi/. moi/ 2>/dev/null || true
+          cp -r client/dist/road/. road/ 2>/dev/null || true
+          cp -r client/dist/ubari-ghat/. ubari-ghat/ 2>/dev/null || true
           touch .nojekyll
           git add -A
           git diff --staged --quiet || (git commit -m "chore(pages): automated sync with zero downtime [skip ci]" && git push origin gh-pages)
