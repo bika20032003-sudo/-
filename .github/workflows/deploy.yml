@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -68,6 +68,17 @@ jobs:
           touch ../client/dist/road/.nojekyll
           touch ../client/dist/ubari-ghat/.nojekyll
 
+      - name: Verify and configure Ubari-Ghat 3D Interactive Portal (/portal/ and /ubari-portal/)
+        run: |
+          mkdir -p client/dist/portal
+          mkdir -p client/dist/ubari-portal
+          cp -r client/public/portal/. client/dist/portal/
+          cp -r client/public/portal/. client/dist/ubari-portal/
+          cp client/dist/portal/index.html client/dist/portal/404.html
+          cp client/dist/portal/index.html client/dist/ubari-portal/404.html
+          touch client/dist/portal/.nojekyll
+          touch client/dist/ubari-portal/.nojekyll
+
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
@@ -78,16 +89,19 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Sync Production Dist to gh-pages branch (Redundancy)
+        if: always()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages:gh-pages || git branch gh-pages
           git checkout gh-pages
           cp -r client/dist/. .
-          mkdir -p moi road ubari-ghat
+          mkdir -p moi road ubari-ghat portal ubari-portal
           cp -r client/dist/moi/. moi/ 2>/dev/null || true
           cp -r client/dist/road/. road/ 2>/dev/null || true
           cp -r client/dist/ubari-ghat/. ubari-ghat/ 2>/dev/null || true
+          cp -r client/dist/portal/. portal/ 2>/dev/null || true
+          cp -r client/dist/ubari-portal/. ubari-portal/ 2>/dev/null || true
           touch .nojekyll
           git add -A
           git diff --staged --quiet || (git commit -m "chore(pages): automated sync with zero downtime [skip ci]" && git push origin gh-pages)
