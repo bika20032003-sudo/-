@@ -3,12 +3,7 @@ import {
   ChevronRight, 
   ChevronLeft, 
   MapPin, 
-  Clock, 
   Tag, 
-  Share2, 
-  Eye, 
-  Sparkles,
-  CheckCircle2,
   Newspaper
 } from 'lucide-react';
 import { getSavedNewsPosts } from '../services/api';
@@ -18,7 +13,6 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [copiedId, setCopiedId] = useState(null);
 
   // Sync with localStorage updates dispatched across tabs/components
   useEffect(() => {
@@ -68,10 +62,6 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
 
   const currentPost = posts[currentIndex] || posts[0];
 
-  const handleShare = (id) => {
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   return (
     <section 
@@ -166,16 +156,11 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-75" />
             </div>
 
-            {/* Overlaid Location & View Info */}
-            <div className="absolute bottom-4 start-5 end-5 flex items-center justify-between text-white text-xs font-bold pointer-events-none">
+            {/* Overlaid Location Info */}
+            <div className="absolute bottom-4 start-5 flex items-center text-white text-xs font-bold pointer-events-none">
               <span className="flex items-center gap-1.5 bg-black/85 px-3.5 py-1.5 rounded-xl border border-white/20 shadow-lg">
                 <MapPin className="w-3.5 h-3.5 text-amber-400" />
                 <span>{lang === 'ar' ? currentPost.location : currentPost.locationEn}</span>
-              </span>
-
-              <span className="flex items-center gap-1.5 bg-black/85 px-3 py-1.5 rounded-xl border border-white/20 shadow-lg font-mono">
-                <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{currentPost.viewsCount} {lang === 'ar' ? 'مشاهدة' : 'views'}</span>
               </span>
             </div>
 
@@ -211,7 +196,6 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
               {/* Badge & News Counter */}
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="inline-flex items-center gap-1.5 text-amber-500 font-bold">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>{lang === 'ar' ? 'المستجدات الميدانية الرسمية' : 'Official Field Update'}</span>
                 </span>
                 <span className="font-mono text-slate-400 font-extrabold">
@@ -232,35 +216,6 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
               }`}>
                 {lang === 'ar' ? currentPost.desc : currentPost.descEn}
               </p>
-            </div>
-
-            {/* Post Action Footer: 5s Timer indicator & Share */}
-            <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-slate-400 text-[11px] font-medium">
-                <Clock className="w-3.5 h-3.5 text-amber-500" />
-                <span>{lang === 'ar' ? 'تحديث تلقائي كل 5 ثوانٍ' : 'Auto transitions every 5s'}</span>
-              </div>
-
-              <button
-                onClick={() => handleShare(currentPost.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border font-bold transition-all cursor-pointer ${
-                  theme === 'light'
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-                    : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
-                }`}
-              >
-                {copiedId === currentPost.id ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    <span className="text-emerald-500">{lang === 'ar' ? 'تم النسخ' : 'Copied'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-3.5 h-3.5 text-amber-500" />
-                    <span>{lang === 'ar' ? 'مشاركة' : 'Share'}</span>
-                  </>
-                )}
-              </button>
             </div>
 
           </div>
