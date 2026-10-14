@@ -122,7 +122,6 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
 
       {/* Main 4K Map Container */}
       <div 
-        ref={mapContainerRef}
         className={`relative overflow-hidden rounded-[28px] sm:rounded-[32px] border shadow-2xl transition-all duration-300 ${
         theme === 'light'
           ? 'bg-white border-slate-200/90 shadow-slate-300/80'

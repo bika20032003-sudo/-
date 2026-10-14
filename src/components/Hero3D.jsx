@@ -167,7 +167,6 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
           {/* ── Left Column: Dignified Project Showcase Card with GPU Hover ── */}
           <div 
-            ref={cardTiltRef}
             className="w-full lg:w-5/12 flex flex-col items-center lg:items-end animate-scaleUp gsap-scale-in"
           >
             
