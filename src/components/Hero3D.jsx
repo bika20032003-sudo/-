@@ -45,23 +45,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
   const bgImageRef = useRef(null);
   const cardTiltRef = useRef(null);
 
-  // Local card tilt handlers for tactile 3D perspective response
-  const handleCardMouseMove = (e) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -8;
-    const rotateY = ((x - centerX) / centerX) * 8;
-    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-8px) scale(1.015)`;
-  };
-
-  const handleCardMouseLeave = (e) => {
-    const card = e.currentTarget;
-    card.style.transform = '';
-  };
+  // High-Performance Parallax Engine (Zero Layout Thrashing & Scoped)
 
   useEffect(() => {
     // Disable heavy parallax only on narrow mobile viewports (< 768px)
@@ -122,10 +106,13 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    const heroEl = heroRef.current;
+    if (heroEl) {
+      heroEl.addEventListener('pointermove', handleMouseMove, { passive: true });
+    }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      if (heroEl) heroEl.removeEventListener('pointermove', handleMouseMove);
       if (animFrame) cancelAnimationFrame(animFrame);
       observer.disconnect();
     };
@@ -264,12 +251,10 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
           </div>
 
-          {/* ── Left Column: Dignified Project Showcase Card with 3D Tilt & Micro-Interactions ── */}
+          {/* ── Left Column: Dignified Project Showcase Card with GPU Hover ── */}
           <div 
             ref={cardTiltRef}
-            onMouseMove={handleCardMouseMove}
-            onMouseLeave={handleCardMouseLeave}
-            className="w-full lg:w-5/12 flex flex-col items-center lg:items-end animate-scaleUp gsap-scale-in will-change-transform transition-transform duration-300 ease-out"
+            className="w-full lg:w-5/12 flex flex-col items-center lg:items-end animate-scaleUp gsap-scale-in"
           >
             
             <div className={`w-full max-w-md rounded-3xl overflow-hidden border shadow-2xl text-start glass-card-hover cursor-pointer ${

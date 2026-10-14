@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   MapPin, 
   Navigation, 
@@ -62,6 +62,22 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
   const [selectedLocId, setSelectedLocId] = useState('ubari');
   const [mapType, setMapType] = useState('m'); // 'm' = Roadmap, 'k' = Satellite
   const [isMapTouchActive, setIsMapTouchActive] = useState(false);
+  const [isMapInView, setIsMapInView] = useState(false);
+  const mapContainerRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsMapInView(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '300px' });
+
+    if (mapContainerRef.current) {
+      observer.observe(mapContainerRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
 
   const selectedLoc = locations.find(l => l.id === selectedLocId) || locations[0];
   const embedUrl = `https://maps.google.com/maps?q=${selectedLoc.coords}&hl=${lang}&t=${mapType}&z=11&ie=UTF8&iwloc=&output=embed`;
@@ -118,7 +134,9 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
       </div>
 
       {/* Main 4K Map Container */}
-      <div className={`relative overflow-hidden rounded-[28px] sm:rounded-[32px] border shadow-2xl transition-all duration-300 ${
+      <div 
+        ref={mapContainerRef}
+        className={`relative overflow-hidden rounded-[28px] sm:rounded-[32px] border shadow-2xl transition-all duration-300 ${
         theme === 'light'
           ? 'bg-white border-slate-200/90 shadow-slate-300/80'
           : 'bg-[#0a0f1d] border-white/15 shadow-black/80'
@@ -189,23 +207,29 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
 
         {/* Map Frame */}
         <div className="relative w-full h-[360px] sm:h-[480px] bg-slate-950">
-          <iframe
-            key={`${selectedLoc.id}-${mapType}`}
-            title={selectedLoc.title}
-            src={embedUrl}
-            width="100%"
-            height="100%"
-            style={{ 
-              border: 0, 
-              filter: theme === 'dark' ? 'contrast(1.08) saturate(1.15)' : 'none' 
-            }}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className={`w-full h-full transition-opacity ${
-              isMapTouchActive ? 'pointer-events-auto' : 'pointer-events-none sm:pointer-events-auto'
-            }`}
-          />
+          {isMapInView ? (
+            <iframe
+              key={`${selectedLoc.id}-${mapType}`}
+              title={selectedLoc.title}
+              src={embedUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className={`w-full h-full transition-opacity ${
+                isMapTouchActive ? 'pointer-events-auto' : 'pointer-events-none sm:pointer-events-auto'
+              }`}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-3">
+              <Compass className="w-8 h-8 text-amber-500 animate-spin" />
+              <div className="text-sm font-bold text-slate-200">
+                {lang === 'ar' ? 'جاري تجهيز الخريطة الميدانية...' : 'Loading field map...'}
+              </div>
+            </div>
+          )}
 
           {/* Mobile Tap-To-Interact Protection Overlay */}
           {!isMapTouchActive && (

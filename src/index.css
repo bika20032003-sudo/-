@@ -139,11 +139,22 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Fixed GPU background glow layer: eliminates repaints during 6000px page scrolling */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
   background-image: 
     radial-gradient(circle at 15% 10%, var(--body-glow1) 0%, transparent 40%),
     radial-gradient(circle at 85% 30%, var(--body-glow2) 0%, transparent 40%),
     radial-gradient(circle at 50% 65%, var(--body-glow3) 0%, transparent 45%);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transform: translateZ(0);
 }
 
 /* ── Prevent Arabic text/font overlapping issues ── */
@@ -200,77 +211,89 @@ button, input, select, textarea {
    ============================================================ */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 10px 30px -10px var(--glass-shadow);
+  box-shadow: 0 4px 20px -5px var(--glass-shadow);
   transform: translateZ(0);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-panel-ultra {
   background: var(--glass-bg-ultra);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 16px 40px -12px var(--glass-shadow);
+  box-shadow: 0 8px 25px -8px var(--glass-shadow);
   border-radius: 2rem;
   transform: translateZ(0);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-pill-ultra {
   background: var(--glass-pill);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 6px 20px var(--glass-shadow);
+  box-shadow: 0 4px 15px var(--glass-shadow);
   transform: translateZ(0);
 }
 
-/* 4K Glass Card Hover with Kinetic Depth & Holographic Gleam */
+/* High-Performance Card Hover (100% GPU-accelerated, Zero Layout Thrashing) */
 .glass-card-hover {
   transform: translateZ(0);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease !important;
-  will-change: transform, box-shadow;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease !important;
+  will-change: transform;
   position: relative;
+  overflow: hidden;
 }
 
 .glass-card-hover:hover {
-  transform: translateY(-8px) scale(1.012) !important;
+  transform: translateY(-5px) !important;
   border-color: rgba(245, 158, 11, 0.75) !important;
-  box-shadow: 0 24px 50px -12px rgba(245, 158, 11, 0.32), 0 0 25px rgba(245, 158, 11, 0.15) !important;
+  box-shadow: 0 12px 28px -8px rgba(245, 158, 11, 0.25) !important;
 }
 
-/* Kinetic light gleam sweep across cards on hover */
+/* GPU Transform light gleam sweep across cards (Zero Layout Reflow) */
 .glass-card-hover::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -120%;
-  width: 75%;
+  left: 0;
+  width: 60%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-  transform: skewX(-25deg);
-  transition: left 0.8s ease;
+  transform: translateX(-160%) skewX(-25deg);
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
   z-index: 20;
 }
 
 .glass-card-hover:hover::before {
-  left: 160%;
+  transform: translateX(250%) skewX(-25deg);
 }
 
-/* 4K Photo Hover Micro-Interactions */
+/* 4K Photo Hover Micro-Interactions (GPU optimized) */
 .photo-hover-zoom {
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.7s ease !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease !important;
   will-change: transform;
+  transform: translateZ(0);
 }
 
 .group:hover .photo-hover-zoom,
 .photo-hover-zoom:hover {
-  transform: scale(1.09) !important;
-  filter: brightness(1.04) contrast(1.02);
+  transform: scale(1.05) translateZ(0) !important;
+  filter: brightness(1.03);
+}
+
+/* Modern Content-Visibility for heavy sections (Instant 60FPS scroll) */
+#sectors-roadmap,
+#map-section,
+#projects-section,
+#news-post-section,
+#ubari-showcase-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
 }
 
 /* ============================================================

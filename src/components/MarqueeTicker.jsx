@@ -62,10 +62,10 @@ export default function MarqueeTicker({
               <div
                 key={`work1-${idx}`}
                 dir="rtl"
-                className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-2xl border shadow-md transition-all duration-200 hover:scale-[1.02] flex-shrink-0 backdrop-blur-md ${
+                className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-2xl border shadow-sm transition-transform duration-200 hover:scale-[1.02] flex-shrink-0 ${
                   theme === 'light'
-                    ? 'bg-white/90 border-slate-200 text-slate-900 shadow-slate-200/60'
-                    : 'bg-[#0f172a]/90 border-white/10 text-white shadow-black/60'
+                    ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/40'
+                    : 'bg-[#0f172a] border-white/10 text-white shadow-black/40'
                 }`}
               >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
@@ -94,10 +94,10 @@ export default function MarqueeTicker({
               <div
                 key={`work2-${idx}`}
                 dir="rtl"
-                className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-2xl border shadow-md transition-all duration-200 hover:scale-[1.02] flex-shrink-0 backdrop-blur-md ${
+                className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-2xl border shadow-sm transition-transform duration-200 hover:scale-[1.02] flex-shrink-0 ${
                   theme === 'light'
-                    ? 'bg-white/90 border-slate-200 text-slate-900 shadow-slate-200/60'
-                    : 'bg-[#0f172a]/90 border-white/10 text-white shadow-black/60'
+                    ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/40'
+                    : 'bg-[#0f172a] border-white/10 text-white shadow-black/40'
                 }`}
               >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">

@@ -199,23 +199,6 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
     return true;
   });
 
-  const handleCardMouseMove = (e) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -6;
-    const rotateY = ((x - centerX) / centerX) * 6;
-    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-8px) scale(1.012)`;
-  };
-
-  const handleCardMouseLeave = (e) => {
-    const card = e.currentTarget;
-    card.style.transform = '';
-  };
-
   return (
     <section id="projects-section" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 select-none">
 
@@ -260,9 +243,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            onMouseMove={handleCardMouseMove}
-            onMouseLeave={handleCardMouseLeave}
-            className={`p-6 sm:p-8 rounded-[36px] border shadow-2xl space-y-6 transition-transform duration-300 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
+            className={`p-6 sm:p-8 rounded-[36px] border shadow-2xl space-y-6 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
               project.isFieldDoc ? 'border-amber-500/40 ring-1 ring-amber-500/20' : ''
             } ${theme === 'light'
                 ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/80'

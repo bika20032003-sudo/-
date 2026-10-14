@@ -85,6 +85,15 @@ export default function SiteHeader() {
             );
           })}
 
+          <a
+            href="https://bika20032003-sudo.github.io/-/road/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full px-4 py-2 text-[13px] font-bold text-orange-500 border border-orange-500/40 hover:bg-orange-500/10 transition-colors shadow-sm"
+          >
+            بداية الرحلة
+          </a>
+
           <Link
             to={isAuthenticated ? '/dashboard' : '/login'}
             className={`rounded-full px-5 py-2 text-[13px] font-medium transition-colors ${
@@ -122,6 +131,15 @@ export default function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            <a
+              href="https://bika20032003-sudo.github.io/-/road/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileOpen(false)}
+              className="mt-2 rounded-full border border-orange-500/40 px-5 py-3 text-center text-sm font-bold text-orange-500 hover:bg-orange-500/10 transition-colors"
+            >
+              بداية الرحلة
+            </a>
             <Link
               to={isAuthenticated ? '/dashboard' : '/login'}
               onClick={() => setMobileOpen(false)}

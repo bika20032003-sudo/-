@@ -14,7 +14,8 @@ import {
   ChevronDown,
   LayoutDashboard,
   Crown,
-  Award
+  Award,
+  Compass
 } from 'lucide-react';
 
 export default function Header({ 
@@ -236,6 +237,24 @@ export default function Header({
         {/* ── Right Side: Action Controls ── */}
         <div className="flex items-center gap-2">
 
+          {/* ── زر بداية الرحلة (الموقع التعريفي) ── */}
+          <a
+            href="https://bika20032003-sudo.github.io/-/road/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Ubari-Ghat Highway Showcase Website'}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-1.5 border shadow-sm backdrop-blur-md cursor-pointer hover:scale-105 ${
+              theme === 'light'
+                ? 'bg-orange-50/90 hover:bg-orange-100/90 border-orange-300/80 shadow-orange-500/10'
+                : 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 hover:border-orange-400/60 shadow-orange-500/10'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+            <span className="text-orange-500 font-black tracking-wide">
+              {lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}
+            </span>
+          </a>
+
           {/* ── BEFORE LOGIN: Glass "دخول" Button ── */}
           {!user ? (
             <button
@@ -405,6 +424,23 @@ export default function Header({
 
           {/* Mobile Dashboard & Auth Options */}
           <div className="border-t border-white/10 pt-2 mt-1 space-y-1">
+            {/* زر بداية الرحلة للجوال */}
+            <a
+              href="https://bika20032003-sudo.github.io/-/road/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full px-3.5 py-2 rounded-xl text-xs font-black text-start text-orange-500 hover:bg-orange-500/15 flex items-center justify-between transition-colors"
+            >
+              <span className="flex items-center gap-2 text-orange-500">
+                <Compass className="w-3.5 h-3.5 text-orange-500" />
+                <span className="text-orange-500 font-extrabold">{lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                {lang === 'ar' ? 'الموقع التعريفي ↗' : 'Showcase ↗'}
+              </span>
+            </a>
+
             {!user ? (
               <button
                 onClick={() => {
