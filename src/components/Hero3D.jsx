@@ -173,34 +173,32 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
           <div className="w-full lg:w-7/12 space-y-4 sm:space-y-6 animate-fadeIn text-start gsap-header">
             
             {/* Official Kicker */}
-            <div className="flex items-center gap-2 text-xs xs:text-sm sm:text-base font-bold text-amber-500 font-mirza">
+            <div className="flex items-center gap-2 text-[11px] sm:text-sm font-bold text-amber-500">
               <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-              <span className="tracking-wide">{lang === 'ar' ? 'دولة ليبيا • جهاز تنفيذ مشروعات المواصلات' : 'State of Libya • Transportation Projects Authority'}</span>
+              <span>{lang === 'ar' ? 'دولة ليبيا • جهاز تنفيذ مشروعات المواصلات' : 'State of Libya • Transportation Projects Authority'}</span>
             </div>
 
-            {/* 4K Hero Title (Mirza Calligraphic Font Stack) */}
-            <div className="space-y-2 sm:space-y-3 font-mirza">
-              <h1 className={`font-mirza font-bold leading-[1.25] sm:leading-[1.2] ${
+            {/* 4K Hero Title */}
+            <div className="space-y-2 sm:space-y-4">
+              <h1 className={`text-xl xs:text-2xl sm:text-5xl lg:text-6xl font-black leading-tight sm:leading-snug ${
                 theme === 'light' ? 'text-slate-950' : 'text-white'
               }`}>
-                <span className="block mb-0.5 sm:mb-1.5 text-slate-900 dark:text-white text-lg xs:text-2xl sm:text-4xl lg:text-5xl font-mirza font-semibold">
-                  {t.heroMainTitle1}
-                </span>
-                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-0.5 sm:py-1 text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-mirza font-bold drop-shadow-sm">
+                <span className="block mb-0.5 sm:mb-2 text-slate-900 dark:text-white text-base xs:text-xl sm:text-4xl lg:text-5xl">{t.heroMainTitle1}</span>
+                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-0.5 sm:py-1 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl">
                   {t.heroMainTitle2}
                 </span>
-                <span className="inline-block text-base xs:text-xl sm:text-3xl font-medium text-slate-400 ms-2 sm:ms-3 font-mirza">
+                <span className="inline-block text-sm xs:text-base sm:text-3xl font-light text-slate-400 ms-1.5 sm:ms-3">
                   (360 كم)
                 </span>
               </h1>
               
-              <p className={`text-sm xs:text-base sm:text-xl lg:text-2xl font-semibold leading-relaxed font-mirza ${
+              <p className={`text-xs xs:text-sm sm:text-lg lg:text-xl font-bold leading-relaxed ${
                 theme === 'light' ? 'text-slate-800' : 'text-slate-200'
               }`}>
                 {t.heroSubtitle}
               </p>
 
-              <p className={`text-xs xs:text-sm sm:text-base lg:text-lg max-w-xl leading-relaxed font-normal font-mirza ${
+              <p className={`text-[11px] xs:text-xs sm:text-sm lg:text-base max-w-xl leading-relaxed font-normal ${
                 theme === 'light' ? 'text-slate-600' : 'text-slate-400'
               }`}>
                 {t.heroDesc}

@@ -18,11 +18,6 @@
   --font-sans: 'Cairo', 'Tajawal', sans-serif;
   --font-display: 'Cairo', 'Tajawal', sans-serif;
   --font-outfit: 'Outfit', 'Cairo', sans-serif;
-  --font-mirza: 'Mirza', 'Cairo', cursive, sans-serif;
-}
-
-.font-mirza {
-  font-family: 'Mirza', 'Cairo', cursive, sans-serif !important;
 }
 
 /* ============================================================
