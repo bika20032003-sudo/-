@@ -25,8 +25,22 @@ import {
   Award,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Bold,
+  Italic,
+  Underline,
+  AlignRight,
+  AlignCenter,
+  AlignLeft,
+  AlignJustify,
+  Save,
+  Columns,
+  Layers,
+  Type,
+  Stamp,
+  Copy
 } from 'lucide-react';
+import ForceNameAutocomplete from './ForceNameAutocomplete';
 
 // Sample pre-seeded employees matching reference image 4 + directorate officers
 const SAMPLE_EMPLOYEES = [
@@ -126,7 +140,10 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
   // 2. Active Generated Document State for Preview & Print
   const [activeDocument, setActiveDocument] = useState(null);
   const [showDocModal, setShowDocModal] = useState(false);
-  const [isEditingBody, setIsEditingBody] = useState(false);
+  const [isEditingBody, setIsEditingBody] = useState(true);
+  const [editorViewMode, setEditorViewMode] = useState('split'); // 'split' | 'editor' | 'preview'
+  const [activeEditorTab, setActiveEditorTab] = useState('body'); // 'body' | 'meta' | 'signature_cc'
+  const [newCcEntity, setNewCcEntity] = useState('');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [notificationMsg, setNotificationMsg] = useState('');
 
@@ -300,7 +317,7 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
         return {
           subject: 'مراسلة حرة بخصوص متابعة الإجراءات الإدارية والأمنية',
           recipient: 'إلى السيد / مدير إدارة الشؤون الإدارية والمالية',
-          body: `وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه\n\nنحيل إليكم هذا الكتاب بخصوص الموظف / ${empName} (الرقم المالي: ${jobNo}) للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة المنظمة لمديرية أمن أوباري.`
+          body: `نحيل إليكم هذا الكتاب بخصوص الموظف / ${empName} (الرقم المالي: ${jobNo}) للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة المنظمة لمديرية أمن أوباري.`
         };
     }
   };
@@ -328,12 +345,53 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
       employee_role: selectedEmployee?.role || 'موظف',
       employee_job_no: selectedEmployee?.job_number || '8163450',
       employee_national_id: selectedEmployee?.national_id || '119940251120',
+      employee_dept: selectedEmployee?.department || 'الشؤون الإدارية والمالية',
       date: dateFormatted,
+
+      // Header fields
+      header_moi_ar: 'وزارة الداخليـــــــــــــــــــة',
+      header_dir_ar: 'مديرية أمن أوبـــــــــــــــــاري',
+      header_moi_en: 'Ministry of Interior',
+      header_dir_en: 'Ubari Security Directorate',
+      show_header_emblem: true,
+      show_qr: true,
+
+      // Subject & Pre-text
       subject: content.subject,
+      reference_subline: 'إشارة إلى السجلات الرسمية وقواعد بيانات منتسبي مديرية أمن أوباري المنظمة للعمل',
+
+      // Recipient & Greetings
       recipient: content.recipient,
+      greeting_1: 'بعد التحيـــــة والســــلام ،،،',
+      greeting_2: 'الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد',
+      prayer_line: 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه',
+
+      // Body text & Typography
       body_text: content.body,
+      font_size: '16.5px',
+      line_height: '2',
+      text_align: 'right',
+      font_weight: 'normal',
+
+      // Signer & Stamp
       signer_name: 'لواء / موسى سعد محمد',
       signer_title: 'مدير مديرية أمن أوباري',
+      show_stamp: true,
+      stamp_text_1: 'وزارة الداخلية',
+      stamp_text_2: 'مديرية أمن أوباري',
+      stamp_text_3: '* مكتب المدير *',
+
+      // CC List
+      cc_list: [
+        'السيد / وكيل وزارة الداخلية',
+        'الملف الوظيفي والشخصي للمعني',
+        'قسم الشؤون الإدارية والمالية',
+        'قسم المحفوظات والسجلات بالمديرية',
+        'الإدارة العامة للتفتيش والمتابعة',
+        'وحدة المتابعة والتوثيق'
+      ],
+
+      // Footer
       editor: (user && user.full_name && user.full_name.includes('عبدالصمد')) ? 'عبدالصمد' : (user?.full_name || 'عبدالصمد'),
       printer: (user && user.full_name && user.full_name.includes('عبدالصمد')) ? 'عبدالصمد' : (user?.full_name || 'عبدالصمد'),
       phone: '0915938137',
@@ -346,11 +404,69 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
     setSavedTemplates(updatedList);
     localStorage.setItem('ubari_generated_templates', JSON.stringify(updatedList));
 
-    // Open active document modal
+    // Open active document modal in split view by default
     setActiveDocument(newDoc);
+    setEditorViewMode('split');
     setShowDocModal(true);
-    setNotificationMsg(`تم إنشاء نموذج «${tplInfo.name}» بنجاح وهو جاهز للمعاينة والطباعة`);
+    setNotificationMsg(`تم إنشاء نموذج «${tplInfo.name}» بنجاح وهو جاهز للمعاينة والتحرير`);
     setTimeout(() => setNotificationMsg(''), 4500);
+  };
+
+  // Save current active document edits to localStorage archive
+  const handleSaveDocEdits = () => {
+    if (!activeDocument) return;
+    const updatedList = savedTemplates.map(item =>
+      item.id === activeDocument.id ? activeDocument : item
+    );
+    // If not in list yet, append
+    if (!updatedList.some(item => item.id === activeDocument.id)) {
+      updatedList.unshift(activeDocument);
+    }
+    setSavedTemplates(updatedList);
+    localStorage.setItem('ubari_generated_templates', JSON.stringify(updatedList));
+    setNotificationMsg('✅ تم حفظ كافة التعديلات في سجل الأرشيف بنجاح');
+    setTimeout(() => setNotificationMsg(''), 4000);
+  };
+
+  // Helper: Add CC Item
+  const handleAddCcItem = () => {
+    if (!newCcEntity.trim() || !activeDocument) return;
+    const currentList = Array.isArray(activeDocument.cc_list) ? activeDocument.cc_list : [];
+    setActiveDocument({
+      ...activeDocument,
+      cc_list: [...currentList, newCcEntity.trim()]
+    });
+    setNewCcEntity('');
+  };
+
+  // Helper: Remove CC Item
+  const handleRemoveCcItem = (index) => {
+    if (!activeDocument) return;
+    const currentList = Array.isArray(activeDocument.cc_list) ? activeDocument.cc_list : [];
+    setActiveDocument({
+      ...activeDocument,
+      cc_list: currentList.filter((_, idx) => idx !== index)
+    });
+  };
+
+  // Helper: Insert variable token into body
+  const insertVariableIntoBody = (val) => {
+    if (!activeDocument) return;
+    const current = activeDocument.body_text || '';
+    setActiveDocument({
+      ...activeDocument,
+      body_text: current ? `${current} ${val}` : val
+    });
+  };
+
+  // Helper: Insert phrase into body
+  const insertPhraseIntoBody = (phrase) => {
+    if (!activeDocument) return;
+    const current = activeDocument.body_text || '';
+    setActiveDocument({
+      ...activeDocument,
+      body_text: current ? `${current}\n\n${phrase}` : phrase
+    });
   };
 
   // Generate QR Code dynamically
@@ -420,65 +536,21 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
 
         {/* The 3 Inputs Row (Photo 1 & Photo 2) */}
         <div className="templates-inputs-row">
-          {/* Input 1: Employee Name Search with Smart Autocomplete (Right) */}
-          <div className="template-field-wrap position-relative" ref={employeeInputRef}>
-            <div className="field-input-box">
-              <input
-                type="text"
-                className="template-text-input employee-search-input"
-                placeholder="ابحث باسم الموظف أو الرقم المالي..."
-                value={employeeSearch}
-                onChange={(e) => {
-                  setEmployeeSearch(e.target.value);
-                  setShowEmployeeSuggestions(true);
-                }}
-                onFocus={() => setShowEmployeeSuggestions(true)}
-              />
-              {employeeSearch && (
-                <button
-                  type="button"
-                  className="btn-clear-emp"
-                  onClick={() => {
-                    setEmployeeSearch('');
-                    setSelectedEmployee(null);
-                    setShowEmployeeSuggestions(true);
-                  }}
-                  title="مسح"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* Smart Autocomplete Dropdown Popup (Photo 4) */}
-            {showEmployeeSuggestions && (
-              <div className="employee-suggestions-popup" ref={suggestionsBoxRef}>
-                <div className="popup-scroll-indicator top">▲</div>
-                <div className="popup-items-container">
-                  {employeeSuggestions.length > 0 ? (
-                    employeeSuggestions.map((emp) => (
-                      <div
-                        key={emp.id}
-                        className={`suggestion-item-row ${selectedEmployee?.name === emp.name ? 'selected' : ''}`}
-                        onClick={() => {
-                          setSelectedEmployee(emp);
-                          setEmployeeSearch(emp.name);
-                          setShowEmployeeSuggestions(false);
-                        }}
-                      >
-                        <div className="suggestion-name-line">{emp.name}</div>
-                        <div className="suggestion-role-line">{emp.role || 'موظف'}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="suggestion-no-results">
-                      <span>لا يوجد موظف مطابق، يمكنك كتابة الاسم يدوياً</span>
-                    </div>
-                  )}
-                </div>
-                <div className="popup-scroll-indicator bottom">▼</div>
-              </div>
-            )}
+          {/* Input 1: Exact Force Name Autocomplete Dropdown (Matching User Photo) */}
+          <div className="template-field-wrap">
+            <ForceNameAutocomplete
+              value={employeeSearch}
+              onChange={(val) => {
+                setEmployeeSearch(val);
+                if (!val) setSelectedEmployee(null);
+              }}
+              onSelect={(member) => {
+                setSelectedEmployee(member);
+                setEmployeeSearch(member.name);
+              }}
+              forceMembers={forceMembers}
+              placeholder="اكتب أول حرف لعرض الأسماء المطابقة..."
+            />
           </div>
 
           {/* Input 2: Template Type Dropdown (Center) - Photo 3 */}
@@ -585,9 +657,10 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                           className="btn-action-preview"
                           onClick={() => {
                             setActiveDocument(item);
+                            setEditorViewMode('split');
                             setShowDocModal(true);
                           }}
-                          title="معاينة وطباعة A4"
+                          title="معاينة وتحرير وطباعة A4"
                         >
                           <Eye size={13} />
                           <span>معاينة وطباعة</span>
@@ -617,51 +690,84 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL: PREVIEW & REAL A4 PRINTING OF THE GENERATED TEMPLATE               */}
+      {/* MODAL: FULL RICH TEXT EDITOR & CUSTOMIZABLE FORM + LIVE A4 PREVIEW         */}
       {/* ========================================================================= */}
       {showDocModal && activeDocument && (
         <div className="moi-modal-overlay" onClick={() => setShowDocModal(false)}>
-          <div className="moi-modal-box letter-modal-box" onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`moi-modal-box letter-modal-box ${editorViewMode === 'split' ? 'split-wide-modal' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: editorViewMode === 'split' ? '96vw' : '900px', width: '96vw' }}
+          >
+            {/* Modal Top Header Bar with Mode Switchers and Actions */}
             <div className="moi-modal-header letter-modal-topbar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} color="#1e3a8a" />
-                <h3 style={{ margin: 0 }}>
-                  معاينة وطباعة النموذج: {activeDocument.template_name}
-                </h3>
-              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileText size={20} color="#1e3a8a" />
+                <h3 style={{ margin: 0, fontSize: '15.5px', fontWeight: 800, color: '#0f172a' }}>
+                  {activeDocument.template_name || 'نموذج رسمي'}
+                </h3>
+                <span className="code-pill-blue" style={{ fontSize: '12px' }}>
+                  {activeDocument.code_no}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* 1. Mode Switcher (Split vs Editor vs Preview) */}
+                <div className="editor-mode-toggle-group">
+                  <button
+                    type="button"
+                    className={`btn-mode-toggle ${editorViewMode === 'split' ? 'active' : ''}`}
+                    onClick={() => setEditorViewMode('split')}
+                    title="العرض المزدوج: محرر ونموذج كامل + معاينة حية في نفس الوقت"
+                  >
+                    <Columns size={14} />
+                    <span>العرض المزدوج (محرر + معاينة)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`btn-mode-toggle ${editorViewMode === 'editor' ? 'active' : ''}`}
+                    onClick={() => setEditorViewMode('editor')}
+                    title="المحرر ونموذج التعديل الشامل فقط"
+                  >
+                    <Edit size={14} />
+                    <span>محرر البيانات الكامل</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`btn-mode-toggle ${editorViewMode === 'preview' ? 'active' : ''}`}
+                    onClick={() => setEditorViewMode('preview')}
+                    title="معاينة الوثيقة الرسمية A4 فقط"
+                  >
+                    <Eye size={14} />
+                    <span>ورقة A4 للطباعة</span>
+                  </button>
+                </div>
+
+                {/* 2. Save Changes in Archive Button */}
                 <button
                   type="button"
-                  className="btn-toggle-edit"
-                  onClick={() => setIsEditingBody(!isEditingBody)}
-                  style={{
-                    padding: '6px 14px',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: isEditingBody ? '#eff6ff' : '#ffffff',
-                    color: isEditingBody ? '#1e3a8a' : '#475569',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
+                  className="btn-save-doc-edits"
+                  onClick={handleSaveDocEdits}
+                  title="حفظ كافة التعديلات في سجل الأرشيف"
                 >
-                  <Edit size={14} />
-                  <span>{isEditingBody ? 'إنهاء التعديل' : 'تعديل النص'}</span>
+                  <Save size={15} />
+                  <span>حفظ التعديلات</span>
                 </button>
 
+                {/* 3. Direct Browser A4 Print */}
                 <button
                   type="button"
                   className="btn-toolbar-save"
                   onClick={handlePrintDocument}
-                  style={{ padding: '6px 16px', fontSize: '13px' }}
+                  style={{ padding: '6px 18px', fontSize: '13px' }}
                 >
                   <Printer size={15} />
                   <span>طباعة فورية (A4)</span>
                 </button>
 
+                {/* Close Button */}
                 <button
                   type="button"
                   className="moi-modal-close-btn"
@@ -672,53 +778,669 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
               </div>
             </div>
 
-            {/* Editable Controls Banner if editing mode is active */}
-            {isEditingBody && (
-              <div className="template-edit-banner" style={{ background: '#f8fafc', padding: '14px 20px', borderBottom: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '3px' }}>المخاطب الرئيسي:</label>
-                    <input
-                      type="text"
-                      style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                      value={activeDocument.recipient}
-                      onChange={(e) => setActiveDocument({ ...activeDocument, recipient: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '3px' }}>بخصوص (الموضوع):</label>
-                    <input
-                      type="text"
-                      style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                      value={activeDocument.subject}
-                      onChange={(e) => setActiveDocument({ ...activeDocument, subject: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '3px' }}>الرقم الإشاري:</label>
-                    <input
-                      type="text"
-                      style={{ width: '100%', padding: '6px 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                      value={activeDocument.reference}
-                      onChange={(e) => setActiveDocument({ ...activeDocument, reference: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '3px' }}>نص المستند أو القرار المعتمد:</label>
-                  <textarea
-                    rows={3}
-                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #cbd5e1', lineHeight: '1.6' }}
-                    value={activeDocument.body_text}
-                    onChange={(e) => setActiveDocument({ ...activeDocument, body_text: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
+            {/* Modal Body Container */}
+            <div className={`letter-modal-body-wrapper ${editorViewMode}`}>
+              {/* PANEL 1: FULL RICH EDITOR & COMPLETE FORM CONTROLS */}
+              {(editorViewMode === 'split' || editorViewMode === 'editor') && (
+                <div className="full-document-editor-panel">
+                  {/* Editor Sub-Tabs */}
+                  <div className="editor-subtabs-bar">
+                    <button
+                      type="button"
+                      className={`subtab-btn ${activeEditorTab === 'body' ? 'active' : ''}`}
+                      onClick={() => setActiveEditorTab('body')}
+                    >
+                      <Type size={15} />
+                      <span>1. صلب المستند ومحرر النصوص</span>
+                    </button>
 
-            {/* Modal Body: The Official A4 Document Sheet */}
-            <div className="letter-modal-body">
-              <OfficialTemplateA4Sheet doc={activeDocument} qrUrl={qrCodeDataUrl} />
+                    <button
+                      type="button"
+                      className={`subtab-btn ${activeEditorTab === 'meta' ? 'active' : ''}`}
+                      onClick={() => setActiveEditorTab('meta')}
+                    >
+                      <Building2 size={15} />
+                      <span>2. الترويسة والأرقام الإشارية</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`subtab-btn ${activeEditorTab === 'signature_cc' ? 'active' : ''}`}
+                      onClick={() => setActiveEditorTab('signature_cc')}
+                    >
+                      <Shield size={15} />
+                      <span>3. التوقيع والختم والتوزيع</span>
+                    </button>
+                  </div>
+
+                  {/* SUBTAB 1: RICH TEXT BODY EDITOR */}
+                  {activeEditorTab === 'body' && (
+                    <div className="editor-tab-pane">
+                      {/* Formatting Toolbar */}
+                      <div className="rich-editor-toolbar">
+                        <div className="toolbar-group">
+                          <button
+                            type="button"
+                            className={`btn-format ${activeDocument.font_weight === 'bold' ? 'active' : ''}`}
+                            onClick={() =>
+                              setActiveDocument({
+                                ...activeDocument,
+                                font_weight: activeDocument.font_weight === 'bold' ? 'normal' : 'bold'
+                              })
+                            }
+                            title="خط عريض غامق (Bold)"
+                          >
+                            <Bold size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn-format ${activeDocument.font_style === 'italic' ? 'active' : ''}`}
+                            onClick={() =>
+                              setActiveDocument({
+                                ...activeDocument,
+                                font_style: activeDocument.font_style === 'italic' ? 'normal' : 'italic'
+                              })
+                            }
+                            title="خط مائل (Italic)"
+                          >
+                            <Italic size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn-format ${activeDocument.text_decoration === 'underline' ? 'active' : ''}`}
+                            onClick={() =>
+                              setActiveDocument({
+                                ...activeDocument,
+                                text_decoration: activeDocument.text_decoration === 'underline' ? 'none' : 'underline'
+                              })
+                            }
+                            title="تسطير تحته خط (Underline)"
+                          >
+                            <Underline size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn-format ${activeDocument.text_align === 'right' ? 'active' : ''}`}
+                            onClick={() => setActiveDocument({ ...activeDocument, text_align: 'right' })}
+                            title="محاذاة لليمين"
+                          >
+                            <AlignRight size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn-format ${activeDocument.text_align === 'center' ? 'active' : ''}`}
+                            onClick={() => setActiveDocument({ ...activeDocument, text_align: 'center' })}
+                            title="محاذاة في الوسط"
+                          >
+                            <AlignCenter size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn-format ${activeDocument.text_align === 'justify' ? 'active' : ''}`}
+                            onClick={() => setActiveDocument({ ...activeDocument, text_align: 'justify' })}
+                            title="ضبط الكشيدة (Justify)"
+                          >
+                            <AlignJustify size={15} />
+                          </button>
+                        </div>
+
+                        <div className="toolbar-group">
+                          <label className="toolbar-lbl">حجم الخط:</label>
+                          <select
+                            className="toolbar-select"
+                            value={activeDocument.font_size || '16.5px'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, font_size: e.target.value })}
+                          >
+                            <option value="14px">14px (صغير)</option>
+                            <option value="16.5px">16.5px (قياسي رسمي)</option>
+                            <option value="18px">18px (متوسط)</option>
+                            <option value="20px">20px (كبير)</option>
+                            <option value="22px">22px (عريض جداً)</option>
+                          </select>
+                        </div>
+
+                        <div className="toolbar-group">
+                          <label className="toolbar-lbl">تباعد الأسطر:</label>
+                          <select
+                            className="toolbar-select"
+                            value={activeDocument.line_height || '2'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, line_height: e.target.value })}
+                          >
+                            <option value="1.6">1.6 (متقارب)</option>
+                            <option value="1.8">1.8 (متوسط)</option>
+                            <option value="2">2.0 (رسمي معتمد)</option>
+                            <option value="2.3">2.3 (متباعد وواضح)</option>
+                          </select>
+                        </div>
+
+                        <div className="toolbar-group">
+                          <label className="toolbar-lbl">اللون:</label>
+                          <select
+                            className="toolbar-select"
+                            value={activeDocument.text_color || '#000000'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, text_color: e.target.value })}
+                          >
+                            <option value="#000000">أسود رسمي</option>
+                            <option value="#1e3a8a">أزرق كحلي</option>
+                            <option value="#334155">رمادي داكن</option>
+                            <option value="#991b1b">عنابي ملكي</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Quick Variable Insertion Chips */}
+                      <div className="variables-quick-chips">
+                        <span className="chips-title">إدراج بيانات الموظف بنقرة:</span>
+                        <button
+                          type="button"
+                          className="quick-chip-btn"
+                          onClick={() => insertVariableIntoBody(activeDocument.employee_name)}
+                        >
+                          👤 {activeDocument.employee_name}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="quick-chip-btn"
+                          onClick={() => insertVariableIntoBody(`الرقم المالي: (${activeDocument.employee_job_no})`)}
+                        >
+                          🔢 الرقم المالي ({activeDocument.employee_job_no})
+                        </button>
+
+                        <button
+                          type="button"
+                          className="quick-chip-btn"
+                          onClick={() => insertVariableIntoBody(`الرقم الوطني: (${activeDocument.employee_national_id})`)}
+                        >
+                          🆔 الرقم الوطني
+                        </button>
+
+                        <button
+                          type="button"
+                          className="quick-chip-btn"
+                          onClick={() => insertVariableIntoBody(activeDocument.date)}
+                        >
+                          📅 تاريخ اليوم ({activeDocument.date})
+                        </button>
+
+                        <button
+                          type="button"
+                          className="quick-chip-btn"
+                          onClick={() => insertVariableIntoBody(activeDocument.employee_dept || 'الشؤون الإدارية والمالية')}
+                        >
+                          🏢 الإدارة / التبعية
+                        </button>
+                      </div>
+
+                      {/* Main Rich Textarea for Document Body */}
+                      <div className="editor-input-group">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <label style={{ fontWeight: 800, fontSize: '13px', color: '#0f172a' }}>
+                            متن وصياغة نص الكتاب / النموذج:
+                          </label>
+                          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                            {activeDocument.body_text?.length || 0} حرف | {activeDocument.body_text?.split(/\s+/).filter(Boolean).length || 0} كلمة
+                          </span>
+                        </div>
+                        <textarea
+                          rows={8}
+                          className="rich-body-textarea"
+                          value={activeDocument.body_text || ''}
+                          onChange={(e) => setActiveDocument({ ...activeDocument, body_text: e.target.value })}
+                          placeholder="اكتب أو عدّل نص المستند وصياغته بحرية كاملة..."
+                        />
+                      </div>
+
+                      {/* Quick Official Phrases Accordion */}
+                      <div className="quick-phrases-bar">
+                        <span className="chips-title">عبارات وصيغ قانونية جاهزة:</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className="phrase-chip"
+                            onClick={() => insertPhraseIntoBody('تفيد مديرية أمن أوباري بأن المذكور أعلاه لا يزال مستمراً في أداء مهامه الوظيفية والنظامية على رأس العمل حتى تاريخه.')}
+                          >
+                            + استمرار بالعمل
+                          </button>
+                          <button
+                            type="button"
+                            className="phrase-chip"
+                            onClick={() => insertPhraseIntoBody('نحيل إليكم هذا الكتاب للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة المنظمة لمديرية أمن أوباري.')}
+                          >
+                            + إحالة للعلم والاختصاص
+                          </button>
+                          <button
+                            type="button"
+                            className="phrase-chip"
+                            onClick={() => insertPhraseIntoBody('تشهد المديرية بأن المعني قد أتم إخلاء طرفه بالكامل من كافة العهد والمسؤوليات وليس بذمته أي التزامات وظيفية.')}
+                          >
+                            + إخلاء طرف
+                          </button>
+                          <button
+                            type="button"
+                            className="phrase-chip"
+                            onClick={() => insertPhraseIntoBody('بناءً على مقتضيات المصلحة العامة وحسن سير العمل بمديرية أمن أوباري، يُكلف المعني بالمهام الموكلة إليه اعتباراً من تاريخه.')}
+                          >
+                            + تكليف ومأمورية
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Greetings & Prayer Lines Editing */}
+                      <div className="grid-3-controls" style={{ marginTop: '16px' }}>
+                        <div>
+                          <label className="editor-control-lbl">عبارة التحية الرسمية:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.greeting_1 || 'بعد التحيـــــة والســــلام ،،،'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, greeting_1: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">الاستفتاح النبوي:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.greeting_2 || 'الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, greeting_2: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">دعاء الختام قبل المتن:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.prayer_line || 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, prayer_line: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBTAB 2: HEADER & META DATA */}
+                  {activeEditorTab === 'meta' && (
+                    <div className="editor-tab-pane">
+                      <div className="grid-2-controls">
+                        <div>
+                          <label className="editor-control-lbl">عنوان الوزارة (عربي):</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.header_moi_ar || 'وزارة الداخليـــــــــــــــــــة'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, header_moi_ar: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">عنوان المديرية (عربي):</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.header_dir_ar || 'مديرية أمن أوبـــــــــــــــــاري'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, header_dir_ar: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid-2-controls" style={{ marginTop: '12px' }}>
+                        <div>
+                          <label className="editor-control-lbl">Ministry Header (EN):</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.header_moi_en || 'Ministry of Interior'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, header_moi_en: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">Directorate Header (EN):</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.header_dir_en || 'Ubari Security Directorate'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, header_dir_en: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid-4-controls" style={{ marginTop: '14px' }}>
+                        <div>
+                          <label className="editor-control-lbl">رقم القيد:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.record_number || '14'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, record_number: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">كود الوثيقة (Code No):</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            dir="ltr"
+                            value={activeDocument.code_no || '2026-T01'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, code_no: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">الرقم الإشاري:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            dir="ltr"
+                            value={activeDocument.reference || '14/2026'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, reference: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">الموافق (التاريخ):</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            dir="ltr"
+                            value={activeDocument.date}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, date: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '14px' }}>
+                        <label className="editor-control-lbl">المخاطب الرئيسي (إلى السيد / ...):</label>
+                        <input
+                          type="text"
+                          className="editor-text-input"
+                          value={activeDocument.recipient || ''}
+                          onChange={(e) => setActiveDocument({ ...activeDocument, recipient: e.target.value })}
+                          placeholder="مثال: إلى السيد / مدير إدارة الشؤون الإدارية والمالية المحترم"
+                        />
+                      </div>
+
+                      <div style={{ marginTop: '14px' }}>
+                        <label className="editor-control-lbl">بخصوص (موضوع الكتاب):</label>
+                        <input
+                          type="text"
+                          className="editor-text-input"
+                          value={activeDocument.subject || ''}
+                          onChange={(e) => setActiveDocument({ ...activeDocument, subject: e.target.value })}
+                          placeholder="موضوع النموذج..."
+                        />
+                      </div>
+
+                      <div style={{ marginTop: '14px' }}>
+                        <label className="editor-control-lbl">سطر الإشارة الرسمية:</label>
+                        <input
+                          type="text"
+                          className="editor-text-input"
+                          value={activeDocument.reference_subline || 'إشارة إلى السجلات الرسمية وقواعد بيانات منتسبي مديرية أمن أوباري المنظمة للعمل'}
+                          onChange={(e) => setActiveDocument({ ...activeDocument, reference_subline: e.target.value })}
+                        />
+                      </div>
+
+                      <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input
+                          type="checkbox"
+                          id="toggle-qr"
+                          checked={activeDocument.show_qr !== false}
+                          onChange={(e) => setActiveDocument({ ...activeDocument, show_qr: e.target.checked })}
+                        />
+                        <label htmlFor="toggle-qr" style={{ fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                          تفعيل وإظهار رمز الاستجابة السريعة (QR Code) الأمني للتحقق الرقمي
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBTAB 3: SIGNATURE, STAMP, CC LIST & FOOTER */}
+                  {activeEditorTab === 'signature_cc' && (
+                    <div className="editor-tab-pane">
+                      <div className="grid-2-controls">
+                        <div>
+                          <label className="editor-control-lbl">اسم الضابط الموقع المعتمد:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.signer_name || 'لواء / موسى سعد محمد'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, signer_name: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">الرتبة والصفة القيادية:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.signer_title || 'مدير مديرية أمن أوباري'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, signer_title: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Official Stamp Configuration */}
+                      <div className="stamp-config-box" style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Stamp size={16} />
+                            <span>إعدادات موضع التوقيع والختم الدائري الرسمي</span>
+                          </span>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={activeDocument.show_stamp !== false}
+                              onChange={(e) => setActiveDocument({ ...activeDocument, show_stamp: e.target.checked })}
+                            />
+                            <span>إظهار الختم</span>
+                          </label>
+                        </div>
+
+                        {/* Controls for Position on page & Stamp layout */}
+                        <div className="grid-3-controls" style={{ marginBottom: '12px' }}>
+                          <div>
+                            <label className="editor-control-lbl">موضع التوقيع والختم في الصفحة:</label>
+                            <select
+                              className="editor-text-input"
+                              value={activeDocument.sig_position || 'left'}
+                              onChange={(e) => setActiveDocument({ ...activeDocument, sig_position: e.target.value })}
+                            >
+                              <option value="left">👈 أقصى اليسار (الوضع الرسمي المعتمد)</option>
+                              <option value="center">وسط الصفحة</option>
+                              <option value="right">👉 أقصى اليمين</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="editor-control-lbl">تموضع الختم مع الاسم:</label>
+                            <select
+                              className="editor-text-input"
+                              value={activeDocument.stamp_layout || 'stacked'}
+                              onChange={(e) => setActiveDocument({ ...activeDocument, stamp_layout: e.target.value })}
+                            >
+                              <option value="stacked">تحت الاسم والصفة مباشرة (على اليسار)</option>
+                              <option value="side">بجانب الاسم (إلى يسار التوقيع)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="editor-control-lbl">لون حبر الختم:</label>
+                            <select
+                              className="editor-text-input"
+                              value={activeDocument.stamp_color || '#1e3a8a'}
+                              onChange={(e) => setActiveDocument({ ...activeDocument, stamp_color: e.target.value })}
+                            >
+                              <option value="#1e3a8a">أزرق كحلي أمني معتمد</option>
+                              <option value="#1d4ed8">أزرق ملكي واضح</option>
+                              <option value="#0f172a">أسود كلاسيكي رسمي</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {activeDocument.show_stamp !== false && (
+                          <div className="grid-3-controls">
+                            <div>
+                              <label className="editor-control-lbl">سطر الختم 1:</label>
+                              <input
+                                type="text"
+                                className="editor-text-input"
+                                value={activeDocument.stamp_text_1 || 'وزارة الداخلية'}
+                                onChange={(e) => setActiveDocument({ ...activeDocument, stamp_text_1: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="editor-control-lbl">سطر الختم 2:</label>
+                              <input
+                                type="text"
+                                className="editor-text-input"
+                                value={activeDocument.stamp_text_2 || 'مديرية أمن أوباري'}
+                                onChange={(e) => setActiveDocument({ ...activeDocument, stamp_text_2: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="editor-control-lbl">سطر الختم 3:</label>
+                              <input
+                                type="text"
+                                className="editor-text-input"
+                                value={activeDocument.stamp_text_3 || '* مكتب المدير *'}
+                                onChange={(e) => setActiveDocument({ ...activeDocument, stamp_text_3: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* CC Distribution List (صورة منه إلى) */}
+                      <div className="cc-manager-box" style={{ marginTop: '16px' }}>
+                        <label style={{ fontWeight: 800, fontSize: '13px', color: '#0f172a', display: 'block', marginBottom: '8px' }}>
+                          جهات التوزيع (صورة منه إلى :-):
+                        </label>
+
+                        <div className="cc-items-editable-list">
+                          {(activeDocument.cc_list || []).map((cc, idx) => (
+                            <div key={idx} className="cc-editable-row">
+                              <span className="cc-bullet-index">-</span>
+                              <input
+                                type="text"
+                                className="editor-text-input cc-input"
+                                value={cc}
+                                onChange={(e) => {
+                                  const updated = [...activeDocument.cc_list];
+                                  updated[idx] = e.target.value;
+                                  setActiveDocument({ ...activeDocument, cc_list: updated });
+                                }}
+                              />
+                              <button
+                                type="button"
+                                className="btn-remove-cc"
+                                onClick={() => handleRemoveCcItem(idx)}
+                                title="حذف هذا البند"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="add-cc-input-row" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            placeholder="اكتب جهة جديدة لإضافتها إلى التوزيع..."
+                            value={newCcEntity}
+                            onChange={(e) => setNewCcEntity(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddCcItem();
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-add-cc"
+                            onClick={handleAddCcItem}
+                            style={{
+                              padding: '8px 16px',
+                              background: '#1e3a8a',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            + إضافة للتوزيع
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Footer Details */}
+                      <div className="grid-4-controls" style={{ marginTop: '18px' }}>
+                        <div>
+                          <label className="editor-control-lbl">المحرر:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.editor || 'عبدالصمد'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, editor: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">الطباعة:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.printer || 'عبدالصمد'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, printer: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">Phone:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            dir="ltr"
+                            value={activeDocument.phone || '0915938137'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, phone: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">Email:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            dir="ltr"
+                            value={activeDocument.email || 'Info@ubari-security.ly'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, email: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PANEL 2: LIVE A4 PRINTABLE DOCUMENT SHEET */}
+              {(editorViewMode === 'split' || editorViewMode === 'preview') && (
+                <div className={`letter-modal-preview-pane ${editorViewMode === 'preview' ? 'full-preview' : ''}`}>
+                  <OfficialTemplateA4Sheet doc={activeDocument} qrUrl={qrCodeDataUrl} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -738,17 +1460,19 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
       {/* Top Header Block matching Directorate Standard */}
       <header className="a4-letter-header">
         <div className="header-lang-right">
-          <h2 className="title-moi-ar">وزارة الداخليـــــــــــــــــــة</h2>
-          <h3 className="title-dir-ar">مديرية أمن أوبـــــــــــــــــاري</h3>
+          <h2 className="title-moi-ar">{doc.header_moi_ar || 'وزارة الداخليـــــــــــــــــــة'}</h2>
+          <h3 className="title-dir-ar">{doc.header_dir_ar || 'مديرية أمن أوبـــــــــــــــــاري'}</h3>
         </div>
 
-        <div className="header-emblem-center">
-          <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="شعار مديرية أمن أوباري" className="emblem-img" />
-        </div>
+        {doc.show_header_emblem !== false && (
+          <div className="header-emblem-center">
+            <img src="./moi-logo.png" onError={(e) => { e.currentTarget.src = './moi-logo.png'; }} alt="شعار مديرية أمن أوباري" className="emblem-img" />
+          </div>
+        )}
 
         <div className="header-lang-left">
-          <h2 className="title-moi-en">Ministry of Interior</h2>
-          <h3 className="title-dir-en">Ubari Security Directorate</h3>
+          <h2 className="title-moi-en">{doc.header_moi_en || 'Ministry of Interior'}</h2>
+          <h3 className="title-dir-en">{doc.header_dir_en || 'Ubari Security Directorate'}</h3>
         </div>
       </header>
 
@@ -759,33 +1483,35 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
           <div className="meta-row">
             <div className="meta-cell record-cell">
               <span className="meta-lbl">القيـــــد:</span>
-              <span className="meta-val">{doc.record_number || '14'}</span>
+              <span className="meta-val" style={{ unicodeBidi: 'plaintext' }}>{doc.record_number || '14'}</span>
             </div>
             <div className="meta-cell code-cell">
               <span className="meta-lbl">:Code No</span>
-              <span className="meta-val">{doc.code_no || '2026-T01'}</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.code_no || '2026-T01'}</span>
             </div>
           </div>
           <div className="meta-row">
             <div className="meta-cell ref-cell">
               <span className="meta-lbl">الإشاري:</span>
-              <span className="meta-val">{doc.reference || '14/2026'}</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.reference || '14/2026'}</span>
             </div>
             <div className="meta-cell date-cell">
               <span className="meta-lbl">الموافق:</span>
-              <span className="meta-val">{doc.date}</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.date}</span>
             </div>
           </div>
         </div>
 
         {/* QR Code on the left (2nd child in RTL) */}
-        <div className="qr-code-box">
-          {qrUrl ? (
-            <img src={qrUrl} alt="رمز التحقق الأمني QR" className="qr-img" />
-          ) : (
-            <div className="qr-placeholder" />
-          )}
-        </div>
+        {doc.show_qr !== false && (
+          <div className="qr-code-box">
+            {qrUrl ? (
+              <img src={qrUrl} alt="رمز التحقق الأمني QR" className="qr-img" />
+            ) : (
+              <div className="qr-placeholder" />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Framed Subject Box */}
@@ -795,11 +1521,11 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
       </div>
 
       {/* Reference Sub-line */}
-      <div className="a4-reference-subline">
-        <span>
-          إشارة إلى السجلات الرسمية وقواعد بيانات منتسبي مديرية أمن أوباري المنظمة للعمل
-        </span>
-      </div>
+      {doc.reference_subline && (
+        <div className="a4-reference-subline">
+          <span>{doc.reference_subline}</span>
+        </div>
+      )}
 
       {/* Recipient Headline */}
       <div className="a4-recipient-headline">
@@ -808,55 +1534,77 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
 
       {/* Formal Greetings */}
       <div className="a4-greetings-section">
-        <p className="greeting-line-1">بعد التحيـــــة والســــلام ،،،</p>
+        <p className="greeting-line-1">{doc.greeting_1 || 'بعد التحيـــــة والســــلام ،،،'}</p>
         <p className="greeting-line-2">
-          الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد
+          {doc.greeting_2 || 'الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد'}
         </p>
       </div>
 
       {/* Document Body Content */}
       <div className="a4-body-content">
         <p className="body-prayer-line">
-          وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه
+          {doc.prayer_line || 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه'}
         </p>
-        <div className="body-main-clause" style={{ whiteSpace: 'pre-line', fontSize: '16.5px', lineHeight: '2' }}>
+        <div
+          className="body-main-clause"
+          style={{
+            whiteSpace: 'pre-line',
+            fontSize: doc.font_size || '16.5px',
+            lineHeight: doc.line_height || '2',
+            textAlign: doc.text_align || 'right',
+            fontWeight: doc.font_weight || 'normal',
+            fontStyle: doc.font_style || 'normal',
+            textDecoration: doc.text_decoration || 'none',
+            color: doc.text_color || '#000000'
+          }}
+        >
           {doc.body_text}
         </div>
       </div>
 
-      {/* Signature Block (Centered) */}
-      <div className="a4-signature-block">
-        <div className="sig-inner">
-          <h4 className="sig-officer-name">{doc.signer_name || 'لواء / موسى سعد محمد'}</h4>
-          <h5 className="sig-officer-rank">{doc.signer_title || 'مدير مديرية أمن أوباري'}</h5>
-          <div className="sig-space-placeholder">
-            <div className="official-stamp-seal-circle">
-              <div className="stamp-inner-text">
-                <span>وزارة الداخلية</span>
-                <span>مديرية أمن أوباري</span>
-                <span>* مكتب المدير *</span>
+      {/* Signature & Stamp Block (Positioned strictly on the LEFT) */}
+      <div className={`a4-signature-block pos-${doc.sig_position || 'left'}`}>
+        <div className={`sig-inner ${doc.stamp_layout === 'side' ? 'layout-side' : 'layout-stacked'}`}>
+          <div className="sig-text-side">
+            <h4 className="sig-officer-name">{doc.signer_name || 'لواء / موسى سعد محمد'}</h4>
+            <h5 className="sig-officer-rank">{doc.signer_title || 'مدير مديرية أمن أوباري'}</h5>
+          </div>
+          {doc.show_stamp !== false && (
+            <div
+              className="official-stamp-seal-circle"
+              style={{
+                borderColor: doc.stamp_color || '#1e3a8a',
+                color: doc.stamp_color || '#1e3a8a'
+              }}
+            >
+              <div className="stamp-inner-text" style={{ color: doc.stamp_color || '#1e3a8a' }}>
+                <span>{doc.stamp_text_1 || 'وزارة الداخلية'}</span>
+                <span>{doc.stamp_text_2 || 'مديرية أمن أوباري'}</span>
+                <span>{doc.stamp_text_3 || '* مكتب المدير *'}</span>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* CC Distribution List (Two Columns) */}
-      <div className="a4-cc-distribution-block">
-        <div className="cc-header">صورة منه إلى :-</div>
-        <div className="cc-grid-2cols">
-          <ul className="cc-col">
-            <li>- السيد / وكيل وزارة الداخلية</li>
-            <li>- الملف الوظيفي والشخصي للمعني</li>
-            <li>- قسم الشؤون الإدارية والمالية</li>
-          </ul>
-          <ul className="cc-col">
-            <li>- قسم المحفوظات والسجلات بالمديرية</li>
-            <li>- الإدارة العامة للتفتيش والمتابعة</li>
-            <li>- وحدة المتابعة والتوثيق</li>
-          </ul>
+      {Array.isArray(doc.cc_list) && doc.cc_list.length > 0 && (
+        <div className="a4-cc-distribution-block">
+          <div className="cc-header">صورة منه إلى :-</div>
+          <div className="cc-grid-2cols">
+            <ul className="cc-col">
+              {doc.cc_list.slice(0, Math.ceil(doc.cc_list.length / 2)).map((item, i) => (
+                <li key={i}>- {item}</li>
+              ))}
+            </ul>
+            <ul className="cc-col">
+              {doc.cc_list.slice(Math.ceil(doc.cc_list.length / 2)).map((item, i) => (
+                <li key={i}>- {item}</li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom Footer Line & Details */}
       <footer className="a4-letter-footer">

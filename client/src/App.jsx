@@ -59,6 +59,7 @@ import {
 import importedForceData from './data/force_data.json';
 import MailSection from './components/MailSection';
 import TemplatesSection from './components/TemplatesSection';
+import ForceNameAutocomplete from './components/ForceNameAutocomplete';
 
 // Normalize Arabic text for accurate search matching regardless of diacritics, alef forms, and taa marbuta
 const normalizeArabicText = (text) => {
@@ -1647,11 +1648,39 @@ export default function App() {
                   <div className="grid-4-cols">
                     <div className="input-field-group">
                       <label>الاسم الكامل</label>
-                      <input
-                        type="text"
-                        placeholder="الاسم الرباعي واللقب..."
+                      <ForceNameAutocomplete
                         value={forceFormData.name}
-                        onChange={(e) => setForceFormData({ ...forceFormData, name: e.target.value })}
+                        onChange={(val) => setForceFormData({ ...forceFormData, name: val })}
+                        onSelect={(member) => {
+                          setForceFormData({
+                            ...forceFormData,
+                            name: member.name,
+                            job_number: member.job_number || member.financial_number || '',
+                            national_id: member.national_id || '',
+                            birth_date: member.birth_date || '',
+                            birth_place: member.birth_place || 'أوباري',
+                            mother_name: member.mother_name || '',
+                            marital_status: member.marital_status || 'متزوج',
+                            wife_name: member.wife_name || '',
+                            children_count: member.children_count || '0',
+                            tribe_city: member.tribe_city || 'أوباري',
+                            residence: member.residence || 'أوباري',
+                            phone: member.phone || '',
+                            languages: member.languages || 'العربية',
+                            education_level: member.education_level || 'مؤهل مدني',
+                            type: member.type || 'مدني',
+                            department: member.department || '',
+                            job_title: member.job_title || '',
+                            job_status: member.job_status || 'على رأس العمل',
+                            financial_number: member.financial_number || member.job_number || '',
+                            basic_salary: member.basic_salary || '',
+                            bank_name: member.bank_name || '',
+                            bank_branch: member.bank_branch || '',
+                            account_number: member.account_number || ''
+                          });
+                        }}
+                        forceMembers={forceMembers}
+                        placeholder="اكتب أول حرف لعرض الأسماء المطابقة..."
                         required
                       />
                     </div>
@@ -2681,7 +2710,7 @@ export default function App() {
     }
 
     if (activeSection === 'mail') {
-      return <MailSection user={user} />;
+      return <MailSection user={user} forceMembers={forceMembers} />;
     }
 
     if (activeSection === 'letters') {

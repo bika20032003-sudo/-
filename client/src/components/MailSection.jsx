@@ -30,6 +30,7 @@ import {
   Phone,
   RefreshCw
 } from 'lucide-react';
+import ForceNameAutocomplete from './ForceNameAutocomplete';
 
 // Default initial Outgoing Mail matching Image 1 & Image 3
 const INITIAL_OUTGOING_MAIL = [
@@ -144,7 +145,7 @@ const ENTITY_SUGGESTIONS = [
   'مصلحة الجوازات والجنسية أوباري'
 ];
 
-export default function MailSection({ user }) {
+export default function MailSection({ user, forceMembers = [] }) {
   // Navigation Tabs: 'outgoing', 'incoming', 'all_logs', 'letter_designer'
   const [activeTab, setActiveTab] = useState('outgoing');
 
@@ -619,12 +620,12 @@ export default function MailSection({ user }) {
                 {/* الموظف المرسل */}
                 <div className="mail-input-group">
                   <label>الموظف المرسل:</label>
-                  <input
-                    type="text"
-                    className="mail-input"
-                    placeholder="الموظف المرسل"
+                  <ForceNameAutocomplete
                     value={outgoingForm.sender_employee}
-                    onChange={(e) => setOutgoingForm({ ...outgoingForm, sender_employee: e.target.value })}
+                    onChange={(val) => setOutgoingForm({ ...outgoingForm, sender_employee: val })}
+                    onSelect={(m) => setOutgoingForm({ ...outgoingForm, sender_employee: m.name })}
+                    forceMembers={forceMembers}
+                    placeholder="اكتب أول حرف لعرض الأسماء المطابقة..."
                     required
                   />
                 </div>
@@ -958,12 +959,12 @@ export default function MailSection({ user }) {
                 {/* اسم الموظف المستلم */}
                 <div className="mail-input-group">
                   <label>اسم الموظف المستلم:</label>
-                  <input
-                    type="text"
-                    className="mail-input"
-                    placeholder="اسم الموظف المستلم"
+                  <ForceNameAutocomplete
                     value={incomingForm.receiver_employee}
-                    onChange={(e) => setIncomingForm({ ...incomingForm, receiver_employee: e.target.value })}
+                    onChange={(val) => setIncomingForm({ ...incomingForm, receiver_employee: val })}
+                    onSelect={(m) => setIncomingForm({ ...incomingForm, receiver_employee: m.name })}
+                    forceMembers={forceMembers}
+                    placeholder="اكتب أول حرف لعرض الأسماء المطابقة..."
                     required
                   />
                 </div>
@@ -1438,21 +1439,21 @@ function OfficialLetterSheet({ letter, qrUrl }) {
           <div className="meta-row">
             <div className="meta-cell record-cell">
               <span className="meta-lbl">القيـــــد:</span>
-              <span className="meta-val">{letter.record_number || '1'}</span>
+              <span className="meta-val" style={{ unicodeBidi: 'plaintext' }}>{letter.record_number || '1'}</span>
             </div>
             <div className="meta-cell code-cell">
               <span className="meta-lbl">:Code No</span>
-              <span className="meta-val">{letter.code_no || '2026-002'}</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.code_no || '2026-002'}</span>
             </div>
           </div>
           <div className="meta-row">
             <div className="meta-cell ref-cell">
               <span className="meta-lbl">الإشاري:</span>
-              <span className="meta-val">{letter.reference || '12/2026'}</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.reference || '12/2026'}</span>
             </div>
             <div className="meta-cell date-cell">
               <span className="meta-lbl">الموافق:</span>
-              <span className="meta-val">{letter.date || '11/10/2026'}</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.date || '11/10/2026'}</span>
             </div>
           </div>
         </div>
@@ -1513,19 +1514,18 @@ function OfficialLetterSheet({ letter, qrUrl }) {
         </p>
       </div>
 
-      {/* Signature Block matching Image 3 (Centered) */}
-      <div className="a4-signature-block">
-        <div className="sig-inner">
-          <h4 className="sig-officer-name">{letter.signer_name || 'لواء / موسى سعد محمد'}</h4>
-          <h5 className="sig-officer-rank">{letter.signer_title || 'مدير مديرية أمن أوباري'}</h5>
-          <div className="sig-space-placeholder">
-            {/* Stamp Space */}
-            <div className="official-stamp-seal-circle">
-              <div className="stamp-inner-text">
-                <span>وزارة الداخلية</span>
-                <span>مديرية أمن أوباري</span>
-                <span>* مكتب المدير *</span>
-              </div>
+      {/* Signature Block (Left side) */}
+      <div className="a4-signature-block pos-left">
+        <div className="sig-inner layout-stacked">
+          <div className="sig-text-side">
+            <h4 className="sig-officer-name">{letter.signer_name || 'لواء / موسى سعد محمد'}</h4>
+            <h5 className="sig-officer-rank">{letter.signer_title || 'مدير مديرية أمن أوباري'}</h5>
+          </div>
+          <div className="official-stamp-seal-circle">
+            <div className="stamp-inner-text">
+              <span>وزارة الداخلية</span>
+              <span>مديرية أمن أوباري</span>
+              <span>* مكتب المدير *</span>
             </div>
           </div>
         </div>
