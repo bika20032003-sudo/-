@@ -21,14 +21,15 @@ import {
 import { nationalProjects } from '../services/api';
 import MarqueeTicker from './MarqueeTicker';
 import { compressImageFile, safeStorageSet, safeStorageGet } from '../utils/imageCompressor';
+import { resolveAsset } from '../utils/assets';
 
 const PROJECT_PRESET_IMAGES = [
-  { title: 'آليات رصف الأسفلت الساخن ومتابعة درجات الحرارة', category: 'رصف الأسفلت', src: '/road-asphalt-paver.jpg' },
-  { title: 'دمك الأسفلت بالمداحل الأسطوانية والمطاطية', category: 'الدمك وضبط المناسيب', src: '/road-rollers-compaction.jpg' },
-  { title: 'تسوية الأساس الحجري بالكاشطات الموتورية', category: 'كشط وتأسيس', src: '/road-grader-earthwork.jpg' },
-  { title: 'تركيب وتشغيل منظومة الإنارة الذكية بالطاقة الشمسية', category: 'الطاقة الشمسية والإنارة', src: '/road-solar-lighting.jpg' },
-  { title: 'فحص عينات الكور الإسفلتي ومطابقة الجودة المعملية', category: 'ضبط الجودة المعملي', src: '/road-qa-testing-core.jpg' },
-  { title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي (360 كم)', category: 'بانوراما جوية', src: '/road-aerial-highway.jpg' }
+  { title: 'آليات رصف الأسفلت الساخن ومتابعة درجات الحرارة', category: 'رصف الأسفلت', src: './road-asphalt-paver.jpg' },
+  { title: 'دمك الأسفلت بالمداحل الأسطوانية والمطاطية', category: 'الدمك وضبط المناسيب', src: './road-rollers-compaction.jpg' },
+  { title: 'تسوية الأساس الحجري بالكاشطات الموتورية', category: 'كشط وتأسيس', src: './road-grader-earthwork.jpg' },
+  { title: 'تركيب وتشغيل منظومة الإنارة الذكية بالطاقة الشمسية', category: 'الطاقة الشمسية والإنارة', src: './road-solar-lighting.jpg' },
+  { title: 'فحص عينات الكور الإسفلتي ومطابقة الجودة المعملية', category: 'ضبط الجودة المعملي', src: './road-qa-testing-core.jpg' },
+  { title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي (360 كم)', category: 'بانوراما جوية', src: './road-aerial-highway.jpg' }
 ];
 
 export default function FeaturedProjects({ theme, lang = 'ar' }) {
@@ -239,11 +240,11 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
       )}
 
       {/* ── Luxury Cards Grid (Ubari - Ghat Projects) with GSAP Stagger ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 gsap-stagger-container">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 gsap-stagger-container">
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            className={`p-6 sm:p-8 rounded-[36px] border shadow-2xl space-y-6 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
+            className={`p-4 sm:p-8 rounded-2xl sm:rounded-[36px] border shadow-2xl space-y-4 sm:space-y-6 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
               project.isFieldDoc ? 'border-amber-500/40 ring-1 ring-amber-500/20' : ''
             } ${theme === 'light'
                 ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/80'
@@ -252,22 +253,26 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
           >
             {/* Top 4K Photo Box with Live Overlay */}
             <div 
-              className="h-64 sm:h-72 rounded-[26px] overflow-hidden relative border border-slate-200 dark:border-white/10 group cursor-pointer" 
+              className="h-48 xs:h-56 sm:h-72 rounded-xl sm:rounded-[26px] overflow-hidden relative border border-slate-200 dark:border-white/10 group cursor-pointer bg-[#0c1220]" 
               onClick={() => setSelectedModalProject(project)}
               data-cursor-image="true"
               data-cursor-label={lang === 'ar' ? 'عرض 4K ↗' : 'View 4K ↗'}
             >
               <img
-                src={project.image}
+                src={resolveAsset(project.image)}
                 alt={project.title}
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover photo-hover-zoom group-hover:scale-110 transition-transform duration-700 ease-out"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-75" />
 
               {/* Status Badge */}
-              <span className={`absolute top-3.5 right-3.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-lg border ${
+              <span className={`absolute top-2.5 sm:top-3.5 right-2.5 sm:right-3.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-black shadow-lg border ${
                 project.isFieldDoc
                   ? 'bg-amber-500 text-slate-950 border-amber-300'
                   : project.status === 'completed'

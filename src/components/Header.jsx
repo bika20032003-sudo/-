@@ -181,29 +181,30 @@ export default function Header({
         {/* ── Left Side: Official Agency Logo & Title ── */}
         <div 
           onClick={() => handleNavClick('hero', 'hero-section')}
-          className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group min-w-0"
           data-cursor-label={lang === 'ar' ? 'الرئيسية' : 'Home'}
         >
           {/* Official Agency Emblem */}
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-sm shadow-amber-500/20 group-hover:scale-105 transition-all duration-300 flex-shrink-0">
+          <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-sm shadow-amber-500/20 group-hover:scale-105 transition-all duration-300 flex-shrink-0">
             <img 
-              src="/logo-agency.jpg" 
+              src="./logo-agency.jpg" 
               alt="جهاز تنفيذ مشروعات المواصلات" 
-              className="w-full h-full object-contain rounded-2xl bg-white"
+              className="w-full h-full object-contain rounded-xl sm:rounded-2xl bg-white"
             />
           </div>
 
           {/* Authority Official Title */}
-          <div className="text-start border-s border-slate-300 dark:border-white/10 ps-2.5 sm:ps-3">
+          <div className="text-start border-s border-slate-300 dark:border-white/10 ps-2 sm:ps-3 min-w-0">
             <div className="flex items-center gap-1.5">
-              <h1 className={`font-black text-xs sm:text-sm leading-snug group-hover:text-amber-500 transition-colors ${
+              <h1 className={`font-black text-[11px] sm:text-sm leading-tight sm:leading-snug truncate max-w-[145px] xs:max-w-[200px] sm:max-w-none group-hover:text-amber-500 transition-colors ${
                 theme === 'light' ? 'text-slate-900' : 'text-white'
               }`}>
-                {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Projects Authority'}
+                {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Authority'}
               </h1>
             </div>
-            <p className="text-[10px] text-amber-500 font-bold flex items-center gap-1">
-              <span>{lang === 'ar' ? 'مشروع طريق أوباري – غات (360 كم)' : 'Ubari – Ghat 360km Highway Project'}</span>
+            <p className="text-[9px] sm:text-[10px] text-amber-500 font-bold flex items-center gap-1 truncate max-w-[145px] xs:max-w-[200px] sm:max-w-none mt-0.5">
+              <span>{lang === 'ar' ? 'طريق أوباري – غات' : 'Ubari – Ghat'}</span>
+              <span className="hidden xs:inline">(360 كم)</span>
             </p>
           </div>
         </div>
@@ -235,15 +236,16 @@ export default function Header({
         </nav>
 
         {/* ── Right Side: Action Controls ── */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
 
           {/* ── زر بداية الرحلة (الموقع التعريفي) ── */}
+          {/* Desktop & Tablet: Full Button */}
           <a
             href="https://bika20032003-sudo.github.io/-/road/"
             target="_blank"
             rel="noopener noreferrer"
-            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Ubari-Ghat Highway Showcase Website'}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
+            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Showcase Website'}
+            className={`hidden md:flex px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
               theme === 'light'
                 ? 'bg-orange-50 hover:bg-orange-100 border-orange-300/80 shadow-orange-500/10'
                 : 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 hover:border-orange-400/60 shadow-orange-500/10'
@@ -255,11 +257,27 @@ export default function Header({
             </span>
           </a>
 
-          {/* ── BEFORE LOGIN: Glass "دخول" Button ── */}
+          {/* Mobile: Compact Pill for "بداية الرحلة" */}
+          <a
+            href="https://bika20032003-sudo.github.io/-/road/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Showcase Website'}
+            className={`md:hidden p-1.5 px-2 rounded-xl border flex items-center gap-1 transition-all text-[11px] font-black ${
+              theme === 'light'
+                ? 'bg-orange-50 border-orange-300 text-orange-600'
+                : 'bg-orange-500/15 border-orange-500/30 text-orange-400'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+            <span className="hidden xs:inline">{lang === 'ar' ? 'الرحلة' : 'Road'}</span>
+          </a>
+
+          {/* ── BEFORE LOGIN: Glass "دخول" Button (Desktop/Tablet) ── */}
           {!user ? (
             <button
               onClick={onOpenGoogleAuth}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all duration-200 flex items-center justify-center border shadow-sm cursor-pointer hover:scale-105 ${
+              className={`hidden sm:flex px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 items-center justify-center border shadow-sm cursor-pointer hover:scale-105 ${
                 theme === 'light'
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                   : 'bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-amber-400/50'
@@ -272,7 +290,7 @@ export default function Header({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className={`p-1 px-2 rounded-2xl border flex items-center gap-1.5 transition-all duration-300 cursor-pointer hover:scale-105 shadow-sm ${
+                className={`p-1 px-1.5 sm:px-2 rounded-2xl border flex items-center gap-1 sm:gap-1.5 transition-all duration-300 cursor-pointer hover:scale-105 shadow-sm ${
                   profileDropdownOpen
                     ? 'border-amber-500 bg-amber-500/20 shadow-md shadow-amber-500/25'
                     : theme === 'light'
@@ -280,7 +298,7 @@ export default function Header({
                       : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
                 }`}
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-sm shadow-amber-500/20 flex-shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-sm shadow-amber-500/20 flex-shrink-0">
                   <img 
                     src={user.avatar} 
                     alt={user.name} 
@@ -288,7 +306,7 @@ export default function Header({
                   />
                 </div>
 
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                <ChevronDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-300 ${
                   profileDropdownOpen ? 'rotate-180 text-amber-500' : 'text-slate-300'
                 }`} />
               </button>
@@ -340,11 +358,11 @@ export default function Header({
             </div>
           )}
 
-          {/* ── Language Switcher (AR / EN) ── */}
+          {/* ── Language Switcher (AR / EN) (Desktop/Tablet) ── */}
           <button
             onClick={toggleLang}
             title={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-            className={`px-2.5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
+            className={`hidden sm:flex px-2.5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
               theme === 'light'
                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                 : 'bg-white/10 hover:bg-white/20 text-slate-100 border-white/15'
@@ -359,7 +377,7 @@ export default function Header({
             id="theme-toggle-btn"
             onClick={handleThemeToggle}
             title={theme === 'light' ? 'التبديل إلى الوضع الليلي' : 'التبديل إلى الوضع النهاري'}
-            className={`relative w-9 h-9 rounded-xl flex items-center justify-center border shadow-md transition-all duration-300 overflow-hidden cursor-pointer hover:scale-105 ${
+            className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-300 overflow-hidden cursor-pointer hover:scale-105 ${
               theme === 'light'
                 ? 'bg-amber-100/90 border-amber-300/80 hover:bg-amber-200 text-amber-900 shadow-amber-500/10'
                 : 'bg-slate-800/80 border-slate-600/50 hover:bg-slate-700/80 text-amber-400'
@@ -376,12 +394,14 @@ export default function Header({
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`lg:hidden p-2 rounded-xl border ${
-              theme === 'light' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-white border-white/10'
+            className={`lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+              mobileMenuOpen 
+                ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20' 
+                : theme === 'light' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-white border-white/10'
             }`}
             aria-label="القائمة الجانبية"
           >
-            <SlidersHorizontal className="w-4 h-4 text-amber-500" />
+            <SlidersHorizontal className={`w-4 h-4 ${mobileMenuOpen ? 'text-slate-950' : 'text-amber-500'}`} />
           </button>
         </div>
 
@@ -389,18 +409,18 @@ export default function Header({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className={`lg:hidden mt-2 p-3 rounded-2xl border shadow-2xl flex flex-col gap-1 animate-scaleUp max-w-7xl mx-auto ${
-          theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#090d18]/95 border-amber-500/30 text-white'
+        <div className={`lg:hidden mt-2 p-3.5 rounded-2xl border shadow-2xl flex flex-col gap-1.5 animate-scaleUp max-w-7xl mx-auto ${
+          theme === 'light' ? 'bg-white/98 border-amber-400/40 text-slate-900 shadow-slate-300/80' : 'bg-[#090d18]/98 border-amber-500/30 text-white shadow-black/90'
         }`}>
           {/* Logo badge inside mobile menu */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-2">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-1">
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-black text-amber-400">
-                {lang === 'ar' ? 'بوابة مشروعات المواصلات' : 'Transportation Authority'}
+              <Award className="w-4 h-4 text-amber-500" />
+              <span className="text-xs font-black text-amber-500">
+                {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Authority'}
               </span>
             </div>
-            <span className="text-[10px] text-slate-400">طريق أوباري – غات 360 كم</span>
+            <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">360 كم</span>
           </div>
 
           {navItems.map((item) => (
@@ -410,9 +430,9 @@ export default function Header({
                 handleNavClick(item.id, item.targetId);
                 setMobileMenuOpen(false);
               }}
-              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-start transition-all flex items-center justify-between ${
+              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-start transition-all flex items-center justify-between cursor-pointer ${
                 (activeTab !== 'dashboard' && activeSection === item.id)
-                  ? 'bg-amber-500/15 text-amber-500 font-bold border border-amber-500/30'
+                  ? 'bg-amber-500/15 text-amber-500 font-black border border-amber-500/30 shadow-sm'
                   : theme === 'light'
                     ? 'text-slate-700 hover:bg-slate-100'
                     : 'text-slate-300 hover:bg-white/10'
@@ -422,22 +442,43 @@ export default function Header({
             </button>
           ))}
 
+          {/* Mobile Language Switcher */}
+          <button
+            onClick={() => {
+              toggleLang();
+              setMobileMenuOpen(false);
+            }}
+            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-start transition-all flex items-center justify-between border cursor-pointer ${
+              theme === 'light'
+                ? 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-amber-500" />
+              <span>{lang === 'ar' ? 'English Language' : 'اللغة العربية'}</span>
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded font-mono font-black bg-amber-500/20 text-amber-500">
+              {lang === 'ar' ? 'EN' : 'عربي'}
+            </span>
+          </button>
+
           {/* Mobile Dashboard & Auth Options */}
-          <div className="border-t border-white/10 pt-2 mt-1 space-y-1">
+          <div className="border-t border-slate-200 dark:border-white/10 pt-2 mt-1 space-y-1.5">
             {/* زر بداية الرحلة للجوال */}
             <a
               href="https://bika20032003-sudo.github.io/-/road/"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full px-3.5 py-2 rounded-xl text-xs font-black text-start text-orange-500 hover:bg-orange-500/15 flex items-center justify-between transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black text-start bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 flex items-center justify-between transition-colors text-orange-500 cursor-pointer"
             >
-              <span className="flex items-center gap-2 text-orange-500">
-                <Compass className="w-3.5 h-3.5 text-orange-500" />
-                <span className="text-orange-500 font-extrabold">{lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}</span>
+              <span className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-orange-500" />
+                <span>{lang === 'ar' ? 'بداية الرحلة (الموقع التعريفي)' : 'Journey Start (Showcase)'}</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                {lang === 'ar' ? 'الموقع التعريفي ↗' : 'Showcase ↗'}
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold">
+                عرض ↗
               </span>
             </a>
 
@@ -447,10 +488,10 @@ export default function Header({
                   setMobileMenuOpen(false);
                   onOpenGoogleAuth();
                 }}
-                className="w-full px-3.5 py-2 rounded-xl text-xs font-extrabold text-start text-cyan-400 hover:bg-cyan-500/15 flex items-center gap-2"
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black text-start bg-amber-500 text-slate-950 flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 cursor-pointer hover:bg-amber-400 transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{lang === 'ar' ? 'دخول' : 'Sign In'}</span>
+                <LogIn className="w-4 h-4" />
+                <span>{lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}</span>
               </button>
             ) : (
               <>
@@ -459,19 +500,19 @@ export default function Header({
                     setActiveTab('dashboard');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl text-xs font-extrabold text-start text-amber-400 hover:bg-amber-500/15 flex items-center gap-2"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs font-extrabold text-start text-amber-400 hover:bg-amber-500/15 flex items-center gap-2"
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>{lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>{lang === 'ar' ? 'لوحة التحكم التنفيذية' : 'Dashboard'}</span>
                 </button>
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     onLogout();
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl text-xs font-extrabold text-start text-red-400 hover:bg-red-500/15 flex items-center gap-2"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs font-extrabold text-start text-red-400 hover:bg-red-500/15 flex items-center gap-2"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-4 h-4" />
                   <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}</span>
                 </button>
               </>

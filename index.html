@@ -12,16 +12,21 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&family=Outfit:wght@300;400;600;700;800&display=swap"
     rel="stylesheet">
-  <!-- GitHub Pages & Subpath Auto-Asset Rescue -->
+  <!-- GitHub Pages & Mobile WebKit Universal Asset Rescue -->
   <script>
     window.addEventListener('error', function(e) {
       if (e.target && e.target.tagName === 'IMG') {
         var img = e.target;
-        var src = img.getAttribute('src');
-        if (src && src.startsWith('/') && !src.startsWith('//') && !img.dataset.rescued) {
-          img.dataset.rescued = 'true';
-          var base = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
-          img.src = base + src.slice(1);
+        if (img.dataset.rescued) return;
+        img.dataset.rescued = '1';
+        var rawSrc = img.getAttribute('src') || img.src || '';
+        if (rawSrc.startsWith('data:') || rawSrc.startsWith('blob:')) return;
+        var cleanUrl = rawSrc.split('?')[0].split('#')[0];
+        var filename = cleanUrl.split('/').pop();
+        if (filename && filename.indexOf('.') !== -1) {
+          var p = window.location.pathname;
+          var base = p.endsWith('/') ? p : p.substring(0, p.lastIndexOf('/') + 1);
+          img.src = base + filename;
         }
       }
     }, true);

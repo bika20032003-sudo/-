@@ -94,51 +94,25 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
         
         <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10 flex-wrap sm:flex-nowrap">
           
-          {/* Mobile Switcher Pills */}
-          <div className="flex sm:hidden items-center gap-1 p-0.5 rounded-xl bg-slate-100 dark:bg-white/10 text-xs font-bold">
-            <button
-              onClick={() => setActiveCityTab('ubari')}
-              className={`px-2.5 py-1 rounded-lg transition-all ${
-                activeCityTab === 'ubari'
-                  ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              أوباري {ubariWeather.temp}°
-            </button>
-            <button
-              onClick={() => setActiveCityTab('ghat')}
-              className={`px-2.5 py-1 rounded-lg transition-all ${
-                activeCityTab === 'ghat'
-                  ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              غات {ghatWeather.temp}°
-            </button>
-          </div>
-
-          {/* ── City 1: Ubari Weather Block (Hidden on mobile if ghat selected) ── */}
-          <div className={`items-center gap-3 ${activeCityTab === 'ubari' ? 'flex' : 'hidden sm:flex'}`}>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <Sun className="w-4 h-4 text-amber-500" />
-              </div>
-              <div className="text-start">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-xs sm:text-sm">{lang === 'ar' ? 'طقس أوباري' : 'Ubari'}</span>
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded">
-                    {lang === 'ar' ? 'بداية المسار' : 'Start'}
-                  </span>
-                </div>
+          {/* ── City 1: Ubari Weather Block ── */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
+            </div>
+            <div className="text-start">
+              <div className="flex items-center gap-1">
+                <span className="font-black text-xs sm:text-sm">{lang === 'ar' ? 'أوباري' : 'Ubari'}</span>
+                <span className="hidden xs:inline text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.2 rounded">
+                  {lang === 'ar' ? 'البداية' : 'Start'}
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm sm:text-base font-black font-mono text-amber-500 tracking-tight">
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="text-xs sm:text-base font-black font-mono text-amber-500 tracking-tight">
                 {ubariWeather.temp}°C
               </span>
-              <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-600 dark:text-cyan-300 bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 rounded-full border border-cyan-500/20 whitespace-nowrap">
                 {ubariWeather.condition}
               </span>
               <span className="hidden md:inline-flex items-center gap-1 bg-cyan-500/10 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 font-mono">
@@ -155,27 +129,25 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
             <span>{lang === 'ar' ? 'مسار الطريق الصحراوي' : 'Highway Route'}</span>
           </div>
 
-          {/* ── City 2: Ghat Weather Block (Hidden on mobile if ubari selected) ── */}
-          <div className={`items-center gap-3 ${activeCityTab === 'ghat' ? 'flex' : 'hidden sm:flex'}`}>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <Sun className="w-4 h-4 text-cyan-500" />
-              </div>
-              <div className="text-start">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-xs sm:text-sm">{lang === 'ar' ? 'طقس غات' : 'Ghat'}</span>
-                  <span className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.2 rounded">
-                    {lang === 'ar' ? 'نهاية المسار' : 'End'}
-                  </span>
-                </div>
+          {/* ── City 2: Ghat Weather Block ── */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-7 h-7 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" />
+            </div>
+            <div className="text-start">
+              <div className="flex items-center gap-1">
+                <span className="font-black text-xs sm:text-sm">{lang === 'ar' ? 'غات' : 'Ghat'}</span>
+                <span className="hidden xs:inline text-[9px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-1 py-0.2 rounded">
+                  {lang === 'ar' ? 'النهاية' : 'End'}
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm sm:text-base font-black font-mono text-cyan-500 tracking-tight">
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="text-xs sm:text-base font-black font-mono text-cyan-500 tracking-tight">
                 {ghatWeather.temp}°C
               </span>
-              <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-500/10 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
                 {ghatWeather.condition}
               </span>
               <span className="hidden md:inline-flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-amber-700 dark:text-amber-400 font-mono">

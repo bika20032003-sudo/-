@@ -13,7 +13,7 @@ const initialSectors = [
     solarPolesInstalled: 640,
     activeWorkers: 115,
     notes: 'تم الانتهاء من الطبقة الرابطة وجاري استكمال الرصف النهائي للطبقة السطحية.',
-    image: '/road-asphalt-paver.jpg'
+    image: './road-asphalt-paver.jpg'
   },
   {
     id: 'SEC-02',
@@ -27,7 +27,7 @@ const initialSectors = [
     solarPolesInstalled: 480,
     activeWorkers: 130,
     notes: 'أعمال دمك الأسفلت وتوسعة الأكتاف وقنوات تصريف مياه الأمطار في أودية العوينات.',
-    image: '/road-rollers-compaction.jpg'
+    image: './road-rollers-compaction.jpg'
   },
   {
     id: 'SEC-03',
@@ -41,7 +41,7 @@ const initialSectors = [
     solarPolesInstalled: 320,
     activeWorkers: 98,
     notes: 'تسوية الأساس الحجري بالكاشطات الموتورية وإزالة الرمال الزاحفة وإعادة التأسيس.',
-    image: '/road-grader-earthwork.jpg'
+    image: './road-grader-earthwork.jpg'
   },
   {
     id: 'SEC-04',
@@ -55,7 +55,7 @@ const initialSectors = [
     solarPolesInstalled: 290,
     activeWorkers: 85,
     notes: 'تركيب أعمدة الإنارة بالطاقة الشمسية واستكمال رصف المسارات المزدوجة بمدخل غات.',
-    image: '/road-solar-lighting.jpg'
+    image: './road-solar-lighting.jpg'
   }
 ];
 
@@ -157,7 +157,7 @@ const initialFieldPhotos = [
     titleEn: 'Vögele Hot Asphalt Paver Fleet & Bitumen Temperature Control',
     sector: 'القطاع الأول (أوباري - الفيوات)',
     desc: 'عمليات مد ورصف الطبقة السطحية الرابطة ومتابعة درجة حرارة الخلطة الإسفلتية المعتمدة (160°C) في الموقع لضمان أعلى جودة.',
-    src: '/road-asphalt-paver.jpg',
+    src: './road-asphalt-paver.jpg',
     category: 'رصف الأسفلت',
     date: '2026-08-16',
     author: 'م. عبد السلام الفزاني'
@@ -168,7 +168,7 @@ const initialFieldPhotos = [
     titleEn: 'Heavy Steel & Pneumatic Rollers Compaction with Survey Station',
     sector: 'القطاع الثاني (الفيوات - العوينات)',
     desc: 'تشغيل أسطول المداحل الاهتزازية Dynapac & CAT للدمك النهائي وتحديد المناسيب عبر المحطة المساحية التوتال ستيشن.',
-    src: '/road-rollers-compaction.jpg',
+    src: './road-rollers-compaction.jpg',
     category: 'الدمك وضبط المناسيب',
     date: '2026-08-14',
     author: 'م. طارق المحجوب'
@@ -179,7 +179,7 @@ const initialFieldPhotos = [
     titleEn: 'Aggregate Sub-base Grading, Compaction & Water Spraying',
     sector: 'القطاع الثالث (العوينات - البركت)',
     desc: 'تسوية وضبط سمك طبقة الأساس الحجرية المكسورة وتوزيع الشاحنات وصهاريج رش المياه قبل الرصف.',
-    src: '/road-grader-earthwork.jpg',
+    src: './road-grader-earthwork.jpg',
     category: 'كشط وتأسيس',
     date: '2026-08-11',
     author: 'م. سالم التواتي'
@@ -190,7 +190,7 @@ const initialFieldPhotos = [
     titleEn: 'Smart Dual-Arm Solar Highway Lighting & Road Markings',
     sector: 'القطاع الرابع (البركت - غات)',
     desc: 'تثبيت أعمدة الإنارة المزدوجة بالطاقة الشمسية المقاومة للرياح الصحراوية وتخطيط مسارات الطريق بالدهان الحراري العاكس.',
-    src: '/road-solar-lighting.jpg',
+    src: './road-solar-lighting.jpg',
     category: 'الطاقة الشمسية والإنارة',
     date: '2026-08-09',
     author: 'م. علي الغاتي'
@@ -201,7 +201,7 @@ const initialFieldPhotos = [
     titleEn: 'Marshall Asphalt Core QA Inspection & Density Testing',
     sector: 'مختبر الجودة الميداني - أوباري',
     desc: 'سحب وفحص عينات الكور الإسفلتي باستخدام أجهزة القياس الرقمية والمختبر الميداني المتنقل للتأكد من مطابقة المواصفات.',
-    src: '/road-qa-testing-core.jpg',
+    src: './road-qa-testing-core.jpg',
     category: 'ضبط الجودة المعملي',
     date: '2026-08-07',
     author: 'المختبر المركزي'
@@ -212,7 +212,7 @@ const initialFieldPhotos = [
     titleEn: 'Aerial Drone View of Desert Highway Paving Train Corridor',
     sector: 'مسار طريق أوباري – غات الدولي (360 كم)',
     desc: 'توثيق جوي شامل لحركة قطار الرصف والآليات والشاحنات على امتداد الطريق المخترق للكثبان الرملية الذهبية بالجنوب الليبي.',
-    src: '/road-aerial-highway.jpg',
+    src: './road-aerial-highway.jpg',
     category: 'توثيق جوي بانورامي',
     date: '2026-08-05',
     author: 'ديوان جهاز المواصلات'
@@ -236,7 +236,7 @@ export const nationalProjects = [
     contractor: 'ائتلاف شركات الطرق الوطنية وفزان',
     startDate: 'يناير 2025',
     targetDate: 'ديسمبر 2026',
-    image: '/road-aerial-highway.jpg',
+    image: './road-aerial-highway.jpg',
     coords: { x: 22, y: 72 },
     realCoords: '26.5925,12.7803',
     desc: 'إعادة إعمار وتوسعة الشريان البري الاستراتيجي بطول 360 كم مقسم إلى 4 قطاعات رئيسية مع تطبيق أحدث معايير الرصف ومقاومة درجات الحرارة.',
@@ -264,7 +264,7 @@ export const nationalProjects = [
     contractor: 'الشركة الوطنية لحلول الطاقات المتجددة',
     startDate: 'أبريل 2025',
     targetDate: 'أكتوبر 2026',
-    image: '/road-solar-lighting.jpg',
+    image: './road-solar-lighting.jpg',
     coords: { x: 24, y: 74 },
     realCoords: '26.1200,12.1100',
     desc: 'توريد وتركيب 1,100 عمود إنارة ذكي مدعوم بألواح شمسية وبطاريات ليثيوم لتأمين الرؤية الليلية عند المنحنيات ومداخل الواحات.',
@@ -292,7 +292,7 @@ export const nationalProjects = [
     contractor: 'شركة الهضبة للإنشاءات المائية والجسور',
     startDate: 'فبراير 2025',
     targetDate: 'نوفمبر 2026',
-    image: '/road-rollers-compaction.jpg',
+    image: './road-rollers-compaction.jpg',
     coords: { x: 20, y: 76 },
     realCoords: '25.6800,11.5500',
     desc: 'إنشاء 28 عبارة خرسانية صندوقية وأنفاق تصريف هيدروليكية لحماية جسم الطريق من الانجراف والسيول الموسمية في حوض العوينات.',
@@ -320,7 +320,7 @@ export const nationalProjects = [
     contractor: 'شركة السهل الصحراوي للمقاولات العامة',
     startDate: 'مايو 2025',
     targetDate: 'يناير 2027',
-    image: '/road-grader-earthwork.jpg',
+    image: './road-grader-earthwork.jpg',
     coords: { x: 26, y: 70 },
     realCoords: '26.4500,12.3500',
     desc: 'توسعة أكتاف الطريق بعرض 2.5 متر لكل جانب مع تركيب حواجز مصدات الرمال البيئية وتسوية التموجات الرملية المتاخمة.',
@@ -348,7 +348,7 @@ export const nationalProjects = [
     contractor: 'شركة الجنوب للمشاريع الكبرى',
     startDate: 'يونيو 2025',
     targetDate: 'مارس 2027',
-    image: '/road-asphalt-paver.jpg',
+    image: './road-asphalt-paver.jpg',
     coords: { x: 16, y: 82 },
     realCoords: '24.9600,10.1800',
     desc: 'ازدواج وتطوير المدخل الشمالي لمدينة غات وربطه بمحور البركت والمنفذ الجنوبي بتصاميم تراثية تعكس الطابع المعماري للمدينة.',
@@ -376,7 +376,7 @@ export const nationalProjects = [
     contractor: 'ائتلاف الشركات الوطنية للخدمات المساندة',
     startDate: 'أغسطس 2025',
     targetDate: 'فبراير 2027',
-    image: '/road-qa-testing-core.jpg',
+    image: './road-qa-testing-core.jpg',
     coords: { x: 23, y: 75 },
     realCoords: '25.9500,11.8500',
     desc: 'إنشاء 4 محطات استراحة متكاملة تتضمن مراكز إسعاف طارئ، ونقاط صيانة سريعة، ومهابط مروحيات طوارئ لخدمة المسافرين والشاحنات.',
@@ -520,7 +520,7 @@ export const initialNewsPosts = [
     descEn: 'Field engineering teams continue hot mix asphalt laying operations with strict temperature control (160°C) ensuring highway longevity and durability.',
     category: 'رصف الأسفلت',
     categoryEn: 'Asphalt Paving',
-    image: '/road-asphalt-paver.jpg',
+    image: './road-asphalt-paver.jpg',
     timeAgo: 'منذ ساعتين',
     timeAgoEn: '2 hours ago',
     location: 'مسار طريق أوباري – غات',
@@ -537,7 +537,7 @@ export const initialNewsPosts = [
     descEn: 'Deploying heavy vibratory & pneumatic rollers for final compaction and surveying slope verification.',
     category: 'الدمك والمساحة',
     categoryEn: 'Compaction & Survey',
-    image: '/road-rollers-compaction.jpg',
+    image: './road-rollers-compaction.jpg',
     timeAgo: 'منذ 5 ساعات',
     timeAgoEn: '5 hours ago',
     location: 'القطاع الميداني الثاني',
@@ -554,7 +554,7 @@ export const initialNewsPosts = [
     descEn: 'Motor graders leveling sub-base crushed aggregate while clearing desert sanddrifts and setting up road stabilization.',
     category: 'كشط وتأسيس',
     categoryEn: 'Earthwork & Grading',
-    image: '/road-grader-earthwork.jpg',
+    image: './road-grader-earthwork.jpg',
     timeAgo: 'أمس',
     timeAgoEn: 'Yesterday',
     location: 'حوض وادي الحياة',
@@ -571,7 +571,7 @@ export const initialNewsPosts = [
     descEn: 'Installing wind-resistant dual-arm solar LED lighting poles with smart sensors for nighttime driving safety.',
     category: 'الطاقة الشمسية والإنارة',
     categoryEn: 'Solar Lighting',
-    image: '/road-solar-lighting.jpg',
+    image: './road-solar-lighting.jpg',
     timeAgo: 'منذ يومين',
     timeAgoEn: '2 days ago',
     location: 'المدخل الجنوبي للمسار',
@@ -588,7 +588,7 @@ export const initialNewsPosts = [
     descEn: 'Core sampling and geotechnical testing in the mobile field laboratory confirming compaction density compliance.',
     category: 'ضبط الجودة المعملي',
     categoryEn: 'Quality Control',
-    image: '/road-qa-testing-core.jpg',
+    image: './road-qa-testing-core.jpg',
     timeAgo: 'منذ 3 أيام',
     timeAgoEn: '3 days ago',
     location: 'المختبر الميداني المركزي',
@@ -605,7 +605,7 @@ export const initialNewsPosts = [
     descEn: 'Aerial drone footage capturing the newly paved highway corridor advancing through desert dunes.',
     category: 'توثيق جوي 4K',
     categoryEn: '4K Aerial Drone',
-    image: '/road-aerial-highway.jpg',
+    image: './road-aerial-highway.jpg',
     timeAgo: 'منذ 4 أيام',
     timeAgoEn: '4 days ago',
     location: 'مسار الـ 360 كم',
@@ -621,7 +621,12 @@ export const getSavedNewsPosts = () => {
     const saved = localStorage.getItem('portal-news-posts');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(p => ({
+          ...p,
+          image: (p.image && p.image.startsWith('/') && !p.image.startsWith('//')) ? '.' + p.image : p.image
+        }));
+      }
     }
   } catch (e) {}
   return initialNewsPosts;
@@ -658,7 +663,7 @@ export const initialHeroCard = {
   tagEn: 'Field Operations Status',
   title: 'أعمال رصف وتأهيل مسار 360 كم',
   titleEn: '360km Highway Paving Operations',
-  image: '/road-asphalt-paver.jpg',
+  image: './road-asphalt-paver.jpg',
   progress: 68.5,
   distance: '360 كيلومتراً',
   distanceEn: '360 km',
@@ -675,7 +680,11 @@ export const getSavedHeroCard = () => {
     const saved = localStorage.getItem('portal-hero-showcase-card');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed && typeof parsed === 'object') return { ...initialHeroCard, ...parsed };
+      if (parsed && typeof parsed === 'object') {
+        const img = parsed.image;
+        const normalizedImg = (img && img.startsWith('/') && !img.startsWith('//')) ? '.' + img : img;
+        return { ...initialHeroCard, ...parsed, image: normalizedImg || initialHeroCard.image };
+      }
     }
   } catch (e) {}
   return initialHeroCard;

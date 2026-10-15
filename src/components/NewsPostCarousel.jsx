@@ -7,6 +7,7 @@ import {
   Newspaper
 } from 'lucide-react';
 import { getSavedNewsPosts } from '../services/api';
+import { resolveAsset } from '../utils/assets';
 
 export default function NewsPostCarousel({ theme, lang = 'ar' }) {
   const [posts, setPosts] = useState(getSavedNewsPosts);
@@ -88,41 +89,42 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
         />
 
         {/* ── Post Header: Source Brand, Live Tag & Category ── */}
-        <div className="px-5 sm:px-8 pt-6 pb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 relative z-10">
+        <div className="px-4 sm:px-8 pt-5 sm:pt-6 pb-3.5 sm:pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 relative z-10">
           
           {/* Author / Source Emblem */}
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-md shadow-amber-500/20 flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-md shadow-amber-500/20 flex-shrink-0">
               <img 
-                src="/logo-agency.jpg" 
+                src={resolveAsset('./logo-agency.jpg')} 
                 alt="جهاز تنفيذ مشروعات المواصلات" 
                 className="w-full h-full object-contain rounded-2xl bg-white"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>
-            <div className="text-start">
-              <div className="flex items-center gap-2">
-                <h4 className="font-black text-xs sm:text-sm leading-snug">
+            <div className="text-start min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h4 className="font-black text-xs sm:text-sm leading-tight sm:leading-snug truncate">
                   {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transport Projects Authority'}
                 </h4>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                  {lang === 'ar' ? 'حساب رسمي معتمد' : 'Verified'}
+                  {lang === 'ar' ? 'معتمد' : 'Verified'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate mt-0.5">
                 {lang === 'ar' ? currentPost.author : currentPost.authorEn} • {lang === 'ar' ? currentPost.timeAgo : currentPost.timeAgoEn}
               </p>
             </div>
           </div>
 
           {/* Right Badges: Category & Live Indicator */}
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-xl text-xs font-black bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <span className="px-2.5 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-black bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center gap-1.5">
+              <Tag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>{lang === 'ar' ? currentPost.category : currentPost.categoryEn}</span>
             </span>
 
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-500/10 text-red-500 border border-red-500/25 text-xs font-black">
+            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl bg-red-500/10 text-red-500 border border-red-500/25 text-[11px] sm:text-xs font-black">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
@@ -138,7 +140,7 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
           
           {/* ── 1. The Post Visual Photo with Fade Animation & Hover Zoom ── */}
           <div 
-            className="lg:col-span-7 relative overflow-hidden min-h-[300px] sm:min-h-[420px] bg-black group cursor-pointer"
+            className="lg:col-span-7 relative overflow-hidden h-64 sm:h-80 md:h-96 lg:h-auto min-h-[250px] sm:min-h-[360px] bg-[#0c1220] group cursor-pointer"
             data-cursor-image="true"
             data-cursor-label={lang === 'ar' ? 'معاينة الصورة ↗' : 'View Photo ↗'}
           >
@@ -148,48 +150,52 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
               }`}
             >
               <img 
-                src={currentPost.image} 
+                src={resolveAsset(currentPost.image)} 
                 alt={currentPost.title} 
-                className="w-full h-full object-cover object-center min-h-[300px] sm:min-h-[420px] photo-hover-zoom group-hover:scale-108 transition-transform duration-700 ease-out"
+                className="w-full h-full object-cover object-center min-h-[250px] sm:min-h-[360px] photo-hover-zoom group-hover:scale-108 transition-transform duration-700 ease-out"
                 loading="eager"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-75" />
             </div>
 
             {/* Overlaid Location Info */}
-            <div className="absolute bottom-4 start-5 flex items-center text-white text-xs font-bold pointer-events-none">
-              <span className="flex items-center gap-1.5 bg-black/85 px-3.5 py-1.5 rounded-xl border border-white/20 shadow-lg">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
+            <div className="absolute bottom-3.5 sm:bottom-4 start-3.5 sm:start-5 flex items-center text-white text-[11px] sm:text-xs font-bold pointer-events-none">
+              <span className="flex items-center gap-1.5 bg-black/85 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-white/20 shadow-lg">
+                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
                 <span>{lang === 'ar' ? currentPost.location : currentPost.locationEn}</span>
               </span>
             </div>
 
             {/* Arrow Nav Overlay on Image */}
-            <div className="absolute inset-y-0 start-3 flex items-center">
+            <div className="absolute inset-y-0 start-2.5 sm:start-3 flex items-center">
               <button
                 onClick={prevSlide}
                 title={lang === 'ar' ? 'الخبر السابق' : 'Previous News'}
-                className="w-10 h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center border border-white/25 shadow-xl transition-transform hover:scale-110 cursor-pointer"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center border border-white/25 shadow-xl transition-transform hover:scale-110 cursor-pointer"
               >
-                {lang === 'ar' ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                {lang === 'ar' ? <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
             </div>
-            <div className="absolute inset-y-0 end-3 flex items-center">
+            <div className="absolute inset-y-0 end-2.5 sm:end-3 flex items-center">
               <button
                 onClick={nextSlide}
                 title={lang === 'ar' ? 'الخبر التالي' : 'Next News'}
-                className="w-10 h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center border border-white/25 shadow-xl transition-transform hover:scale-110 cursor-pointer"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center border border-white/25 shadow-xl transition-transform hover:scale-110 cursor-pointer"
               >
-                {lang === 'ar' ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                {lang === 'ar' ? <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
             </div>
           </div>
 
           {/* ── 2. The Post Content (Text & Narrative) ── */}
-          <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between text-start space-y-6">
+          <div className="lg:col-span-5 p-4 sm:p-7 md:p-8 flex flex-col justify-between text-start space-y-4 sm:space-y-6">
             
             <div 
-              className={`space-y-4 transition-all duration-400 ease-in-out ${
+              className={`space-y-3 sm:space-y-4 transition-all duration-400 ease-in-out ${
                 isFading ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'
               }`}
             >
@@ -198,13 +204,13 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
                 <span className="inline-flex items-center gap-1.5 text-amber-500 font-bold">
                   <span>{lang === 'ar' ? 'المستجدات الميدانية الرسمية' : 'Official Field Update'}</span>
                 </span>
-                <span className="font-mono text-slate-400 font-extrabold">
+                <span className="font-mono text-slate-400 font-extrabold text-xs">
                   {currentIndex + 1} / {posts.length}
                 </span>
               </div>
 
               {/* Bold Title */}
-              <h3 className={`text-xl sm:text-2xl font-black leading-snug ${
+              <h3 className={`text-base sm:text-xl lg:text-2xl font-black leading-snug ${
                 theme === 'light' ? 'text-slate-950' : 'text-white'
               }`}>
                 {lang === 'ar' ? currentPost.title : currentPost.titleEn}
