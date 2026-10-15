@@ -147,13 +147,14 @@ export default function MarqueeTicker({
         />
 
         {/* ── Fixed Live Broadcast Badge (Pulsing Radar) ── */}
-        <div className="flex-shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-[11px] sm:text-xs shadow-md shadow-amber-500/25 z-20 border-none transition-transform hover:scale-[1.02]">
-          <span className="relative flex h-2 w-2 flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-[10px] sm:text-xs shadow-md shadow-amber-500/25 z-20 border-none transition-transform hover:scale-[1.02]">
+          <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600 shadow-sm"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-red-600 shadow-sm"></span>
           </span>
           <span className="tracking-wide whitespace-nowrap">
-            {lang === 'ar' ? 'المستجدات الميدانية' : 'Field Updates'}
+            <span className="inline sm:hidden">{lang === 'ar' ? 'المستجدات' : 'Updates'}</span>
+            <span className="hidden sm:inline">{lang === 'ar' ? 'المستجدات الميدانية' : 'Field Updates'}</span>
           </span>
         </div>
 
@@ -188,17 +189,17 @@ export default function MarqueeTicker({
             }}
           />
 
-          {/* Continuous Moving Track: Dual-Track Seamless Infinite Loop (Zero delay, instant continuation) */}
+          {/* Continuous Moving Track: Moves Left-to-Right on Mobile, Default on Desktop */}
           <div className="flex w-full overflow-hidden select-none" dir="ltr">
             {/* Primary Track 1 */}
             <div 
-              className="flex shrink-0 animate-marquee items-center gap-8 sm:gap-10 pe-8 sm:pe-10 py-0.5 will-change-transform"
+              className="flex shrink-0 animate-marquee-reverse md:animate-marquee items-center gap-8 sm:gap-10 pe-8 sm:pe-10 py-0.5 will-change-transform"
               style={{ animationDuration: animDuration }}
             >
               {baseList.map((item, idx) => (
-                <div key={`track1-${idx}`} dir="rtl" className="flex items-center gap-3 whitespace-nowrap text-sm sm:text-base font-bold">
+                <div key={`track1-${idx}`} dir="rtl" className="flex items-center gap-3 whitespace-nowrap text-xs sm:text-base font-bold">
                   {/* News Tag Micro-Pill */}
-                  <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black tracking-wide transition-colors ${
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black tracking-wide transition-colors ${
                     theme === 'light'
                       ? 'bg-amber-500/15 text-amber-950 shadow-sm'
                       : 'bg-amber-400/20 text-amber-300 shadow-sm'
@@ -216,7 +217,7 @@ export default function MarqueeTicker({
                   </span>
 
                   {/* Glowing Separator Diamond */}
-                  <span className="text-amber-400 font-black mx-3 text-xs drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">✦</span>
+                  <span className="text-amber-400 font-black mx-2 sm:mx-3 text-[10px] sm:text-xs drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">✦</span>
                 </div>
               ))}
             </div>
@@ -224,13 +225,13 @@ export default function MarqueeTicker({
             {/* Seamless Sibling Track 2 (Cloned for 100% infinite loop with zero delay) */}
             <div 
               aria-hidden="true"
-              className="flex shrink-0 animate-marquee items-center gap-8 sm:gap-10 pe-8 sm:pe-10 py-0.5 will-change-transform"
+              className="flex shrink-0 animate-marquee-reverse md:animate-marquee items-center gap-8 sm:gap-10 pe-8 sm:pe-10 py-0.5 will-change-transform"
               style={{ animationDuration: animDuration }}
             >
               {baseList.map((item, idx) => (
-                <div key={`track2-${idx}`} dir="rtl" className="flex items-center gap-3 whitespace-nowrap text-sm sm:text-base font-bold">
+                <div key={`track2-${idx}`} dir="rtl" className="flex items-center gap-3 whitespace-nowrap text-xs sm:text-base font-bold">
                   {/* News Tag Micro-Pill */}
-                  <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black tracking-wide transition-colors ${
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black tracking-wide transition-colors ${
                     theme === 'light'
                       ? 'bg-amber-500/15 text-amber-950 shadow-sm'
                       : 'bg-amber-400/20 text-amber-300 shadow-sm'

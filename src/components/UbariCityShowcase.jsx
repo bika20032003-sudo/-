@@ -1,45 +1,70 @@
-import React from 'react';
-import { Layers, Sun, ShieldCheck, Route, MapPin, Navigation, Award, BookOpen, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Layers, Sun, ShieldCheck, Route, MapPin, Navigation, BookOpen } from 'lucide-react';
 import { translations } from '../i18n/translations';
-import { resolveAsset } from '../utils/assets';
 
 export default function UbariCityShowcase({ theme, lang = 'ar' }) {
   const t = translations[lang] || translations.ar;
 
-  const aboutFeatures = [
+  const originalFeatures = [
     {
+      id: 0,
       title: t.ubariLakesTitle,
       desc: t.ubariLakesDesc,
       icon: Layers,
-      color: 'text-cyan-500',
-      badge: lang === 'ar' ? 'المواصفات الفنية للأسفلت' : 'Asphalt Technical Specs',
-      image: './road-asphalt-paver.jpg'
+      color: 'text-cyan-600 dark:text-cyan-400',
+      iconColor: 'text-cyan-500',
+      iconBg: 'bg-cyan-500/15 border-cyan-500/30',
+      badge: lang === 'ar' ? 'المواصفات الفنية للأسفلت' : 'Asphalt Specs'
     },
     {
+      id: 1,
       title: t.ubariTransportTitle,
       desc: t.ubariTransportDesc,
       icon: Sun,
-      color: 'text-amber-500',
-      badge: lang === 'ar' ? 'الإنارة بالطاقة الشمسية' : 'Solar Lighting',
-      image: './road-solar-lighting.jpg'
+      color: 'text-amber-600 dark:text-amber-400',
+      iconColor: 'text-amber-500',
+      iconBg: 'bg-amber-500/15 border-amber-500/30',
+      badge: lang === 'ar' ? 'الإنارة بالطاقة الشمسية' : 'Solar Lighting'
     },
     {
+      id: 2,
       title: t.ubariEnergyTitle,
       desc: t.ubariEnergyDesc,
       icon: ShieldCheck,
-      color: 'text-emerald-500',
-      badge: lang === 'ar' ? 'تصريف السيول والعبارات' : 'Drainage & Culverts',
-      image: './road-qa-testing-core.jpg'
+      color: 'text-emerald-600 dark:text-emerald-400',
+      iconColor: 'text-emerald-500',
+      iconBg: 'bg-emerald-500/15 border-emerald-500/30',
+      badge: lang === 'ar' ? 'تصريف السيول والعبارات' : 'Drainage & Culverts'
     },
     {
+      id: 3,
       title: t.ubariHeritageTitle,
       desc: t.ubariHeritageDesc,
       icon: Route,
-      color: 'text-amber-500',
-      badge: lang === 'ar' ? 'الربط الاستراتيجي والتجاري' : 'Strategic Highway Link',
-      image: './road-aerial-highway.jpg'
+      color: 'text-amber-600 dark:text-amber-400',
+      iconColor: 'text-amber-500',
+      iconBg: 'bg-amber-500/15 border-amber-500/30',
+      badge: lang === 'ar' ? 'الربط الاستراتيجي والتجاري' : 'Strategic Link'
     }
   ];
+
+  const [activeFeatureIdx, setActiveFeatureIdx] = useState(0);
+  const [fadeActive, setFadeActive] = useState(true);
+
+  // 5-second automatic progression with fade animation (المدة خمسة ثواني مع انميشن تلاشي)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeActive(false);
+      setTimeout(() => {
+        setActiveFeatureIdx(prev => (prev + 1) % originalFeatures.length);
+        setFadeActive(true);
+      }, 350);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [originalFeatures.length]);
+
+  const currentFeature = originalFeatures[activeFeatureIdx];
+  const CurrentIcon = currentFeature.icon;
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fadeIn select-none">
@@ -166,88 +191,107 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
 
         </div>
 
-        {/* 2. MOBILE ONLY: News-Post Style Cards (نظام البوست للأخبار على الهاتف حصراً) */}
-        <div className="md:hidden space-y-3.5 pt-1 relative z-10 text-start">
-          {aboutFeatures.map((post, idx) => (
-            <div 
-              key={idx}
-              className={`rounded-2xl overflow-hidden border shadow-lg transition-all ${
-                theme === 'light'
-                  ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/70'
-                  : 'bg-[#090e1a]/95 border-white/10 text-white shadow-black/80'
-              }`}
-            >
-              {/* Post Header: Agency Brand + Tag */}
-              <div className="px-3 py-2 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-sm flex-shrink-0">
-                    <img 
-                      src={resolveAsset('./logo-agency.jpg')} 
-                      alt="جهاز تنفيذ مشروعات المواصلات" 
-                      className="w-full h-full object-contain rounded-md bg-white"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  </div>
-                  <div className="text-start leading-tight">
-                    <div className="flex items-center gap-1">
-                      <span className="font-black text-xs">
-                        {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
-                      </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {lang === 'ar' ? 'نبذة تنفيذية معتمدة' : 'Official Project Pillar'}
-                    </span>
-                  </div>
+        {/* 2. MOBILE ONLY: 5-Second Fade Animation Auto-Cycling Card (البطاقات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي) */}
+        <div className="md:hidden relative z-10 text-start space-y-2.5">
+          <div 
+            className={`p-4 xs:p-5 rounded-2xl border shadow-xl transition-all duration-500 min-h-[170px] flex flex-col justify-between ${
+              fadeActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
+            } ${
+              theme === 'light' 
+                ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-200/80' 
+                : 'bg-[#090e1a]/95 border-white/10 text-white shadow-black/80'
+            }`}
+          >
+            {/* Card Header: Icon + Badge + Counter */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shadow-sm ${currentFeature.iconBg} ${currentFeature.iconColor}`}>
+                  <CurrentIcon className="w-4 h-4 xs:w-5 xs:h-5" />
                 </div>
+                <div>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                    {currentFeature.badge}
+                  </span>
+                </div>
+              </div>
 
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                  {post.badge}
+              {/* 5s Auto Indicator & Slide index */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span>5s</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10">
+                  {activeFeatureIdx + 1} / {originalFeatures.length}
                 </span>
               </div>
+            </div>
 
-              {/* Post Photo */}
-              <div className="h-40 relative overflow-hidden bg-slate-950">
-                <img 
-                  src={resolveAsset(post.image)} 
-                  alt={post.title} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px]">
-                  <span className="px-2 py-0.5 rounded-md bg-black/70 font-mono font-bold text-amber-400 border border-white/10">
-                    {lang === 'ar' ? 'توثيق ميداني 4K' : '4K Documentation'}
-                  </span>
-                  <span className="bg-emerald-500/90 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px]">
-                    {lang === 'ar' ? 'مطابق للمواصفات' : 'Certified'}
-                  </span>
-                </div>
+            {/* Card Title & Description */}
+            <div className="space-y-1.5 my-2">
+              <h4 className={`font-black text-xs xs:text-sm ${currentFeature.color}`}>
+                {currentFeature.title}
+              </h4>
+              <p className="text-[11px] xs:text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                {currentFeature.desc}
+              </p>
+            </div>
+
+            {/* Card Navigation Controls: Dots + Arrows */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10 text-xs">
+              <div className="flex items-center gap-1.5">
+                {originalFeatures.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setFadeActive(false);
+                      setTimeout(() => {
+                        setActiveFeatureIdx(i);
+                        setFadeActive(true);
+                      }, 200);
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      i === activeFeatureIdx ? 'w-5 bg-amber-500' : 'w-2 bg-slate-300 dark:bg-white/20'
+                    }`}
+                    aria-label={`Card ${i + 1}`}
+                  />
+                ))}
               </div>
 
-              {/* Post Content */}
-              <div className="p-3 space-y-1.5">
-                <h4 className="font-black text-xs xs:text-sm leading-snug">
-                  {post.title}
-                </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-                  {post.desc}
-                </p>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10 text-[10px]">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>{lang === 'ar' ? 'متابعة رسمية مباشرة' : 'Direct Authority Supervision'}</span>
-                  </span>
-                  <span className="text-amber-500 font-bold font-mono">
-                    {lang === 'ar' ? 'طريق أوباري غات (360 كم)' : '360 KM Highway'}
-                  </span>
-                </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFadeActive(false);
+                    setTimeout(() => {
+                      setActiveFeatureIdx((activeFeatureIdx - 1 + originalFeatures.length) % originalFeatures.length);
+                      setFadeActive(true);
+                    }, 200);
+                  }}
+                  className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                  aria-label="Previous card"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFadeActive(false);
+                    setTimeout(() => {
+                      setActiveFeatureIdx((activeFeatureIdx + 1) % originalFeatures.length);
+                      setFadeActive(true);
+                    }, 200);
+                  }}
+                  className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                  aria-label="Next card"
+                >
+                  ›
+                </button>
               </div>
             </div>
-          ))}
+
+          </div>
         </div>
 
       </div>

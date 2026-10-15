@@ -200,6 +200,24 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
     return true;
   });
 
+  // Mobile Projects 5-Second Fade Auto-Cycle State (المشروعات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي)
+  const [activeProjectMobileIdx, setActiveProjectMobileIdx] = useState(0);
+  const [projectFadeActive, setProjectFadeActive] = useState(true);
+
+  useEffect(() => {
+    if (!filteredProjects || filteredProjects.length <= 1) return;
+    const interval = setInterval(() => {
+      setProjectFadeActive(false);
+      setTimeout(() => {
+        setActiveProjectMobileIdx(prev => (prev + 1) % filteredProjects.length);
+        setProjectFadeActive(true);
+      }, 350);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [filteredProjects.length]);
+
+  const currentMobileProject = filteredProjects[activeProjectMobileIdx] || filteredProjects[0];
+
   return (
     <section id="projects-section" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 select-none">
 
@@ -354,14 +372,15 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         ))}
       </div>
 
-      {/* 2. MOBILE ONLY: News-Post Style Project Cards (نظام البوست للأخبار على الهاتف حصراً) */}
-      <div className="md:hidden space-y-4 text-start">
-        {filteredProjects.map((project) => (
+      {/* 2. MOBILE ONLY: 5-Second Fade Animation Auto-Cycling Project Card (المشروعات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي) */}
+      <div className="md:hidden text-start">
+        {currentMobileProject && (
           <div
-            key={project.id}
-            onClick={() => setSelectedModalProject(project)}
-            className={`rounded-2xl overflow-hidden border shadow-xl transition-all active:scale-[0.99] cursor-pointer ${
-              project.isFieldDoc ? 'border-amber-500/40' : ''
+            onClick={() => setSelectedModalProject(currentMobileProject)}
+            className={`rounded-2xl overflow-hidden border shadow-xl transition-all duration-500 active:scale-[0.99] cursor-pointer ${
+              projectFadeActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
+            } ${
+              currentMobileProject.isFieldDoc ? 'border-amber-500/40' : ''
             } ${theme === 'light'
                 ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/80'
                 : 'bg-[#090e1a]/95 border-white/10 text-white shadow-black/80'
@@ -386,27 +405,33 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   </div>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    {project.id} • {project.startDate}
+                    {currentMobileProject.id} • {currentMobileProject.startDate}
                   </span>
                 </div>
               </div>
 
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                project.isFieldDoc
-                  ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
-                  : project.status === 'completed'
-                    ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
-                    : 'bg-amber-500/15 text-amber-500 border-amber-500/30'
-              }`}>
-                {project.statusLabel}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span>5s</span>
+                </span>
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                  currentMobileProject.isFieldDoc
+                    ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                    : currentMobileProject.status === 'completed'
+                      ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                }`}>
+                  {currentMobileProject.statusLabel}
+                </span>
+              </div>
             </div>
 
             {/* Post Photo */}
             <div className="h-44 relative overflow-hidden bg-slate-950">
               <img
-                src={resolveAsset(project.image)}
-                alt={project.title}
+                src={resolveAsset(currentMobileProject.image)}
+                alt={currentMobileProject.title}
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover"
@@ -420,10 +445,10 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               {/* Overlaid Badges on Image */}
               <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px]">
                 <span className="px-2 py-0.5 rounded-md bg-black/75 font-mono font-bold text-amber-400 border border-white/10">
-                  {project.lengthKm ? `${project.lengthKm} كم • ` : ''}{project.region}
+                  {currentMobileProject.lengthKm ? `${currentMobileProject.lengthKm} كم • ` : ''}{currentMobileProject.region}
                 </span>
                 <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px]">
-                  {project.progress}% منجز
+                  {currentMobileProject.progress}% منجز
                 </span>
               </div>
             </div>
@@ -431,10 +456,10 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
             {/* Post Content */}
             <div className="p-3.5 space-y-2">
               <h3 className="text-sm font-black leading-snug">
-                {project.title}
+                {currentMobileProject.title}
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 font-normal">
-                {project.desc}
+                {currentMobileProject.desc}
               </p>
 
               {/* Progress Bar */}
@@ -443,30 +468,79 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                   <span className="text-slate-500 dark:text-slate-400 font-semibold">
                     {lang === 'ar' ? 'نسبة الإنجاز الفعلي:' : 'Progress:'}
                   </span>
-                  <span className="font-mono font-black text-amber-500">{project.progress}%</span>
+                  <span className="font-mono font-black text-amber-500">{currentMobileProject.progress}%</span>
                 </div>
                 <div className="w-full h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10">
                   <div
                     className="bg-amber-500 h-full rounded-full transition-all duration-700"
-                    style={{ width: `${project.progress}%` }}
+                    style={{ width: `${currentMobileProject.progress}%` }}
                   />
                 </div>
               </div>
 
-              {/* Post Footer */}
-              <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-white/10 text-[10px]">
-                <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate max-w-[170px]">
-                  <Building2 className="w-3 h-3 text-amber-500 shrink-0" />
-                  <span className="truncate">{project.contractor}</span>
+              {/* Navigation Dots + Arrows + Action */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10 text-[10px]">
+                <div className="flex items-center gap-1.5">
+                  {filteredProjects.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProjectFadeActive(false);
+                        setTimeout(() => {
+                          setActiveProjectMobileIdx(i);
+                          setProjectFadeActive(true);
+                        }, 200);
+                      }}
+                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        i === activeProjectMobileIdx ? 'w-5 bg-amber-500' : 'w-2 bg-slate-300 dark:bg-white/20'
+                      }`}
+                      aria-label={`Project ${i + 1}`}
+                    />
+                  ))}
                 </div>
-                <span className="text-amber-500 font-bold flex items-center gap-1">
-                  <span>{lang === 'ar' ? 'التفاصيل ↗' : 'Details ↗'}</span>
-                </span>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProjectFadeActive(false);
+                      setTimeout(() => {
+                        setActiveProjectMobileIdx((activeProjectMobileIdx - 1 + filteredProjects.length) % filteredProjects.length);
+                        setProjectFadeActive(true);
+                      }, 200);
+                    }}
+                    className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                    aria-label="Previous project"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProjectFadeActive(false);
+                      setTimeout(() => {
+                        setActiveProjectMobileIdx((activeProjectMobileIdx + 1) % filteredProjects.length);
+                        setProjectFadeActive(true);
+                      }, 200);
+                    }}
+                    className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                    aria-label="Next project"
+                  >
+                    ›
+                  </button>
+                  <span className="text-amber-500 font-bold ms-1">
+                    {lang === 'ar' ? 'التفاصيل ↗' : 'Details ↗'}
+                  </span>
+                </div>
               </div>
             </div>
 
           </div>
-        ))}
+        )}
       </div>
 
       {/* ── Full Specifications Modal Dialog ── */}
