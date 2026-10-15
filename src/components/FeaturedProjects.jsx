@@ -239,12 +239,12 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         </div>
       )}
 
-      {/* ── Luxury Cards Grid (Ubari - Ghat Projects) with GSAP Stagger ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 gsap-stagger-container">
+      {/* 1. DESKTOP ONLY: Luxury Cards Grid (Ubari - Ghat Projects) with GSAP Stagger (100% Preserved) */}
+      <div className="hidden md:grid grid-cols-2 gap-6 sm:gap-8 gsap-stagger-container">
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            className={`p-4 sm:p-8 rounded-2xl sm:rounded-[36px] border shadow-2xl space-y-4 sm:space-y-6 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
+            className={`p-6 sm:p-8 rounded-[36px] border shadow-2xl space-y-4 sm:space-y-6 text-start relative overflow-hidden glass-card-hover gsap-stagger-item ${
               project.isFieldDoc ? 'border-amber-500/40 ring-1 ring-amber-500/20' : ''
             } ${theme === 'light'
                 ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/80'
@@ -253,7 +253,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
           >
             {/* Top 4K Photo Box with Live Overlay */}
             <div 
-              className="h-48 xs:h-56 sm:h-72 rounded-xl sm:rounded-[26px] overflow-hidden relative border border-slate-200 dark:border-white/10 group cursor-pointer bg-[#0c1220]" 
+              className="h-56 sm:h-72 rounded-[26px] overflow-hidden relative border border-slate-200 dark:border-white/10 group cursor-pointer bg-[#0c1220]" 
               onClick={() => setSelectedModalProject(project)}
               data-cursor-image="true"
               data-cursor-label={lang === 'ar' ? 'عرض 4K ↗' : 'View 4K ↗'}
@@ -272,7 +272,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-75" />
 
               {/* Status Badge */}
-              <span className={`absolute top-2.5 sm:top-3.5 right-2.5 sm:right-3.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-black shadow-lg border ${
+              <span className={`absolute top-3.5 right-3.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-lg border ${
                 project.isFieldDoc
                   ? 'bg-amber-500 text-slate-950 border-amber-300'
                   : project.status === 'completed'
@@ -296,10 +296,10 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                 <span>{project.id}</span>
                 <span>{project.startDate} {project.targetDate ? `— ${project.targetDate}` : ''}</span>
               </div>
-              <h3 className={`text-xl sm:text-2xl font-black ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
+              <h3 className={`text-2xl font-black ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
                 {project.title}
               </h3>
-              <p className={`text-xs sm:text-sm font-medium leading-relaxed line-clamp-2 ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'
+              <p className={`text-sm font-medium leading-relaxed line-clamp-2 ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'
                 }`}>
                 {project.desc}
               </p>
@@ -348,6 +348,121 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                   </button>
                 </div>
               )}
+            </div>
+
+          </div>
+        ))}
+      </div>
+
+      {/* 2. MOBILE ONLY: News-Post Style Project Cards (نظام البوست للأخبار على الهاتف حصراً) */}
+      <div className="md:hidden space-y-4 text-start">
+        {filteredProjects.map((project) => (
+          <div
+            key={project.id}
+            onClick={() => setSelectedModalProject(project)}
+            className={`rounded-2xl overflow-hidden border shadow-xl transition-all active:scale-[0.99] cursor-pointer ${
+              project.isFieldDoc ? 'border-amber-500/40' : ''
+            } ${theme === 'light'
+                ? 'bg-white border-slate-200/90 text-slate-900 shadow-slate-200/80'
+                : 'bg-[#090e1a]/95 border-white/10 text-white shadow-black/80'
+              }`}
+          >
+            {/* Post Header: Agency Brand + Tag */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-sm flex-shrink-0">
+                  <img 
+                    src={resolveAsset('./logo-agency.jpg')} 
+                    alt="جهاز تنفيذ مشروعات المواصلات" 
+                    className="w-full h-full object-contain rounded-md bg-white"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="flex items-center gap-1">
+                    <span className="font-black text-xs">
+                      {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {project.id} • {project.startDate}
+                  </span>
+                </div>
+              </div>
+
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                project.isFieldDoc
+                  ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                  : project.status === 'completed'
+                    ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                    : 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+              }`}>
+                {project.statusLabel}
+              </span>
+            </div>
+
+            {/* Post Photo */}
+            <div className="h-44 relative overflow-hidden bg-slate-950">
+              <img
+                src={resolveAsset(project.image)}
+                alt={project.title}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+              {/* Overlaid Badges on Image */}
+              <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px]">
+                <span className="px-2 py-0.5 rounded-md bg-black/75 font-mono font-bold text-amber-400 border border-white/10">
+                  {project.lengthKm ? `${project.lengthKm} كم • ` : ''}{project.region}
+                </span>
+                <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px]">
+                  {project.progress}% منجز
+                </span>
+              </div>
+            </div>
+
+            {/* Post Content */}
+            <div className="p-3.5 space-y-2">
+              <h3 className="text-sm font-black leading-snug">
+                {project.title}
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 font-normal">
+                {project.desc}
+              </p>
+
+              {/* Progress Bar */}
+              <div className="space-y-1 pt-1.5 border-t border-slate-100 dark:border-white/10">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                    {lang === 'ar' ? 'نسبة الإنجاز الفعلي:' : 'Progress:'}
+                  </span>
+                  <span className="font-mono font-black text-amber-500">{project.progress}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10">
+                  <div
+                    className="bg-amber-500 h-full rounded-full transition-all duration-700"
+                    style={{ width: `${project.progress}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Post Footer */}
+              <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-white/10 text-[10px]">
+                <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate max-w-[170px]">
+                  <Building2 className="w-3 h-3 text-amber-500 shrink-0" />
+                  <span className="truncate">{project.contractor}</span>
+                </div>
+                <span className="text-amber-500 font-bold flex items-center gap-1">
+                  <span>{lang === 'ar' ? 'التفاصيل ↗' : 'Details ↗'}</span>
+                </span>
+              </div>
             </div>
 
           </div>

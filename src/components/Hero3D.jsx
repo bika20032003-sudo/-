@@ -18,23 +18,50 @@ import {
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 import MarqueeTicker from './MarqueeTicker';
-import { getSavedHeroCard } from '../services/api';
+import { getSavedHeroCard, getSavedNewsPosts } from '../services/api';
 import { resolveAsset } from '../utils/assets';
 
 export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenGoogleAuth, lang = 'ar', tickerNews }) {
   const t = translations[lang] || translations.ar;
   const progressVal = summaryData?.overallProgress ?? 68.5;
 
-  // Dynamic Hero Showcase Card State (Controllable from Dashboard)
+  // Dynamic Hero Showcase Card State (Controllable from Dashboard - Preserved for Desktop)
   const [heroCard, setHeroCard] = useState(getSavedHeroCard);
+
+  // Mobile News Post Feed State
+  const [mobileNewsList, setMobileNewsList] = useState(getSavedNewsPosts);
+  const [mobileNewsIdx, setMobileNewsIdx] = useState(0);
 
   useEffect(() => {
     const handleStorageChange = () => {
       setHeroCard(getSavedHeroCard());
+      const updatedNews = getSavedNewsPosts();
+      setMobileNewsList(updatedNews);
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // 6-second mobile news carousel auto progression
+  useEffect(() => {
+    if (!mobileNewsList || mobileNewsList.length <= 1) return;
+    const interval = setInterval(() => {
+      setMobileNewsIdx(prev => (prev + 1) % mobileNewsList.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [mobileNewsList]);
+
+  const currentMobileNews = mobileNewsList[mobileNewsIdx] || mobileNewsList[0] || {};
+
+  const nextMobileNews = () => {
+    if (!mobileNewsList || mobileNewsList.length === 0) return;
+    setMobileNewsIdx((mobileNewsIdx + 1) % mobileNewsList.length);
+  };
+
+  const prevMobileNews = () => {
+    if (!mobileNewsList || mobileNewsList.length === 0) return;
+    setMobileNewsIdx((mobileNewsIdx - 1 + mobileNewsList.length) % mobileNewsList.length);
+  };
 
   // Circular progress calculation for SVG
   const radius = 38;
@@ -128,26 +155,26 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
             </div>
 
             {/* 4K Hero Title */}
-            <div className="space-y-2.5 sm:space-y-4">
-              <h1 className={`text-2xl xs:text-3xl sm:text-5xl lg:text-6xl font-black leading-tight sm:leading-snug ${
+            <div className="space-y-2 sm:space-y-4">
+              <h1 className={`text-xl xs:text-2xl sm:text-5xl lg:text-6xl font-black leading-tight sm:leading-snug ${
                 theme === 'light' ? 'text-slate-950' : 'text-white'
               }`}>
-                <span className="block mb-1 sm:mb-2 text-slate-900 dark:text-white">{t.heroMainTitle1}</span>
-                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-0.5 sm:py-1">
+                <span className="block mb-0.5 sm:mb-2 text-slate-900 dark:text-white text-base xs:text-xl sm:text-4xl lg:text-5xl">{t.heroMainTitle1}</span>
+                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-0.5 sm:py-1 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl">
                   {t.heroMainTitle2}
                 </span>
-                <span className="inline-block text-lg xs:text-xl sm:text-4xl font-light text-slate-400 ms-2 sm:ms-3">
+                <span className="inline-block text-sm xs:text-base sm:text-3xl font-light text-slate-400 ms-1.5 sm:ms-3">
                   (360 كم)
                 </span>
               </h1>
               
-              <p className={`text-sm sm:text-lg lg:text-xl font-bold leading-relaxed ${
+              <p className={`text-xs xs:text-sm sm:text-lg lg:text-xl font-bold leading-relaxed ${
                 theme === 'light' ? 'text-slate-800' : 'text-slate-200'
               }`}>
                 {t.heroSubtitle}
               </p>
 
-              <p className={`text-xs sm:text-sm lg:text-base max-w-xl leading-relaxed font-normal ${
+              <p className={`text-[11px] xs:text-xs sm:text-sm lg:text-base max-w-xl leading-relaxed font-normal ${
                 theme === 'light' ? 'text-slate-600' : 'text-slate-400'
               }`}>
                 {t.heroDesc}
@@ -155,14 +182,14 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-1 sm:pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="pt-0.5 sm:pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
               {/* Primary Action Button */}
               <button
                 onClick={() => {
                   const el = document.getElementById('projects-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-lg shadow-amber-500/20 cursor-pointer text-center active:scale-98"
+                className="w-full sm:w-auto px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition-all shadow-lg shadow-amber-500/20 cursor-pointer text-center active:scale-98"
               >
                 {lang === 'ar' ? 'استكشف المشاريع' : 'Explore Projects'}
               </button>
@@ -170,12 +197,129 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
           </div>
 
-          {/* ── Left Column: Dignified Project Showcase Card with GPU Hover ── */}
+          {/* ── Left Column: News Post Card on Mobile / Desktop Showcase Card with GPU Hover ── */}
           <div 
             className="w-full lg:w-5/12 flex flex-col items-center lg:items-end animate-scaleUp gsap-scale-in"
           >
             
-            <div className={`w-full max-w-md rounded-2xl sm:rounded-3xl overflow-hidden border shadow-2xl text-start glass-card-hover cursor-pointer ${
+            {/* 1. MOBILE ONLY: News Post Card (تبديل البطاقة بالهاتف إلى نظام بوست الأخبار الميدانية) */}
+            <div className="w-full max-w-md block lg:hidden">
+              <div className={`w-full rounded-2xl overflow-hidden border shadow-xl text-start transition-all duration-300 ${
+                theme === 'light'
+                  ? 'bg-white border-amber-300/80 shadow-slate-200/90 text-slate-900'
+                  : 'bg-[#090e1a]/95 border-amber-500/30 shadow-black/90 text-white'
+              }`}>
+                
+                {/* Mobile Post Header: Agency Brand + Tag */}
+                <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-sm flex-shrink-0">
+                      <img 
+                        src={resolveAsset('./logo-agency.jpg')} 
+                        alt="جهاز تنفيذ مشروعات المواصلات" 
+                        className="w-full h-full object-contain rounded-[10px] bg-white"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    </div>
+                    <div className="text-start leading-tight">
+                      <div className="flex items-center gap-1">
+                        <span className="font-black text-xs">
+                          {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
+                        </span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {lang === 'ar' ? (currentMobileNews.author || 'المكتب الإعلامي') : (currentMobileNews.authorEn || 'Media Office')} • {lang === 'ar' ? (currentMobileNews.timeAgo || 'مباشر') : (currentMobileNews.timeAgoEn || 'Live')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                    {lang === 'ar' ? 'المستجدات الميدانية' : 'Field News'}
+                  </span>
+                </div>
+
+                {/* Mobile Post Photo with Controls */}
+                <div className="h-44 xs:h-48 relative overflow-hidden group bg-slate-950">
+                  <img 
+                    src={resolveAsset(currentMobileNews.image || './road-asphalt-paver.jpg')} 
+                    alt={currentMobileNews.title || 'أخبار طريق أوباري غات'} 
+                    className="w-full h-full object-cover transition-transform duration-500"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                  {/* Tag on image */}
+                  <span className="absolute top-2.5 end-2.5 px-2.5 py-0.5 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black shadow-md">
+                    {lang === 'ar' ? (currentMobileNews.tag || 'توثيق 4K') : (currentMobileNews.tagEn || '4K Field Doc')}
+                  </span>
+
+                  {/* Navigation Arrows for Mobile News */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); prevMobileNews(); }}
+                    className="absolute top-1/2 start-2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center text-xs border border-white/20 active:scale-90"
+                    aria-label="Previous"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); nextMobileNews(); }}
+                    className="absolute top-1/2 end-2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center text-xs border border-white/20 active:scale-90"
+                    aria-label="Next"
+                  >
+                    ›
+                  </button>
+
+                  {/* Slide index & Location pill */}
+                  <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px]">
+                    <span className="px-2 py-0.5 rounded-md bg-black/70 font-mono font-bold text-amber-400 border border-white/10">
+                      {lang === 'ar' ? (currentMobileNews.location || 'طريق أوباري - غات') : (currentMobileNews.locationEn || 'Ubari - Ghat Highway')}
+                    </span>
+                    <span className="font-mono bg-black/60 px-1.5 py-0.5 rounded font-bold">
+                      {mobileNewsIdx + 1} / {mobileNewsList.length}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Mobile Post Text Content */}
+                <div className="p-3.5 space-y-2">
+                  <h3 className="font-black text-xs xs:text-sm leading-snug line-clamp-2">
+                    {lang === 'ar' ? currentMobileNews.title : (currentMobileNews.titleEn || currentMobileNews.title)}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed font-normal">
+                    {lang === 'ar' ? currentMobileNews.desc : (currentMobileNews.descEn || currentMobileNews.desc)}
+                  </p>
+
+                  {/* Dots Indicators */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-white/10 text-[10px]">
+                    <div className="flex items-center gap-1">
+                      {mobileNewsList.slice(0, 6).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setMobileNewsIdx(i)}
+                          className={`h-1.5 rounded-full transition-all ${
+                            i === mobileNewsIdx ? 'w-4 bg-amber-500' : 'w-1.5 bg-slate-300 dark:bg-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>{lang === 'ar' ? 'متابعة رسمية معتمدة' : 'Official Update'}</span>
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* 2. DESKTOP ONLY: Preserved 100% of Desktop Technical Showcase Card */}
+            <div className={`hidden lg:block w-full max-w-md rounded-2xl sm:rounded-3xl overflow-hidden border shadow-2xl text-start glass-card-hover cursor-pointer ${
               theme === 'light' 
                 ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-200/80' 
                 : 'bg-[#0b101e]/95 border-white/15 text-white shadow-black/80'

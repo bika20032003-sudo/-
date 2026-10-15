@@ -305,8 +305,10 @@ function App() {
               </div>
             </div>
 
-            {/* Section: News Post Carousel (بوست أخبار المشروع المصور مع التنقل ونقاط العرض) */}
-            <NewsPostCarousel theme={theme} lang={lang} />
+            {/* Section: News Post Carousel (بوست أخبار المشروع المصور مع التنقل ونقاط العرض - للكمبيوتر) */}
+            <div className="hidden lg:block">
+              <NewsPostCarousel theme={theme} lang={lang} />
+            </div>
 
             {/* Section: Ubari - Ghat 360km Project Overview (نبذة خاصة بالمشروع) */}
             <div id="about-section" className="gsap-scale-in">
