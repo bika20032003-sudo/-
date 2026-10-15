@@ -257,21 +257,7 @@ export default function Header({
             </span>
           </a>
 
-          {/* Mobile: Compact Pill for "بداية الرحلة" */}
-          <a
-            href="https://bika20032003-sudo.github.io/-/road/"
-            target="_blank"
-            rel="noopener noreferrer"
-            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Showcase Website'}
-            className={`md:hidden p-1.5 px-2 rounded-xl border flex items-center gap-1 transition-all text-[11px] font-black ${
-              theme === 'light'
-                ? 'bg-orange-50 border-orange-300 text-orange-600'
-                : 'bg-orange-500/15 border-orange-500/30 text-orange-400'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-            <span className="hidden xs:inline">{lang === 'ar' ? 'الرحلة' : 'Road'}</span>
-          </a>
+
 
           {/* ── BEFORE LOGIN: Glass "دخول" Button (Desktop/Tablet) ── */}
           {!user ? (
@@ -422,6 +408,25 @@ export default function Header({
             </div>
             <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">360 كم</span>
           </div>
+
+          {/* Mobile Start Journey Link */}
+          <a
+            href="https://bika20032003-sudo.github.io/-/road/"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-between border shadow-sm ${
+              theme === 'light'
+                ? 'bg-orange-50 hover:bg-orange-100 border-orange-300 text-orange-700'
+                : 'bg-orange-500/15 hover:bg-orange-500/25 border-orange-500/30 text-orange-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Compass className="w-4 h-4 text-orange-500 shrink-0" />
+              <span>{lang === 'ar' ? 'الموقع التعريفي (بداية الرحلة)' : 'Showcase Website (Start Journey)'}</span>
+            </div>
+            <span className="text-[10px] font-mono text-orange-500">↗</span>
+          </a>
 
           {navItems.map((item) => (
             <button

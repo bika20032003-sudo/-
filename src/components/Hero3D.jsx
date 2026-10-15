@@ -53,14 +53,36 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
   const currentMobileNews = mobileNewsList[mobileNewsIdx] || mobileNewsList[0] || {};
 
+  const [touchStartHero, setTouchStartHero] = useState(null);
+  const [touchEndHero, setTouchEndHero] = useState(null);
+
   const nextMobileNews = () => {
     if (!mobileNewsList || mobileNewsList.length === 0) return;
-    setMobileNewsIdx((mobileNewsIdx + 1) % mobileNewsList.length);
+    setMobileNewsIdx(prev => (prev + 1) % mobileNewsList.length);
   };
 
   const prevMobileNews = () => {
     if (!mobileNewsList || mobileNewsList.length === 0) return;
-    setMobileNewsIdx((mobileNewsIdx - 1 + mobileNewsList.length) % mobileNewsList.length);
+    setMobileNewsIdx(prev => (prev - 1 + mobileNewsList.length) % mobileNewsList.length);
+  };
+
+  const onTouchStartHero = (e) => {
+    setTouchEndHero(null);
+    setTouchStartHero(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMoveHero = (e) => {
+    setTouchEndHero(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEndHero = () => {
+    if (!touchStartHero || !touchEndHero) return;
+    const distance = touchStartHero - touchEndHero;
+    if (distance > 45) {
+      nextMobileNews();
+    } else if (distance < -45) {
+      prevMobileNews();
+    }
   };
 
   // Circular progress calculation for SVG
@@ -203,7 +225,12 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
           >
             
             {/* 1. MOBILE ONLY: News Post Card (تبديل البطاقة بالهاتف إلى نظام بوست الأخبار الميدانية) */}
-            <div className="w-full max-w-md block lg:hidden">
+            <div 
+              className="w-full max-w-md block lg:hidden"
+              onTouchStart={onTouchStartHero}
+              onTouchMove={onTouchMoveHero}
+              onTouchEnd={onTouchEndHero}
+            >
               <div className={`w-full rounded-2xl overflow-hidden border shadow-xl text-start transition-all duration-300 ${
                 theme === 'light'
                   ? 'bg-white border-amber-300/80 shadow-slate-200/90 text-slate-900'

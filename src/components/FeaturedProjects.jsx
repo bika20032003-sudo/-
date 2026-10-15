@@ -203,15 +203,50 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
   // Mobile Projects 5-Second Fade Auto-Cycle State (المشروعات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي)
   const [activeProjectMobileIdx, setActiveProjectMobileIdx] = useState(0);
   const [projectFadeActive, setProjectFadeActive] = useState(true);
+  const [touchStartProj, setTouchStartProj] = useState(null);
+  const [touchEndProj, setTouchEndProj] = useState(null);
+
+  const handleNextProject = () => {
+    if (!filteredProjects || filteredProjects.length <= 1) return;
+    setProjectFadeActive(false);
+    setTimeout(() => {
+      setActiveProjectMobileIdx(prev => (prev + 1) % filteredProjects.length);
+      setProjectFadeActive(true);
+    }, 200);
+  };
+
+  const handlePrevProject = () => {
+    if (!filteredProjects || filteredProjects.length <= 1) return;
+    setProjectFadeActive(false);
+    setTimeout(() => {
+      setActiveProjectMobileIdx(prev => (prev - 1 + filteredProjects.length) % filteredProjects.length);
+      setProjectFadeActive(true);
+    }, 200);
+  };
+
+  const onTouchStartProj = (e) => {
+    setTouchEndProj(null);
+    setTouchStartProj(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMoveProj = (e) => {
+    setTouchEndProj(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEndProj = () => {
+    if (!touchStartProj || !touchEndProj) return;
+    const distance = touchStartProj - touchEndProj;
+    if (distance > 45) {
+      handleNextProject();
+    } else if (distance < -45) {
+      handlePrevProject();
+    }
+  };
 
   useEffect(() => {
     if (!filteredProjects || filteredProjects.length <= 1) return;
     const interval = setInterval(() => {
-      setProjectFadeActive(false);
-      setTimeout(() => {
-        setActiveProjectMobileIdx(prev => (prev + 1) % filteredProjects.length);
-        setProjectFadeActive(true);
-      }, 350);
+      handleNextProject();
     }, 5000);
     return () => clearInterval(interval);
   }, [filteredProjects.length]);
@@ -373,7 +408,12 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
       </div>
 
       {/* 2. MOBILE ONLY: 5-Second Fade Animation Auto-Cycling Project Card (المشروعات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي) */}
-      <div className="md:hidden text-start">
+      <div 
+        className="md:hidden text-start"
+        onTouchStart={onTouchStartProj}
+        onTouchMove={onTouchMoveProj}
+        onTouchEnd={onTouchEndProj}
+      >
         {currentMobileProject && (
           <div
             onClick={() => setSelectedModalProject(currentMobileProject)}
@@ -387,8 +427,8 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               }`}
           >
             {/* Post Header: Agency Brand + Tag */}
-            <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
-              <div className="flex items-center gap-2">
+            <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-sm flex-shrink-0">
                   <img 
                     src={resolveAsset('./logo-agency.jpg')} 
@@ -397,25 +437,25 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 </div>
-                <div className="text-start leading-tight">
+                <div className="text-start leading-tight min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="font-black text-xs">
+                    <span className="font-black text-xs whitespace-nowrap">
                       {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
                     </span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">
                     {currentMobileProject.id} • {currentMobileProject.startDate}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 font-mono">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 font-mono whitespace-nowrap">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                   <span>5s</span>
                 </span>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border whitespace-nowrap ${
                   currentMobileProject.isFieldDoc
                     ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
                     : currentMobileProject.status === 'completed'
@@ -506,13 +546,9 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setProjectFadeActive(false);
-                      setTimeout(() => {
-                        setActiveProjectMobileIdx((activeProjectMobileIdx - 1 + filteredProjects.length) % filteredProjects.length);
-                        setProjectFadeActive(true);
-                      }, 200);
+                      handlePrevProject();
                     }}
-                    className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
                     aria-label="Previous project"
                   >
                     ‹
@@ -521,13 +557,9 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setProjectFadeActive(false);
-                      setTimeout(() => {
-                        setActiveProjectMobileIdx((activeProjectMobileIdx + 1) % filteredProjects.length);
-                        setProjectFadeActive(true);
-                      }, 200);
+                      handleNextProject();
                     }}
-                    className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
                     aria-label="Next project"
                   >
                     ›

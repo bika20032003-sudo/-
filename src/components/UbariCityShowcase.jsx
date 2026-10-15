@@ -14,7 +14,7 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
       color: 'text-cyan-600 dark:text-cyan-400',
       iconColor: 'text-cyan-500',
       iconBg: 'bg-cyan-500/15 border-cyan-500/30',
-      badge: lang === 'ar' ? 'المواصفات الفنية للأسفلت' : 'Asphalt Specs'
+      badge: lang === 'ar' ? 'معايير دولية' : 'Global Specs'
     },
     {
       id: 1,
@@ -24,7 +24,7 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
       color: 'text-amber-600 dark:text-amber-400',
       iconColor: 'text-amber-500',
       iconBg: 'bg-amber-500/15 border-amber-500/30',
-      badge: lang === 'ar' ? 'الإنارة بالطاقة الشمسية' : 'Solar Lighting'
+      badge: lang === 'ar' ? 'طاقة متجددة' : 'Renewable Energy'
     },
     {
       id: 2,
@@ -34,7 +34,7 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
       color: 'text-emerald-600 dark:text-emerald-400',
       iconColor: 'text-emerald-500',
       iconBg: 'bg-emerald-500/15 border-emerald-500/30',
-      badge: lang === 'ar' ? 'تصريف السيول والعبارات' : 'Drainage & Culverts'
+      badge: lang === 'ar' ? 'تصريف هيدروليكي' : 'Flood Safe'
     },
     {
       id: 3,
@@ -44,21 +44,54 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
       color: 'text-amber-600 dark:text-amber-400',
       iconColor: 'text-amber-500',
       iconBg: 'bg-amber-500/15 border-amber-500/30',
-      badge: lang === 'ar' ? 'الربط الاستراتيجي والتجاري' : 'Strategic Link'
+      badge: lang === 'ar' ? 'شريان تنموي' : 'Strategic Link'
     }
   ];
 
   const [activeFeatureIdx, setActiveFeatureIdx] = useState(0);
   const [fadeActive, setFadeActive] = useState(true);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const handleNext = () => {
+    setFadeActive(false);
+    setTimeout(() => {
+      setActiveFeatureIdx(prev => (prev + 1) % originalFeatures.length);
+      setFadeActive(true);
+    }, 200);
+  };
+
+  const handlePrev = () => {
+    setFadeActive(false);
+    setTimeout(() => {
+      setActiveFeatureIdx(prev => (prev - 1 + originalFeatures.length) % originalFeatures.length);
+      setFadeActive(true);
+    }, 200);
+  };
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 45) {
+      handleNext();
+    } else if (distance < -45) {
+      handlePrev();
+    }
+  };
 
   // 5-second automatic progression with fade animation (المدة خمسة ثواني مع انميشن تلاشي)
   useEffect(() => {
     const interval = setInterval(() => {
-      setFadeActive(false);
-      setTimeout(() => {
-        setActiveFeatureIdx(prev => (prev + 1) % originalFeatures.length);
-        setFadeActive(true);
-      }, 350);
+      handleNext();
     }, 5000);
     return () => clearInterval(interval);
   }, [originalFeatures.length]);
@@ -192,9 +225,14 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
         </div>
 
         {/* 2. MOBILE ONLY: 5-Second Fade Animation Auto-Cycling Card (البطاقات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي) */}
-        <div className="md:hidden relative z-10 text-start space-y-2.5">
+        <div 
+          className="md:hidden relative z-10 text-start space-y-2.5"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <div 
-            className={`p-4 xs:p-5 rounded-2xl border shadow-xl transition-all duration-500 min-h-[170px] flex flex-col justify-between ${
+            className={`p-4 xs:p-5 rounded-2xl border shadow-xl transition-all duration-500 min-h-[175px] flex flex-col justify-between ${
               fadeActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
             } ${
               theme === 'light' 
@@ -202,33 +240,31 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
                 : 'bg-[#090e1a]/95 border-white/10 text-white shadow-black/80'
             }`}
           >
-            {/* Card Header: Icon + Badge + Counter */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shadow-sm ${currentFeature.iconBg} ${currentFeature.iconColor}`}>
+            {/* Card Header: Icon + Badge + Counter (Zero-wrap protection) */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 xs:w-9 xs:h-9 rounded-xl border flex items-center justify-center shadow-sm shrink-0 ${currentFeature.iconBg} ${currentFeature.iconColor}`}>
                   <CurrentIcon className="w-4 h-4 xs:w-5 xs:h-5" />
                 </div>
-                <div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                    {currentFeature.badge}
-                  </span>
-                </div>
+                <span className="text-[10px] xs:text-[11px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30 whitespace-nowrap shrink-0">
+                  {currentFeature.badge}
+                </span>
               </div>
 
-              {/* 5s Auto Indicator & Slide index */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 font-mono">
+              {/* 5s Auto Indicator & Slide index (never wrap vertically) */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 font-mono whitespace-nowrap">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                   <span>5s</span>
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10">
+                <span className="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded border border-slate-200 dark:border-white/10 whitespace-nowrap">
                   {activeFeatureIdx + 1} / {originalFeatures.length}
                 </span>
               </div>
             </div>
 
             {/* Card Title & Description */}
-            <div className="space-y-1.5 my-2">
+            <div className="space-y-1.5 my-2.5">
               <h4 className={`font-black text-xs xs:text-sm ${currentFeature.color}`}>
                 {currentFeature.title}
               </h4>
@@ -262,35 +298,22 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setFadeActive(false);
-                    setTimeout(() => {
-                      setActiveFeatureIdx((activeFeatureIdx - 1 + originalFeatures.length) % originalFeatures.length);
-                      setFadeActive(true);
-                    }, 200);
-                  }}
-                  className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                  onClick={handlePrev}
+                  className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
                   aria-label="Previous card"
                 >
                   ‹
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setFadeActive(false);
-                    setTimeout(() => {
-                      setActiveFeatureIdx((activeFeatureIdx + 1) % originalFeatures.length);
-                      setFadeActive(true);
-                    }, 200);
-                  }}
-                  className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
+                  onClick={handleNext}
+                  className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs active:scale-95 text-slate-400 hover:text-white cursor-pointer"
                   aria-label="Next card"
                 >
                   ›
                 </button>
               </div>
             </div>
-
           </div>
         </div>
 
