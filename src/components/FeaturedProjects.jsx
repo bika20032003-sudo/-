@@ -437,16 +437,16 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 </div>
-                <div className="text-start leading-tight min-w-0">
+                <div className="text-start leading-tight min-w-0 flex-1 overflow-hidden">
                   <div className="flex items-center gap-1">
                     <span className="font-black text-xs whitespace-nowrap">
                       {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">
-                    {currentMobileProject.id} • {currentMobileProject.startDate}
-                  </span>
+                  <p className="text-[9.5px] text-slate-400 font-mono truncate max-w-[130px] xs:max-w-[170px]">
+                    {currentMobileProject.id}
+                  </p>
                 </div>
               </div>
 

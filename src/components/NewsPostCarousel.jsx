@@ -8,12 +8,14 @@ import {
 } from 'lucide-react';
 import { getSavedNewsPosts } from '../services/api';
 import { resolveAsset } from '../utils/assets';
+import NewsDetailModal from './NewsDetailModal';
 
 export default function NewsPostCarousel({ theme, lang = 'ar' }) {
   const [posts, setPosts] = useState(getSavedNewsPosts);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [selectedPostModal, setSelectedPostModal] = useState(null);
 
   // Sync with localStorage updates dispatched across tabs/components
   useEffect(() => {
@@ -140,9 +142,10 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
           
           {/* ── 1. The Post Visual Photo with Fade Animation & Hover Zoom ── */}
           <div 
+            onClick={() => setSelectedPostModal(currentPost)}
             className="lg:col-span-7 relative overflow-hidden h-64 sm:h-80 md:h-96 lg:h-auto min-h-[250px] sm:min-h-[360px] bg-[#0c1220] group cursor-pointer"
             data-cursor-image="true"
-            data-cursor-label={lang === 'ar' ? 'معاينة الصورة ↗' : 'View Photo ↗'}
+            data-cursor-label={lang === 'ar' ? 'عرض التفاصيل الكاملة ↗' : 'View Full Story ↗'}
           >
             <div 
               className={`w-full h-full relative transition-all duration-500 ease-in-out ${
@@ -173,7 +176,8 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
             {/* Arrow Nav Overlay on Image */}
             <div className="absolute inset-y-0 start-2.5 sm:start-3 flex items-center">
               <button
-                onClick={prevSlide}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); prevSlide(); }}
                 title={lang === 'ar' ? 'الخبر السابق' : 'Previous News'}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center border border-white/25 shadow-xl transition-transform hover:scale-110 cursor-pointer"
               >
@@ -182,7 +186,8 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
             </div>
             <div className="absolute inset-y-0 end-2.5 sm:end-3 flex items-center">
               <button
-                onClick={nextSlide}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); nextSlide(); }}
                 title={lang === 'ar' ? 'الخبر التالي' : 'Next News'}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center border border-white/25 shadow-xl transition-transform hover:scale-110 cursor-pointer"
               >
@@ -210,9 +215,12 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
               </div>
 
               {/* Bold Title */}
-              <h3 className={`text-base sm:text-xl lg:text-2xl font-black leading-snug ${
-                theme === 'light' ? 'text-slate-950' : 'text-white'
-              }`}>
+              <h3 
+                onClick={() => setSelectedPostModal(currentPost)}
+                className={`text-base sm:text-xl lg:text-2xl font-black leading-snug cursor-pointer hover:text-amber-500 transition-colors ${
+                  theme === 'light' ? 'text-slate-950' : 'text-white'
+                }`}
+              >
                 {lang === 'ar' ? currentPost.title : currentPost.titleEn}
               </h3>
 
@@ -222,6 +230,17 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
               }`}>
                 {lang === 'ar' ? currentPost.desc : currentPost.descEn}
               </p>
+
+              {/* Read Full Article Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPostModal(currentPost)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 border border-amber-500/35 text-xs font-black transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
+                >
+                  <span>{lang === 'ar' ? 'قراءة تفاصيل الخبر بالكامل ↗' : 'Read Full Article ↗'}</span>
+                </button>
+              </div>
             </div>
 
           </div>
@@ -253,6 +272,15 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
         </div>
 
       </div>
+
+      {/* ── Full News Post Modal (يظهر الخبر بالكامل عند النقر) ── */}
+      <NewsDetailModal 
+        post={selectedPostModal}
+        isOpen={Boolean(selectedPostModal)}
+        onClose={() => setSelectedPostModal(null)}
+        theme={theme}
+        lang={lang}
+      />
     </section>
   );
 }

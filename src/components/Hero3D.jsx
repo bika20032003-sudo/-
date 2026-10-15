@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
 import MarqueeTicker from './MarqueeTicker';
+import NewsDetailModal from './NewsDetailModal';
 import { getSavedHeroCard, getSavedNewsPosts } from '../services/api';
 import { resolveAsset } from '../utils/assets';
 
@@ -31,6 +32,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
   // Mobile News Post Feed State
   const [mobileNewsList, setMobileNewsList] = useState(getSavedNewsPosts);
   const [mobileNewsIdx, setMobileNewsIdx] = useState(0);
+  const [selectedNewsPost, setSelectedNewsPost] = useState(null);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -231,11 +233,14 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
               onTouchMove={onTouchMoveHero}
               onTouchEnd={onTouchEndHero}
             >
-              <div className={`w-full rounded-2xl overflow-hidden border shadow-xl text-start transition-all duration-300 ${
-                theme === 'light'
-                  ? 'bg-white border-amber-300/80 shadow-slate-200/90 text-slate-900'
-                  : 'bg-[#090e1a]/95 border-amber-500/30 shadow-black/90 text-white'
-              }`}>
+              <div 
+                onClick={() => setSelectedNewsPost(currentMobileNews)}
+                className={`w-full rounded-2xl overflow-hidden border shadow-xl text-start transition-all duration-300 cursor-pointer active:scale-[0.99] ${
+                  theme === 'light'
+                    ? 'bg-white border-amber-300/80 shadow-slate-200/90 text-slate-900'
+                    : 'bg-[#090e1a]/95 border-amber-500/30 shadow-black/90 text-white'
+                }`}
+              >
                 
                 {/* Mobile Post Header: Agency Brand + Tag */}
                 <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
@@ -322,22 +327,22 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                     {lang === 'ar' ? currentMobileNews.desc : (currentMobileNews.descEn || currentMobileNews.desc)}
                   </p>
 
-                  {/* Dots Indicators */}
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-white/10 text-[10px]">
+                  {/* Dots Indicators + Full Story Prompt */}
+                  <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-white/10 text-[10px]">
                     <div className="flex items-center gap-1">
                       {mobileNewsList.slice(0, 6).map((_, i) => (
                         <button
                           key={i}
-                          onClick={() => setMobileNewsIdx(i)}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setMobileNewsIdx(i); }}
                           className={`h-1.5 rounded-full transition-all ${
                             i === mobileNewsIdx ? 'w-4 bg-amber-500' : 'w-1.5 bg-slate-300 dark:bg-white/20'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>{lang === 'ar' ? 'متابعة رسمية معتمدة' : 'Official Update'}</span>
+                    <span className="text-amber-500 font-black flex items-center gap-1 hover:underline">
+                      <span>{lang === 'ar' ? 'عرض الخبر بالكامل ↗' : 'View Full Post ↗'}</span>
                     </span>
                   </div>
                 </div>
@@ -346,7 +351,9 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
             </div>
 
             {/* 2. DESKTOP ONLY: Preserved 100% of Desktop Technical Showcase Card */}
-            <div className={`hidden lg:block w-full max-w-md rounded-2xl sm:rounded-3xl overflow-hidden border shadow-2xl text-start glass-card-hover cursor-pointer ${
+            <div 
+              onClick={() => setSelectedNewsPost(currentMobileNews || heroCard)}
+              className={`hidden lg:block w-full max-w-md rounded-2xl sm:rounded-3xl overflow-hidden border shadow-2xl text-start glass-card-hover cursor-pointer ${
               theme === 'light' 
                 ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-200/80' 
                 : 'bg-[#0b101e]/95 border-white/15 text-white shadow-black/80'
@@ -447,6 +454,15 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
         </div>
 
       </div>
+
+      {/* ── Full News Post Modal (يظهر الخبر بالكامل عند النقر) ── */}
+      <NewsDetailModal 
+        post={selectedNewsPost}
+        isOpen={Boolean(selectedNewsPost)}
+        onClose={() => setSelectedNewsPost(null)}
+        theme={theme}
+        lang={lang}
+      />
 
     </section>
   );
