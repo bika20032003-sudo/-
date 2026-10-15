@@ -187,19 +187,19 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                 <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-0.5 sm:py-1 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl">
                   {t.heroMainTitle2}
                 </span>
-                <span className="inline-block text-sm xs:text-base sm:text-3xl font-light text-slate-400 ms-1.5 sm:ms-3">
+                <span className="inline-block text-sm xs:text-base sm:text-3xl font-light text-slate-500 dark:text-white/85 ms-1.5 sm:ms-3">
                   (360 كم)
                 </span>
               </h1>
               
               <p className={`text-xs xs:text-sm sm:text-lg lg:text-xl font-bold leading-relaxed ${
-                theme === 'light' ? 'text-slate-800' : 'text-slate-200'
+                theme === 'light' ? 'text-slate-800' : 'text-white'
               }`}>
                 {t.heroSubtitle}
               </p>
 
               <p className={`text-[11px] xs:text-xs sm:text-sm lg:text-base max-w-xl leading-relaxed font-normal ${
-                theme === 'light' ? 'text-slate-600' : 'text-slate-400'
+                theme === 'light' ? 'text-slate-700' : 'text-white'
               }`}>
                 {t.heroDesc}
               </p>

@@ -13,9 +13,7 @@ import {
   Globe,
   ChevronDown,
   LayoutDashboard,
-  Crown,
-  Award,
-  Compass
+  Crown
 } from 'lucide-react';
 
 export default function Header({ 
@@ -251,7 +249,6 @@ export default function Header({
                 : 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 hover:border-orange-400/60 shadow-orange-500/10'
             }`}
           >
-            <Compass className="w-3.5 h-3.5 text-orange-500 shrink-0" />
             <span className="text-orange-500 font-black tracking-wide">
               {lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}
             </span>
@@ -400,33 +397,11 @@ export default function Header({
         }`}>
           {/* Logo badge inside mobile menu */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-1">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-500" />
-              <span className="text-xs font-black text-amber-500">
-                {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Authority'}
-              </span>
-            </div>
-            <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">360 كم</span>
+            <span className={`text-xs font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+              {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Authority'}
+            </span>
+            <span className="text-[10px] text-amber-400 font-bold bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">360 كم</span>
           </div>
-
-          {/* Mobile Start Journey Link */}
-          <a
-            href="https://bika20032003-sudo.github.io/-/road/"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-between border shadow-sm ${
-              theme === 'light'
-                ? 'bg-orange-50 hover:bg-orange-100 border-orange-300 text-orange-700'
-                : 'bg-orange-500/15 hover:bg-orange-500/25 border-orange-500/30 text-orange-300'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-orange-500 shrink-0" />
-              <span>{lang === 'ar' ? 'الموقع التعريفي (بداية الرحلة)' : 'Showcase Website (Start Journey)'}</span>
-            </div>
-            <span className="text-[10px] font-mono text-orange-500">↗</span>
-          </a>
 
           {navItems.map((item) => (
             <button
@@ -476,13 +451,12 @@ export default function Header({
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black text-start bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 flex items-center justify-between transition-colors text-orange-500 cursor-pointer"
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black text-start bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 flex items-center justify-between transition-colors cursor-pointer"
             >
-              <span className="flex items-center gap-2">
-                <Compass className="w-4 h-4 text-orange-500" />
-                <span>{lang === 'ar' ? 'بداية الرحلة (الموقع التعريفي)' : 'Journey Start (Showcase)'}</span>
+              <span className={`font-bold ${theme === 'light' ? 'text-orange-950' : 'text-white'}`}>
+                {lang === 'ar' ? 'بداية الرحلة (الموقع التعريفي)' : 'Journey Start (Showcase)'}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold">
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-orange-500/30 text-white border border-orange-500/40 font-bold whitespace-nowrap">
                 عرض ↗
               </span>
             </a>
