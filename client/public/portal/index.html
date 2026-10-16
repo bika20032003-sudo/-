@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl" data-theme="dark" class="dark">
 
 <head>
   <meta charset="UTF-8" />
@@ -9,6 +9,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>مشروع طريق أوباري - غات | جهاز تنفيذ مشروعات المواصلات</title>
+  <!-- Pre-render Theme Initialization (Night Mode Default) -->
+  <script>
+    try {
+      var saved = localStorage.getItem('portal_theme_v2');
+      var theme = (saved === 'light' || saved === 'dark') ? saved : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch(e) {}
+  </script>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,11 +49,11 @@
   </script>
   <!-- Google Identity Services (OAuth 2.0) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script type="module" crossorigin src="./assets/index-TJqoUawf.js"></script>
+  <script type="module" crossorigin src="./assets/index-C7RCLxmK.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-1oJ96Mrs.css">
 </head>
 
-<body class="bg-[#F8FAFC] text-slate-900 overflow-x-hidden selection:bg-amber-500 selection:text-black">
+<body class="bg-[#06080E] text-slate-100 overflow-x-hidden selection:bg-amber-500 selection:text-black">
   <div id="root"></div>
 </body>
 
