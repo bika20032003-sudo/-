@@ -100,17 +100,29 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
       
       {/* ── 4K Cinematic Background Road Photo (Direct GPU Hardware Texture) ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <img 
-          src={resolveAsset('./road-aerial-highway.jpg')} 
-          alt="أعمال رصف وصيانة طريق أوباري غات الميدانية 4K" 
-          fetchpriority="high"
-          decoding="async"
-          className="w-full h-full object-cover object-center"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
-          }}
-        />
+        <picture className="w-full h-full block">
+          {/* Mobile Portrait 9:16 Ultra-Sharp Image */}
+          <source 
+            media="(max-width: 768px)" 
+            srcSet={resolveAsset('./road-hero-mobile.jpg')} 
+          />
+          {/* Desktop & Tablet 2.5K Panoramic Widescreen Image */}
+          <source 
+            media="(min-width: 769px)" 
+            srcSet={resolveAsset('./hero-desert-road.jpg')} 
+          />
+          <img 
+            src={resolveAsset('./hero-desert-road.jpg')} 
+            alt="مشروع طريق أوباري - غات 4K" 
+            fetchPriority="high"
+            decoding="async"
+            className="w-full h-full object-cover object-center"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+            }}
+          />
+        </picture>
 
         {/* 3D Glowing Road Horizon Guide Trajectory */}
         <div className="absolute inset-0 pointer-events-none opacity-30">
