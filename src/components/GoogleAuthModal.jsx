@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 
-const GOOGLE_CLIENT_ID = '368836718086-av1eioa7j621i25cfsa6bk3lc0nt3blu.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '368836718086-j4g0qa4mlr7tko7vsdgvaougpkgk3493.apps.googleusercontent.com';
 
 const DEFAULT_GOOGLE_ACCOUNTS = [
   {
