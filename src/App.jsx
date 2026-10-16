@@ -105,9 +105,11 @@ function App() {
   // Navigation tab state: 'hero' | 'sectors' | 'contractors' | 'media' | 'dashboard'
   const [activeTab, setActiveTab] = useState('hero');
 
-  // Theme state: 'light' | 'dark'
+  // Theme state: 'dark' | 'light' - Default is Night Mode (dark)
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'light';
+    const saved = localStorage.getItem('portal_theme_v2');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'dark';
   });
 
   // Language state: 'ar' | 'en'
@@ -166,6 +168,7 @@ function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('portal_theme_v2', theme);
     localStorage.setItem('portal_theme', theme);
   }, [theme]);
 
