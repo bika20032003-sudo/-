@@ -5,6 +5,7 @@ const STORAGE_KEY_URL = 'portal_supabase_url';
 const STORAGE_KEY_ANON = 'portal_supabase_anon_key';
 
 const DEFAULT_SUPABASE_URL = 'https://ffrycyftoyxsmsqpxkyy.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_I56OiPlpoC_oLX9JVRnoZg_IuyVvWSr';
 
 export const getSupabaseConfig = () => {
   const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -15,11 +16,12 @@ export const getSupabaseConfig = () => {
 
   return {
     url: (localUrl || envUrl || DEFAULT_SUPABASE_URL || '').trim(),
-    anonKey: (localKey || envKey || '').trim(),
+    anonKey: (localKey || envKey || DEFAULT_SUPABASE_KEY || '').trim(),
     isFromEnv: Boolean(!localUrl && (envUrl || DEFAULT_SUPABASE_URL)),
     isFromStorage: Boolean(localUrl)
   };
 };
+
 
 
 let cachedClient = null;
@@ -107,13 +109,19 @@ export const testSupabaseConnection = async (testUrl, testKey) => {
 
     if (error) {
       // إذا كان الجدول غير موجود، نوضح للمستخدم كود SQL المطلوب
-      if (error.code === '42P01' || error.message?.includes('relation "portal_store" does not exist')) {
+      if (
+        error.code === '42P01' || 
+        error.code === 'PGRST205' || 
+        error.message?.includes('relation "portal_store" does not exist') ||
+        error.message?.includes('schema cache')
+      ) {
         return { 
           success: false, 
           tableMissing: true,
-          message: 'تم الاتصال بنجاح بمشروع سوبابيس! يرجى تشغيل كود SQL لإنشاء جدول portal_store.' 
+          message: 'تم الاتصال والتحقق من المفاتيح بنجاح! بانتظار تشغيل كود SQL لإنشاء جدول portal_store.' 
         };
       }
+
       return { success: false, message: `خطأ في سوبابيس: ${error.message}` };
     }
 
