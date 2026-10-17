@@ -1031,8 +1031,8 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                         </div>
                       </div>
 
-                      {/* Greetings & Prayer Lines Editing */}
-                      <div className="grid-3-controls" style={{ marginTop: '16px' }}>
+                      {/* Formal Greeting Editing */}
+                      <div style={{ marginTop: '16px' }}>
                         <div>
                           <label className="editor-control-lbl">عبارة التحية الرسمية:</label>
                           <input
@@ -1040,28 +1040,6 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                             className="editor-text-input"
                             value={activeDocument.greeting_1 || 'بعد التحيـــــة والســــلام ،،،'}
                             onChange={(e) => setActiveDocument({ ...activeDocument, greeting_1: e.target.value })}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="editor-control-lbl">الاستفتاح النبوي (اختياري):</label>
-                          <input
-                            type="text"
-                            className="editor-text-input"
-                            value={activeDocument.greeting_2 || ''}
-                            placeholder="فارغ تلقائياً..."
-                            onChange={(e) => setActiveDocument({ ...activeDocument, greeting_2: e.target.value })}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="editor-control-lbl">دعاء الختام قبل المتن (اختياري):</label>
-                          <input
-                            type="text"
-                            className="editor-text-input"
-                            value={activeDocument.prayer_line || ''}
-                            placeholder="فارغ تلقائياً..."
-                            onChange={(e) => setActiveDocument({ ...activeDocument, prayer_line: e.target.value })}
                           />
                         </div>
                       </div>
@@ -1537,16 +1515,10 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
       {/* Formal Greetings */}
       <div className="a4-greetings-section">
         <p className="greeting-line-1">{doc.greeting_1 || 'بعد التحيـــــة والســــلام ،،،'}</p>
-        {doc.greeting_2 && (
-          <p className="greeting-line-2">{doc.greeting_2}</p>
-        )}
       </div>
 
       {/* Document Body Content */}
       <div className="a4-body-content">
-        {doc.prayer_line && (
-          <p className="body-prayer-line">{doc.prayer_line}</p>
-        )}
         <div
           className="body-main-clause"
           style={{
@@ -1564,28 +1536,13 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
         </div>
       </div>
 
-      {/* Signature & Stamp Block (Positioned strictly on the LEFT) */}
+      {/* Signature Block (Positioned strictly on the LEFT) */}
       <div className={`a4-signature-block pos-${doc.sig_position || 'left'}`}>
         <div className={`sig-inner ${doc.stamp_layout === 'side' ? 'layout-side' : 'layout-stacked'}`}>
           <div className="sig-text-side">
             <h4 className="sig-officer-name">{doc.signer_name || 'لواء / موسى سعد محمد'}</h4>
             <h5 className="sig-officer-rank">{doc.signer_title || 'مدير مديرية أمن أوباري'}</h5>
           </div>
-          {doc.show_stamp === true && (
-            <div
-              className="official-stamp-seal-circle"
-              style={{
-                borderColor: doc.stamp_color || '#1e3a8a',
-                color: doc.stamp_color || '#1e3a8a'
-              }}
-            >
-              <div className="stamp-inner-text" style={{ color: doc.stamp_color || '#1e3a8a' }}>
-                <span>{doc.stamp_text_1 || 'وزارة الداخلية'}</span>
-                <span>{doc.stamp_text_2 || 'مديرية أمن أوباري'}</span>
-                <span>{doc.stamp_text_3 || '* مكتب المدير *'}</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
