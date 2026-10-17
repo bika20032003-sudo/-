@@ -363,8 +363,8 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
       // Recipient & Greetings
       recipient: content.recipient,
       greeting_1: 'بعد التحيـــــة والســــلام ،،،',
-      greeting_2: 'الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد',
-      prayer_line: 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه',
+      greeting_2: '',
+      prayer_line: '',
 
       // Body text & Typography
       body_text: content.body,
@@ -376,7 +376,7 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
       // Signer & Stamp
       signer_name: 'لواء / موسى سعد محمد',
       signer_title: 'مدير مديرية أمن أوباري',
-      show_stamp: true,
+      show_stamp: false,
       stamp_text_1: 'وزارة الداخلية',
       stamp_text_2: 'مديرية أمن أوباري',
       stamp_text_3: '* مكتب المدير *',
@@ -1044,21 +1044,23 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                         </div>
 
                         <div>
-                          <label className="editor-control-lbl">الاستفتاح النبوي:</label>
+                          <label className="editor-control-lbl">الاستفتاح النبوي (اختياري):</label>
                           <input
                             type="text"
                             className="editor-text-input"
-                            value={activeDocument.greeting_2 || 'الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد'}
+                            value={activeDocument.greeting_2 || ''}
+                            placeholder="فارغ تلقائياً..."
                             onChange={(e) => setActiveDocument({ ...activeDocument, greeting_2: e.target.value })}
                           />
                         </div>
 
                         <div>
-                          <label className="editor-control-lbl">دعاء الختام قبل المتن:</label>
+                          <label className="editor-control-lbl">دعاء الختام قبل المتن (اختياري):</label>
                           <input
                             type="text"
                             className="editor-text-input"
-                            value={activeDocument.prayer_line || 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه'}
+                            value={activeDocument.prayer_line || ''}
+                            placeholder="فارغ تلقائياً..."
                             onChange={(e) => setActiveDocument({ ...activeDocument, prayer_line: e.target.value })}
                           />
                         </div>
@@ -1239,7 +1241,7 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer' }}>
                             <input
                               type="checkbox"
-                              checked={activeDocument.show_stamp !== false}
+                              checked={Boolean(activeDocument.show_stamp)}
                               onChange={(e) => setActiveDocument({ ...activeDocument, show_stamp: e.target.checked })}
                             />
                             <span>إظهار الختم</span>
@@ -1535,16 +1537,16 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
       {/* Formal Greetings */}
       <div className="a4-greetings-section">
         <p className="greeting-line-1">{doc.greeting_1 || 'بعد التحيـــــة والســــلام ،،،'}</p>
-        <p className="greeting-line-2">
-          {doc.greeting_2 || 'الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد'}
-        </p>
+        {doc.greeting_2 && (
+          <p className="greeting-line-2">{doc.greeting_2}</p>
+        )}
       </div>
 
       {/* Document Body Content */}
       <div className="a4-body-content">
-        <p className="body-prayer-line">
-          {doc.prayer_line || 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه'}
-        </p>
+        {doc.prayer_line && (
+          <p className="body-prayer-line">{doc.prayer_line}</p>
+        )}
         <div
           className="body-main-clause"
           style={{
@@ -1569,7 +1571,7 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
             <h4 className="sig-officer-name">{doc.signer_name || 'لواء / موسى سعد محمد'}</h4>
             <h5 className="sig-officer-rank">{doc.signer_title || 'مدير مديرية أمن أوباري'}</h5>
           </div>
-          {doc.show_stamp !== false && (
+          {doc.show_stamp === true && (
             <div
               className="official-stamp-seal-circle"
               style={{

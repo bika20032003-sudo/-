@@ -51,7 +51,7 @@ const INITIAL_OUTGOING_MAIL = [
     print_employee: 'عبدالصمد',
     status: 'delivered', // 'delivered' = تم التسليم (مغلق), 'pending' = قيد الإرسال, 'action_required'
     attachment_name: 'مذكرة_تنسيق_رسمية.pdf',
-    letter_body: 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه\n\nإليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.',
+    letter_body: 'إليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.',
     cc_list: [
       'السيد / وكيل وزارة الداخلية',
       'معالي / وزير الداخلية',
@@ -252,7 +252,7 @@ export default function MailSection({ user, forceMembers = [] }) {
       print_employee: (user && user.full_name) ? (user.full_name.includes('عبدالصمد') ? 'عبدالصمد' : user.full_name) : 'عبدالصمد',
       signer_name: 'لواء / موسى سعد محمد',
       signer_title: 'مدير مديرية أمن أوباري',
-      letter_body: 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه\n\nإليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.',
+      letter_body: outgoingForm.letter_body || 'إليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.',
       cc_list: [
         'السيد / وكيل وزارة الداخلية',
         'معالي / وزير الداخلية',
@@ -686,7 +686,7 @@ export default function MailSection({ user, forceMembers = [] }) {
                       print_employee: outgoingForm.sender_employee || 'عبدالصمد',
                       signer_name: 'لواء / موسى سعد محمد',
                       signer_title: 'مدير مديرية أمن أوباري',
-                      letter_body: 'وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه\n\nإليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.',
+                      letter_body: outgoingForm.letter_body || 'إليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.',
                       cc_list: [
                         'السيد / وكيل وزارة الداخلية',
                         'معالي / وزير الداخلية',
@@ -1494,23 +1494,17 @@ function OfficialLetterSheet({ letter, qrUrl }) {
         <h3>{letter.recipient_title || `إلى السيد / ${letter.recipient || 'آمر المنطقة العسكرية الجنوبية'}`}</h3>
       </div>
 
-      {/* Formal Greetings matching Image 3 */}
+      {/* Formal Greetings */}
       <div className="a4-greetings-section">
         <p className="greeting-line-1">بعد التحيـــــة والســــلام ،،،</p>
-        <p className="greeting-line-2">
-          الحمد لله والصلاة والسلام على رسول الله وعلى اله وصحبه ومن اتبع هداه اما بعد
-        </p>
       </div>
 
-      {/* Letter Body Text matching Image 3 */}
+      {/* Letter Body Text */}
       <div className="a4-body-content">
-        <p className="body-prayer-line">
-          وفقكم الله لما فيه خدمة الوطن والمواطن، والسلام عليكم ورحمة الله وبركاتــــه
-        </p>
         <p className="body-main-clause">
-          {letter.letter_body && !letter.letter_body.includes('وفقكم الله')
-            ? letter.letter_body
-            : 'إليكم من حيث الاختصاص'}
+          {(letter.letter_body || 'إليكم من حيث الاختصاص للتفضل بالعلم واتخاذ ما يلزم من إجراءات وفق ما تقتضيه المصلحة الأمنية العامة.')
+            .replace(/وفقكم الله لما فيه خدمة الوطن والمواطن[،,]?\s*والسلام عليكم ورحمة الله وبركاتــــ?ه?\n*/g, '')
+            .trim()}
         </p>
       </div>
 
@@ -1520,13 +1514,6 @@ function OfficialLetterSheet({ letter, qrUrl }) {
           <div className="sig-text-side">
             <h4 className="sig-officer-name">{letter.signer_name || 'لواء / موسى سعد محمد'}</h4>
             <h5 className="sig-officer-rank">{letter.signer_title || 'مدير مديرية أمن أوباري'}</h5>
-          </div>
-          <div className="official-stamp-seal-circle">
-            <div className="stamp-inner-text">
-              <span>وزارة الداخلية</span>
-              <span>مديرية أمن أوباري</span>
-              <span>* مكتب المدير *</span>
-            </div>
           </div>
         </div>
       </div>
