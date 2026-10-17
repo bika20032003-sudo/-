@@ -140,10 +140,7 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
-            {/* Top Tag */}
-            <span className="absolute top-3 end-3 px-3 py-1 rounded-xl bg-amber-500 text-slate-950 text-xs font-black shadow-lg">
-              {post.category || (lang === 'ar' ? 'توثيق 4K' : '4K Doc')}
-            </span>
+
 
             {/* Bottom Photo Telemetry */}
             <div className="absolute bottom-3 start-3 end-3 flex items-center justify-between text-white text-xs gap-2 pointer-events-none">
@@ -227,19 +224,14 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
         </div>
 
         {/* ── Modal Footer ── */}
-        <div className="px-4 sm:px-6 py-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs relative z-10 shrink-0 bg-slate-50/70 dark:bg-black/30 gap-2">
+        <div className="px-4 sm:px-6 py-2.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs relative z-10 shrink-0 bg-slate-50/70 dark:bg-black/30">
           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1.5 min-w-0 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-            <span className="truncate">{lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات - دولة ليبيا' : 'State of Libya'}</span>
+            <span className="truncate">{lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات - دولة ليبيا' : 'Transport Projects Execution Authority - State of Libya'}</span>
           </span>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black cursor-pointer shadow-md transition-transform active:scale-95 shrink-0 whitespace-nowrap"
-          >
-            {lang === 'ar' ? 'إغلاق الخبر' : 'Close Article'}
-          </button>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono shrink-0">
+            {lang === 'ar' ? 'بوابة المشروعات الرسمية' : 'Official Portal'}
+          </span>
         </div>
 
       </div>

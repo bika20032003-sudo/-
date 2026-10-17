@@ -316,10 +316,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                   </div>
 
-                  {/* Tag on image */}
-                  <span className="absolute top-2.5 end-2.5 px-2.5 py-0.5 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black shadow-md z-10 pointer-events-none">
-                    {lang === 'ar' ? (currentMobileNews.tag || 'توثيق 4K') : (currentMobileNews.tagEn || '4K Field Doc')}
-                  </span>
+
 
                   {/* Navigation Arrows for Mobile News */}
                   <button
