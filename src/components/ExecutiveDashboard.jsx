@@ -1244,25 +1244,49 @@ export default function ExecutiveDashboard({
             {/* Actions Bar per active view */}
             <div className="flex items-center gap-2">
               {activeSidebarItem === 'executive-projects' && (
-                <button
-                  onClick={() => {
-                    setExecutiveProjectForm({
-                      title: '',
-                      region: 'فزان (أوباري - غات)',
-                      progress: 68.5,
-                      status: 'in_progress',
-                      contractor: 'ائتلاف شركات الطرق الوطنية',
-                      image: '/road-aerial-highway.jpg',
-                      desc: 'مشروع صيانة وتأهيل المسار الاستراتيجي مع تطبيق أعلى معايير الجودة والسلامة.'
-                    });
-                    setSelectedExecutiveProjectEditModal(null);
-                    setIsAddExecutiveProjectModalOpen(true);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>إضافة مشروع تنفيذي للمسار</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        const data = localStorage.getItem('portal-national-projects');
+                        if (data) {
+                          navigator.clipboard.writeText(data);
+                          showToast('تم نسخ بيانات وتعديلات المشروعات إلى الحافظة! قم بلصقها في الشات ليتم رفعها لهاتفك فوراً.');
+                        } else {
+                          showToast('لا توجد تعديلات محفوظة في متصفحك حالياً');
+                        }
+                      } catch (e) {
+                        showToast('يرجى نسخ البيانات');
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    title="نسخ التعديلات والصور لنشرها إلى الهاتف"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>مزامنة الصور مع الهاتف</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setExecutiveProjectForm({
+                        title: '',
+                        region: 'فزان (أوباري - غات)',
+                        progress: 68.5,
+                        status: 'in_progress',
+                        contractor: 'ائتلاف شركات الطرق الوطنية',
+                        image: '/road-aerial-highway.jpg',
+                        desc: 'مشروع صيانة وتأهيل المسار الاستراتيجي مع تطبيق أعلى معايير الجودة والسلامة.'
+                      });
+                      setSelectedExecutiveProjectEditModal(null);
+                      setIsAddExecutiveProjectModalOpen(true);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>إضافة مشروع تنفيذي للمسار</span>
+                  </button>
+                </div>
               )}
               {(activeSidebarItem === 'news-center' || activeSidebarItem === 'news') && (
                 <button
