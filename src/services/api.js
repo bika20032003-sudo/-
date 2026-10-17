@@ -7,7 +7,8 @@ import {
   fetchCloudStoreItem,
   saveCloudStoreItem,
   isSupabaseConfigured 
-} from './supabase';
+} from './supabase.js';
+
 
 
 const initialSectors = [

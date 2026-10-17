@@ -2,7 +2,8 @@
  * Utility for compressing uploaded images on an off-screen HTML5 Canvas
  * Prevents localStorage QuotaExceededError while retaining 4K visual clarity.
  */
-import { saveCloudStoreItem, isSupabaseConfigured } from '../services/supabase';
+import { saveCloudStoreItem, isSupabaseConfigured } from '../services/supabase.js';
+
 
 
 export function compressImageFile(file, maxWidth = 1400, maxHeight = 1000, quality = 0.82) {
