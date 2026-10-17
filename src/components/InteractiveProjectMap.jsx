@@ -81,7 +81,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
           <span>{t.mapBadge}</span>
         </div>
 
-        <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${
+        <h2 className={`text-xl xs:text-2xl sm:text-4xl lg:text-5xl font-black leading-tight sm:leading-snug ${
           theme === 'light' ? 'text-slate-950' : 'text-white'
         }`}>
           {t.mapTitle}
@@ -94,15 +94,15 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
         </p>
       </div>
 
-      {/* Locations Switcher Bar */}
-      <div className="flex flex-wrap items-center gap-2.5">
+      {/* Locations Switcher Bar with Fluid Mobile Horizontal Scroll */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sm:flex-wrap">
         {locations.map((loc) => {
           const isSelected = loc.id === selectedLoc.id;
           return (
             <button
               key={loc.id}
               onClick={() => setSelectedLocId(loc.id)}
-              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs font-bold transition-all duration-200 flex items-center gap-2 border shadow-sm cursor-pointer ${
+              className={`px-3.5 sm:px-5 py-2 sm:py-3 rounded-2xl text-[11px] sm:text-xs font-bold transition-all duration-200 flex items-center gap-1.5 sm:gap-2 border shadow-sm cursor-pointer shrink-0 whitespace-nowrap ${
                 isSelected
                   ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-lg shadow-amber-500/25 scale-[1.02]'
                   : theme === 'light'
@@ -110,7 +110,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
                     : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
               }`}
             >
-              <Compass className={`w-4 h-4 ${isSelected ? 'text-slate-950' : 'text-amber-500'}`} />
+              <Compass className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSelected ? 'text-slate-950' : 'text-amber-500'}`} />
               <span>{loc.title}</span>
             </button>
           );
@@ -119,26 +119,26 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
 
       {/* Main 4K Map Container */}
       <div 
-        className={`relative overflow-hidden rounded-[28px] sm:rounded-[32px] border shadow-2xl transition-all duration-300 ${
+        className={`relative overflow-hidden rounded-[24px] sm:rounded-[32px] border shadow-2xl transition-all duration-300 ${
         theme === 'light'
           ? 'bg-white border-slate-200/90 shadow-slate-300/80'
           : 'bg-[#0a0f1d] border-white/15 shadow-black/80'
       }`}>
         
         {/* Map Header Card Info Overlay */}
-        <div className={`p-4 sm:p-7 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+        <div className={`p-3.5 sm:p-7 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${
           theme === 'light' ? 'bg-slate-50/90 border-slate-200' : 'bg-black/40 border-white/10'
         }`}>
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/15 border border-amber-500/35 flex items-center justify-center text-amber-500 shadow-md flex-shrink-0">
-              <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/15 border border-amber-500/35 flex items-center justify-center text-amber-500 shadow-md shrink-0">
+              <MapPin className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1 text-start">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className={`font-black text-base sm:text-lg ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
+                <h3 className={`font-black text-sm sm:text-lg truncate ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
                   {selectedLoc.title}
                 </h3>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/30">
+                <span className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/30 shrink-0">
                   {t.mapLive}
                 </span>
               </div>
@@ -148,14 +148,14 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 w-full sm:w-auto">
             {/* View Mode Toggle: Roadmap vs Satellite */}
-            <div className={`p-1 rounded-xl border flex items-center gap-1 ${
+            <div className={`p-1 rounded-xl border flex items-center gap-1 flex-1 sm:flex-initial justify-center ${
               theme === 'light' ? 'bg-slate-200/80 border-slate-300' : 'bg-white/10 border-white/15'
             }`}>
               <button
                 onClick={() => setMapType('m')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   mapType === 'm'
                     ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -165,7 +165,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
               </button>
               <button
                 onClick={() => setMapType('k')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   mapType === 'k'
                     ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -179,7 +179,7 @@ export default function InteractiveProjectMap({ theme, lang = 'ar' }) {
               href={directUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-amber-500/20 active:scale-95"
+              className="flex-1 sm:flex-initial justify-center px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-amber-500/20 active:scale-95 whitespace-nowrap"
             >
               <Navigation className="w-3.5 h-3.5" />
               <span>{t.btnOpenGoogleMaps}</span>

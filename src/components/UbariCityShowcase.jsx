@@ -121,32 +121,32 @@ export default function UbariCityShowcase({ theme, lang = 'ar' }) {
 
         {/* Title Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b pb-4 sm:pb-6 border-slate-200 dark:border-white/10 relative z-10">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-lg shadow-amber-500/25 flex-shrink-0">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-[1.5px] shadow-lg shadow-amber-500/25 shrink-0">
               <div className="w-full h-full rounded-[10px] sm:rounded-[14px] bg-[#0c1220] flex items-center justify-center text-amber-400">
                 <Navigation className="w-5 h-5 sm:w-7 sm:h-7 animate-float" />
               </div>
             </div>
-            <div>
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                <span className="text-[10px] sm:text-xs font-black px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-xl bg-amber-500 text-slate-950 shadow-md flex items-center gap-1.5">
+            <div className="min-w-0 flex-1 text-start">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-xl bg-amber-500 text-slate-950 shadow-md flex items-center gap-1.5 shrink-0">
                   <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   <span>{lang === 'ar' ? 'نبذة عن المشروع' : 'Project Overview'}</span>
                 </span>
-                <h3 className={`text-lg sm:text-2xl lg:text-3xl font-black leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
-                  {t.ubariTitle}
-                </h3>
-                <span className="text-[10px] sm:text-xs font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/35 font-mono shadow-sm">
+                <span className="text-[10px] sm:text-xs font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/35 font-mono shadow-sm shrink-0">
                   {t.ubariBadge}
                 </span>
               </div>
-              <p className={`text-xs sm:text-sm mt-0.5 sm:mt-1 font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+              <h3 className={`text-base xs:text-lg sm:text-2xl lg:text-3xl font-black leading-snug mt-1.5 ${theme === 'light' ? 'text-slate-950' : 'text-white'}`}>
+                {t.ubariTitle}
+              </h3>
+              <p className={`text-xs sm:text-sm mt-1 font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
                 {t.ubariSub}
               </p>
             </div>
           </div>
 
-          <div className="text-[11px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-amber-500/30 self-start sm:self-auto shadow-sm flex items-center gap-1.5">
+          <div className="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-amber-500/30 self-start sm:self-auto shadow-sm flex items-center gap-1.5 shrink-0">
             <MapPin className="w-3.5 h-3.5" />
             <span>{t.ubariRegionBadge}</span>
           </div>

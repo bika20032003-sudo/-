@@ -265,7 +265,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
           <Layers className="w-4 h-4 text-amber-500" />
           <span>{lang === 'ar' ? 'حزم ومشاريع مسار أوباري – غات' : 'Ubari – Ghat Corridor Projects'}</span>
         </div>
-        <h2 className={`text-3xl sm:text-5xl font-black leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'
+        <h2 className={`text-xl xs:text-2xl sm:text-4xl lg:text-5xl font-black leading-tight sm:leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
           {lang === 'ar' ? 'المشروعات التنفيذية لمسار أوباري – غات (360 كم)' : 'Execution Projects – Ubari – Ghat Highway'}
         </h2>
@@ -428,7 +428,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
           >
             {/* Post Header: Agency Brand + Tag */}
             <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 gap-2">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-sm flex-shrink-0">
                   <img 
                     src={resolveAsset('./logo-agency.jpg')} 
@@ -438,13 +438,13 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                   />
                 </div>
                 <div className="text-start leading-tight min-w-0 flex-1 overflow-hidden">
-                  <div className="flex items-center gap-1">
-                    <span className="font-black text-xs whitespace-nowrap">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="font-black text-xs truncate">
                       {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   </div>
-                  <p className="text-[9.5px] text-slate-400 font-mono truncate max-w-[130px] xs:max-w-[170px]">
+                  <p className="text-[9.5px] text-slate-400 font-mono truncate">
                     {currentMobileProject.id}
                   </p>
                 </div>
@@ -519,9 +519,9 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               </div>
 
               {/* Navigation Dots + Arrows + Action */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10 text-[10px]">
-                <div className="flex items-center gap-1.5">
-                  {filteredProjects.map((_, i) => (
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10 text-[10px] gap-2">
+                <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                  {filteredProjects.slice(0, 6).map((_, i) => (
                     <button
                       key={i}
                       type="button"
@@ -533,15 +533,20 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                           setProjectFadeActive(true);
                         }, 200);
                       }}
-                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        i === activeProjectMobileIdx ? 'w-5 bg-amber-500' : 'w-2 bg-slate-300 dark:bg-white/20'
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer shrink-0 ${
+                        i === activeProjectMobileIdx ? 'w-4 bg-amber-500' : 'w-1.5 bg-slate-300 dark:bg-white/20'
                       }`}
                       aria-label={`Project ${i + 1}`}
                     />
                   ))}
+                  {filteredProjects.length > 6 && (
+                    <span className="text-[9px] text-slate-400 font-mono ms-0.5 shrink-0">
+                      +{filteredProjects.length - 6}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ms-auto">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -564,7 +569,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                   >
                     ›
                   </button>
-                  <span className="text-amber-500 font-bold ms-1">
+                  <span className="text-amber-500 font-bold ms-1 shrink-0 whitespace-nowrap">
                     {lang === 'ar' ? 'التفاصيل ↗' : 'Details ↗'}
                   </span>
                 </div>
@@ -577,63 +582,64 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
 
       {/* ── Full Specifications Modal Dialog ── */}
       {selectedModalProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className={`w-full max-w-2xl rounded-3xl p-6 sm:p-8 space-y-5 border shadow-2xl text-start relative animate-scaleUp max-h-[92vh] overflow-y-auto ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#090e1a] border-amber-500/30 text-white'
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className={`w-full max-w-2xl rounded-3xl p-4 xs:p-6 sm:p-8 space-y-4 sm:space-y-5 border shadow-2xl text-start relative animate-scaleUp max-h-[92vh] overflow-y-auto ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#090e1a] border-amber-500/30 text-white'
             }`}>
 
             {/* Close Button */}
             <button
               onClick={() => setSelectedModalProject(null)}
-              className="absolute top-5 left-5 w-9 h-9 rounded-full bg-slate-500/10 hover:bg-slate-500/20 flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-3.5 sm:top-5 end-3.5 sm:end-5 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-500/15 hover:bg-slate-500/25 flex items-center justify-center transition-colors cursor-pointer z-10"
+              aria-label="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Photo preview in Modal */}
-            <div className="h-56 sm:h-64 rounded-2xl overflow-hidden bg-black border border-slate-200 dark:border-white/10 relative">
+            <div className="h-48 xs:h-56 sm:h-64 rounded-2xl overflow-hidden bg-black border border-slate-200 dark:border-white/10 relative">
               <img src={selectedModalProject.image} alt={selectedModalProject.title} className="w-full h-full object-cover" />
-              <div className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-black/70 backdrop-blur-md text-amber-400 text-xs font-bold font-mono">
+              <div className="absolute bottom-2.5 end-2.5 px-3 py-1 rounded-xl bg-black/75 backdrop-blur-md text-amber-400 text-[11px] sm:text-xs font-bold font-mono">
                 {selectedModalProject.region}
               </div>
             </div>
 
             {/* Modal Header */}
-            <div className="space-y-1.5 pr-2">
+            <div className="space-y-1.5 pe-10">
               <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-500">
                 <span>{selectedModalProject.id}</span>
                 <span>•</span>
                 <span>{selectedModalProject.region}</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-black">
+              <h3 className="text-lg sm:text-2xl font-black leading-snug">
                 {selectedModalProject.title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
                 {selectedModalProject.desc}
               </p>
             </div>
 
             {/* Key Specs Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5 sm:space-y-1">
                 <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'الطول الإجمالي:' : 'Total Length:'}</span>
-                <strong className="text-amber-500 font-mono text-base">{selectedModalProject.lengthKm} كم</strong>
+                <strong className="text-amber-500 font-mono text-sm sm:text-base">{selectedModalProject.lengthKm} كم</strong>
               </div>
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5 sm:space-y-1">
                 <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'نسبة الإنجاز:' : 'Progress:'}</span>
-                <strong className="text-emerald-400 font-mono text-base">{selectedModalProject.progress}%</strong>
+                <strong className="text-emerald-400 font-mono text-sm sm:text-base">{selectedModalProject.progress}%</strong>
               </div>
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5 sm:space-y-1">
                 <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'الجهة المشرفة:' : 'Authority:'}</span>
-                <strong className="text-amber-300 text-xs">جهاز مشروعات المواصلات</strong>
+                <strong className="text-amber-300 text-[11px] sm:text-xs">جهاز مشروعات المواصلات</strong>
               </div>
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5 sm:space-y-1">
                 <span className="text-[10px] text-slate-400 block">{lang === 'ar' ? 'الحالة:' : 'Status:'}</span>
-                <strong className="text-cyan-400 text-xs">{selectedModalProject.statusLabel}</strong>
+                <strong className="text-cyan-400 text-[11px] sm:text-xs">{selectedModalProject.statusLabel}</strong>
               </div>
             </div>
 
             {/* Scope of Work Points */}
-            <div className="space-y-2 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+            <div className="space-y-2 p-3.5 sm:p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
               <h4 className="text-xs font-black text-amber-400 flex items-center gap-1.5">
                 <Wrench className="w-4 h-4" />
                 <span>{lang === 'ar' ? 'بنود ونطاق الأعمال الهندسية المعتمدة:' : 'Approved Scope of Engineering Work:'}</span>
@@ -647,13 +653,13 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs">
               <div className="text-slate-400 font-medium">
                 {lang === 'ar' ? 'المقاول المنفذ:' : 'Contractor:'} <strong className="text-white">{selectedModalProject.contractor}</strong>
               </div>
               <button
                 onClick={() => setSelectedModalProject(null)}
-                className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black cursor-pointer shadow-lg transition-transform active:scale-95"
+                className="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black cursor-pointer shadow-lg transition-transform active:scale-95"
               >
                 {lang === 'ar' ? 'إغلاق النافذة' : 'Close'}
               </button>

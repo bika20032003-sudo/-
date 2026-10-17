@@ -92,7 +92,61 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
           : 'bg-[#0a0f1d] border-amber-500/25 text-slate-100 shadow-black/40'
       }`}>
         
-        <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10 flex-wrap sm:flex-nowrap">
+        {/* Mobile View: Balanced 2-Column Corridor Weather Cards */}
+        <div className="sm:hidden flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2 text-start">
+            {/* Ubari Card */}
+            <div className={`p-2.5 rounded-xl border flex flex-col justify-between gap-1.5 ${
+              theme === 'light' ? 'bg-amber-50/50 border-amber-200/70' : 'bg-white/5 border-amber-500/20'
+            }`}>
+              <div className="flex items-center justify-between gap-1">
+                <span className="font-black text-xs">{lang === 'ar' ? 'أوباري' : 'Ubari'}</span>
+                <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded font-mono">
+                  {lang === 'ar' ? 'البداية' : 'Start'}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between gap-1">
+                <span className="text-sm font-black font-mono text-amber-500">{ubariWeather.temp}°C</span>
+                <span className="text-[9px] text-slate-400 font-medium truncate">{ubariWeather.condition}</span>
+              </div>
+            </div>
+
+            {/* Ghat Card */}
+            <div className={`p-2.5 rounded-xl border flex flex-col justify-between gap-1.5 ${
+              theme === 'light' ? 'bg-cyan-50/50 border-cyan-200/70' : 'bg-white/5 border-cyan-500/20'
+            }`}>
+              <div className="flex items-center justify-between gap-1">
+                <span className="font-black text-xs">{lang === 'ar' ? 'غات' : 'Ghat'}</span>
+                <span className="text-[9px] font-bold text-cyan-500 bg-cyan-500/10 px-1.5 py-0.2 rounded font-mono">
+                  {lang === 'ar' ? 'النهاية' : 'End'}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between gap-1">
+                <span className="text-sm font-black font-mono text-cyan-500">{ghatWeather.temp}°C</span>
+                <span className="text-[9px] text-slate-400 font-medium truncate">{ghatWeather.condition}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Telemetry Status Strip */}
+          <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100 dark:border-white/5">
+            <span className="font-medium text-[9px] text-amber-500/80">360 KM • {lang === 'ar' ? 'مسار أوباري - غات' : 'Highway'}</span>
+            <div className="flex items-center gap-1.5 font-mono text-[9px]">
+              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+              <span>{updatedAt}</span>
+              <button
+                onClick={fetchLiveWeather}
+                className="p-1 rounded text-slate-400 hover:text-amber-500 cursor-pointer"
+                title={lang === 'ar' ? 'تحديث' : 'Refresh'}
+              >
+                <RefreshCw className={`w-2.5 h-2.5 ${loading ? 'animate-spin text-amber-500' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden sm:flex items-center justify-between gap-4 relative z-10">
           
           {/* ── City 1: Ubari Weather Block ── */}
           <div className="flex items-center gap-2 sm:gap-3">
