@@ -135,6 +135,12 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
             ? 'bg-gradient-to-r from-[#F8FAFC]/85 via-[#F8FAFC]/50 to-transparent'
             : 'bg-gradient-to-r from-[#06080E]/95 via-[#06080E]/70 to-transparent'
         }`} />
+        {/* Mobile vertical contrast scrim to prevent text bleed over bright photos on phone */}
+        <div className={`sm:hidden absolute inset-0 ${
+          theme === 'light'
+            ? 'bg-gradient-to-b from-[#F8FAFC]/90 via-[#F8FAFC]/50 to-[#F8FAFC]/95'
+            : 'bg-gradient-to-b from-[#06080E]/90 via-[#06080E]/50 to-[#06080E]/95'
+        }`} />
         <div className={`hero-overlay-top absolute inset-0 ${
           theme === 'light'
             ? 'bg-gradient-to-t from-[#F8FAFC] via-transparent to-[#F8FAFC]/25'
@@ -255,8 +261,8 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
               >
                 
                 {/* Mobile Post Header: Agency Brand + Tag */}
-                <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
-                  <div className="flex items-center gap-2">
+                <div className="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-[1px] shadow-sm flex-shrink-0">
                       <img 
                         src={resolveAsset('./logo-agency.jpg')} 
@@ -265,20 +271,20 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                       />
                     </div>
-                    <div className="text-start leading-tight">
-                      <div className="flex items-center gap-1">
-                        <span className="font-black text-xs">
+                    <div className="text-start leading-tight min-w-0 flex-1 overflow-hidden">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="font-black text-xs truncate">
                           {lang === 'ar' ? 'مشروعات المواصلات' : 'Transport Projects'}
                         </span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                       </div>
-                      <span className="text-[10px] text-slate-400 font-medium">
+                      <span className="text-[10px] text-slate-400 font-medium truncate block">
                         {lang === 'ar' ? (currentMobileNews.author || 'المكتب الإعلامي') : (currentMobileNews.authorEn || 'Media Office')} • {lang === 'ar' ? (currentMobileNews.timeAgo || 'مباشر') : (currentMobileNews.timeAgoEn || 'Live')}
                       </span>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30 shrink-0 whitespace-nowrap">
                     {lang === 'ar' ? 'المستجدات الميدانية' : 'Field News'}
                   </span>
                 </div>

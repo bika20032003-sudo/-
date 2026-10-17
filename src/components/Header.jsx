@@ -179,7 +179,7 @@ export default function Header({
         {/* ── Left Side: Official Agency Logo & Title ── */}
         <div 
           onClick={() => handleNavClick('hero', 'hero-section')}
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group min-w-0"
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group min-w-0 flex-1 sm:flex-initial"
           data-cursor-label={lang === 'ar' ? 'الرئيسية' : 'Home'}
         >
           {/* Official Agency Emblem */}
@@ -192,15 +192,15 @@ export default function Header({
           </div>
 
           {/* Authority Official Title */}
-          <div className="text-start border-s border-slate-300 dark:border-white/10 ps-1.5 sm:ps-3 shrink-0">
-            <div className="flex items-center gap-1">
-              <h1 className={`font-black text-[10px] xs:text-[11px] sm:text-sm leading-tight whitespace-nowrap group-hover:text-amber-500 transition-colors ${
+          <div className="text-start border-s border-slate-300 dark:border-white/10 ps-1.5 sm:ps-3 min-w-0 flex-1 sm:flex-initial overflow-hidden">
+            <div className="flex items-center gap-1 min-w-0">
+              <h1 className={`font-black text-[10px] xs:text-[11px] sm:text-sm leading-tight truncate sm:whitespace-nowrap group-hover:text-amber-500 transition-colors ${
                 theme === 'light' ? 'text-slate-900' : 'text-white'
               }`}>
                 {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Authority'}
               </h1>
             </div>
-            <p className="text-[9px] sm:text-[10px] text-amber-500 font-bold flex items-center gap-1 whitespace-nowrap mt-0.5">
+            <p className="text-[9px] sm:text-[10px] text-amber-500 font-bold flex items-center gap-1 truncate sm:whitespace-nowrap mt-0.5">
               <span>{lang === 'ar' ? 'طريق أوباري – غات' : 'Ubari – Ghat'}</span>
               <span className="hidden xs:inline">(360 كم)</span>
             </p>
@@ -269,8 +269,8 @@ export default function Header({
               <span>{lang === 'ar' ? 'دخول' : 'Sign In'}</span>
             </button>
           ) : (
-            /* ── AFTER LOGIN: User Avatar Dropdown ── */
-            <div className="relative" ref={dropdownRef}>
+            /* ── AFTER LOGIN: User Avatar Dropdown (Desktop & Tablet) ── */
+            <div className="relative hidden sm:block" ref={dropdownRef}>
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className={`p-1 px-1.5 sm:px-2 rounded-2xl border flex items-center gap-1 sm:gap-1.5 transition-all duration-300 cursor-pointer hover:scale-105 shadow-sm ${
@@ -377,14 +377,20 @@ export default function Header({
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+            className={`lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer relative shrink-0 ${
               mobileMenuOpen 
                 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20' 
                 : theme === 'light' ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-white border-white/10'
             }`}
             aria-label="القائمة الجانبية"
           >
-            <SlidersHorizontal className={`w-4 h-4 ${mobileMenuOpen ? 'text-slate-950' : 'text-amber-500'}`} />
+            {user ? (
+              <div className="w-5.5 h-5.5 rounded-full overflow-hidden ring-1.5 ring-amber-500">
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <SlidersHorizontal className={`w-4 h-4 ${mobileMenuOpen ? 'text-slate-950' : 'text-amber-500'}`} />
+            )}
           </button>
         </div>
 
@@ -395,6 +401,24 @@ export default function Header({
         <div className={`lg:hidden mt-2 p-3.5 rounded-2xl border shadow-2xl flex flex-col gap-1.5 animate-scaleUp max-w-7xl mx-auto ${
           theme === 'light' ? 'bg-white/98 border-amber-400/40 text-slate-900 shadow-slate-300/80' : 'bg-[#090d18]/98 border-amber-500/30 text-white shadow-black/90'
         }`}>
+          {/* User profile card if logged in */}
+          {user && (
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 mb-1 flex items-center justify-between gap-2.5 text-start">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-amber-500 flex-shrink-0">
+                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                </div>
+                <div className="min-w-0 text-start">
+                  <div className="font-black text-xs text-amber-500 dark:text-amber-400 truncate">{user.name}</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</div>
+                </div>
+              </div>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold border border-amber-500/30 shrink-0">
+                مسؤول
+              </span>
+            </div>
+          )}
+
           {/* Logo badge inside mobile menu */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-1">
             <span className={`text-xs font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
