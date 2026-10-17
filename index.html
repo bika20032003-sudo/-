@@ -40,8 +40,9 @@
         var cleanUrl = rawSrc.split('?')[0].split('#')[0];
         var filename = cleanUrl.split('/').pop();
         if (filename && filename.indexOf('.') !== -1) {
-          var p = window.location.pathname;
-          var base = p.endsWith('/') ? p : p.substring(0, p.lastIndexOf('/') + 1);
+          var p = window.location.pathname || '';
+          var last = p.split('/').pop();
+          var base = (last && last.indexOf('.') !== -1) ? p.substring(0, p.lastIndexOf('/') + 1) : (p.endsWith('/') ? p : p + '/');
           img.src = base + filename;
         }
       }

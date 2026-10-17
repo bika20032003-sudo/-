@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Navigation, ExternalLink, Compass, Layers, ShieldCheck, CheckCircle2, AlertTriangle, Clock, ArrowUpRight, X } from 'lucide-react';
 import { nationalProjects } from '../services/api';
+import { resolveAsset } from '../utils/assets';
 
 export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
   const [filterStatus, setFilterStatus] = useState('all');
@@ -242,7 +243,15 @@ export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
                 </div>
 
                 <div className="h-28 rounded-2xl overflow-hidden relative border border-white/10">
-                  <img src={selectedProject.image} alt={selectedProject.title} className="w-full h-full object-cover" />
+                  <img 
+                    src={resolveAsset(selectedProject.image)} 
+                    alt={selectedProject.title} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                    }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <span className="absolute bottom-2 right-2 text-xs font-mono font-black text-amber-300">
                     {selectedProject.lengthKm} {lang === 'ar' ? 'كم' : 'km'} • {selectedProject.budget}

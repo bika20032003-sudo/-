@@ -407,13 +407,50 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         ))}
       </div>
 
-      {/* 2. MOBILE ONLY: 5-Second Fade Animation Auto-Cycling Project Card (المشروعات فوق بعضها البعض وتتحرك تلقائياً كل 5 ثواني بانميشن تلاشي) */}
+      {/* 2. MOBILE ONLY: 5-Second Fade Animation Auto-Cycling Project Card */}
       <div 
-        className="md:hidden text-start"
+        className="md:hidden text-start space-y-3"
         onTouchStart={onTouchStartProj}
         onTouchMove={onTouchMoveProj}
         onTouchEnd={onTouchEndProj}
       >
+        {/* Mobile Projects Quick Thumbnail Switcher */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none no-scrollbar -mx-1 px-1">
+          {filteredProjects.map((proj, idx) => (
+            <button
+              key={proj.id}
+              type="button"
+              onClick={() => {
+                setProjectFadeActive(false);
+                setTimeout(() => {
+                  setActiveProjectMobileIdx(idx);
+                  setProjectFadeActive(true);
+                }, 150);
+              }}
+              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all shrink-0 cursor-pointer text-start ${
+                idx === activeProjectMobileIdx
+                  ? 'bg-amber-500/15 border-amber-500 text-amber-500 dark:text-amber-400 ring-1 ring-amber-500/30 font-bold'
+                  : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <div className="w-6 h-6 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-white/15 bg-black">
+                <img 
+                  src={resolveAsset(proj.image)} 
+                  alt={proj.title} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                  }}
+                />
+              </div>
+              <span className="text-[11px] max-w-[120px] truncate">
+                {proj.title}
+              </span>
+            </button>
+          ))}
+        </div>
+
         {currentMobileProject && (
           <div
             onClick={() => setSelectedModalProject(currentMobileProject)}
@@ -470,10 +507,9 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
             {/* Post Photo */}
             <div className="h-44 relative overflow-hidden bg-slate-950">
               <img
+                key={`proj-img-${currentMobileProject.id}-${activeProjectMobileIdx}`}
                 src={resolveAsset(currentMobileProject.image)}
                 alt={currentMobileProject.title}
-                loading="lazy"
-                decoding="async"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
@@ -597,7 +633,15 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
 
             {/* Photo preview in Modal */}
             <div className="h-48 xs:h-56 sm:h-64 rounded-2xl overflow-hidden bg-black border border-slate-200 dark:border-white/10 relative">
-              <img src={selectedModalProject.image} alt={selectedModalProject.title} className="w-full h-full object-cover" />
+              <img 
+                src={resolveAsset(selectedModalProject.image)} 
+                alt={selectedModalProject.title} 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                }}
+              />
               <div className="absolute bottom-2.5 end-2.5 px-3 py-1 rounded-xl bg-black/75 backdrop-blur-md text-amber-400 text-[11px] sm:text-xs font-bold font-mono">
                 {selectedModalProject.region}
               </div>

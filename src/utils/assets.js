@@ -11,7 +11,7 @@ export const ASSETS = {
 /**
  * Universal Asset URL Resolver:
  * Ensures assets resolve cleanly whether running locally (Vite),
- * or hosted in subfolders like GitHub Pages (/-/portal/).
+ * or hosted in subfolders like GitHub Pages (/-/portal/ or /-/ubari-portal/).
  */
 export const resolveAsset = (path) => {
   if (!path) return './road-asphalt-paver.jpg';
@@ -20,6 +20,20 @@ export const resolveAsset = (path) => {
     return path;
   }
   const clean = path.replace(/^(\.\/|\/)/, '');
+
+  if (typeof window !== 'undefined' && window.location) {
+    const pathname = window.location.pathname || '';
+    const last = pathname.split('/').pop();
+    // If the last segment is not a file (no dot), ensure base ends with trailing slash
+    const baseDir = (last && last.includes('.')) 
+      ? pathname.substring(0, pathname.lastIndexOf('/') + 1)
+      : (pathname.endsWith('/') ? pathname : pathname + '/');
+
+    if (baseDir && baseDir !== '/') {
+      return `${baseDir}${clean}`;
+    }
+  }
+
   return `./${clean}`;
 };
 
