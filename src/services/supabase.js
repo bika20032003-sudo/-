@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const STORAGE_KEY_URL = 'portal_supabase_url';
 const STORAGE_KEY_ANON = 'portal_supabase_anon_key';
 
+const DEFAULT_SUPABASE_URL = 'https://ffrycyftoyxsmsqpxkyy.supabase.co';
+
 export const getSupabaseConfig = () => {
   const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -12,12 +14,13 @@ export const getSupabaseConfig = () => {
   const localKey = (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY_ANON)) || '';
 
   return {
-    url: (localUrl || envUrl || '').trim(),
+    url: (localUrl || envUrl || DEFAULT_SUPABASE_URL || '').trim(),
     anonKey: (localKey || envKey || '').trim(),
-    isFromEnv: Boolean(!localUrl && envUrl),
+    isFromEnv: Boolean(!localUrl && (envUrl || DEFAULT_SUPABASE_URL)),
     isFromStorage: Boolean(localUrl)
   };
 };
+
 
 let cachedClient = null;
 let currentClientSignature = '';
