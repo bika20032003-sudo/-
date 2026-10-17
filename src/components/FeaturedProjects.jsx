@@ -263,7 +263,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
             : 'bg-amber-500/10 border-amber-500/35 text-amber-300'
           }`}>
           <Layers className="w-4 h-4 text-amber-500" />
-          <span>{lang === 'ar' ? 'حزم ومشاريع مسار أوباري – غات' : 'Ubari – Ghat Corridor Projects'}</span>
+          <span>{lang === 'ar' ? 'مشاريع مسار طريق أوباري - غات' : 'Ubari – Ghat Road Corridor Projects'}</span>
         </div>
         <h2 className={`text-xl xs:text-2xl sm:text-4xl lg:text-5xl font-black leading-tight sm:leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
@@ -272,8 +272,8 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         <p className={`text-xs sm:text-base font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'
           }`}>
           {lang === 'ar'
-            ? 'الحزم والمشاريع الهندسية المتكاملة والتوثيقات الميدانية 4K الجاري تنفيذها على امتداد قطاعات طريق أوباري - غات.'
-            : 'Integrated engineering packages and 4K field execution visuals along the Ubari – Ghat highway corridor.'}
+            ? 'المشاريع الهندسية المتكاملة والمتابعات الميدانية الجاري تنفيذها على امتداد قطاعات طريق أوباري - غات.'
+            : 'Integrated engineering projects and field execution updates along the Ubari – Ghat highway corridor.'}
         </p>
       </div>
 
