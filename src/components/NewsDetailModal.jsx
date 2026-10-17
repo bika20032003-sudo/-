@@ -10,7 +10,6 @@ import {
   Building2, 
   ShieldCheck, 
   Layers, 
-  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import { resolveAsset } from '../utils/assets';
@@ -82,8 +81,8 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
         />
 
         {/* ── Modal Header: Agency Brand + Close Button ── */}
-        <div className="px-4 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 relative z-10 shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="px-3.5 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10 relative z-10 shrink-0 gap-2">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 overflow-hidden">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-[1.5px] shadow-sm shrink-0">
               <img 
                 src={resolveAsset('./logo-agency.jpg')} 
@@ -92,20 +91,20 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-xs sm:text-sm text-amber-500 whitespace-nowrap">
+            <div className="min-w-0 flex-1 overflow-hidden text-start">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-black text-xs sm:text-sm text-amber-500 truncate block">
                   {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transport Projects Authority'}
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
               </div>
-              <p className="text-[10px] text-slate-400 truncate">
+              <p className="text-[10px] text-slate-400 truncate block">
                 {lang === 'ar' ? 'المكتب الإعلامي • تقرير ميداني معتمد' : 'Media Office • Official Field Report'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 ms-1 sm:ms-2">
             <button
               type="button"
               onClick={handleShare}
@@ -147,13 +146,13 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
             </span>
 
             {/* Bottom Photo Telemetry */}
-            <div className="absolute bottom-3 start-3 end-3 flex items-center justify-between text-white text-xs">
-              <span className="flex items-center gap-1.5 bg-black/80 px-3 py-1 rounded-xl border border-white/15 text-[11px] font-bold">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                <span>{post.location || (lang === 'ar' ? 'مسار أوباري - غات' : 'Ubari - Ghat Highway')}</span>
+            <div className="absolute bottom-3 start-3 end-3 flex items-center justify-between text-white text-xs gap-2 pointer-events-none">
+              <span className="flex items-center gap-1.5 bg-black/80 px-2.5 sm:px-3 py-1 rounded-xl border border-white/15 text-[10px] sm:text-[11px] font-bold min-w-0 truncate">
+                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="truncate">{post.location || (lang === 'ar' ? 'مسار أوباري - غات' : 'Ubari - Ghat Highway')}</span>
               </span>
 
-              <span className="bg-black/70 px-2.5 py-1 rounded-xl text-[10px] font-mono text-slate-300 border border-white/10">
+              <span className="bg-black/70 px-2.5 py-1 rounded-xl text-[10px] font-mono text-slate-300 border border-white/10 shrink-0 whitespace-nowrap">
                 {post.timeAgo || (lang === 'ar' ? 'اليوم' : 'Today')}
               </span>
             </div>
@@ -228,16 +227,16 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
         </div>
 
         {/* ── Modal Footer ── */}
-        <div className="px-4 sm:px-6 py-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs relative z-10 shrink-0 bg-slate-50/70 dark:bg-black/30">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>{lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات - دولة ليبيا' : 'State of Libya'}</span>
+        <div className="px-4 sm:px-6 py-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs relative z-10 shrink-0 bg-slate-50/70 dark:bg-black/30 gap-2">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1.5 min-w-0 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+            <span className="truncate">{lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات - دولة ليبيا' : 'State of Libya'}</span>
           </span>
 
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black cursor-pointer shadow-md transition-transform active:scale-95"
+            className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black cursor-pointer shadow-md transition-transform active:scale-95 shrink-0 whitespace-nowrap"
           >
             {lang === 'ar' ? 'إغلاق الخبر' : 'Close Article'}
           </button>

@@ -417,7 +417,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         {currentMobileProject && (
           <div
             onClick={() => setSelectedModalProject(currentMobileProject)}
-            className={`rounded-2xl overflow-hidden border shadow-xl transition-all duration-500 active:scale-[0.99] cursor-pointer ${
+            className={`rounded-2xl overflow-hidden border shadow-xl transition-all duration-300 ease-in-out active:scale-[0.99] cursor-pointer ${
               projectFadeActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
             } ${
               currentMobileProject.isFieldDoc ? 'border-amber-500/40' : ''
@@ -483,11 +483,11 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
               {/* Overlaid Badges on Image */}
-              <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px]">
-                <span className="px-2 py-0.5 rounded-md bg-black/75 font-mono font-bold text-amber-400 border border-white/10">
+              <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px] gap-2 pointer-events-none">
+                <span className="px-2 py-0.5 rounded-md bg-black/75 font-mono font-bold text-amber-400 border border-white/10 truncate min-w-0">
                   {currentMobileProject.lengthKm ? `${currentMobileProject.lengthKm} كم • ` : ''}{currentMobileProject.region}
                 </span>
-                <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px]">
+                <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px] shrink-0 whitespace-nowrap">
                   {currentMobileProject.progress}% منجز
                 </span>
               </div>

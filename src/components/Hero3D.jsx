@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ArrowUpRight, 
   Zap, 
@@ -32,6 +32,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
   // Mobile News Post Feed State
   const [mobileNewsList, setMobileNewsList] = useState(getSavedNewsPosts);
   const [mobileNewsIdx, setMobileNewsIdx] = useState(0);
+  const [isNewsFading, setIsNewsFading] = useState(false);
   const [selectedNewsPost, setSelectedNewsPost] = useState(null);
 
   useEffect(() => {
@@ -44,29 +45,38 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // 6-second mobile news carousel auto progression
+  // Smooth fade transition between news
+  const goToMobileNews = useCallback((newIdx) => {
+    if (isNewsFading || !mobileNewsList || mobileNewsList.length <= 1) return;
+    setIsNewsFading(true);
+    setTimeout(() => {
+      setMobileNewsIdx(newIdx);
+      setIsNewsFading(false);
+    }, 220);
+  }, [isNewsFading, mobileNewsList]);
+
+  const nextMobileNews = useCallback(() => {
+    if (!mobileNewsList || mobileNewsList.length === 0) return;
+    const nextIdx = (mobileNewsIdx + 1) % mobileNewsList.length;
+    goToMobileNews(nextIdx);
+  }, [mobileNewsIdx, mobileNewsList, goToMobileNews]);
+
+  const prevMobileNews = useCallback(() => {
+    if (!mobileNewsList || mobileNewsList.length === 0) return;
+    const prevIdx = (mobileNewsIdx - 1 + mobileNewsList.length) % mobileNewsList.length;
+    goToMobileNews(prevIdx);
+  }, [mobileNewsIdx, mobileNewsList, goToMobileNews]);
+
+  // 6-second mobile news carousel auto progression with fade
   useEffect(() => {
     if (!mobileNewsList || mobileNewsList.length <= 1) return;
     const interval = setInterval(() => {
-      setMobileNewsIdx(prev => (prev + 1) % mobileNewsList.length);
+      nextMobileNews();
     }, 6000);
     return () => clearInterval(interval);
-  }, [mobileNewsList]);
+  }, [mobileNewsList, nextMobileNews]);
 
   const currentMobileNews = mobileNewsList[mobileNewsIdx] || mobileNewsList[0] || {};
-
-  const [touchStartHero, setTouchStartHero] = useState(null);
-  const [touchEndHero, setTouchEndHero] = useState(null);
-
-  const nextMobileNews = () => {
-    if (!mobileNewsList || mobileNewsList.length === 0) return;
-    setMobileNewsIdx(prev => (prev + 1) % mobileNewsList.length);
-  };
-
-  const prevMobileNews = () => {
-    if (!mobileNewsList || mobileNewsList.length === 0) return;
-    setMobileNewsIdx(prev => (prev - 1 + mobileNewsList.length) % mobileNewsList.length);
-  };
 
   const onTouchStartHero = (e) => {
     setTouchEndHero(null);
@@ -291,19 +301,23 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
 
                 {/* Mobile Post Photo with Controls */}
                 <div className="h-44 xs:h-48 relative overflow-hidden group bg-slate-950">
-                  <img 
-                    src={resolveAsset(currentMobileNews.image || './road-asphalt-paver.jpg')} 
-                    alt={currentMobileNews.title || 'أخبار طريق أوباري غات'} 
-                    className="w-full h-full object-cover transition-transform duration-500"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  <div className={`w-full h-full relative transition-all duration-300 ease-in-out ${
+                    isNewsFading ? 'opacity-0 scale-[1.02]' : 'opacity-100 scale-100'
+                  }`}>
+                    <img 
+                      src={resolveAsset(currentMobileNews.image || './road-asphalt-paver.jpg')} 
+                      alt={currentMobileNews.title || 'أخبار طريق أوباري غات'} 
+                      className="w-full h-full object-cover transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = resolveAsset('./road-asphalt-paver.jpg');
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  </div>
 
                   {/* Tag on image */}
-                  <span className="absolute top-2.5 end-2.5 px-2.5 py-0.5 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black shadow-md">
+                  <span className="absolute top-2.5 end-2.5 px-2.5 py-0.5 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black shadow-md z-10 pointer-events-none">
                     {lang === 'ar' ? (currentMobileNews.tag || 'توثيق 4K') : (currentMobileNews.tagEn || '4K Field Doc')}
                   </span>
 
@@ -311,7 +325,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); prevMobileNews(); }}
-                    className="absolute top-1/2 start-2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center text-xs border border-white/20 active:scale-90"
+                    className="absolute top-1/2 start-2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center text-xs border border-white/20 active:scale-90 z-20 cursor-pointer"
                     aria-label="Previous"
                   >
                     ‹
@@ -319,31 +333,35 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); nextMobileNews(); }}
-                    className="absolute top-1/2 end-2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center text-xs border border-white/20 active:scale-90"
+                    className="absolute top-1/2 end-2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center text-xs border border-white/20 active:scale-90 z-20 cursor-pointer"
                     aria-label="Next"
                   >
                     ›
                   </button>
 
                   {/* Slide index & Location pill */}
-                  <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px]">
-                    <span className="px-2 py-0.5 rounded-md bg-black/70 font-mono font-bold text-amber-400 border border-white/10">
+                  <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px] gap-2 pointer-events-none z-10">
+                    <span className="px-2 py-0.5 rounded-md bg-black/70 font-mono font-bold text-amber-400 border border-white/10 truncate min-w-0">
                       {lang === 'ar' ? (currentMobileNews.location || 'طريق أوباري - غات') : (currentMobileNews.locationEn || 'Ubari - Ghat Highway')}
                     </span>
-                    <span className="font-mono bg-black/60 px-1.5 py-0.5 rounded font-bold">
+                    <span className="font-mono bg-black/60 px-1.5 py-0.5 rounded font-bold shrink-0 whitespace-nowrap">
                       {mobileNewsIdx + 1} / {mobileNewsList.length}
                     </span>
                   </div>
                 </div>
 
-                {/* Mobile Post Text Content */}
+                {/* Mobile Post Text Content with Fade */}
                 <div className="p-3.5 space-y-2">
-                  <h3 className="font-black text-xs xs:text-sm leading-snug line-clamp-2">
-                    {lang === 'ar' ? currentMobileNews.title : (currentMobileNews.titleEn || currentMobileNews.title)}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed font-normal">
-                    {lang === 'ar' ? currentMobileNews.desc : (currentMobileNews.descEn || currentMobileNews.desc)}
-                  </p>
+                  <div className={`space-y-2 transition-all duration-300 ease-in-out ${
+                    isNewsFading ? 'opacity-0 translate-y-0.5' : 'opacity-100 translate-y-0'
+                  }`}>
+                    <h3 className="font-black text-xs xs:text-sm leading-snug line-clamp-2">
+                      {lang === 'ar' ? currentMobileNews.title : (currentMobileNews.titleEn || currentMobileNews.title)}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed font-normal">
+                      {lang === 'ar' ? currentMobileNews.desc : (currentMobileNews.descEn || currentMobileNews.desc)}
+                    </p>
+                  </div>
 
                   {/* Dots Indicators + Full Story Prompt */}
                   <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-white/10 text-[10px]">
@@ -352,10 +370,11 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                         <button
                           key={i}
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setMobileNewsIdx(i); }}
-                          className={`h-1.5 rounded-full transition-all ${
+                          onClick={(e) => { e.stopPropagation(); goToMobileNews(i); }}
+                          className={`h-1.5 rounded-full transition-all cursor-pointer ${
                             i === mobileNewsIdx ? 'w-4 bg-amber-500' : 'w-1.5 bg-slate-300 dark:bg-white/20'
                           }`}
+                          aria-label={`News ${i + 1}`}
                         />
                       ))}
                     </div>
