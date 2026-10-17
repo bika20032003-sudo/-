@@ -3562,7 +3562,7 @@ body {
   border-radius: 6px;
   background: #f8fafc;
   overflow: hidden;
-  min-width: 280px;
+  min-width: 320px;
 }
 
 .meta-row {
@@ -3579,9 +3579,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 13.5px;
   border-left: 1px solid #cbd5e1;
+  white-space: nowrap;
 }
 
 .meta-cell:last-child {
@@ -3591,6 +3592,7 @@ body {
 .meta-lbl {
   font-weight: 700;
   color: #334155;
+  margin-left: 8px;
 }
 
 .meta-val {
@@ -3598,6 +3600,26 @@ body {
   color: #000000;
   font-family: Arial, sans-serif;
   direction: ltr;
+}
+
+.btn-refresh-code-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #0ea5e9;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-refresh-code-sm:hover {
+  background: #0284c7;
 }
 
 /* Subject Box matching Image 3 */

@@ -322,6 +322,26 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
     }
   };
 
+  // Helper to get next unique dynamic code that increments with every new report
+  const getNextReportCode = (list = savedTemplates) => {
+    let maxNum = 0;
+    if (Array.isArray(list)) {
+      list.forEach(item => {
+        if (item && item.code_no) {
+          const match = String(item.code_no).match(/(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (!isNaN(num) && num > maxNum) maxNum = num;
+          }
+        }
+      });
+    }
+    const savedCounter = parseInt(localStorage.getItem('ubari_report_code_counter') || '0', 10);
+    const nextSeq = Math.max(maxNum, savedCounter) + 1;
+    localStorage.setItem('ubari_report_code_counter', String(nextSeq));
+    return `2026-T${String(nextSeq).padStart(2, '0')}`;
+  };
+
   // Handler: "إنشاء وطباعة النموذج" button (Photo 1 & 2)
   const handleCreateTemplate = () => {
     if (!employeeSearch.trim()) {
@@ -331,14 +351,20 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
 
     const tplInfo = TEMPLATE_TYPES.find(t => t.id === selectedTemplateType) || TEMPLATE_TYPES[0];
     const content = generateTemplateContent(selectedTemplateType, selectedEmployee, referenceNumber);
-    const codeNo = `2026-T${String(savedTemplates.length + 1).padStart(2, '0')}`;
+    const codeNo = getNextReportCode(savedTemplates);
     const dateFormatted = new Date().toLocaleDateString('ar-LY');
+
+    const cleanRef = referenceNumber.trim();
+    const recordNum = cleanRef || String(savedTemplates.length + 14);
+    const refFormatted = cleanRef
+      ? (cleanRef.includes('/') ? cleanRef : `${cleanRef}/2026`)
+      : `${recordNum}/2026`;
 
     const newDoc = {
       id: Date.now(),
       code_no: codeNo,
-      record_number: referenceNumber || '14',
-      reference: referenceNumber ? `${referenceNumber}/2026` : '15/2026',
+      record_number: recordNum,
+      reference: refFormatted,
       template_type_id: selectedTemplateType,
       template_name: tplInfo.name,
       employee_name: employeeSearch,
@@ -1095,27 +1121,6 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
 
                       <div className="grid-4-controls" style={{ marginTop: '14px' }}>
                         <div>
-                          <label className="editor-control-lbl">رقم القيد:</label>
-                          <input
-                            type="text"
-                            className="editor-text-input"
-                            value={activeDocument.record_number || '14'}
-                            onChange={(e) => setActiveDocument({ ...activeDocument, record_number: e.target.value })}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="editor-control-lbl">كود الوثيقة (Code No):</label>
-                          <input
-                            type="text"
-                            className="editor-text-input"
-                            dir="ltr"
-                            value={activeDocument.code_no || '2026-T01'}
-                            onChange={(e) => setActiveDocument({ ...activeDocument, code_no: e.target.value })}
-                          />
-                        </div>
-
-                        <div>
                           <label className="editor-control-lbl">الرقم الإشاري:</label>
                           <input
                             type="text"
@@ -1123,6 +1128,16 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                             dir="ltr"
                             value={activeDocument.reference || '14/2026'}
                             onChange={(e) => setActiveDocument({ ...activeDocument, reference: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">رقم القيـد:</label>
+                          <input
+                            type="text"
+                            className="editor-text-input"
+                            value={activeDocument.record_number || '14'}
+                            onChange={(e) => setActiveDocument({ ...activeDocument, record_number: e.target.value })}
                           />
                         </div>
 
@@ -1135,6 +1150,31 @@ export default function TemplatesSection({ user, forceMembers = [] }) {
                             value={activeDocument.date}
                             onChange={(e) => setActiveDocument({ ...activeDocument, date: e.target.value })}
                           />
+                        </div>
+
+                        <div>
+                          <label className="editor-control-lbl">كود الوثيقة (Code No):</label>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <input
+                              type="text"
+                              className="editor-text-input"
+                              dir="ltr"
+                              value={activeDocument.code_no || ''}
+                              onChange={(e) => setActiveDocument({ ...activeDocument, code_no: e.target.value })}
+                            />
+                            <button
+                              type="button"
+                              className="btn-refresh-code-sm"
+                              onClick={() => {
+                                const fresh = getNextReportCode();
+                                setActiveDocument({ ...activeDocument, code_no: fresh });
+                              }}
+                              title="توليد وتحديث كود تقرير جديد تلقائياً"
+                            >
+                              <RefreshCw size={13} />
+                              <span>تحديث</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -1458,26 +1498,26 @@ function OfficialTemplateA4Sheet({ doc, qrUrl }) {
 
       {/* Metadata Table (Right) and QR Code (Left) */}
       <div className="a4-metadata-qr-row">
-        {/* Table on the right (1st child in RTL) */}
+        {/* Table on the right (1st child in RTL): الترتيب: الإشاري -> القيد -> التاريخ -> الكود */}
         <div className="official-meta-table-box">
-          <div className="meta-row">
-            <div className="meta-cell record-cell">
-              <span className="meta-lbl">القيـــــد:</span>
-              <span className="meta-val" style={{ unicodeBidi: 'plaintext' }}>{doc.record_number || '14'}</span>
-            </div>
-            <div className="meta-cell code-cell">
-              <span className="meta-lbl">:Code No</span>
-              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.code_no || '2026-T01'}</span>
-            </div>
-          </div>
           <div className="meta-row">
             <div className="meta-cell ref-cell">
               <span className="meta-lbl">الإشاري:</span>
               <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.reference || '14/2026'}</span>
             </div>
+            <div className="meta-cell record-cell">
+              <span className="meta-lbl">القيـــــد:</span>
+              <span className="meta-val" style={{ unicodeBidi: 'plaintext' }}>{doc.record_number || '14'}</span>
+            </div>
+          </div>
+          <div className="meta-row">
             <div className="meta-cell date-cell">
               <span className="meta-lbl">الموافق:</span>
               <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.date}</span>
+            </div>
+            <div className="meta-cell code-cell">
+              <span className="meta-lbl">:Code No</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{doc.code_no || '2026-T01'}</span>
             </div>
           </div>
         </div>

@@ -1150,22 +1150,6 @@ export default function MailSection({ user, forceMembers = [] }) {
             <div className="panel-title">تعديل بيانات الرسالة المباشرة:</div>
             <div className="customizer-inputs-grid">
               <div>
-                <label>رقم القيد:</label>
-                <input
-                  type="text"
-                  value={previewLetter.record_number || '1'}
-                  onChange={(e) => setPreviewLetter({ ...previewLetter, record_number: e.target.value })}
-                />
-              </div>
-              <div>
-                <label>كود الرسالة (Code No):</label>
-                <input
-                  type="text"
-                  value={previewLetter.code_no || '2026-002'}
-                  onChange={(e) => setPreviewLetter({ ...previewLetter, code_no: e.target.value })}
-                />
-              </div>
-              <div>
                 <label>الرقم الإشاري:</label>
                 <input
                   type="text"
@@ -1174,11 +1158,27 @@ export default function MailSection({ user, forceMembers = [] }) {
                 />
               </div>
               <div>
+                <label>رقم القيـد:</label>
+                <input
+                  type="text"
+                  value={previewLetter.record_number || '1'}
+                  onChange={(e) => setPreviewLetter({ ...previewLetter, record_number: e.target.value })}
+                />
+              </div>
+              <div>
                 <label>التاريخ (الموافق):</label>
                 <input
                   type="text"
                   value={previewLetter.date || '11/10/2026'}
                   onChange={(e) => setPreviewLetter({ ...previewLetter, date: e.target.value })}
+                />
+              </div>
+              <div>
+                <label>كود الرسالة (Code No):</label>
+                <input
+                  type="text"
+                  value={previewLetter.code_no || '2026-002'}
+                  onChange={(e) => setPreviewLetter({ ...previewLetter, code_no: e.target.value })}
                 />
               </div>
               <div>
@@ -1434,26 +1434,26 @@ function OfficialLetterSheet({ letter, qrUrl }) {
 
       {/* QR Code and Metadata Table Row matching Image 3 */}
       <div className="a4-metadata-qr-row">
-        {/* Table on the right (1st child in RTL) */}
+        {/* Table on the right (1st child in RTL): الترتيب: الإشاري -> القيد -> التاريخ -> الكود */}
         <div className="official-meta-table-box">
-          <div className="meta-row">
-            <div className="meta-cell record-cell">
-              <span className="meta-lbl">القيـــــد:</span>
-              <span className="meta-val" style={{ unicodeBidi: 'plaintext' }}>{letter.record_number || '1'}</span>
-            </div>
-            <div className="meta-cell code-cell">
-              <span className="meta-lbl">:Code No</span>
-              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.code_no || '2026-002'}</span>
-            </div>
-          </div>
           <div className="meta-row">
             <div className="meta-cell ref-cell">
               <span className="meta-lbl">الإشاري:</span>
               <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.reference || '12/2026'}</span>
             </div>
+            <div className="meta-cell record-cell">
+              <span className="meta-lbl">القيـــــد:</span>
+              <span className="meta-val" style={{ unicodeBidi: 'plaintext' }}>{letter.record_number || '1'}</span>
+            </div>
+          </div>
+          <div className="meta-row">
             <div className="meta-cell date-cell">
               <span className="meta-lbl">الموافق:</span>
               <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.date || '11/10/2026'}</span>
+            </div>
+            <div className="meta-cell code-cell">
+              <span className="meta-lbl">:Code No</span>
+              <span className="meta-val" dir="ltr" style={{ unicodeBidi: 'plaintext' }}>{letter.code_no || '2026-002'}</span>
             </div>
           </div>
         </div>

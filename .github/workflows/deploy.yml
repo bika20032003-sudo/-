@@ -35,11 +35,19 @@ jobs:
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Install dependencies & Build Ministry of Interior System
+      - name: Install dependencies & Build Ministry of Interior System & Portal
         run: |
           cd client
           npm ci || npm install
           npm run build
+          # Ensure portal subpath mirror exists
+          if [ -d "dist/portal" ]; then
+            mkdir -p dist/ubari-portal
+            cp -r dist/portal/. dist/ubari-portal/
+            cp dist/portal/index.html dist/portal/404.html || true
+            touch dist/portal/.nojekyll
+            touch dist/ubari-portal/.nojekyll
+          fi
           # Create SPA routing fallbacks to guarantee 0% 404 errors
           cp dist/index.html dist/404.html
           touch dist/.nojekyll
@@ -60,9 +68,10 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages:gh-pages || git branch gh-pages
           git checkout gh-pages
-          # Remove legacy road/portal folders from gh-pages
-          rm -rf road ubari-ghat portal ubari-portal moi
           cp -r client/dist/. .
+          touch .nojekyll
+          git add -A
+          git diff --staged --quiet || (git commit -m "chore(pages): automated sync with zero downtime [skip ci]" && git push origin gh-pages)
           touch .nojekyll
           git add -A
           git diff --staged --quiet || (git commit -m "deploy: update Ministry of Interior system [skip ci]" && git push origin gh-pages)
