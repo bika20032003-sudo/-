@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, RefreshCw, MapPin, Wind, Droplets, CheckCircle2, Navigation, ArrowRightLeft } from 'lucide-react';
+import { Sun, Wind, Navigation } from 'lucide-react';
 import { translations } from '../i18n/translations';
 
 export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
@@ -81,6 +81,13 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
 
   useEffect(() => {
     fetchLiveWeather();
+
+    // Auto-update weather telemetry automatically every 60 seconds (1 minute)
+    const timer = setInterval(() => {
+      fetchLiveWeather();
+    }, 60000);
+
+    return () => clearInterval(timer);
   }, [lang]);
 
   return (
@@ -132,15 +139,11 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
           <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100 dark:border-white/5">
             <span className="font-medium text-[9px] text-amber-500/80">360 KM • {lang === 'ar' ? 'مسار أوباري - غات' : 'Highway'}</span>
             <div className="flex items-center gap-1.5 font-mono text-[9px]">
-              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
               <span>{updatedAt}</span>
-              <button
-                onClick={fetchLiveWeather}
-                className="p-1 rounded text-slate-400 hover:text-amber-500 cursor-pointer"
-                title={lang === 'ar' ? 'تحديث' : 'Refresh'}
-              >
-                <RefreshCw className={`w-2.5 h-2.5 ${loading ? 'animate-spin text-amber-500' : ''}`} />
-              </button>
+              <span className="text-[8px] text-emerald-500/80 font-sans">
+                {lang === 'ar' ? 'تلقائي' : 'Live'}
+              </span>
             </div>
           </div>
         </div>
@@ -211,25 +214,13 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
             </div>
           </div>
 
-          {/* ── End: Sync Status & Refresh Button ── */}
+          {/* ── End: Live Auto-Sync Status ── */}
           <div className="flex items-center gap-2 flex-shrink-0 text-[10px] text-slate-400 ms-auto sm:ms-0">
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 font-mono">
-              <CheckCircle2 className="w-2.5 h-2.5 flex-shrink-0" />
-              <span className="hidden xl:inline">{t.weatherUpdated}:</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
+              <span className="hidden xl:inline">{lang === 'ar' ? 'تحديث تلقائي مستمر:' : 'Auto Live:'}</span>
               <span>{updatedAt}</span>
             </span>
-
-            <button
-              onClick={fetchLiveWeather}
-              title={lang === 'ar' ? 'تحديث بيانات طقس أوباري وغات' : 'Refresh Weather'}
-              className={`p-1.5 rounded-lg transition-all border cursor-pointer ${
-                theme === 'light' 
-                  ? 'hover:bg-slate-100 text-slate-700 border-slate-200' 
-                  : 'hover:bg-white/10 text-slate-300 border-white/10'
-              }`}
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin text-amber-500' : ''}`} />
-            </button>
           </div>
 
         </div>
