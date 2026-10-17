@@ -1,4 +1,14 @@
 // Mock REST API Service for Ubari - Ghat 360km Road Project
+import { 
+  fetchCloudProjects, 
+  saveCloudProjects, 
+  fetchCloudPhotos, 
+  saveCloudPhotos, 
+  fetchCloudStoreItem,
+  saveCloudStoreItem,
+  isSupabaseConfigured 
+} from './supabase';
+
 
 const initialSectors = [
   {
@@ -650,12 +660,65 @@ export const getSavedExecutiveProjects = () => {
   return nationalProjects;
 };
 
+export const syncExecutiveProjectsFromCloud = async () => {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const cloudProjects = await fetchCloudProjects();
+    if (cloudProjects && Array.isArray(cloudProjects) && cloudProjects.length > 0) {
+      localStorage.setItem('portal-national-projects', JSON.stringify(cloudProjects));
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('cloud_projects_updated', { detail: cloudProjects }));
+      return cloudProjects;
+    }
+  } catch (e) {
+    console.warn('[Supabase Sync] خطأ في مزامنة المشروعات:', e);
+  }
+  return null;
+};
+
+export const syncFieldPhotosFromCloud = async () => {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const cloudPhotos = await fetchCloudPhotos();
+    if (cloudPhotos && Array.isArray(cloudPhotos) && cloudPhotos.length > 0) {
+      localStorage.setItem('portal-field-photos-v2', JSON.stringify(cloudPhotos));
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('cloud_photos_updated', { detail: cloudPhotos }));
+      return cloudPhotos;
+    }
+  } catch (e) {
+    console.warn('[Supabase Sync] خطأ في مزامنة الصور:', e);
+  }
+  return null;
+};
+
+// Automatic initial cloud sync on page load and window events
+if (typeof window !== 'undefined') {
+  const triggerInitialSync = () => {
+    if (isSupabaseConfigured()) {
+      syncExecutiveProjectsFromCloud();
+      syncFieldPhotosFromCloud();
+    }
+  };
+  setTimeout(triggerInitialSync, 300);
+  window.addEventListener('focus', triggerInitialSync);
+  window.addEventListener('online', triggerInitialSync);
+  window.addEventListener('supabase_config_changed', triggerInitialSync);
+}
+
 export const saveExecutiveProjects = (projects) => {
   try {
     localStorage.setItem('portal-national-projects', JSON.stringify(projects));
     window.dispatchEvent(new Event('storage'));
   } catch (e) {}
+
+  if (isSupabaseConfigured()) {
+    saveCloudProjects(projects).catch(err => {
+      console.warn('[Supabase] فشل حفظ المشروعات سحابياً:', err);
+    });
+  }
 };
+
 
 // ── Hero 3D Showcase Card State Management ──
 export const initialHeroCard = {

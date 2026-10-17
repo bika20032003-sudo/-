@@ -71,7 +71,9 @@ import {
   FileClock,
   ImagePlus,
   Newspaper,
-  Crown
+  Crown,
+  Cloud,
+  Copy
 } from 'lucide-react';
 import { 
   initialFieldPhotos, 
@@ -86,11 +88,27 @@ import {
   getSavedNewsPosts,
   saveNewsPosts,
   getSavedHeroCard,
-  saveHeroCard
+  saveHeroCard,
+  syncExecutiveProjectsFromCloud,
+  syncFieldPhotosFromCloud
 } from '../services/api';
 import DocumentReportsHub from './DocumentReportsHub';
 import MarqueeTicker from './MarqueeTicker';
 import { compressImageFile, safeStorageSet, safeStorageGet } from '../utils/imageCompressor';
+import {
+  getSupabaseConfig,
+  setSupabaseConfig,
+  clearSupabaseConfig,
+  testSupabaseConnection,
+  isSupabaseConfigured,
+  saveCloudProjects,
+  saveCloudPhotos,
+  saveCloudStoreItem,
+  fetchCloudProjects,
+  fetchCloudPhotos,
+  SUPABASE_SQL_SETUP
+} from '../services/supabase';
+
 
 // S-Curve Progress Data (Planned vs Actual)
 const progressCurveData2026 = [
@@ -264,8 +282,35 @@ export default function ExecutiveDashboard({
       setLocalHeroCard(getSavedHeroCard());
     };
     window.addEventListener('storage', handleStorageUpdate);
-    return () => window.removeEventListener('storage', handleStorageUpdate);
+    window.addEventListener('cloud_projects_updated', handleStorageUpdate);
+    window.addEventListener('cloud_photos_updated', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('storage', handleStorageUpdate);
+      window.removeEventListener('cloud_projects_updated', handleStorageUpdate);
+      window.removeEventListener('cloud_photos_updated', handleStorageUpdate);
+    };
   }, []);
+
+  // ── Supabase Cloud Database Management State ──
+  const [supabaseConfigState, setSupabaseConfigState] = useState(getSupabaseConfig);
+  const [supabaseUrlInput, setSupabaseUrlInput] = useState(() => getSupabaseConfig().url);
+  const [supabaseKeyInput, setSupabaseKeyInput] = useState(() => getSupabaseConfig().anonKey);
+  const [isTestingSupabase, setIsTestingSupabase] = useState(false);
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [supabaseStatusResult, setSupabaseStatusResult] = useState(null);
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  useEffect(() => {
+    const handleConfigChange = () => {
+      const cfg = getSupabaseConfig();
+      setSupabaseConfigState(cfg);
+      setSupabaseUrlInput(cfg.url);
+      setSupabaseKeyInput(cfg.anonKey);
+    };
+    window.addEventListener('supabase_config_changed', handleConfigChange);
+    return () => window.removeEventListener('supabase_config_changed', handleConfigChange);
+  }, []);
+
 
   // News ticker management state
   const [localNews, setLocalNews] = useState(() => {
@@ -473,12 +518,14 @@ export default function ExecutiveDashboard({
     ))
   );
 
-  // Sidebar navigation menu definition (Executive Projects, News Center, Media)
+  // Sidebar navigation menu definition (Executive Projects, News Center, Media, Supabase Cloud)
   const sidebarNavItems = [
     { id: 'executive-projects', label: 'المشروعات التنفيذية للمسار', icon: Building2, badge: 'مشاريع المسار' },
     { id: 'news-center', label: 'مركز الأخبار والمستجدات', icon: Newspaper, badge: 'مركز الأخبار' },
-    { id: 'media', label: 'الصور والفيديو', icon: ImageIcon }
+    { id: 'media', label: 'الصور والفيديو', icon: ImageIcon },
+    { id: 'supabase-cloud', label: 'مزامنة سوبابيس السحابية', icon: Database, badge: 'سحابي ⚡' }
   ];
+
 
   // ── Handlers: Executive Projects Management ──
   const handleSaveExecutiveProject = (e) => {
@@ -1138,6 +1185,20 @@ export default function ExecutiveDashboard({
             </div>
           </div>
 
+          {/* Supabase Cloud Sync Quick Status Pill */}
+          <button
+            onClick={() => setActiveSidebarItem('supabase-cloud')}
+            className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              isSupabaseConfigured()
+                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
+                : 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+            }`}
+            title="إعدادات مزامنة سوبابيس السحابية"
+          >
+            <Cloud className={`w-3.5 h-3.5 ${isSupabaseConfigured() ? 'text-emerald-400' : 'text-amber-400'}`} />
+            <span className="hidden sm:inline">{isSupabaseConfigured() ? 'سوبابيس متصل ⚡' : 'ربط سوبابيس'}</span>
+          </button>
+
           {/* Return to Public Portal Button */}
           {onBackToPortal && (
             <button
@@ -1247,25 +1308,26 @@ export default function ExecutiveDashboard({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      try {
-                        const data = localStorage.getItem('portal-national-projects');
-                        if (data) {
-                          navigator.clipboard.writeText(data);
-                          showToast('تم نسخ بيانات وتعديلات المشروعات إلى الحافظة! قم بلصقها في الشات ليتم رفعها لهاتفك فوراً.');
-                        } else {
-                          showToast('لا توجد تعديلات محفوظة في متصفحك حالياً');
+                    onClick={async () => {
+                      if (isSupabaseConfigured()) {
+                        try {
+                          await saveCloudProjects(localExecutiveProjects);
+                          showToast('تمت مزامنة مشروعات المسار مع سوبابيس بنجاح! ⚡ ستظهر على الهواتف فوراً.');
+                        } catch (err) {
+                          showToast('تعذر المزامنة السحابية، يرجى فحص إعدادات سوبابيس');
                         }
-                      } catch (e) {
-                        showToast('يرجى نسخ البيانات');
+                      } else {
+                        setActiveSidebarItem('supabase-cloud');
+                        showToast('يرجى إدخال مفاتيح سوبابيس لتفعيل المزامنة السحابية المباشرة مع الهاتف');
                       }
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    title="نسخ التعديلات والصور لنشرها إلى الهاتف"
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer transition-all hover:scale-105"
+                    title="مزامنة المشروعات والصور مع هواتف الجميع عبر سوبابيس"
                   >
-                    <Download className="w-4 h-4" />
-                    <span>مزامنة الصور مع الهاتف</span>
+                    <Cloud className="w-4 h-4 text-emerald-200" />
+                    <span>{isSupabaseConfigured() ? 'مزامنة مع الهواتف سحابياً ⚡' : 'ربط الهاتف عبر سوبابيس'}</span>
                   </button>
+
 
                   <button
                     onClick={() => {
@@ -2804,8 +2866,352 @@ export default function ExecutiveDashboard({
             </div>
           )}
 
+          {/* ══════════════════════════════════════════════════════════════════════════════
+              VIEW: SUPABASE CLOUD DATABASE SYNC (لوحة التحكم السحابية لقاعدة بيانات Supabase)
+          ══════════════════════════════════════════════════════════════════════════════ */}
+          {activeSidebarItem === 'supabase-cloud' && (
+            <div className="space-y-6 animate-fadeIn text-start">
+              
+              {/* Header Banner */}
+              <div className="bg-gradient-to-r from-[#0A1128] via-[#101b3b] to-[#0A1128] rounded-3xl p-6 sm:p-7 border border-amber-500/30 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute -top-12 -left-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="space-y-2 max-w-2xl">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                        <Database className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>منظومة التزامن السحابي الفوري (Supabase Cloud Sync)</span>
+                      </span>
+                      {isSupabaseConfigured() ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950 flex items-center gap-1.5 shadow-md">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>متصل بالسحابة بنجاح</span>
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                          <span>بانتظار إدخال المفاتيح</span>
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xl sm:text-3xl font-black text-white">
+                      مزامنة المشروعات والصور بين الكمبيوتر والهواتف الذكية
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+                      عند ربط سوبابيس، فإن أي مشروع أو صورة أو تعديل تجريه في لوحة التحكم يتم حفظه تلقائياً في السحابة ويظهر مباشرةً على جميع هواتف المواطنين والمهندسين حول العالم دون الحاجة لإعادة رفع أو برمجة.
+                    </p>
+                  </div>
+
+                  {/* Quick Stat Pill */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col items-center justify-center min-w-[160px] text-center">
+                    <span className="text-[11px] text-amber-300 font-bold block mb-1">المشروعات الجاهزة للمزامنة</span>
+                    <span className="text-3xl font-black font-mono text-white">{localExecutiveProjects.length}</span>
+                    <span className="text-[10px] text-slate-300 mt-1">مشروع تنفيذي وميداني</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Alert if tested */}
+              {supabaseStatusResult && (
+                <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs font-bold ${
+                  supabaseStatusResult.success 
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900' 
+                    : supabaseStatusResult.tableMissing
+                      ? 'bg-amber-50 border-amber-300 text-amber-900'
+                      : 'bg-red-50 border-red-300 text-red-900'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {supabaseStatusResult.success ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                    )}
+                    <span>{supabaseStatusResult.message}</span>
+                  </div>
+                  <button 
+                    onClick={() => setSupabaseStatusResult(null)} 
+                    className="p-1 rounded-lg hover:bg-black/5 text-slate-500 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Two Column Grid: Credentials Form & 1-Click Operations */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Column 1: Supabase Credentials */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm text-slate-900">بيانات الاتصال بمشروع Supabase</h4>
+                      <p className="text-[11px] text-slate-500">احصل عليها من مشروعك في Supabase (Settings &gt; API)</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3.5 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        رابط المشروع السحابي (Project URL):
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://your-project.supabase.co"
+                        value={supabaseUrlInput}
+                        onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-amber-500 outline-none font-mono text-xs bg-slate-50 focus:bg-white transition-colors"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        المفتاح العام المجهول (Anon Public API Key):
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        value={supabaseKeyInput}
+                        onChange={(e) => setSupabaseKeyInput(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-amber-500 outline-none font-mono text-xs bg-slate-50 focus:bg-white transition-colors"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isTestingSupabase}
+                        onClick={async () => {
+                          if (!supabaseUrlInput.trim() || !supabaseKeyInput.trim()) {
+                            showToast('يرجى إدخال الرابط والمفتاح العام أولاً');
+                            return;
+                          }
+                          setIsTestingSupabase(true);
+                          setSupabaseConfig(supabaseUrlInput, supabaseKeyInput);
+                          const res = await testSupabaseConnection(supabaseUrlInput, supabaseKeyInput);
+                          setIsTestingSupabase(false);
+                          setSupabaseStatusResult(res);
+                          if (res.success) {
+                            showToast('تم حفظ الاتصال بسوبابيس والتحقق بنجاح! ⚡');
+                          }
+                        }}
+                        className="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01] disabled:opacity-50"
+                      >
+                        {isTestingSupabase ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>جاري فحص الاتصال...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>حفظ واختبار الاتصال بالسحابة</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          clearSupabaseConfig();
+                          setSupabaseUrlInput('');
+                          setSupabaseKeyInput('');
+                          setSupabaseStatusResult(null);
+                          showToast('تم مسح إعدادات سوبابيس والعودة للوضع المحلي');
+                        }}
+                        className="py-3 px-3.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
+                        title="إلغاء الإعدادات"
+                      >
+                        مسح
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: 1-Click Sync Operations */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                      <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                        <UploadCloud className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-slate-900">إجراءات المزامنة السحابية المباشرة</h4>
+                        <p className="text-[11px] text-slate-500">تحديث فوري لجميع الأجهزة والمتصفحات بنقرة واحدة</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* Push Button */}
+                      <button
+                        type="button"
+                        disabled={isSyncingCloud || !isSupabaseConfigured()}
+                        onClick={async () => {
+                          if (!isSupabaseConfigured()) {
+                            showToast('يرجى حفظ بيانات سوبابيس أولاً');
+                            return;
+                          }
+                          setIsSyncingCloud(true);
+                          try {
+                            // 1. Push projects
+                            await saveCloudProjects(localExecutiveProjects);
+                            // 2. Push field photos
+                            const photos = safeStorageGet('portal-field-photos-v2', initialFieldPhotos);
+                            await saveCloudPhotos(photos);
+                            // 3. Push hero card
+                            await saveCloudStoreItem('portal-hero-showcase-card', getSavedHeroCard());
+                            // 4. Push news
+                            await saveCloudStoreItem('portal-news-posts', getSavedNewsPosts());
+                            
+                            showToast('تمت مزامنة جميع البيانات والصور بنجاح إلى سوبابيس! ستظهر فوراً في هواتف الجميع.');
+                          } catch (err) {
+                            showToast('حدث خطأ أثناء الرفع السحابي: ' + (err.message || err));
+                          } finally {
+                            setIsSyncingCloud(false);
+                          }
+                        }}
+                        className={`w-full p-3.5 rounded-2xl font-black text-xs flex items-center justify-between transition-all cursor-pointer ${
+                          isSupabaseConfigured()
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 hover:scale-[1.01]'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <UploadCloud className="w-5 h-5 text-emerald-200" />
+                          <div className="text-start">
+                            <span className="block font-black">رفع ومزامنة جميع البيانات إلى سوبابيس الآن 🚀</span>
+                            <span className="block text-[10px] font-normal opacity-85">يرسل المشروعات والصور الحالية لتظهر فوراً على الهواتف</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] px-2 py-1 rounded bg-black/20 font-mono">1-Click</span>
+                      </button>
+
+                      {/* Pull Button */}
+                      <button
+                        type="button"
+                        disabled={isSyncingCloud || !isSupabaseConfigured()}
+                        onClick={async () => {
+                          if (!isSupabaseConfigured()) {
+                            showToast('يرجى حفظ بيانات سوبابيس أولاً');
+                            return;
+                          }
+                          setIsSyncingCloud(true);
+                          try {
+                            const cloudProjects = await syncExecutiveProjectsFromCloud();
+                            await syncFieldPhotosFromCloud();
+                            if (cloudProjects && cloudProjects.length > 0) {
+                              setLocalExecutiveProjects(cloudProjects);
+                              showToast(`تم استيراد ${cloudProjects.length} مشروع من سوبابيس بنجاح!`);
+                            } else {
+                              showToast('تم الاتصال بالسحابة: لا توجد بيانات جديدة بعد');
+                            }
+                          } catch (err) {
+                            showToast('تعذر جلب البيانات من السحابة');
+                          } finally {
+                            setIsSyncingCloud(false);
+                          }
+                        }}
+                        className={`w-full p-3.5 rounded-2xl font-black text-xs flex items-center justify-between border transition-all cursor-pointer ${
+                          isSupabaseConfigured()
+                            ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 hover:scale-[1.01]'
+                            : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <RefreshCw className={`w-5 h-5 text-amber-500 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                          <div className="text-start">
+                            <span className="block font-black">سحب وتحديث البيانات من سوبابيس</span>
+                            <span className="block text-[10px] font-normal text-slate-500">جلب أحدث التعديلات المنشورة سحابياً إلى هذا المتصفح</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] px-2 py-1 rounded bg-slate-200 font-mono text-slate-700">Pull</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/60 text-[11px] text-amber-900 flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <span>
+                      بمجرد الضغط على <strong>رفع ومزامنة</strong>، سيتم تحديث جدول <code>portal_store</code> في سوبابيس، وسيشاهد أي شخص يفتح رابط GitHub Pages على هاتفه الصور والمشاريع المعدلة مباشرة!
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* SQL Setup Instruction Card */}
+              <div className="bg-[#070b14] rounded-3xl p-6 sm:p-7 border border-white/10 text-white shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">
+                        إعداد لمرة واحدة فقط
+                      </span>
+                      <h4 className="font-black text-base text-white">كود إنشاء جدول المزامنة في Supabase (SQL Editor)</h4>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      إذا لم تقم بإنشاء الجدول بعد في حسابك، انسخ الكود التالي والصقه في <strong>SQL Editor</strong> في Supabase واضغط <strong>Run</strong>.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        navigator.clipboard.writeText(SUPABASE_SQL_SETUP);
+                        setCopiedSql(true);
+                        showToast('تم نسخ كود SQL بنجاح! الصقه في Supabase SQL Editor واضغط Run');
+                        setTimeout(() => setCopiedSql(false), 3000);
+                      } catch (e) {
+                        showToast('يرجى نسخ الكود يدوياً');
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
+                      copiedSql 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' 
+                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 hover:scale-105'
+                    }`}
+                  >
+                    {copiedSql ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedSql ? 'تم النسخ للحافظة ✓' : 'نسخ كود SQL بنقرة واحدة'}</span>
+                  </button>
+                </div>
+
+                {/* Preformatted SQL snippet */}
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#04070e]">
+                  <pre className="p-4 text-[11px] font-mono text-emerald-400 leading-relaxed overflow-x-auto max-h-56 select-text" dir="ltr">
+                    {SUPABASE_SQL_SETUP}
+                  </pre>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-300 pt-2">
+                  <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <span className="text-amber-400 font-bold block mb-1">1. إنشاء الحساب والمشروع:</span>
+                    <span>سجل دخول في <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-amber-400 underline">supabase.com</a> وأنشئ مشروع جديد مجاني.</span>
+                  </div>
+                  <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <span className="text-amber-400 font-bold block mb-1">2. تشغيل كود SQL:</span>
+                    <span>اختر <strong>SQL Editor</strong> من القائمة، الصق الكود أعلاه، واضغط الزر الأخضر <strong>Run</strong>.</span>
+                  </div>
+                  <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <span className="text-amber-400 font-bold block mb-1">3. وضع الرابط والمفتاح:</span>
+                    <span>من <strong>Project Settings &gt; API</strong>، انسخ رابط URL ومفتاح <code>anon public</code> وضعهما أعلاه!</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
           {/* ── FOOTER BAR (Dark Navy `#0A1128`) ── */}
           <footer className="bg-[#0A1128] text-slate-400 rounded-2xl p-3.5 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm font-medium">
+
             <span>جميع الحقوق محفوظة © 2026</span>
             <span className="text-white font-bold">جهاز تنفيذ مشروعات المواصلات</span>
             <span className="font-mono text-amber-400">الإصدار 1.0.0</span>

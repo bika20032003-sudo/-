@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, ExternalLink, Compass, Layers, ShieldCheck, CheckCircle2, AlertTriangle, Clock, ArrowUpRight, X } from 'lucide-react';
-import { nationalProjects } from '../services/api';
+import { nationalProjects, getSavedExecutiveProjects } from '../services/api';
 import { resolveAsset } from '../utils/assets';
 
 export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
   const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedProject, setSelectedProject] = useState(nationalProjects[0]);
+  const [projectsList, setProjectsList] = useState(getSavedExecutiveProjects);
+  const [selectedProject, setSelectedProject] = useState(() => projectsList[0] || nationalProjects[0]);
   const [mapMode, setMapMode] = useState('tactical'); // 'tactical' | 'satellite'
 
-  const filteredProjects = nationalProjects.filter(p => {
+  useEffect(() => {
+    const handleUpdate = () => {
+      const updated = getSavedExecutiveProjects();
+      setProjectsList(updated);
+      setSelectedProject(prev => {
+        if (!prev) return updated[0] || null;
+        const found = updated.find(p => p.id === prev.id);
+        return found || updated[0] || null;
+      });
+    };
+
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('cloud_projects_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('cloud_projects_updated', handleUpdate);
+    };
+  }, []);
+
+  const filteredProjects = projectsList.filter(p => {
     if (filterStatus === 'all') return true;
     return p.status === filterStatus;
   });
+
 
   return (
     <section id="map-section" className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-fadeIn select-none">

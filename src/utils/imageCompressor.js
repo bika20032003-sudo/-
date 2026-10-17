@@ -2,6 +2,8 @@
  * Utility for compressing uploaded images on an off-screen HTML5 Canvas
  * Prevents localStorage QuotaExceededError while retaining 4K visual clarity.
  */
+import { saveCloudStoreItem, isSupabaseConfigured } from '../services/supabase';
+
 
 export function compressImageFile(file, maxWidth = 1400, maxHeight = 1000, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -69,25 +71,41 @@ export function compressImageFile(file, maxWidth = 1400, maxHeight = 1000, quali
  * Safe localStorage setter with quota protection
  */
 export function safeStorageSet(key, value) {
+  let savedOk = false;
   try {
     const serialized = typeof value === 'string' ? value : JSON.stringify(value);
     localStorage.setItem(key, serialized);
-    return true;
+    savedOk = true;
   } catch (err) {
     console.warn(`[SafeStorage] Quota exceeded or storage error on ${key}:`, err);
     // If quota exceeded, try to clean old large temporary items
     try {
-      // Clear legacy heavy keys if present
       localStorage.removeItem('portal-field-photos');
       const serialized = typeof value === 'string' ? value : JSON.stringify(value);
       localStorage.setItem(key, serialized);
-      return true;
+      savedOk = true;
     } catch (e2) {
       console.error('[SafeStorage] Unable to save to localStorage:', e2);
-      return false;
     }
   }
+
+  // Dispatch local window event so UI updates immediately
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {}
+  }
+
+  // Asynchronous background sync to Supabase Cloud
+  if (isSupabaseConfigured()) {
+    saveCloudStoreItem(key, value).catch(cloudErr => {
+      console.warn(`[Supabase Cloud] فشل المزامنة السحابية لـ ${key}:`, cloudErr);
+    });
+  }
+
+  return savedOk;
 }
+
 
 /**
  * Safe localStorage getter with fallback

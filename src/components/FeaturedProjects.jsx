@@ -68,8 +68,15 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
       setProjectsList(loadAllExecutiveProjects());
     };
     window.addEventListener('storage', handleStorageUpdate);
-    return () => window.removeEventListener('storage', handleStorageUpdate);
+    window.addEventListener('cloud_projects_updated', handleStorageUpdate);
+    window.addEventListener('supabase_config_changed', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('storage', handleStorageUpdate);
+      window.removeEventListener('cloud_projects_updated', handleStorageUpdate);
+      window.removeEventListener('supabase_config_changed', handleStorageUpdate);
+    };
   }, []);
+
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
