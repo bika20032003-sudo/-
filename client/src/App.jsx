@@ -51,15 +51,14 @@ import {
   UserPlus,
   Key,
   ShieldCheck,
-  User,
-  Compass,
-  ExternalLink
+  User
 } from 'lucide-react';
 
 import importedForceData from './data/force_data.json';
 import MailSection from './components/MailSection';
 import TemplatesSection from './components/TemplatesSection';
 import ForceNameAutocomplete from './components/ForceNameAutocomplete';
+import DashboardSection from './components/DashboardSection';
 
 // Normalize Arabic text for accurate search matching regardless of diacritics, alef forms, and taa marbuta
 const normalizeArabicText = (text) => {
@@ -2361,53 +2360,12 @@ export default function App() {
 
     if (activeSection === 'dashboard') {
       return (
-        <div>
-          {/* Hero Welcome Card */}
-          <div className="hero-welcome-card">
-            <h2>مرحباً بك، {user.full_name || 'سيادة اللواء / موسى سعد محمد البدين'}</h2>
-            <p>
-              منظومة القيادة والتحكم الرقمية الموحدة - مديرية أمن أوباري. جاهزية تامة ومتابعة شاملة لكافة الإدارات والأقسام الأمنية واللوجستية.
-            </p>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="stats-summary-grid">
-            <div className="stat-box-card" onClick={() => setActiveSection('force')} style={{ cursor: 'pointer' }}>
-              <div className="stat-box-icon"><Users size={22} /></div>
-              <div className="stat-box-content">
-                <h3>{forceMembers.length.toLocaleString('ar-LY')}</h3>
-                <p>إجمالي القوة العمومية (قوة 2222)</p>
-              </div>
-            </div>
-            <div className="stat-box-card">
-              <div className="stat-box-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
-                <Car size={22} />
-              </div>
-              <div className="stat-box-content">
-                <h3>46 آلية</h3>
-                <p>الآليات والدوريات الجاهزة</p>
-              </div>
-            </div>
-            <div className="stat-box-card">
-              <div className="stat-box-icon" style={{ background: '#ecfdf5', color: '#059669' }}>
-                <Radio size={22} />
-              </div>
-              <div className="stat-box-content">
-                <h3>100%</h3>
-                <p>جاهزية غرفة العمليات</p>
-              </div>
-            </div>
-            <div className="stat-box-card">
-              <div className="stat-box-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
-                <Fuel size={22} />
-              </div>
-              <div className="stat-box-content">
-                <h3>24,800 لتر</h3>
-                <p>مخزون الوقود المتوفر</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardSection
+          user={user}
+          forceMembers={forceMembers}
+          setForceMembers={setForceMembers}
+          setActiveSection={setActiveSection}
+        />
       );
     }
 
@@ -2878,36 +2836,6 @@ export default function App() {
                 </div>
               );
             })}
-
-            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-              <a
-                href="./road/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nav-item"
-                style={{
-                  color: '#fbbf24',
-                  background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.25)',
-                  borderRadius: '10px',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '9px 12px',
-                  margin: '6px 8px',
-                  fontWeight: 700,
-                  fontSize: '12.5px'
-                }}
-                title="مشروع صيانة وتطوير طريق أوباري – غات (جهاز تنفيذ مشروعات المواصلات)"
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Compass size={16} />
-                  <span>طريق أوباري – غات</span>
-                </div>
-                <ExternalLink size={13} style={{ opacity: 0.7 }} />
-              </a>
-            </div>
           </nav>
 
           <div
@@ -3999,28 +3927,6 @@ export default function App() {
 
             {/* Links and Directorate Social */}
             <div className="auth-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <a
-                href="./road/"
-                className="road-project-badge-link"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#b45309',
-                  background: '#fef3c7',
-                  border: '1px solid #fde68a',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                title="الانتقال إلى موقع مشروع طريق أوباري – غات (جهاز تنفيذ مشروعات المواصلات)"
-              >
-                <span>🛣️</span>
-                <span>طريق أوباري – غات</span>
-              </a>
 
               <a
                 href="https://www.facebook.com/share/1CYt5jTzG7/?mibextid=wwXIfr"

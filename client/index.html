@@ -14,23 +14,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
 
-    <!-- Multi-Project Subpath Safety Guard -->
-    <script>
-      (function() {
-        var p = window.location.pathname;
-        if (p.includes('/portal') || p.includes('/ubari-portal')) {
-          var targetPortal = p.includes('/ubari-portal') ? '/-/ubari-portal/' : '/-/portal/';
-          if (!p.endsWith('/portal/') && !p.endsWith('/ubari-portal/') && !p.endsWith('index.html')) {
-            window.location.replace(window.location.origin + targetPortal);
-          }
-        } else if (p.includes('/road') || p.includes('/ubari-ghat')) {
-          var targetRoad = p.includes('/ubari-ghat') ? '/-/ubari-ghat/' : '/-/road/';
-          if (!p.endsWith('/road/') && !p.endsWith('/ubari-ghat/') && !p.endsWith('index.html')) {
-            window.location.replace(window.location.origin + targetRoad);
-          }
-        }
-      })();
-    </script>
     <!-- Google Fonts: Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
