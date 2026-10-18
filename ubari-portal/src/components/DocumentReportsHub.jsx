@@ -70,7 +70,7 @@ const DEFAULT_DOCS = [
   },
   {
     id: 'FIN-2026-Q3',
-    title: 'كشف المستخلصات المالية المعتمدة للشركات المنفذة لطريق ﻱ – غات',
+    title: 'كشف المستخلصات المالية المعتمدة للشركات المنفذة لطريق أوبارﻱ – غات',
     titleEn: 'Approved Financial Claims Ledger for Executing Contractors',
     category: 'التقارير المالية',
     categoryEn: 'Financial Claims',
@@ -135,7 +135,7 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
   const [uploadTab, setUploadTab] = useState('file'); // 'file' | 'presets' | 'url'
   const [newUploadPhoto, setNewUploadPhoto] = useState({
     title: '',
-    sector: 'القطاع الأول (ﻱ - الفيوات)',
+    sector: 'القطاع الأول (أوبارﻱ - الفيوات)',
     category: 'رصف الأسفلت',
     src: '/road-asphalt-paver.jpg',
     img: '/road-asphalt-paver.jpg',
@@ -174,7 +174,7 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
       id: `PH-${Date.now().toString().slice(-4)}`,
       title: newUploadPhoto.title.trim(),
       titleEn: newUploadPhoto.title.trim(),
-      sector: newUploadPhoto.sector || 'القطاع الأول (ﻱ - الفيوات)',
+      sector: newUploadPhoto.sector || 'القطاع الأول (أوبارﻱ - الفيوات)',
       category: newUploadPhoto.category || 'رصف الأسفلت',
       desc: newUploadPhoto.desc?.trim() || `توثيق ميداني فوتوغرافي لأعمال ${newUploadPhoto.category} في ${newUploadPhoto.sector}.`,
       date: new Date().toISOString().split('T')[0],
@@ -196,7 +196,7 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
     setTimeout(() => setPhotoUploadSuccess(null), 4000);
     setNewUploadPhoto({
       title: '',
-      sector: 'القطاع الأول (ﻱ - الفيوات)',
+      sector: 'القطاع الأول (أوبارﻱ - الفيوات)',
       category: 'رصف الأسفلت',
       src: '/road-asphalt-paver.jpg',
       img: '/road-asphalt-paver.jpg',
@@ -784,11 +784,11 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
                     onChange={(e) => setNewUploadPhoto({ ...newUploadPhoto, sector: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white"
                   >
-                    <option value="القطاع الأول (ﻱ - الفيوات)">القطاع الأول (ﻱ - الفيوات)</option>
+                    <option value="القطاع الأول (أوبارﻱ - الفيوات)">القطاع الأول (أوبارﻱ - الفيوات)</option>
                     <option value="القطاع الثاني (الفيوات - العوينات)">القطاع الثاني (الفيوات - العوينات)</option>
                     <option value="القطاع الثالث (العوينات - البركت)">القطاع الثالث (العوينات - البركت)</option>
                     <option value="القطاع الرابع (البركت - غات)">القطاع الرابع (البركت - غات)</option>
-                    <option value="مسار طريق ﻱ – غات الدولي (360 كم)">كافة مسار المشروع (360 كم)</option>
+                    <option value="مسار طريق أوبارﻱ – غات الدولي (360 كم)">كافة مسار المشروع (360 كم)</option>
                   </select>
                 </div>
                 <div>

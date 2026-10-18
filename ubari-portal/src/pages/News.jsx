@@ -23,7 +23,7 @@ export default function News() {
       {/* Header */}
       <section className="mx-auto max-w-6xl px-5 pt-32 md:px-8 md:pt-40">
         <FadeIn>
-          <p className="kicker text-center">مشروع طريق ﻱ – غات</p>
+          <p className="kicker text-center">مشروع طريق أوبارﻱ – غات</p>
           <h1 className="mt-5 text-center font-display text-5xl font-bold md:text-6xl">
             الأخبار والتقارير
           </h1>

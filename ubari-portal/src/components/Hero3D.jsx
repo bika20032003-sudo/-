@@ -123,7 +123,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
           />
           <img 
             src={resolveAsset('./hero-desert-road.jpg')} 
-            alt="مشروع طريق ﻱ - غات 4K" 
+            alt="مشروع طريق أوبارﻱ - غات 4K" 
             fetchPriority="high"
             decoding="async"
             className="w-full h-full object-cover object-center"
@@ -312,7 +312,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                   }`}>
                     <img 
                       src={resolveAsset(currentMobileNews.image || './road-asphalt-paver.jpg')} 
-                      alt={currentMobileNews.title || 'أخبار طريق ﻱ غات'} 
+                      alt={currentMobileNews.title || 'أخبار طريق أوبارﻱ غات'} 
                       className="w-full h-full object-cover transition-transform duration-500"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
@@ -345,7 +345,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                   {/* Slide index & Location pill */}
                   <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[10px] gap-2 pointer-events-none z-10">
                     <span className="px-2 py-0.5 rounded-md bg-black/70 font-mono font-bold text-amber-400 border border-white/10 truncate min-w-0">
-                      {lang === 'ar' ? (currentMobileNews.location || 'طريق ﻱ - غات') : (currentMobileNews.locationEn || 'Ubari - Ghat Highway')}
+                      {lang === 'ar' ? (currentMobileNews.location || 'طريق أوبارﻱ - غات') : (currentMobileNews.locationEn || 'Ubari - Ghat Highway')}
                     </span>
                     <span className="font-mono bg-black/60 px-1.5 py-0.5 rounded font-bold shrink-0 whitespace-nowrap">
                       {mobileNewsIdx + 1} / {mobileNewsList.length}
@@ -407,7 +407,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
               >
                 <img 
                   src={resolveAsset(heroCard.image || "./road-asphalt-paver.jpg")} 
-                  alt={heroCard.title || "أعمال رصف وتأهيل طريق ﻱ غات"} 
+                  alt={heroCard.title || "أعمال رصف وتأهيل طريق أوبارﻱ غات"} 
                   className="w-full h-full object-cover photo-hover-zoom group-hover:scale-110 transition-transform duration-700 ease-out"
                   onError={(e) => {
                     e.currentTarget.onerror = null;

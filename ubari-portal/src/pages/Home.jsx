@@ -19,7 +19,7 @@ const FEATURES = [
   {
     icon: Route,
     title: 'مسار استراتيجي',
-    desc: 'يربط مدينتي ﻱ وغات ويخدم واحات الجنوب الغربي وحركة التجارة البينية.'
+    desc: 'يربط مدينتي أوبارﻱ وغات ويخدم واحات الجنوب الغربي وحركة التجارة البينية.'
   },
   {
     icon: Ruler,
@@ -74,7 +74,7 @@ export default function Home() {
         >
           <img
             src={ASSETS.hero}
-            alt="طريق ﻱ – غات"
+            alt="طريق أوبارﻱ – غات"
             className="h-full w-full object-cover"
           />
         </motion.div>
@@ -102,7 +102,7 @@ export default function Home() {
             transition={{ duration: 1.1, delay: 0.5, ease: EASING }}
             className="mt-5 font-display text-6xl font-bold leading-[1.15] text-white md:text-8xl"
           >
-            طريق ﻱ — غات
+            طريق أوبارﻱ — غات
           </motion.h1>
 
           <motion.p
@@ -172,7 +172,7 @@ export default function Home() {
               طريق يختصر المسافات ويصل الجنوب ببعضه
             </h2>
             <p className="mx-auto mt-6 max-w-2xl text-center leading-8 text-muted-foreground">
-              يُعد مشروع طريق ﻱ – غات من المشاريع الاستراتيجية في المنطقة الجنوبية، حيث يوفر محوراً برياً حديثاً يخدم الحركة التجارية والتنقل اليومي للمواطنين، بإشراف جهاز تنفيذ مشروعات المواصلات ومتابعة ميدانية مستمرة وتقارير إنجاز دورية تُنشر عبر هذه البوابة.
+              يُعد مشروع طريق أوبارﻱ – غات من المشاريع الاستراتيجية في المنطقة الجنوبية، حيث يوفر محوراً برياً حديثاً يخدم الحركة التجارية والتنقل اليومي للمواطنين، بإشراف جهاز تنفيذ مشروعات المواصلات ومتابعة ميدانية مستمرة وتقارير إنجاز دورية تُنشر عبر هذه البوابة.
             </p>
           </FadeIn>
 

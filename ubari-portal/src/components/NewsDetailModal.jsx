@@ -146,7 +146,7 @@ export default function NewsDetailModal({ post, isOpen, onClose, theme = 'dark',
             <div className="absolute bottom-3 start-3 end-3 flex items-center justify-between text-white text-xs gap-2 pointer-events-none">
               <span className="flex items-center gap-1.5 bg-black/80 px-2.5 sm:px-3 py-1 rounded-xl border border-white/15 text-[10px] sm:text-[11px] font-bold min-w-0 truncate">
                 <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="truncate">{post.location || (lang === 'ar' ? 'مسار ﻱ - غات' : 'Ubari - Ghat Highway')}</span>
+                <span className="truncate">{post.location || (lang === 'ar' ? 'مسار أوبارﻱ - غات' : 'Ubari - Ghat Highway')}</span>
               </span>
 
               <span className="bg-black/70 px-2.5 py-1 rounded-xl text-[10px] font-mono text-slate-300 border border-white/10 shrink-0 whitespace-nowrap">

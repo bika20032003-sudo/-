@@ -12,7 +12,7 @@ export default function FloatingWhatsApp({ lang = 'ar' }) {
   const defaultTemplates = [
     {
       id: 1,
-      textAr: 'السلام عليكم، أود الاستفسار عن الموقف التنفيذي لمشروع طريق ﻱ - غات.',
+      textAr: 'السلام عليكم، أود الاستفسار عن الموقف التنفيذي لمشروع طريق أوبارﻱ - غات.',
       textEn: 'Hello, I would like to inquire about the execution status of the Ubari - Ghat road project.'
     },
     {
@@ -83,7 +83,7 @@ export default function FloatingWhatsApp({ lang = 'ar' }) {
           <div className="p-4 space-y-3 bg-[#080d17]/80 text-xs">
             <p className="text-slate-300 text-[11px] leading-relaxed">
               {lang === 'ar' 
-                ? 'مرحباً بك في البوابة الإلكترونية لمشروع طريق ﻱ – غات (360 كم). اختر قالباً جاهزاً أو اكتب رسالتك للتواصل المباشر عبر واتساب:'
+                ? 'مرحباً بك في البوابة الإلكترونية لمشروع طريق أوبارﻱ – غات (360 كم). اختر قالباً جاهزاً أو اكتب رسالتك للتواصل المباشر عبر واتساب:'
                 : 'Welcome to Ubari – Ghat Highway Portal. Choose a template or write your custom message for instant WhatsApp connection:'}
             </p>
 
