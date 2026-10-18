@@ -13,7 +13,10 @@ import {
   Globe,
   ChevronDown,
   LayoutDashboard,
-  Crown
+  Crown,
+  Compass,
+  ArrowUpRight,
+  Sparkles
 } from 'lucide-react';
 
 export default function Header({ 
@@ -245,13 +248,15 @@ export default function Header({
             title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Showcase Website'}
             className={`hidden md:flex px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
               theme === 'light'
-                ? 'bg-orange-50 hover:bg-orange-100 border-orange-300/80 shadow-orange-500/10'
-                : 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 hover:border-orange-400/60 shadow-orange-500/10'
+                ? 'bg-orange-50 hover:bg-orange-100 border-orange-300/80 text-orange-600 shadow-orange-500/10'
+                : 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 hover:border-orange-400/60 text-orange-400 shadow-orange-500/10'
             }`}
           >
-            <span className="text-orange-500 font-black tracking-wide">
+            <Compass className="w-3.5 h-3.5 text-amber-500" />
+            <span className="font-black tracking-wide">
               {lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}
             </span>
+            <ArrowUpRight className="w-3 h-3 opacity-70" />
           </a>
 
 
@@ -469,20 +474,50 @@ export default function Header({
 
           {/* Mobile Dashboard & Auth Options */}
           <div className="border-t border-slate-200 dark:border-white/10 pt-2 mt-1 space-y-1.5">
-            {/* زر بداية الرحلة للجوال */}
+            {/* زر بداية الرحلة للجوال - تصميم عصري وفخم */}
             <a
               href="https://bika20032003-sudo.github.io/-/road/"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-black text-start bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 flex items-center justify-between transition-colors cursor-pointer"
+              className={`group relative overflow-hidden w-full p-2.5 sm:p-3 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-2.5 shadow-md active:scale-[0.98] cursor-pointer ${
+                theme === 'light'
+                  ? 'bg-gradient-to-r from-amber-50 via-orange-50/90 to-amber-100/70 border-amber-300/80 hover:border-amber-400 shadow-amber-500/10'
+                  : 'bg-gradient-to-r from-amber-950/40 via-orange-950/30 to-slate-900/90 border-amber-500/40 hover:border-amber-400/70 shadow-black/40 backdrop-blur-md'
+              }`}
             >
-              <span className={`font-bold ${theme === 'light' ? 'text-orange-950' : 'text-white'}`}>
-                {lang === 'ar' ? 'بداية الرحلة (الموقع التعريفي)' : 'Journey Start (Showcase)'}
-              </span>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-orange-500/30 text-white border border-orange-500/40 font-bold whitespace-nowrap">
-                عرض ↗
-              </span>
+              {/* لمسة بريق ضوئي تمر عند التحويم */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+              {/* الجانب الأيمن: أيقونة بوصلة متوهجة + العنوان الرئيسي والفرعي */}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-slate-950 flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/30 group-hover:scale-105 group-hover:rotate-6 transition-all duration-300">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col text-start min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xs font-black tracking-wide truncate ${
+                      theme === 'light' ? 'text-slate-900' : 'text-white'
+                    }`}>
+                      {lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}
+                    </span>
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 shrink-0">
+                      3D
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-semibold truncate ${
+                    theme === 'light' ? 'text-amber-900/80' : 'text-amber-200/75'
+                  }`}>
+                    {lang === 'ar' ? 'الموقع التعريفي للمشروع' : 'Interactive Showcase'}
+                  </span>
+                </div>
+              </div>
+
+              {/* الجانب الأيسر: زر تفاعلي أنيق بلمسة عصرية */}
+              <div className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm shadow-amber-500/25 group-hover:from-amber-400 group-hover:to-orange-400 group-hover:shadow-md transition-all duration-200">
+                <span>{lang === 'ar' ? 'استكشف' : 'Explore'}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+              </div>
             </a>
 
             {!user ? (
