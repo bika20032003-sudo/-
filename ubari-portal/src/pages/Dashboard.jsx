@@ -120,7 +120,7 @@ export default function Dashboard() {
                 لوحة تحكم مدير المشروع
               </p>
               <p className="text-[11px] tracking-[0.15em] text-muted-foreground">
-                طريق أوباري – غات
+                طريق ﻱ – غات
               </p>
             </div>
           </div>

@@ -47,7 +47,7 @@ export default function ProjectExecutiveAnalytics({
     {
       id: 1,
       title: lang === 'ar' ? 'فحص عينات مارشال للطبقة الرابطة' : 'Marshall Compaction Sample Inspection',
-      sector: lang === 'ar' ? 'القطاع الأول (أوباري - الفيوات)' : 'Sector 01 (Ubari – Al-Faywat)',
+      sector: lang === 'ar' ? 'القطاع الأول (ﻱ - الفيوات)' : 'Sector 01 (Ubari – Al-Faywat)',
       status: lang === 'ar' ? 'مطابق للمواصفات 100%' : '100% Passed Specs',
       author: 'م. عبد السلام الفزاني',
       time: lang === 'ar' ? 'قبل ساعتين' : '2 hours ago'

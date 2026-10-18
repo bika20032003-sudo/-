@@ -57,7 +57,7 @@ export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
             theme === 'light' ? 'text-slate-600' : 'text-slate-400'
           }`}>
             {lang === 'ar'
-              ? 'متابعة حية لمواقع مشروعات الطرق السريعة ومسار طريق أوباري – غات (360 كم) وشبكة الربط الوطني عبر الأقاليم.'
+              ? 'متابعة حية لمواقع مشروعات الطرق السريعة ومسار طريق ﻱ – غات (360 كم) وشبكة الربط الوطني عبر الأقاليم.'
               : 'Live spatial tracking of national highway corridors, the 360km Ubari – Ghat route, and inter-regional corridors.'}
           </p>
         </div>
@@ -204,7 +204,7 @@ export default function InteractiveLibyaMap({ theme, lang = 'ar' }) {
                   <text x="395" y="435" fill="#FFAB00" fontWeight="black">سبها</text>
 
                   <circle cx="330" cy="460" r="5" fill="#FFAB00" />
-                  <text x="345" y="465" fill="#FFAB00" fontWeight="black">أوباري (000+00)</text>
+                  <text x="345" y="465" fill="#FFAB00" fontWeight="black">ﻱ (000+00)</text>
 
                   <circle cx="160" cy="590" r="5" fill="#FFAB00" />
                   <text x="175" y="595" fill="#FFAB00" fontWeight="black">غات (360 كم)</text>

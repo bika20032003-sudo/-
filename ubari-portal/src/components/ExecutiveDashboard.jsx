@@ -200,7 +200,7 @@ const PRESET_PROJECT_PHOTOS = [
 
 // Extended 12 Sectors Dataset for complete Road Management
 const default12Sectors = [
-  { id: 'SEC-01', name: 'القطاع 01: أوباري - الفيوات', lengthKm: 30, progress: 84.0, contractor: 'شركة السهل الصحراوي', residentEngineer: 'م. عبد السلام الفزاني', status: 'متقدم جداً', statusColor: 'emerald', thickness: 12, machinery: 38, workers: 115 },
+  { id: 'SEC-01', name: 'القطاع 01: ﻱ - الفيوات', lengthKm: 30, progress: 84.0, contractor: 'شركة السهل الصحراوي', residentEngineer: 'م. عبد السلام الفزاني', status: 'متقدم جداً', statusColor: 'emerald', thickness: 12, machinery: 38, workers: 115 },
   { id: 'SEC-02', name: 'القطاع 02: الفيوات - القرقيبة', lengthKm: 30, progress: 76.5, contractor: 'شركة السهل الصحراوي', residentEngineer: 'م. يحيى التاورغي', status: 'متقدم جداً', statusColor: 'emerald', thickness: 12, machinery: 32, workers: 95 },
   { id: 'SEC-03', name: 'القطاع 03: القرقيبة - بيسان', lengthKm: 30, progress: 72.0, contractor: 'شركة الهضبة للإعمار', residentEngineer: 'م. طارق المحجوب', status: 'وفق الجدول', statusColor: 'emerald', thickness: 10, machinery: 42, workers: 130 },
   { id: 'SEC-04', name: 'القطاع 04: بيسان - تين الوه', lengthKm: 30, progress: 68.0, contractor: 'شركة الطريق السريع', residentEngineer: 'م. منصور المهدي', status: 'وفق الجدول', statusColor: 'emerald', thickness: 10, machinery: 30, workers: 90 },
@@ -244,7 +244,7 @@ export default function ExecutiveDashboard({
   const [executiveProjectToDelete, setExecutiveProjectToDelete] = useState(null);
   const [executiveProjectForm, setExecutiveProjectForm] = useState({
     title: '',
-    region: 'فزان (أوباري - غات)',
+    region: 'فزان (ﻱ - غات)',
     progress: 68.5,
     status: 'in_progress',
     contractor: 'ائتلاف شركات الطرق الوطنية',
@@ -264,7 +264,7 @@ export default function ExecutiveDashboard({
     desc: '',
     image: '/road-asphalt-paver.jpg',
     author: 'المكتب الإعلامي - جهاز مشروعات المواصلات',
-    location: 'مسار طريق أوباري – غات'
+    location: 'مسار طريق ﻱ – غات'
   });
 
   // ── Hero 3D Showcase Card Management State ──
@@ -385,7 +385,7 @@ export default function ExecutiveDashboard({
       { id: 'P-03', title: 'بناء عبّارات السيول الصندوقية المزدوجة', sector: 'القطاع 03', category: 'العبارات والجسور', date: '2026-08-20', img: '/road-qa-testing-core.jpg', photographer: 'م. سالم التواتي' },
       { id: 'P-04', title: 'قطار الرصف الآلي المزدوج في قطاع الفيوات', sector: 'القطاع 01', category: 'رصف الأسفلت', date: '2026-08-20', img: '/road-asphalt-paver.jpg', photographer: 'فريق الإعلام الهندسي' },
       { id: 'P-05', title: 'تركيب أعمدة الإنارة الذكية بالطاقة الشمسية', sector: 'القطاع 04', category: 'الإنارة والسلامة', date: '2026-08-19', img: '/road-solar-lighting.jpg', photographer: 'م. منصور المهدي' },
-      { id: 'P-06', title: 'مسار الطريق الصحراوي الممتد من أوباري لغات', sector: 'القطاع 02', category: 'بانوراما جوية', date: '2026-08-18', img: '/road-aerial-desert-highway.jpg', photographer: 'طائرة التصوير الميداني' }
+      { id: 'P-06', title: 'مسار الطريق الصحراوي الممتد من ﻱ لغات', sector: 'القطاع 02', category: 'بانوراما جوية', date: '2026-08-18', img: '/road-aerial-desert-highway.jpg', photographer: 'طائرة التصوير الميداني' }
     ];
   });
 
@@ -397,7 +397,7 @@ export default function ExecutiveDashboard({
     return [
       { id: 'USR-01', name: 'أحمد محمد', email: 'ahmed.mohammed@transport.gov.ly', role: 'مدير النظام', status: 'نشط', permissions: 'كامل الصلاحيات (Super Admin)', sectorsAssigned: 'كافة القطاعات (01 - 12)', phone: '+218 91 234 5678' },
       { id: 'USR-02', name: 'م. عبد السلام الفزاني', email: 'a.fazzani@transport.gov.ly', role: 'مهندس إشراف موقعي', status: 'نشط', permissions: 'إدارة وتعديل القطاعات والتقارير', sectorsAssigned: 'القطاع 01، القطاع 02', phone: '+218 92 345 6789' },
-      { id: 'USR-03', name: 'د. سالم التواتي', email: 's.touati@transport.gov.ly', role: 'مدير ضبط الجودة والمختبرات', status: 'نشط', permissions: 'اعتماد محاضر الاختبارات المعملية', sectorsAssigned: 'مختبرات أوباري وغات', phone: '+218 91 456 7890' },
+      { id: 'USR-03', name: 'د. سالم التواتي', email: 's.touati@transport.gov.ly', role: 'مدير ضبط الجودة والمختبرات', status: 'نشط', permissions: 'اعتماد محاضر الاختبارات المعملية', sectorsAssigned: 'مختبرات ﻱ وغات', phone: '+218 91 456 7890' },
       { id: 'USR-04', name: 'أ. فاطمة الورفلي', email: 'f.werfalli@finance.gov.ly', role: 'مدقق مالي ومستخلصات', status: 'نشط', permissions: 'إدارة القيود والمستخلصات المالية', sectorsAssigned: 'الإدارة المالية المركزية', phone: '+218 93 567 8901' }
     ];
   });
@@ -428,7 +428,7 @@ export default function ExecutiveDashboard({
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'مهندس إشراف موقعي', permissions: 'إدارة وتعديل القطاعات', phone: '', sectorsAssigned: 'القطاع 01' });
   const [newMedia, setNewMedia] = useState({
     title: '',
-    sector: 'القطاع 01: أوباري - الفيوات',
+    sector: 'القطاع 01: ﻱ - الفيوات',
     category: 'رصف الأسفلت',
     img: '/road-asphalt-paver.jpg',
     src: '/road-asphalt-paver.jpg',
@@ -559,7 +559,7 @@ export default function ExecutiveDashboard({
         id: `PRJ-EXEC-${Date.now().toString().slice(-4)}`,
         title: executiveProjectForm.title.trim(),
         titleEn: executiveProjectForm.title.trim(),
-        region: executiveProjectForm.region || 'مسار أوباري - غات',
+        region: executiveProjectForm.region || 'مسار ﻱ - غات',
         regionEn: 'Ubari - Ghat Corridor',
         lengthKm: 90,
         progress: Number(executiveProjectForm.progress) || 50,
@@ -570,7 +570,7 @@ export default function ExecutiveDashboard({
         startDate: new Date().toISOString().split('T')[0],
         targetDate: '2026-12-31',
         image: executiveProjectForm.image || '/road-aerial-highway.jpg',
-        desc: executiveProjectForm.desc || 'مشروع تنفيذي ميداني على مسار أوباري - غات.',
+        desc: executiveProjectForm.desc || 'مشروع تنفيذي ميداني على مسار ﻱ - غات.',
         specs: {
           thickness: '10-12 سم',
           paved: 'منجز وموثق',
@@ -664,7 +664,7 @@ export default function ExecutiveDashboard({
         image: newsPostForm.image || '/road-asphalt-paver.jpg',
         timeAgo: 'الآن',
         timeAgoEn: 'Just now',
-        location: newsPostForm.location || 'مسار طريق أوباري – غات',
+        location: newsPostForm.location || 'مسار طريق ﻱ – غات',
         locationEn: 'Ubari – Ghat Highway Corridor',
         author: newsPostForm.author || 'المكتب الإعلامي - جهاز مشروعات المواصلات',
         authorEn: 'Media Office – Transportation Projects Authority',
@@ -886,7 +886,7 @@ export default function ExecutiveDashboard({
       id: `PH-${Date.now().toString().slice(-4)}`,
       title: newMedia.title.trim(),
       titleEn: newMedia.title.trim(),
-      sector: newMedia.sector || 'القطاع 01: أوباري - الفيوات',
+      sector: newMedia.sector || 'القطاع 01: ﻱ - الفيوات',
       category: newMedia.category || 'رصف الأسفلت',
       desc: newMedia.desc?.trim() || `توثيق ميداني فوتوغرافي عالي الدقة لأعمال ${newMedia.category} في ${newMedia.sector}.`,
       date: newMedia.date || new Date().toISOString().split('T')[0],
@@ -913,7 +913,7 @@ export default function ExecutiveDashboard({
         id: `PRJ-EXEC-${Date.now().toString().slice(-4)}`,
         title: newMedia.title.trim(),
         titleEn: newMedia.title.trim(),
-        region: newMedia.sector || 'القطاع الأول (أوباري - الفيوات)',
+        region: newMedia.sector || 'القطاع الأول (ﻱ - الفيوات)',
         regionEn: newMedia.sector || 'Corridor Sector',
         lengthKm: 35,
         progress: 88,
@@ -926,7 +926,7 @@ export default function ExecutiveDashboard({
         startDate: newMedia.date || new Date().toISOString().split('T')[0],
         targetDate: '2026-12-31',
         image: finalImg,
-        desc: newMedia.desc?.trim() || `توثيق تنفيذي ميداني عالي الدقة لأعمال ${newMedia.category} بطريق أوباري - غات.`,
+        desc: newMedia.desc?.trim() || `توثيق تنفيذي ميداني عالي الدقة لأعمال ${newMedia.category} بطريق ﻱ - غات.`,
         isFieldDoc: true,
         isCustomUploaded: true,
         specs: {
@@ -953,7 +953,7 @@ export default function ExecutiveDashboard({
     setIsAddMediaModalOpen(false);
     setNewMedia({
       title: '',
-      sector: 'القطاع 01: أوباري - الفيوات',
+      sector: 'القطاع 01: ﻱ - الفيوات',
       category: 'رصف الأسفلت',
       img: '/road-asphalt-paver.jpg',
       src: '/road-asphalt-paver.jpg',
@@ -1078,7 +1078,7 @@ export default function ExecutiveDashboard({
   // ── Handler: Export Backup JSON ──
   const handleExportBackup = () => {
     const backupData = {
-      project: 'مشروع طريق أوباري - غات 360 كم',
+      project: 'مشروع طريق ﻱ - غات 360 كم',
       timestamp: new Date().toISOString(),
       summary: summaryData,
       sectors: localSectors,
@@ -1143,7 +1143,7 @@ export default function ExecutiveDashboard({
           </div>
           <div className="text-start">
             <h1 className="font-black text-sm sm:text-base tracking-wide text-white flex items-center gap-2">
-              <span>مشروع طريق أوباري – غات</span>
+              <span>مشروع طريق ﻱ – غات</span>
             </h1>
             <span className="text-[11px] text-amber-400 font-bold block">
               جهاز تنفيذ مشروعات المواصلات
@@ -1321,7 +1321,7 @@ export default function ExecutiveDashboard({
                     onClick={() => {
                       setExecutiveProjectForm({
                         title: '',
-                        region: 'فزان (أوباري - غات)',
+                        region: 'فزان (ﻱ - غات)',
                         progress: 68.5,
                         status: 'in_progress',
                         contractor: 'ائتلاف شركات الطرق الوطنية',
@@ -1348,7 +1348,7 @@ export default function ExecutiveDashboard({
                         desc: '',
                         image: '/road-asphalt-paver.jpg',
                         author: 'المكتب الإعلامي - جهاز مشروعات المواصلات',
-                        location: 'مسار طريق أوباري – غات'
+                        location: 'مسار طريق ﻱ – غات'
                       });
                       setSelectedNewsPostEditModal(null);
                       setIsAddNewsPostModalOpen(true);
@@ -1951,7 +1951,7 @@ export default function ExecutiveDashboard({
                         قسم الشفافية والمتابعة والتقارير التنفيذية
                       </h3>
                       <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                        الاطلاع الحصري لمدير المشروع على تقارير الإنجاز الشهرية الشاملة، المستخلصات المالية، نتائج الفحوصات المعملية لعينات الأسفلت والدمك، والتوثيق البصري الميداني لطريق أوباري – غات (360 كم).
+                        الاطلاع الحصري لمدير المشروع على تقارير الإنجاز الشهرية الشاملة، المستخلصات المالية، نتائج الفحوصات المعملية لعينات الأسفلت والدمك، والتوثيق البصري الميداني لطريق ﻱ – غات (360 كم).
                       </p>
                     </div>
 
@@ -2159,7 +2159,7 @@ export default function ExecutiveDashboard({
           )}
 
           {/* ══════════════════════════════════════════════════════════════════════════════
-              VIEW: EXECUTIVE CORRIDOR PROJECTS (المشروعات التنفيذية لمسار طريق أوباري - غات)
+              VIEW: EXECUTIVE CORRIDOR PROJECTS (المشروعات التنفيذية لمسار طريق ﻱ - غات)
           ══════════════════════════════════════════════════════════════════════════════ */}
           {activeSidebarItem === 'executive-projects' && (
             <div className="space-y-6 animate-fadeIn text-start">
@@ -2173,7 +2173,7 @@ export default function ExecutiveDashboard({
                     </div>
                     <div>
                       <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <span>المشروعات التنفيذية لمسار طريق أوباري – غات</span>
+                        <span>المشروعات التنفيذية لمسار طريق ﻱ – غات</span>
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
                           ربط مباشر مع البوابة العامة
                         </span>
@@ -2190,7 +2190,7 @@ export default function ExecutiveDashboard({
                     onClick={() => {
                       setExecutiveProjectForm({
                         title: '',
-                        region: 'فزان (أوباري - غات)',
+                        region: 'فزان (ﻱ - غات)',
                         progress: 68.5,
                         status: 'in_progress',
                         contractor: 'ائتلاف شركات الطرق الوطنية',
@@ -2402,7 +2402,7 @@ export default function ExecutiveDashboard({
                             </h4>
                             <div className="flex items-center gap-1.5 text-slate-500 text-xs mt-0.5">
                               <MapPin className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                              <span className="truncate">{project.region || 'مسار أوباري - غات'}</span>
+                              <span className="truncate">{project.region || 'مسار ﻱ - غات'}</span>
                             </div>
                           </div>
 
@@ -2446,7 +2446,7 @@ export default function ExecutiveDashboard({
                               setSelectedExecutiveProjectEditModal(project);
                               setExecutiveProjectForm({
                                 title: project.title || '',
-                                region: project.region || 'مسار أوباري - غات',
+                                region: project.region || 'مسار ﻱ - غات',
                                 progress: project.progress ?? 50,
                                 status: project.status || 'in_progress',
                                 contractor: project.contractor || '',
@@ -2544,7 +2544,7 @@ export default function ExecutiveDashboard({
                           desc: '',
                           image: '/road-asphalt-paver.jpg',
                           author: 'المكتب الإعلامي - جهاز مشروعات المواصلات',
-                          location: 'مسار طريق أوباري – غات'
+                          location: 'مسار طريق ﻱ – غات'
                         });
                         setSelectedNewsPostEditModal(null);
                         setIsAddNewsPostModalOpen(true);
@@ -2578,7 +2578,7 @@ export default function ExecutiveDashboard({
                           </div>
                           <div className="absolute bottom-3 right-3 text-white text-[11px] flex items-center gap-2">
                             <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                            <span className="truncate max-w-[200px]">{post.location || 'مسار أوباري – غات'}</span>
+                            <span className="truncate max-w-[200px]">{post.location || 'مسار ﻱ – غات'}</span>
                           </div>
                         </div>
 
@@ -2608,7 +2608,7 @@ export default function ExecutiveDashboard({
                                   desc: post.desc || '',
                                   image: post.image || '/road-asphalt-paver.jpg',
                                   author: post.author || 'المكتب الإعلامي - جهاز مشروعات المواصلات',
-                                  location: post.location || 'مسار طريق أوباري – غات'
+                                  location: post.location || 'مسار طريق ﻱ – غات'
                                 });
                                 setIsAddNewsPostModalOpen(true);
                               }}
@@ -3636,8 +3636,8 @@ export default function ExecutiveDashboard({
                   className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500 bg-white"
                 >
                   <option value="new">إدراج كحزمة عمل وصورة جديدة في المشروعات التنفيذية (تظهر فوراً في المقدمة)</option>
-                  <option value="PRJ-UBG-360">تحديث الصورة الرئيسية: مشروع صيانة ورصف طريق أوباري – غات</option>
-                  <option value="PRJ-UBG-SOL-1100">تحديث الصورة الرئيسية: مشروع إنارة مسار أوباري – غات بالطاقة الشمسية</option>
+                  <option value="PRJ-UBG-360">تحديث الصورة الرئيسية: مشروع صيانة ورصف طريق ﻱ – غات</option>
+                  <option value="PRJ-UBG-SOL-1100">تحديث الصورة الرئيسية: مشروع إنارة مسار ﻱ – غات بالطاقة الشمسية</option>
                   <option value="PRJ-UBG-CUL-028">تحديث الصورة الرئيسية: مشروع عبّارات تصريف السيول</option>
                   <option value="PRJ-UBG-DUN-120">تحديث الصورة الرئيسية: مشروع تثبيت الكثبان الرملية وتوسعة الأكتاف</option>
                 </select>
@@ -4482,7 +4482,7 @@ export default function ExecutiveDashboard({
                   required
                   value={executiveProjectForm.title}
                   onChange={(e) => setExecutiveProjectForm({ ...executiveProjectForm, title: e.target.value })}
-                  placeholder="مثال: مشروع صيانة وتأهيل مسار أوباري - غات 360 كم"
+                  placeholder="مثال: مشروع صيانة وتأهيل مسار ﻱ - غات 360 كم"
                   className="w-full p-3 rounded-xl border border-slate-200 outline-none focus:border-amber-500 font-bold"
                 />
               </div>
@@ -4494,7 +4494,7 @@ export default function ExecutiveDashboard({
                     type="text"
                     value={executiveProjectForm.region}
                     onChange={(e) => setExecutiveProjectForm({ ...executiveProjectForm, region: e.target.value })}
-                    placeholder="فزان (أوباري - غات)"
+                    placeholder="فزان (ﻱ - غات)"
                     className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
                   />
                 </div>
@@ -5037,7 +5037,7 @@ export default function ExecutiveDashboard({
                     type="text"
                     value={newsPostForm.location}
                     onChange={(e) => setNewsPostForm({ ...newsPostForm, location: e.target.value })}
-                    placeholder="مسار طريق أوباري – غات"
+                    placeholder="مسار طريق ﻱ – غات"
                     className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-amber-500"
                   />
                 </div>

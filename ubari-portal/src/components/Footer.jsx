@@ -45,7 +45,7 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
 
           <p className={`text-xs leading-relaxed max-w-md font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
             {lang === 'ar' 
-              ? 'البوابة الرقمية الموحدة لمتابعة تنفيذ ورصف طريق أوباري – غات (طول 360 كم) بأعلى معايير الجودة والإنارة بالطاقة الشمسية والربط الإلكتروني.'
+              ? 'البوابة الرقمية الموحدة لمتابعة تنفيذ ورصف طريق ﻱ – غات (طول 360 كم) بأعلى معايير الجودة والإنارة بالطاقة الشمسية والربط الإلكتروني.'
               : 'Unified digital portal monitoring the execution and paving of the 360km Ubari – Ghat Highway according to modern engineering standards and solar lighting.'}
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function Footer({ setActiveTab, theme, lang = 'ar' }) {
           </h4>
           <p className="flex items-center gap-2.5 font-medium">
             <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <span>{lang === 'ar' ? 'طرابلس / غريان / سبها / أوباري - دولة ليبيا' : 'Tripoli / Sabha / Ubari – Libya'}</span>
+            <span>{lang === 'ar' ? 'طرابلس / غريان / سبها / ﻱ - دولة ليبيا' : 'Tripoli / Sabha / Ubari – Libya'}</span>
           </p>
           <p className="flex items-center gap-2.5 font-mono">
             <Globe className="w-4 h-4 text-cyan-500 flex-shrink-0" />
