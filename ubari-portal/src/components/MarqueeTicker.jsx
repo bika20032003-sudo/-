@@ -120,37 +120,28 @@ export default function MarqueeTicker({
     );
   }
 
-  // ── Variant 2: Hero Ticker (2026 Seamless Borderless Floating Glass Edition) ──
+  // ── Variant 2: Hero Ticker (State-of-the-Art Translucent Glassmorphic Ribbon) ──
   const isRtl = direction === 'rtl' || lang === 'ar';
 
   return (
     <div 
-      className="w-full overflow-hidden py-2.5 px-3 sm:px-4 relative select-none z-30 transition-all duration-300 border-none"
-      style={{
-        background: theme === 'light'
-          ? isRtl
-            ? 'linear-gradient(to left, transparent 0%, rgba(245, 158, 11, 0.05) 5%, rgba(254, 243, 199, 0.22) 14%, rgba(254, 243, 199, 0.3) 20%, rgba(255, 255, 255, 0.25) 45%, rgba(255, 255, 255, 0.2) 75%, transparent 100%)'
-            : 'linear-gradient(to right, transparent 0%, rgba(245, 158, 11, 0.05) 5%, rgba(254, 243, 199, 0.22) 14%, rgba(254, 243, 199, 0.3) 20%, rgba(255, 255, 255, 0.25) 45%, rgba(255, 255, 255, 0.2) 75%, transparent 100%)'
-          : isRtl
-            ? 'linear-gradient(to left, transparent 0%, rgba(245, 158, 11, 0.08) 5%, rgba(245, 158, 11, 0.04) 14%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.45) 75%, transparent 100%)'
-            : 'linear-gradient(to right, transparent 0%, rgba(245, 158, 11, 0.08) 5%, rgba(245, 158, 11, 0.04) 14%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.45) 75%, transparent 100%)'
-      }}
+      className={`w-full overflow-hidden py-2 sm:py-2.5 px-3 sm:px-6 relative select-none z-30 transition-all duration-500 border-y backdrop-blur-xl ${
+        theme === 'light'
+          ? 'bg-white/40 border-amber-500/20 shadow-[0_4px_24px_rgba(245,158,11,0.06)]'
+          : 'bg-[#060a16]/45 border-amber-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.35)]'
+      }`}
     >
+      {/* Top and Bottom Subtle Shimmer Rim Highlights */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/25 to-transparent pointer-events-none" />
+
       <div className="max-w-7xl mx-auto flex items-center gap-3 sm:gap-4 relative">
         
-        {/* ── Ambient Warm Golden Glow behind & beside the Badge on Right (RTL) ── */}
-        <div 
-          className="absolute -end-3 top-1/2 -translate-y-1/2 w-48 h-12 pointer-events-none rounded-full opacity-60 z-10"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(245, 158, 11, 0.3) 0%, rgba(251, 191, 36, 0.1) 50%, transparent 80%)'
-          }}
-        />
-
-        {/* ── Fixed Live Broadcast Badge (Pulsing Radar) ── */}
-        <div className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-[10px] sm:text-xs shadow-md shadow-amber-500/25 z-20 border-none transition-transform hover:scale-[1.02]">
-          <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2 flex-shrink-0">
+        {/* ── Fixed Live Broadcast Badge (Refined Frosted Glass Pill) ── */}
+        <div className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500 text-slate-950 font-black text-[10px] sm:text-xs shadow-md shadow-amber-500/25 z-20 border border-amber-300/40 transition-transform duration-200 hover:scale-[1.02]">
+          <span className="relative flex h-2 w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-red-600 shadow-sm"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600 shadow-sm"></span>
           </span>
           <span className="tracking-wide whitespace-nowrap">
             <span className="inline sm:hidden">{lang === 'ar' ? 'المستجدات' : 'Updates'}</span>
@@ -163,46 +154,46 @@ export default function MarqueeTicker({
           
           {/* Side Fade Gradient Mask - Start (Right in RTL, next to badge) */}
           <div 
-            className="absolute top-0 bottom-0 start-0 w-12 sm:w-24 z-10 pointer-events-none"
+            className="absolute top-0 bottom-0 start-0 w-8 sm:w-16 z-10 pointer-events-none"
             style={{
               background: theme === 'light'
                 ? isRtl
-                  ? 'linear-gradient(to left, rgba(254, 243, 199, 0.5) 0%, rgba(255, 255, 255, 0.25) 50%, transparent 100%)'
-                  : 'linear-gradient(to right, rgba(254, 243, 199, 0.5) 0%, rgba(255, 255, 255, 0.25) 50%, transparent 100%)'
+                  ? 'linear-gradient(to left, rgba(255, 255, 255, 0.6) 0%, transparent 100%)'
+                  : 'linear-gradient(to right, rgba(255, 255, 255, 0.6) 0%, transparent 100%)'
                 : isRtl
-                  ? 'linear-gradient(to left, rgba(245, 158, 11, 0.18) 0%, rgba(15, 23, 42, 0.4) 50%, transparent 100%)'
-                  : 'linear-gradient(to right, rgba(245, 158, 11, 0.18) 0%, rgba(15, 23, 42, 0.4) 50%, transparent 100%)'
+                  ? 'linear-gradient(to left, rgba(6, 10, 22, 0.65) 0%, transparent 100%)'
+                  : 'linear-gradient(to right, rgba(6, 10, 22, 0.65) 0%, transparent 100%)'
             }}
           />
           
           {/* Side Fade Gradient Mask - End (Left in RTL, screen edge) */}
           <div 
-            className="absolute top-0 bottom-0 end-0 w-12 sm:w-24 z-10 pointer-events-none"
+            className="absolute top-0 bottom-0 end-0 w-8 sm:w-16 z-10 pointer-events-none"
             style={{
               background: theme === 'light'
                 ? isRtl
                   ? 'linear-gradient(to right, rgba(255, 255, 255, 0.6) 0%, transparent 100%)'
                   : 'linear-gradient(to left, rgba(255, 255, 255, 0.6) 0%, transparent 100%)'
                 : isRtl
-                  ? 'linear-gradient(to right, rgba(15, 23, 42, 0.6) 0%, transparent 100%)'
-                  : 'linear-gradient(to left, rgba(15, 23, 42, 0.6) 0%, transparent 100%)'
+                  ? 'linear-gradient(to right, rgba(6, 10, 22, 0.65) 0%, transparent 100%)'
+                  : 'linear-gradient(to left, rgba(6, 10, 22, 0.65) 0%, transparent 100%)'
             }}
           />
 
-          {/* Continuous Moving Track: Moves Left-to-Right on Mobile, Default on Desktop */}
-          <div className="flex w-full overflow-hidden select-none" dir="ltr">
+          {/* Continuous Moving Track: Smooth pause on hover */}
+          <div className="flex w-full overflow-hidden select-none group-hover:[&>div]:[animation-play-state:paused]" dir="ltr">
             {/* Primary Track 1 */}
             <div 
               className="flex shrink-0 animate-marquee-reverse md:animate-marquee items-center gap-8 sm:gap-10 pe-8 sm:pe-10 py-0.5 will-change-transform"
               style={{ animationDuration: animDuration }}
             >
               {baseList.map((item, idx) => (
-                <div key={`track1-${idx}`} dir="rtl" className="flex items-center gap-3 whitespace-nowrap text-xs sm:text-base font-bold">
+                <div key={`track1-${idx}`} dir="rtl" className="flex items-center gap-2.5 sm:gap-3 whitespace-nowrap text-xs sm:text-sm font-bold">
                   {/* News Tag Micro-Pill */}
-                  <span className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black tracking-wide transition-colors ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black tracking-wide border transition-all ${
                     theme === 'light'
-                      ? 'bg-amber-500/15 text-amber-950 shadow-sm'
-                      : 'bg-amber-400/20 text-amber-300 shadow-sm'
+                      ? 'bg-amber-500/10 text-amber-950 border-amber-500/25 shadow-sm'
+                      : 'bg-amber-400/10 text-amber-300 border-amber-400/25 shadow-sm backdrop-blur-sm'
                   }`}>
                     {item.tag || (lang === 'ar' ? 'متابعة دورية' : 'Update')}
                   </span>
@@ -210,14 +201,18 @@ export default function MarqueeTicker({
                   {/* News Headline - High Clarity & Sharp Legibility */}
                   <span className={`tracking-normal transition-colors cursor-pointer select-text ${
                     theme === 'light' 
-                      ? 'text-slate-950 hover:text-amber-600 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]' 
-                      : 'text-white hover:text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]'
+                      ? 'text-slate-900 hover:text-amber-600' 
+                      : 'text-slate-100 hover:text-amber-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]'
                   }`}>
                     {item.text}
                   </span>
 
-                  {/* Glowing Separator Diamond */}
-                  <span className="text-amber-400 font-black mx-2 sm:mx-3 text-[10px] sm:text-xs drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">✦</span>
+                  {/* Architectural / Highway Precision Separator (Replacing the generic AI star) */}
+                  <span className="inline-flex items-center gap-1.5 mx-3 sm:mx-4 opacity-75 shrink-0 select-none">
+                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-amber-400/50 to-amber-400" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/20" />
+                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-amber-400 via-amber-400/50 to-transparent" />
+                  </span>
                 </div>
               ))}
             </div>
@@ -229,12 +224,12 @@ export default function MarqueeTicker({
               style={{ animationDuration: animDuration }}
             >
               {baseList.map((item, idx) => (
-                <div key={`track2-${idx}`} dir="rtl" className="flex items-center gap-3 whitespace-nowrap text-xs sm:text-base font-bold">
+                <div key={`track2-${idx}`} dir="rtl" className="flex items-center gap-2.5 sm:gap-3 whitespace-nowrap text-xs sm:text-sm font-bold">
                   {/* News Tag Micro-Pill */}
-                  <span className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black tracking-wide transition-colors ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black tracking-wide border transition-all ${
                     theme === 'light'
-                      ? 'bg-amber-500/15 text-amber-950 shadow-sm'
-                      : 'bg-amber-400/20 text-amber-300 shadow-sm'
+                      ? 'bg-amber-500/10 text-amber-950 border-amber-500/25 shadow-sm'
+                      : 'bg-amber-400/10 text-amber-300 border-amber-400/25 shadow-sm backdrop-blur-sm'
                   }`}>
                     {item.tag || (lang === 'ar' ? 'متابعة دورية' : 'Update')}
                   </span>
@@ -242,14 +237,18 @@ export default function MarqueeTicker({
                   {/* News Headline - High Clarity & Sharp Legibility */}
                   <span className={`tracking-normal transition-colors cursor-pointer select-text ${
                     theme === 'light' 
-                      ? 'text-slate-950 hover:text-amber-600 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]' 
-                      : 'text-white hover:text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]'
+                      ? 'text-slate-900 hover:text-amber-600' 
+                      : 'text-slate-100 hover:text-amber-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]'
                   }`}>
                     {item.text}
                   </span>
 
-                  {/* Glowing Separator Diamond */}
-                  <span className="text-amber-400 font-black mx-3 text-xs drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">✦</span>
+                  {/* Architectural / Highway Precision Separator (Replacing the generic AI star) */}
+                  <span className="inline-flex items-center gap-1.5 mx-3 sm:mx-4 opacity-75 shrink-0 select-none">
+                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-amber-400/50 to-amber-400" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/20" />
+                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-amber-400 via-amber-400/50 to-transparent" />
+                  </span>
                 </div>
               ))}
             </div>
