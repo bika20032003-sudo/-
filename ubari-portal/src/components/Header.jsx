@@ -196,7 +196,7 @@ export default function Header({
 
           {/* Authority Official Title */}
           <div 
-            style={{ fontFamily: "'Alexandria', 'Almarai', sans-serif" }}
+            style={{ fontFamily: "'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif" }}
             className="text-start border-s border-slate-300 dark:border-white/10 ps-1.5 sm:ps-3 min-w-0 flex-1 sm:flex-initial"
           >
             <div className="flex items-center gap-1 min-w-0">
@@ -207,7 +207,7 @@ export default function Header({
               </h1>
             </div>
             <p className="text-[9px] sm:text-[10px] text-amber-500 font-bold flex items-center gap-1 whitespace-nowrap mt-0.5">
-              <span>{lang === 'ar' ? 'طريق أوبارﻱ – غات' : 'Ubari – Ghat'}</span>
+              <span>{lang === 'ar' ? 'طريق أوباري – غات' : 'Ubari – Ghat'}</span>
               <span className="hidden xs:inline">(360 كم)</span>
             </p>
           </div>
@@ -248,7 +248,7 @@ export default function Header({
             href="https://bika20032003-sudo.github.io/-/road/"
             target="_blank"
             rel="noopener noreferrer"
-            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوبارﻱ – غات' : 'Showcase Website'}
+            title={lang === 'ar' ? 'الموقع التعريفي لمشروع طريق أوباري – غات' : 'Showcase Website'}
             className={`hidden md:flex px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 items-center gap-1.5 border shadow-sm cursor-pointer hover:scale-105 ${
               theme === 'light'
                 ? 'bg-orange-50 hover:bg-orange-100 border-orange-300/80 text-orange-600 shadow-orange-500/10'

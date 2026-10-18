@@ -43,7 +43,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
   
   const [newProjectPhoto, setNewProjectPhoto] = useState({
     title: '',
-    region: 'القطاع الأول (أوبارﻱ - الفيوات)',
+    region: 'القطاع الأول (أوباري - الفيوات)',
     image: '/road-asphalt-paver.jpg',
     desc: '',
     contractor: '',
@@ -110,7 +110,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         id: `PRJ-EXEC-${Date.now().toString().slice(-4)}`,
         title: newProjectPhoto.title.trim(),
         titleEn: newProjectPhoto.title.trim(),
-        region: newProjectPhoto.region || 'القطاع الأول (أوبارﻱ - الفيوات)',
+        region: newProjectPhoto.region || 'القطاع الأول (أوباري - الفيوات)',
         regionEn: newProjectPhoto.region || 'Ubari - Ghat Sector',
         lengthKm: 35,
         progress: 88,
@@ -123,7 +123,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
         startDate: new Date().toISOString().split('T')[0],
         targetDate: '2026-12-31',
         image: finalImage,
-        desc: newProjectPhoto.desc?.trim() || `توثيق تنفيذي ميداني عالي الدقة لأعمال الرصف والتطوير بمشروع طريق أوبارﻱ - غات.`,
+        desc: newProjectPhoto.desc?.trim() || `توثيق تنفيذي ميداني عالي الدقة لأعمال الرصف والتطوير بمشروع طريق أوباري - غات.`,
         isFieldDoc: true,
         isCustomUploaded: true,
         specs: {
@@ -180,7 +180,7 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
     setTimeout(() => setUploadSuccessAlert(null), 4000);
     setNewProjectPhoto({
       title: '',
-      region: 'القطاع الأول (أوبارﻱ - الفيوات)',
+      region: 'القطاع الأول (أوباري - الفيوات)',
       image: '/road-asphalt-paver.jpg',
       desc: '',
       contractor: '',
@@ -270,16 +270,16 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
             : 'bg-amber-500/10 border-amber-500/35 text-amber-300'
           }`}>
           <Layers className="w-4 h-4 text-amber-500" />
-          <span>{lang === 'ar' ? 'مشاريع مسار طريق أوبارﻱ - غات' : 'Ubari – Ghat Road Corridor Projects'}</span>
+          <span>{lang === 'ar' ? 'مشاريع مسار طريق أوباري - غات' : 'Ubari – Ghat Road Corridor Projects'}</span>
         </div>
         <h2 className={`text-xl xs:text-2xl sm:text-4xl lg:text-5xl font-black leading-tight sm:leading-snug ${theme === 'light' ? 'text-slate-950' : 'text-white'
           }`}>
-          {lang === 'ar' ? 'المشروعات التنفيذية لمسار أوبارﻱ – غات (360 كم)' : 'Execution Projects – Ubari – Ghat Highway'}
+          {lang === 'ar' ? 'المشروعات التنفيذية لمسار أوباري – غات (360 كم)' : 'Execution Projects – Ubari – Ghat Highway'}
         </h2>
         <p className={`text-xs sm:text-base font-medium ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'
           }`}>
           {lang === 'ar'
-            ? 'المشاريع الهندسية المتكاملة والمتابعات الميدانية الجاري تنفيذها على امتداد قطاعات طريق أوبارﻱ - غات.'
+            ? 'المشاريع الهندسية المتكاملة والمتابعات الميدانية الجاري تنفيذها على امتداد قطاعات طريق أوباري - غات.'
             : 'Integrated engineering projects and field execution updates along the Ubari – Ghat highway corridor.'}
         </p>
       </div>
@@ -892,8 +892,8 @@ export default function FeaturedProjects({ theme, lang = 'ar' }) {
                   className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-white/10 outline-none focus:border-amber-500 bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white"
                 >
                   <option value="new">إدراج كحزمة عمل وصورة تنفيذية جديدة (تظهر في المقدمة فوراً)</option>
-                  <option value="PRJ-UBG-360">تحديث الصورة الرئيسية: مشروع صيانة ورصف طريق أوبارﻱ – غات</option>
-                  <option value="PRJ-UBG-SOL-1100">تحديث الصورة الرئيسية: مشروع إنارة مسار أوبارﻱ – غات بالطاقة الشمسية</option>
+                  <option value="PRJ-UBG-360">تحديث الصورة الرئيسية: مشروع صيانة ورصف طريق أوباري – غات</option>
+                  <option value="PRJ-UBG-SOL-1100">تحديث الصورة الرئيسية: مشروع إنارة مسار أوباري – غات بالطاقة الشمسية</option>
                   <option value="PRJ-UBG-CUL-028">تحديث الصورة الرئيسية: مشروع عبّارات تصريف السيول</option>
                   <option value="PRJ-UBG-DUN-120">تحديث الصورة الرئيسية: مشروع تثبيت الكثبان الرملية وتوسعة الأكتاف</option>
                 </select>

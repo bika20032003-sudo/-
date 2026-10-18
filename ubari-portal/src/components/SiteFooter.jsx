@@ -24,7 +24,7 @@ export default function SiteFooter() {
               </span>
             </div>
             <p className="mt-4 max-w-xs text-sm leading-7 text-muted-foreground">
-              البوابة الإلكترونية الرسمية لمشروع طريق أوبارﻱ – غات، لمتابعة مراحل التنفيذ ونسب الإنجاز والأخبار والتقارير الدورية الصادرة عن إدارة المشروع.
+              البوابة الإلكترونية الرسمية لمشروع طريق أوباري – غات، لمتابعة مراحل التنفيذ ونسب الإنجاز والأخبار والتقارير الدورية الصادرة عن إدارة المشروع.
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export default function SiteFooter() {
           <div>
             <h4 className="kicker mb-5">المشروع</h4>
             <ul className="space-y-3 text-sm text-foreground/75">
-              <li>طريق أوبارﻱ – غات</li>
+              <li>طريق أوباري – غات</li>
               <li>المنطقة الجنوبية — ليبيا</li>
               <li>جهاز تنفيذ مشروعات المواصلات</li>
             </ul>
