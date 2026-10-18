@@ -212,7 +212,7 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
                 theme === 'light' ? 'text-slate-950' : 'text-white'
               }`}>
                 <span className="block mb-0.5 sm:mb-2 text-slate-900 dark:text-white text-base xs:text-xl sm:text-4xl lg:text-5xl">{t.heroMainTitle1}</span>
-                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-0.5 sm:py-1 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl">
+                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 px-1 pe-2 pb-1.5 pt-0.5 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl overflow-visible">
                   {t.heroMainTitle2}
                 </span>
                 <span className="inline-block text-sm xs:text-base sm:text-3xl font-light text-slate-500 dark:text-white/85 ms-1.5 sm:ms-3">

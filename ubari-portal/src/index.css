@@ -12,12 +12,13 @@
   --color-libya-green: #239E46;
   --color-libya-dark: #07090E;
 
-  /* Unified Prestigious Font Stack */
-  --font-arabic: 'Cairo', 'Tajawal', sans-serif;
-  --font-cairo: 'Cairo', sans-serif;
-  --font-sans: 'Cairo', 'Tajawal', sans-serif;
-  --font-display: 'Cairo', 'Tajawal', sans-serif;
-  --font-outfit: 'Outfit', 'Cairo', sans-serif;
+  /* Unified Prestigious Font Stack with Authentic Arabic Orthography (Preserving Yaa dots) */
+  --font-arabic: 'Tajawal', 'Cairo', sans-serif;
+  --font-cairo: 'Tajawal', 'Cairo', sans-serif;
+  --font-tajawal: 'Tajawal', sans-serif;
+  --font-sans: 'Tajawal', 'Cairo', sans-serif;
+  --font-display: 'Tajawal', 'Cairo', sans-serif;
+  --font-outfit: 'Outfit', 'Tajawal', 'Cairo', sans-serif;
 }
 
 /* ============================================================
@@ -130,7 +131,7 @@ html {
 }
 
 html, body, #root {
-  font-family: 'Cairo', 'Tajawal', sans-serif !important;
+  font-family: 'Tajawal', 'Cairo', sans-serif !important;
   max-width: 100vw;
   overflow-x: hidden !important;
 }
