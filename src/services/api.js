@@ -14,7 +14,7 @@ import {
 const initialSectors = [
   {
     id: 'SEC-01',
-    name: 'القطاع الأول: أوباري - الفيوات',
+    name: 'القطاع الأول: أوبارﻱ - الفيوات',
     lengthKm: 85,
     progress: 84,
     residentEngineer: 'م. عبد السلام الفزاني',
@@ -71,7 +71,7 @@ const initialSectors = [
 ];
 
 const initialSummary = {
-  projectTitle: 'مشروع صيانة طريق أوباري - غات',
+  projectTitle: 'مشروع صيانة طريق أوبارﻱ - غات',
   agency: 'جهاز تنفيذ مشروعات المواصلات',
   initiative: 'خطة عودة الحياة',
   totalLengthKm: 360,
@@ -166,7 +166,7 @@ const initialFieldPhotos = [
     id: 'PH-01',
     title: 'آليات رصف الأسفلت الساخن Vögele ومتابعة درجات الحرارة',
     titleEn: 'Vögele Hot Asphalt Paver Fleet & Bitumen Temperature Control',
-    sector: 'القطاع الأول (أوباري - الفيوات)',
+    sector: 'القطاع الأول (أوبارﻱ - الفيوات)',
     desc: 'عمليات مد ورصف الطبقة السطحية الرابطة ومتابعة درجة حرارة الخلطة الإسفلتية المعتمدة (160°C) في الموقع لضمان أعلى جودة.',
     src: './road-asphalt-paver.jpg',
     category: 'رصف الأسفلت',
@@ -210,7 +210,7 @@ const initialFieldPhotos = [
     id: 'PH-05',
     title: 'فحص عينات الكور الإسفلتي واختبارات الدمك ومطابقة الجودة',
     titleEn: 'Marshall Asphalt Core QA Inspection & Density Testing',
-    sector: 'مختبر الجودة الميداني - أوباري',
+    sector: 'مختبر الجودة الميداني - أوبارﻱ',
     desc: 'سحب وفحص عينات الكور الإسفلتي باستخدام أجهزة القياس الرقمية والمختبر الميداني المتنقل للتأكد من مطابقة المواصفات.',
     src: './road-qa-testing-core.jpg',
     category: 'ضبط الجودة المعملي',
@@ -221,7 +221,7 @@ const initialFieldPhotos = [
     id: 'PH-06',
     title: 'مشهد جوي بانورامي لمسار الطريق الصحراوي المعبد وأسطول الآليات',
     titleEn: 'Aerial Drone View of Desert Highway Paving Train Corridor',
-    sector: 'مسار طريق أوباري – غات الدولي (360 كم)',
+    sector: 'مسار طريق أوبارﻱ – غات الدولي (360 كم)',
     desc: 'توثيق جوي شامل لحركة قطار الرصف والآليات والشاحنات على امتداد الطريق المخترق للكثبان الرملية الذهبية بالجنوب الليبي.',
     src: './road-aerial-highway.jpg',
     category: 'توثيق جوي بانورامي',
@@ -233,9 +233,9 @@ const initialFieldPhotos = [
 export const nationalProjects = [
   {
     id: 'PRJ-UBG-360',
-    title: 'مشروع صيانة ورصف طريق أوباري – غات (المسار الرئيسي)',
+    title: 'مشروع صيانة ورصف طريق أوبارﻱ – غات (المسار الرئيسي)',
     titleEn: 'Ubari – Ghat Main Highway Paving & Upgrade',
-    region: 'فزان (أوباري - غات 360 كم)',
+    region: 'فزان (أوبارﻱ - غات 360 كم)',
     regionEn: 'Fezzan (Ubari – Ghat 360km)',
     lengthKm: 360,
     progress: 68.5,
@@ -261,7 +261,7 @@ export const nationalProjects = [
   },
   {
     id: 'PRJ-UBG-SOL-1100',
-    title: 'مشروع إنارة مسار أوباري – غات بالطاقة الشمسية الذكية',
+    title: 'مشروع إنارة مسار أوبارﻱ – غات بالطاقة الشمسية الذكية',
     titleEn: 'Ubari – Ghat Highway Smart Solar Lighting System',
     region: 'مسار الطريق (360 كم)',
     regionEn: 'Corridor Route (360km)',
@@ -289,7 +289,7 @@ export const nationalProjects = [
   },
   {
     id: 'PRJ-UBG-CUL-028',
-    title: 'مشروع عبّارات تصريف السيول وحماية مسار أوباري – غات',
+    title: 'مشروع عبّارات تصريف السيول وحماية مسار أوبارﻱ – غات',
     titleEn: 'Ubari – Ghat Flood Culverts & Drainage Protection',
     region: 'أودية العوينات ومخرات السيول',
     regionEn: 'Al Uwaynat Valleys',
@@ -317,7 +317,7 @@ export const nationalProjects = [
   },
   {
     id: 'PRJ-UBG-DUN-120',
-    title: 'مشروع تثبيت الكثبان الرملية وتوسعة أكتاف مسار أوباري',
+    title: 'مشروع تثبيت الكثبان الرملية وتوسعة أكتاف مسار أوبارﻱ',
     titleEn: 'Ubari Sand Dune Stabilization & Shoulder Widening',
     region: 'قطاع الفيوات – العوينات',
     regionEn: 'Alfyoat – Al Uwaynat',
@@ -373,7 +373,7 @@ export const nationalProjects = [
   },
   {
     id: 'PRJ-UBG-RST-004',
-    title: 'مشروع نقاط الاستراحة والطوارئ والإسعاف بمسار أوباري – غات',
+    title: 'مشروع نقاط الاستراحة والطوارئ والإسعاف بمسار أوبارﻱ – غات',
     titleEn: 'Ubari – Ghat Highway Emergency & Rest Service Stations',
     region: 'على طول المسار (4 محطات)',
     regionEn: '4 Rest Stations on Route',
@@ -414,7 +414,7 @@ export const initialFieldDispatches = [
   {
     id: 'DISP-02',
     title: 'بدء فرد الطبقة الرابطة بالفرادة Vögele Super 1800',
-    sector: 'القطاع الأول (أوباري - الفيوات)',
+    sector: 'القطاع الأول (أوبارﻱ - الفيوات)',
     time: 'منذ ساعتين',
     author: 'م. عبد السلام الفزاني',
     status: 'جاري التنفيذ',
@@ -423,7 +423,7 @@ export const initialFieldDispatches = [
   {
     id: 'DISP-03',
     title: 'اجتياز اختبارات الكثافة لمارشال بنسبة نجاح 99.2%',
-    sector: 'المختبر المركزي - أوباري',
+    sector: 'المختبر المركزي - أوبارﻱ',
     time: 'منذ 4 ساعات',
     author: 'المختبر الميداني',
     status: 'مطابق للمواصفات',
@@ -506,7 +506,7 @@ export const fetchMonthlyProgressHistory = async () => {
 };
 
 export const initialTickerNews = [
-  { id: 'NEWS-01', text: 'مشروع صيانة ورصف طريق أوباري – غات الاستراتيجي بطول 360 كم', tag: 'مشروع وطني', active: true, date: '2026-08-20' },
+  { id: 'NEWS-01', text: 'مشروع صيانة ورصف طريق أوبارﻱ – غات الاستراتيجي بطول 360 كم', tag: 'مشروع وطني', active: true, date: '2026-08-20' },
   { id: 'NEWS-02', text: 'نسبة الإنجاز الفعلي الإجمالية تتجاوز 68.5% على امتداد مسار الطريق', tag: 'متابعة دورية', active: true, date: '2026-08-19' },
   { id: 'NEWS-03', text: 'تواصل أعمال طبقات الرصف والأسفلت بأعلى معايير الجودة المعتمدة', tag: 'سير الأعمال', active: true, date: '2026-08-18' },
   { id: 'NEWS-04', text: 'توريد وتركيب أعمدة الإنارة الذكية بالطاقة الشمسية على امتداد المسار', tag: 'السلامة والإنارة', active: true, date: '2026-08-17' },
@@ -534,7 +534,7 @@ export const initialNewsPosts = [
     image: './road-asphalt-paver.jpg',
     timeAgo: 'منذ ساعتين',
     timeAgoEn: '2 hours ago',
-    location: 'مسار طريق أوباري – غات',
+    location: 'مسار طريق أوبارﻱ – غات',
     locationEn: 'Ubari – Ghat Highway Corridor',
     author: 'المكتب الإعلامي - جهاز مشروعات المواصلات',
     authorEn: 'Media Office – Transportation Projects Authority',

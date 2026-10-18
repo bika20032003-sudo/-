@@ -59,7 +59,7 @@ export default function SiteHeader() {
                 isTransparent ? 'text-white/70' : 'text-muted-foreground'
               }`}
             >
-              طريق أوباري — غات
+              طريق أوبارﻱ — غات
             </span>
           </span>
         </Link>

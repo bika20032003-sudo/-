@@ -88,7 +88,7 @@ export default function RoadAlertsContact() {
               <MapPin className="w-5 h-5 text-amber-400 flex-shrink-0" />
               <div>
                 <strong className="text-white block font-bold">المقر الرئيس للجهاز:</strong>
-                <span>طرابلس / غريان / الفرع الجنوبي (سبها - أوباري)</span>
+                <span>طرابلس / غريان / الفرع الجنوبي (سبها - أوبارﻱ)</span>
               </div>
             </div>
 
@@ -123,7 +123,7 @@ export default function RoadAlertsContact() {
             <div className="p-8 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3">
               <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto animate-bounce" />
               <h4 className="text-lg font-bold text-white">تم استلام بلاغك بنجاح!</h4>
-              <p className="text-xs text-slate-300">شكراً لمساهمتك في متابعة جودة طريق أوباري – غات.</p>
+              <p className="text-xs text-slate-300">شكراً لمساهمتك في متابعة جودة طريق أوبارﻱ – غات.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-right text-xs">
