@@ -207,11 +207,10 @@ export default function MarqueeTicker({
                     {item.text}
                   </span>
 
-                  {/* Architectural / Highway Precision Separator (Replacing the generic AI star) */}
-                  <span className="inline-flex items-center gap-1.5 mx-3 sm:mx-4 opacity-75 shrink-0 select-none">
-                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-amber-400/50 to-amber-400" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/20" />
-                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-amber-400 via-amber-400/50 to-transparent" />
+                  {/* Red Live Pulse Dot Separator */}
+                  <span className="relative flex h-2 w-2 mx-3 sm:mx-4 flex-shrink-0 items-center justify-center select-none">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]"></span>
                   </span>
                 </div>
               ))}
@@ -243,11 +242,10 @@ export default function MarqueeTicker({
                     {item.text}
                   </span>
 
-                  {/* Architectural / Highway Precision Separator (Replacing the generic AI star) */}
-                  <span className="inline-flex items-center gap-1.5 mx-3 sm:mx-4 opacity-75 shrink-0 select-none">
-                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-amber-400/50 to-amber-400" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/20" />
-                    <span className="w-2.5 h-[1.5px] rounded-full bg-gradient-to-r from-amber-400 via-amber-400/50 to-transparent" />
+                  {/* Red Live Pulse Dot Separator */}
+                  <span className="relative flex h-2 w-2 mx-3 sm:mx-4 flex-shrink-0 items-center justify-center select-none">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]"></span>
                   </span>
                 </div>
               ))}
