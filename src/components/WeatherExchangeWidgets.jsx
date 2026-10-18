@@ -18,7 +18,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
     condition: lang === 'ar' ? 'سماء صافية' : 'Clear Sky',
     windSpeed: '12 km/h',
     humidity: '15%',
-    location: lang === 'ar' ? 'أوبارﻱ (بداية الطريق)' : 'Ubari (Start)'
+    location: lang === 'ar' ? 'أوباري (بداية الطريق)' : 'Ubari (Start)'
   });
 
   const [ghatWeather, setGhatWeather] = useState({
@@ -56,7 +56,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
           condition: parseWeatherCondition(cw.weathercode),
           windSpeed: `${Math.round(cw.windspeed)} km/h`,
           humidity: '15%',
-          location: lang === 'ar' ? 'أوبارﻱ (بداية الطريق)' : 'Ubari (Start)'
+          location: lang === 'ar' ? 'أوباري (بداية الطريق)' : 'Ubari (Start)'
         });
       }
 
@@ -107,7 +107,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
               theme === 'light' ? 'bg-amber-50/50 border-amber-200/70' : 'bg-white/5 border-amber-500/20'
             }`}>
               <div className="flex items-center justify-between gap-1">
-                <span className="font-black text-xs">{lang === 'ar' ? 'أوبارﻱ' : 'Ubari'}</span>
+                <span className="font-black text-xs">{lang === 'ar' ? 'أوباري' : 'Ubari'}</span>
                 <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded font-mono">
                   {lang === 'ar' ? 'البداية' : 'Start'}
                 </span>
@@ -137,7 +137,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
 
           {/* Telemetry Status Strip */}
           <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100 dark:border-white/5">
-            <span className="font-medium text-[9px] text-amber-500/80">360 KM • {lang === 'ar' ? 'مسار أوبارﻱ - غات' : 'Highway'}</span>
+            <span className="font-medium text-[9px] text-amber-500/80">360 KM • {lang === 'ar' ? 'مسار أوباري - غات' : 'Highway'}</span>
             <div className="flex items-center gap-1.5 font-mono text-[9px]">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
               <span>{updatedAt}</span>
@@ -158,7 +158,7 @@ export default function WeatherExchangeWidgets({ theme, lang = 'ar' }) {
             </div>
             <div className="text-start">
               <div className="flex items-center gap-1">
-                <span className="font-black text-xs sm:text-sm">{lang === 'ar' ? 'أوبارﻱ' : 'Ubari'}</span>
+                <span className="font-black text-xs sm:text-sm">{lang === 'ar' ? 'أوباري' : 'Ubari'}</span>
                 <span className="hidden xs:inline text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.2 rounded">
                   {lang === 'ar' ? 'البداية' : 'Start'}
                 </span>

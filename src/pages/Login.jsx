@@ -51,7 +51,7 @@ export default function Login() {
               دخول مدير المشروع
             </h1>
             <p className="mt-2 text-xs text-muted-foreground">
-              لوحة التحكم والمتابعة الميدانية لطريق أوبارﻱ – غات
+              لوحة التحكم والمتابعة الميدانية لطريق أوباري – غات
             </p>
           </div>
 

@@ -12,7 +12,7 @@ import { translations } from '../i18n/translations';
 const getMapLocations = (lang) => [
   {
     id: 'ubari',
-    title: lang === 'ar' ? 'أوبارﻱ (نقطة الانطلاق)' : 'Ubari (Starting Point)',
+    title: lang === 'ar' ? 'أوباري (نقطة الانطلاق)' : 'Ubari (Starting Point)',
     coords: '26.5925,12.7803',
     sector: lang === 'ar' ? 'المحطة 000+00' : 'Station 000+00',
     stage: lang === 'ar' ? 'طبقة الرصف السطحية وأعمال الأكتاف' : 'Surface Paving & Shoulders',

@@ -74,7 +74,7 @@ export default function ApiConsole({ customApiUrl, setCustomApiUrl }) {
             شاشة اختبار واجهات برمجة التطبيقات (APIs)
           </h2>
           <p className="text-slate-400 text-sm mt-1">
-            ربط واستدعاء بيانات طريق أوبارﻱ – غات بصيغة JSON القياسية للمنظومات والجهات المعنية
+            ربط واستدعاء بيانات طريق أوباري – غات بصيغة JSON القياسية للمنظومات والجهات المعنية
           </p>
         </div>
 

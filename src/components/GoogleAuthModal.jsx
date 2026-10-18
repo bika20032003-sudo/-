@@ -8,7 +8,7 @@ const DEFAULT_GOOGLE_ACCOUNTS = [
     id: 1,
     name: 'م. أحمد الشريف',
     email: 'eng.ahmed@trans.gov.ly',
-    role: 'مدير مشروع قطاع أوبارﻱ',
+    role: 'مدير مشروع قطاع أوباري',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     type: 'حساب رسمي معتمد'
   },
@@ -150,7 +150,7 @@ export default function GoogleAuthModal({ isOpen, onClose, onLoginSuccess, theme
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img 
           src="/road-aerial-highway.jpg" 
-          alt="خلفية الأعمال الميدانية طريق أوبارﻱ غات" 
+          alt="خلفية الأعمال الميدانية طريق أوباري غات" 
           className="w-full h-full object-cover object-center filter brightness-[0.55] contrast-[1.08] scale-105 transition-transform duration-1000"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-950/80" />
