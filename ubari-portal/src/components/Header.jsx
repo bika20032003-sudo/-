@@ -195,7 +195,10 @@ export default function Header({
           </div>
 
           {/* Authority Official Title */}
-          <div className="text-start border-s border-slate-300 dark:border-white/10 ps-1.5 sm:ps-3 min-w-0 flex-1 sm:flex-initial">
+          <div 
+            style={{ fontFamily: "'Alexandria', 'Almarai', sans-serif" }}
+            className="text-start border-s border-slate-300 dark:border-white/10 ps-1.5 sm:ps-3 min-w-0 flex-1 sm:flex-initial"
+          >
             <div className="flex items-center gap-1 min-w-0">
               <h1 className={`font-black text-[10px] xs:text-[11px] sm:text-sm leading-tight whitespace-nowrap group-hover:text-amber-500 transition-colors ${
                 theme === 'light' ? 'text-slate-900' : 'text-white'
