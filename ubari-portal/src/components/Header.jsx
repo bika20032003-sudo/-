@@ -495,16 +495,11 @@ export default function Header({
                   <Compass className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col text-start min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-xs font-black tracking-wide truncate ${
-                      theme === 'light' ? 'text-slate-900' : 'text-white'
-                    }`}>
-                      {lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}
-                    </span>
-                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 shrink-0">
-                      3D
-                    </span>
-                  </div>
+                  <span className={`text-xs font-black tracking-wide truncate ${
+                    theme === 'light' ? 'text-slate-900' : 'text-white'
+                  }`}>
+                    {lang === 'ar' ? 'بداية الرحلة' : 'Journey Start'}
+                  </span>
                   <span className={`text-[10px] font-semibold truncate ${
                     theme === 'light' ? 'text-amber-900/80' : 'text-amber-200/75'
                   }`}>
