@@ -406,23 +406,7 @@ export default function Header({
         <div className={`lg:hidden mt-2 p-3.5 rounded-2xl border shadow-2xl flex flex-col gap-1.5 animate-scaleUp max-w-7xl mx-auto ${
           theme === 'light' ? 'bg-white/98 border-amber-400/40 text-slate-900 shadow-slate-300/80' : 'bg-[#090d18]/98 border-amber-500/30 text-white shadow-black/90'
         }`}>
-          {/* User profile card if logged in */}
-          {user && (
-            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 mb-1 flex items-center justify-between gap-2.5 text-start">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-amber-500 flex-shrink-0">
-                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="min-w-0 text-start">
-                  <div className="font-black text-xs text-amber-500 dark:text-amber-400 truncate">{user.name}</div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</div>
-                </div>
-              </div>
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold border border-amber-500/30 shrink-0">
-                مسؤول
-              </span>
-            </div>
-          )}
+
 
 
 
@@ -509,7 +493,7 @@ export default function Header({
               </div>
             </a>
 
-            {!user ? (
+            {!user && (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
@@ -520,29 +504,6 @@ export default function Header({
                 <LogIn className="w-4 h-4" />
                 <span>{lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}</span>
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    setActiveTab('dashboard');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-xs font-extrabold text-start text-amber-400 hover:bg-amber-500/15 flex items-center gap-2"
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>{lang === 'ar' ? 'لوحة التحكم التنفيذية' : 'Dashboard'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onLogout();
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-xs font-extrabold text-start text-red-400 hover:bg-red-500/15 flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}</span>
-                </button>
-              </>
             )}
           </div>
         </div>

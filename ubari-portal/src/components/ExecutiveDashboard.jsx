@@ -1143,7 +1143,7 @@ export default function ExecutiveDashboard({
           </div>
           <div className="text-start">
             <h1 className="font-black text-sm sm:text-base tracking-wide text-white flex items-center gap-2">
-              <span>مشروع طريق أوباري – غات 360 كم</span>
+              <span>مشروع طريق أوباري – غات</span>
             </h1>
             <span className="text-[11px] text-amber-400 font-bold block">
               جهاز تنفيذ مشروعات المواصلات
@@ -1263,19 +1263,7 @@ export default function ExecutiveDashboard({
             })}
           </nav>
 
-          {/* Bottom Logout Button */}
-          <div className="p-3 border-t border-white/10">
-            <button
-              onClick={() => {
-                if (onLogout) onLogout();
-                if (onBackToPortal) onBackToPortal();
-              }}
-              className="w-full px-3 py-2.5 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/15 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 text-red-400" />
-              <span>تسجيل الخروج</span>
-            </button>
-          </div>
+
 
         </aside>
 
