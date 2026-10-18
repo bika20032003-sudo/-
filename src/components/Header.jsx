@@ -424,13 +424,7 @@ export default function Header({
             </div>
           )}
 
-          {/* Logo badge inside mobile menu */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-1">
-            <span className={`text-xs font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-              {lang === 'ar' ? 'جهاز تنفيذ مشروعات المواصلات' : 'Transportation Authority'}
-            </span>
-            <span className="text-[10px] text-amber-400 font-bold bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">360 كم</span>
-          </div>
+
 
           {navItems.map((item) => (
             <button
