@@ -157,7 +157,11 @@ function App() {
       setTickerNews(getSavedTickerNews());
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('cloud_ticker_updated', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cloud_ticker_updated', handleStorageChange);
+    };
   }, []);
 
   // Apply theme & dir attribute to document

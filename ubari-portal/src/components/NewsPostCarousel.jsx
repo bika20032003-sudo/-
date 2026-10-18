@@ -27,7 +27,11 @@ export default function NewsPostCarousel({ theme, lang = 'ar' }) {
       }
     };
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener('cloud_news_updated', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('cloud_news_updated', handleStorage);
+    };
   }, [currentIndex]);
 
   // Transition handler with smooth fade animation
