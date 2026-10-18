@@ -20,7 +20,8 @@ import {
   ImagePlus
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
-import { fetchFieldPhotos, initialFieldPhotos, initialFinancialReports } from '../services/api';
+import { fetchFieldPhotos, initialFieldPhotos, initialFinancialReports, saveFieldPhotos } from '../services/api';
+import { compressImageFile } from '../utils/imageCompressor';
 
 const HUB_PRESET_PHOTOS = [
   { title: 'آليات رصف الأسفلت الساخن ومتابعة درجات الحرارة', category: 'رصف الأسفلت', src: '/road-asphalt-paver.jpg' },
@@ -143,26 +144,32 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
     desc: ''
   });
 
-  const handlePhotoFileUpload = (e) => {
+  const handlePhotoFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 12 * 1024 * 1024) {
-      alert('حجم الصورة كبير جداً، يرجى اختيار ملف أقل من 12 ميجابايت');
-      return;
+    try {
+      const dataUrl = await compressImageFile(file, 1600, 1100, 0.82);
+      setNewUploadPhoto(prev => ({
+        ...prev,
+        src: dataUrl,
+        img: dataUrl,
+        title: prev.title || file.name.replace(/\.[^/.]+$/, "")
+      }));
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result;
+        if (dataUrl) {
+          setNewUploadPhoto(prev => ({
+            ...prev,
+            src: dataUrl,
+            img: dataUrl,
+            title: prev.title || file.name.replace(/\.[^/.]+$/, "")
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result;
-      if (dataUrl) {
-        setNewUploadPhoto(prev => ({
-          ...prev,
-          src: dataUrl,
-          img: dataUrl,
-          title: prev.title || file.name.replace(/\.[^/.]+$/, "")
-        }));
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSaveUploadedPhoto = (e) => {
@@ -186,10 +193,7 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
 
     const updated = [item, ...fieldPhotos];
     setFieldPhotos(updated);
-    try {
-      localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
-      window.dispatchEvent(new Event('storage'));
-    } catch (err) {}
+    saveFieldPhotos(updated);
 
     setIsUploadPhotoModalOpen(false);
     setPhotoUploadSuccess(item.title);
@@ -238,7 +242,11 @@ export default function DocumentReportsHub({ documents = DEFAULT_DOCS, theme, la
     };
 
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener('cloud_photos_updated', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('cloud_photos_updated', handleStorage);
+    };
   }, []);
 
   const handleDownload = (doc) => {

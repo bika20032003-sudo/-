@@ -42,7 +42,11 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
       setMobileNewsList(updatedNews);
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('cloud_news_updated', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cloud_news_updated', handleStorageChange);
+    };
   }, []);
 
   // Smooth fade transition between news

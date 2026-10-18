@@ -87,10 +87,16 @@ import {
   saveExecutiveProjects,
   getSavedNewsPosts,
   saveNewsPosts,
+  saveFieldPhotos,
+  saveTickerNews,
   getSavedHeroCard,
   saveHeroCard,
   syncExecutiveProjectsFromCloud,
-  syncFieldPhotosFromCloud
+  syncFieldPhotosFromCloud,
+  syncNewsFromCloud,
+  syncTickerNewsFromCloud,
+  syncHeroCardFromCloud,
+  syncAllPortalData
 } from '../services/api';
 import DocumentReportsHub from './DocumentReportsHub';
 import MarqueeTicker from './MarqueeTicker';
@@ -280,14 +286,20 @@ export default function ExecutiveDashboard({
       setLocalExecutiveProjects(getSavedExecutiveProjects());
       setLocalNewsPosts(getSavedNewsPosts());
       setLocalHeroCard(getSavedHeroCard());
+      setLocalPhotos(safeStorageGet('portal-field-photos-v2', initialFieldPhotos));
+      setLocalNews(getSavedTickerNews());
     };
     window.addEventListener('storage', handleStorageUpdate);
     window.addEventListener('cloud_projects_updated', handleStorageUpdate);
     window.addEventListener('cloud_photos_updated', handleStorageUpdate);
+    window.addEventListener('cloud_news_updated', handleStorageUpdate);
+    window.addEventListener('cloud_ticker_updated', handleStorageUpdate);
     return () => {
       window.removeEventListener('storage', handleStorageUpdate);
       window.removeEventListener('cloud_projects_updated', handleStorageUpdate);
       window.removeEventListener('cloud_photos_updated', handleStorageUpdate);
+      window.removeEventListener('cloud_news_updated', handleStorageUpdate);
+      window.removeEventListener('cloud_ticker_updated', handleStorageUpdate);
     };
   }, []);
 
@@ -715,7 +727,7 @@ export default function ExecutiveDashboard({
     }
 
     setLocalNews(updated);
-    localStorage.setItem('portal_ticker_news', JSON.stringify(updated));
+    saveTickerNews(updated);
     if (setTickerNews) setTickerNews(updated);
     setIsAddNewsModalOpen(false);
     setNewsForm({ text: '', tag: 'تحديث حي', active: true });
@@ -731,7 +743,7 @@ export default function ExecutiveDashboard({
       return item;
     });
     setLocalNews(updated);
-    localStorage.setItem('portal_ticker_news', JSON.stringify(updated));
+    saveTickerNews(updated);
     if (setTickerNews) setTickerNews(updated);
   };
 
@@ -739,7 +751,7 @@ export default function ExecutiveDashboard({
     if (!newsToDelete) return;
     const updated = localNews.filter(item => item.id !== newsToDelete.id);
     setLocalNews(updated);
-    localStorage.setItem('portal_ticker_news', JSON.stringify(updated));
+    saveTickerNews(updated);
     if (setTickerNews) setTickerNews(updated);
     showToast('تم حذف الخبر من الشريط العلوي');
     setNewsToDelete(null);
@@ -969,10 +981,7 @@ export default function ExecutiveDashboard({
     if (!photoToDelete) return;
     const updated = localPhotos.filter(p => p.id !== photoToDelete.id);
     setLocalPhotos(updated);
-    try {
-      localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
-      window.dispatchEvent(new Event('storage'));
-    } catch (err) {}
+    saveFieldPhotos(updated);
     showToast(`تم حذف الصورة (${photoToDelete.title}) من المعرض`);
     setPhotoToDelete(null);
   };
@@ -989,10 +998,7 @@ export default function ExecutiveDashboard({
     };
     const updated = localPhotos.map(p => p.id === selectedPhotoEditModal.id ? updatedItem : p);
     setLocalPhotos(updated);
-    try {
-      localStorage.setItem('portal-field-photos-v2', JSON.stringify(updated));
-      window.dispatchEvent(new Event('storage'));
-    } catch (err) {}
+    saveFieldPhotos(updated);
     setSelectedPhotoEditModal(null);
     showToast('تم حفظ بيانات الصورة بنجاح');
   };
@@ -1292,29 +1298,39 @@ export default function ExecutiveDashboard({
 
             {/* Actions Bar per active view */}
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isSyncingCloud}
+                onClick={async () => {
+                  if (isSupabaseConfigured()) {
+                    setIsSyncingCloud(true);
+                    try {
+                      await saveCloudProjects(localExecutiveProjects);
+                      await saveCloudPhotos(safeStorageGet('portal-field-photos-v2', initialFieldPhotos));
+                      await saveCloudNews(getSavedNewsPosts());
+                      await saveCloudTickerNews(getSavedTickerNews());
+                      await saveCloudStoreItem('portal-hero-showcase-card', getSavedHeroCard());
+                      showToast('تمت المزامنة السحابية الشاملة بنجاح! ⚡ ستظهر جميع التعديلات فوراً على الهواتف والكمبيوتر.');
+                    } catch (err) {
+                      showToast('تعذر المزامنة السحابية: ' + (err.message || err));
+                    } finally {
+                      setIsSyncingCloud(false);
+                    }
+                  } else {
+                    setActiveSidebarItem('supabase-cloud');
+                    showToast('يرجى التحقق من إعدادات سوبابيس');
+                  }
+                }}
+                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] sm:text-xs flex items-center gap-1.5 shadow-sm cursor-pointer transition-all hover:scale-105"
+                title="مزامنة شاملة لجميع الأخبار والصور والمشروعات بين الهاتف والكمبيوتر"
+              >
+                <Cloud className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-200 ${isSyncingCloud ? 'animate-bounce' : ''}`} />
+                <span className="hidden xs:inline">{isSyncingCloud ? 'جاري المزامنة...' : 'مزامنة سحابية ⚡'}</span>
+                <span className="xs:hidden">{isSyncingCloud ? 'مزامنة...' : 'مزامنة ⚡'}</span>
+              </button>
+
               {activeSidebarItem === 'executive-projects' && (
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (isSupabaseConfigured()) {
-                        try {
-                          await saveCloudProjects(localExecutiveProjects);
-                          showToast('تمت مزامنة مشروعات المسار مع سوبابيس بنجاح! ⚡ ستظهر على الهواتف فوراً.');
-                        } catch (err) {
-                          showToast('تعذر المزامنة السحابية، يرجى فحص إعدادات سوبابيس');
-                        }
-                      } else {
-                        setActiveSidebarItem('supabase-cloud');
-                        showToast('يرجى إدخال مفاتيح سوبابيس لتفعيل المزامنة السحابية المباشرة مع الهاتف');
-                      }
-                    }}
-                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-sm cursor-pointer transition-all hover:scale-105"
-                    title="مزامنة المشروعات والصور مع هواتف الجميع عبر سوبابيس"
-                  >
-                    <Cloud className="w-4 h-4 text-emerald-200" />
-                    <span>{isSupabaseConfigured() ? 'مزامنة مع الهواتف سحابياً ⚡' : 'ربط الهاتف عبر سوبابيس'}</span>
-                  </button>
 
 
                   <button
@@ -3054,10 +3070,13 @@ export default function ExecutiveDashboard({
                             await saveCloudPhotos(photos);
                             // 3. Push hero card
                             await saveCloudStoreItem('portal-hero-showcase-card', getSavedHeroCard());
-                            // 4. Push news
+                            // 4. Push news posts
                             await saveCloudStoreItem('portal-news-posts', getSavedNewsPosts());
+                            // 5. Push ticker news
+                            const tickerVal = safeStorageGet('portal_ticker_news', initialTickerNews);
+                            await saveCloudStoreItem('portal_ticker_news', tickerVal);
                             
-                            showToast('تمت مزامنة جميع البيانات والصور بنجاح إلى سوبابيس! ستظهر فوراً في هواتف الجميع.');
+                            showToast('تمت مزامنة جميع الأخبار والصور والمشروعات بنجاح إلى سوبابيس! ستظهر فوراً على جميع الأجهزة.');
                           } catch (err) {
                             showToast('حدث خطأ أثناء الرفع السحابي: ' + (err.message || err));
                           } finally {
@@ -3074,7 +3093,7 @@ export default function ExecutiveDashboard({
                           <UploadCloud className="w-5 h-5 text-emerald-200" />
                           <div className="text-start">
                             <span className="block font-black">رفع ومزامنة جميع البيانات إلى سوبابيس الآن 🚀</span>
-                            <span className="block text-[10px] font-normal opacity-85">يرسل المشروعات والصور الحالية لتظهر فوراً على الهواتف</span>
+                            <span className="block text-[10px] font-normal opacity-85">يرسل المشروعات والصور والأخبار الحالية لتظهر فوراً على الكمبيوتر والهاتف</span>
                           </div>
                         </div>
                         <span className="text-[10px] px-2 py-1 rounded bg-black/20 font-mono">1-Click</span>
@@ -3091,13 +3110,16 @@ export default function ExecutiveDashboard({
                           }
                           setIsSyncingCloud(true);
                           try {
-                            const cloudProjects = await syncExecutiveProjectsFromCloud();
-                            await syncFieldPhotosFromCloud();
-                            if (cloudProjects && cloudProjects.length > 0) {
-                              setLocalExecutiveProjects(cloudProjects);
-                              showToast(`تم استيراد ${cloudProjects.length} مشروع من سوبابيس بنجاح!`);
+                            const res = await syncAllPortalData();
+                            setLocalExecutiveProjects(getSavedExecutiveProjects());
+                            setLocalNewsPosts(getSavedNewsPosts());
+                            setLocalHeroCard(getSavedHeroCard());
+                            setLocalPhotos(safeStorageGet('portal-field-photos-v2', initialFieldPhotos));
+                            setLocalNews(getSavedTickerNews());
+                            if (res && res.success) {
+                              showToast('تم بنجاح سحب وتحديث أحدث الأخبار والصور والمشروعات من السحابة!');
                             } else {
-                              showToast('تم الاتصال بالسحابة: لا توجد بيانات جديدة بعد');
+                              showToast('تم الاتصال بالسحابة ومزامنة المحتوى المتاح');
                             }
                           } catch (err) {
                             showToast('تعذر جلب البيانات من السحابة');
@@ -3115,7 +3137,7 @@ export default function ExecutiveDashboard({
                           <RefreshCw className={`w-5 h-5 text-amber-500 ${isSyncingCloud ? 'animate-spin' : ''}`} />
                           <div className="text-start">
                             <span className="block font-black">سحب وتحديث البيانات من سوبابيس</span>
-                            <span className="block text-[10px] font-normal text-slate-500">جلب أحدث التعديلات المنشورة سحابياً إلى هذا المتصفح</span>
+                            <span className="block text-[10px] font-normal text-slate-500">جلب أحدث الأخبار والصور المنشورة سحابياً إلى هذا الجهاز فوراً</span>
                           </div>
                         </div>
                         <span className="text-[10px] px-2 py-1 rounded bg-slate-200 font-mono text-slate-700">Pull</span>

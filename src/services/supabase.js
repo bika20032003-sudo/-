@@ -221,6 +221,48 @@ export const saveCloudPhotos = async (photos) => {
 };
 
 /**
+ * جلب مركز الأخبار المصورة من سوبابيس
+ */
+export const fetchCloudNews = async () => {
+  return await fetchCloudStoreItem('portal-news-posts');
+};
+
+/**
+ * حفظ مركز الأخبار المصورة إلى سوبابيس
+ */
+export const saveCloudNews = async (posts) => {
+  return await saveCloudStoreItem('portal-news-posts', posts);
+};
+
+/**
+ * جلب شريط الأخبار العلوي من سوبابيس
+ */
+export const fetchCloudTickerNews = async () => {
+  return await fetchCloudStoreItem('portal_ticker_news');
+};
+
+/**
+ * حفظ شريط الأخبار العلوي إلى سوبابيس
+ */
+export const saveCloudTickerNews = async (news) => {
+  return await saveCloudStoreItem('portal_ticker_news', news);
+};
+
+/**
+ * جلب بطاقة العرض الرئيسية (Hero Card) من سوبابيس
+ */
+export const fetchCloudHeroCard = async () => {
+  return await fetchCloudStoreItem('portal-hero-showcase-card');
+};
+
+/**
+ * حفظ بطاقة العرض الرئيسية إلى سوبابيس
+ */
+export const saveCloudHeroCard = async (card) => {
+  return await saveCloudStoreItem('portal-hero-showcase-card', card);
+};
+
+/**
  * كود SQL لإنشاء الجدول وسياسات الأمان في سوبابيس
  */
 export const SUPABASE_SQL_SETUP = `-- ========================================================

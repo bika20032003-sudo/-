@@ -4,6 +4,12 @@ import {
   saveCloudProjects, 
   fetchCloudPhotos, 
   saveCloudPhotos, 
+  fetchCloudNews,
+  saveCloudNews,
+  fetchCloudTickerNews,
+  saveCloudTickerNews,
+  fetchCloudHeroCard,
+  saveCloudHeroCard,
   fetchCloudStoreItem,
   saveCloudStoreItem,
   isSupabaseConfigured 
@@ -476,7 +482,7 @@ export const fetchFieldPhotos = async () => {
   } catch (e) {
     // API offline fallback
   }
-  const saved = localStorage.getItem('portal-field-photos');
+  const saved = localStorage.getItem('portal-field-photos-v2') || localStorage.getItem('portal-field-photos');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -647,7 +653,74 @@ export const saveNewsPosts = (posts) => {
   try {
     localStorage.setItem('portal-news-posts', JSON.stringify(posts));
     window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('cloud_news_updated', { detail: posts }));
   } catch (e) {}
+
+  if (isSupabaseConfigured()) {
+    saveCloudNews(posts).catch(err => {
+      console.warn('[Supabase] فشل حفظ الأخبار سحابياً:', err);
+    });
+  }
+};
+
+export const syncNewsFromCloud = async () => {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const cloudNews = await fetchCloudNews();
+    if (cloudNews && Array.isArray(cloudNews) && cloudNews.length > 0) {
+      localStorage.setItem('portal-news-posts', JSON.stringify(cloudNews));
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('cloud_news_updated', { detail: cloudNews }));
+      return cloudNews;
+    }
+  } catch (e) {
+    console.warn('[Supabase Sync] خطأ في مزامنة الأخبار:', e);
+  }
+  return null;
+};
+
+export const saveFieldPhotos = (photos) => {
+  try {
+    localStorage.setItem('portal-field-photos-v2', JSON.stringify(photos));
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('cloud_photos_updated', { detail: photos }));
+  } catch (e) {}
+
+  if (isSupabaseConfigured()) {
+    saveCloudPhotos(photos).catch(err => {
+      console.warn('[Supabase] فشل حفظ الصور سحابياً:', err);
+    });
+  }
+};
+
+export const saveTickerNews = (news) => {
+  try {
+    localStorage.setItem('portal_ticker_news', JSON.stringify(news));
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('cloud_ticker_updated', { detail: news }));
+  } catch (e) {}
+
+  if (isSupabaseConfigured()) {
+    saveCloudTickerNews(news).catch(err => {
+      console.warn('[Supabase] فشل حفظ شريط الأخبار سحابياً:', err);
+    });
+  }
+};
+
+export const syncTickerNewsFromCloud = async () => {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const cloudTicker = await fetchCloudTickerNews();
+    if (cloudTicker && Array.isArray(cloudTicker) && cloudTicker.length > 0) {
+      localStorage.setItem('portal_ticker_news', JSON.stringify(cloudTicker));
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('cloud_ticker_updated', { detail: cloudTicker }));
+      return cloudTicker;
+    }
+  } catch (e) {
+    console.warn('[Supabase Sync] خطأ في مزامنة شريط الأخبار:', e);
+  }
+  return null;
 };
 
 export const getSavedExecutiveProjects = () => {
@@ -693,17 +766,85 @@ export const syncFieldPhotosFromCloud = async () => {
   return null;
 };
 
-// Automatic initial cloud sync on page load and window events
+export const syncHeroCardFromCloud = async () => {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const cloudHero = await fetchCloudHeroCard();
+    if (cloudHero && typeof cloudHero === 'object') {
+      localStorage.setItem('portal-hero-showcase-card', JSON.stringify(cloudHero));
+      window.dispatchEvent(new Event('storage'));
+      return cloudHero;
+    }
+  } catch (e) {
+    console.warn('[Supabase Sync] خطأ في مزامنة بطاقة العرض:', e);
+  }
+  return null;
+};
+
+/**
+ * مزامنة سحابية شاملة ثنائية الاتجاه:
+ * 1. تسحب أحدث الأخبار والصور والمشروعات من سوبابيس لجميع الأجهزة
+ * 2. إذا كان هذا الجهاز (مثل هاتف المستخدم) يحتوي على أخبار أو صور محلية جديدة لم ترفع بعد، يرفعها تلقائياً
+ */
+export const syncAllPortalData = async () => {
+  if (!isSupabaseConfigured()) return { success: false, message: 'سوبابيس غير مهيأ' };
+
+  try {
+    // جلب أحدث الحالات السحابية
+    const [cloudProjects, cloudPhotos, cloudNews, cloudTicker, cloudHero] = await Promise.allSettled([
+      syncExecutiveProjectsFromCloud(),
+      syncFieldPhotosFromCloud(),
+      syncNewsFromCloud(),
+      syncTickerNewsFromCloud(),
+      syncHeroCardFromCloud()
+    ]);
+
+    // تحقق من وجود بيانات محلية على الهاتف تحتاج إلى رفع إلى السحابة
+    try {
+      const localNews = localStorage.getItem('portal-news-posts');
+      if (localNews) {
+        const parsedNews = JSON.parse(localNews);
+        if (Array.isArray(parsedNews) && parsedNews.length > 0) {
+          // إذا كانت الأخبار المحلية أكبر أو تحتوي على منشورات جديدة غير موجودة بالسحابة
+          const cloudNewsVal = cloudNews.status === 'fulfilled' ? cloudNews.value : null;
+          if (!cloudNewsVal || parsedNews.length > cloudNewsVal.length) {
+            await saveCloudNews(parsedNews);
+          }
+        }
+      }
+
+      const localPhotos = localStorage.getItem('portal-field-photos-v2');
+      if (localPhotos) {
+        const parsedPhotos = JSON.parse(localPhotos);
+        if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+          const cloudPhotosVal = cloudPhotos.status === 'fulfilled' ? cloudPhotos.value : null;
+          if (!cloudPhotosVal || parsedPhotos.length > cloudPhotosVal.length) {
+            await saveCloudPhotos(parsedPhotos);
+          }
+        }
+      }
+    } catch (ePush) {
+      console.warn('[Supabase SyncAll] خطأ في التحقق من رفع البيانات المحلية:', ePush);
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.warn('[Supabase SyncAll] خطأ في المزامنة الشاملة:', err);
+    return { success: false, error: err };
+  }
+};
+
+// تشغيل المزامنة السحابية التلقائية عند تحميل الصفحة والتنقل بين التبويبات
 if (typeof window !== 'undefined') {
   const triggerInitialSync = () => {
     if (isSupabaseConfigured()) {
-      syncExecutiveProjectsFromCloud();
-      syncFieldPhotosFromCloud();
+      syncAllPortalData();
     }
   };
   setTimeout(triggerInitialSync, 300);
   window.addEventListener('focus', triggerInitialSync);
   window.addEventListener('online', triggerInitialSync);
+  window.addEventListener('pageshow', triggerInitialSync);
   window.addEventListener('supabase_config_changed', triggerInitialSync);
 }
 
@@ -711,6 +852,7 @@ export const saveExecutiveProjects = (projects) => {
   try {
     localStorage.setItem('portal-national-projects', JSON.stringify(projects));
     window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('cloud_projects_updated', { detail: projects }));
   } catch (e) {}
 
   if (isSupabaseConfigured()) {
@@ -719,7 +861,6 @@ export const saveExecutiveProjects = (projects) => {
     });
   }
 };
-
 
 // ── Hero 3D Showcase Card State Management ──
 export const initialHeroCard = {
@@ -759,6 +900,13 @@ export const saveHeroCard = (heroCard) => {
     localStorage.setItem('portal-hero-showcase-card', JSON.stringify(heroCard));
     window.dispatchEvent(new Event('storage'));
   } catch (e) {}
+
+  if (isSupabaseConfigured()) {
+    saveCloudHeroCard(heroCard).catch(err => {
+      console.warn('[Supabase] فشل حفظ بطاقة الهيرو سحابياً:', err);
+    });
+  }
 };
+
 
 
