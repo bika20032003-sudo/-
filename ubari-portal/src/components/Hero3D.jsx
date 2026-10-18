@@ -213,14 +213,14 @@ export default function Hero3D({ summaryData, setActiveTab, theme, user, onOpenG
             {/* 4K Hero Title */}
             <div className="space-y-2 sm:space-y-4">
               <h1 
-                style={{ fontFamily: "'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif" }}
+                style={{ fontFamily: "'Alexandria', 'Cairo', sans-serif" }}
                 className={`text-xl xs:text-2xl sm:text-5xl lg:text-6xl font-extrabold leading-tight sm:leading-snug ${
                   theme === 'light' ? 'text-slate-950' : 'text-white'
                 }`}
               >
                 <span className="block mb-0.5 sm:mb-2 text-slate-900 dark:text-white text-base xs:text-xl sm:text-4xl lg:text-5xl">{t.heroMainTitle1}</span>
                 <span 
-                  style={{ fontFamily: "'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif" }}
+                  style={{ fontFamily: "'Alexandria', 'Cairo', sans-serif" }}
                   className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 px-1 pe-2 pb-2.5 pt-0.5 text-2xl xs:text-3xl sm:text-5xl lg:text-6xl overflow-visible font-extrabold"
                 >
                   {t.heroMainTitle2}
