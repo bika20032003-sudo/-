@@ -196,7 +196,7 @@ export default function Header({
 
           {/* Authority Official Title */}
           <div 
-            style={{ fontFamily: "'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif" }}
+            style={{ fontFamily: "'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif" }}
             className="text-start border-s border-slate-300 dark:border-white/10 ps-1.5 sm:ps-3 min-w-0 flex-1 sm:flex-initial"
           >
             <div className="flex items-center gap-1 min-w-0">

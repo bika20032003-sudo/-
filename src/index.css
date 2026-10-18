@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
@@ -14,15 +14,16 @@
   --color-libya-dark: #07090E;
 
   /* Unified Prestigious Font Stack with Authentic Arabic Orthography (Guaranteed Yaa Dots) */
-  --font-arabic: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', 'Noto Kufi Arabic', sans-serif;
+  --font-ibm: 'IBM Plex Sans Arabic', sans-serif;
   --font-kufi: 'Noto Kufi Arabic', sans-serif;
-  --font-alexandria: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
-  --font-almarai: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
-  --font-cairo: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
-  --font-tajawal: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
-  --font-sans: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
-  --font-display: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif;
-  --font-outfit: 'Outfit', 'Noto Kufi Arabic', sans-serif;
+  --font-alexandria: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-almarai: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-cairo: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-tajawal: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-sans: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-display: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif;
+  --font-outfit: 'Outfit', 'IBM Plex Sans Arabic', sans-serif;
 }
 
 /* ============================================================
@@ -135,7 +136,7 @@ html {
 }
 
 html, body, #root {
-  font-family: 'Noto Kufi Arabic', 'Noto Sans Arabic', sans-serif !important;
+  font-family: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', 'Noto Kufi Arabic', sans-serif !important;
   max-width: 100vw;
   overflow-x: hidden !important;
 }
