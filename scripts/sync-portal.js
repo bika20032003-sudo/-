@@ -8,14 +8,26 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const worktreeDir = path.resolve(rootDir, '..', 'gh-pages-worktree');
 
+// Ensure Git binary is in PATH
+const gitDirs = [
+  'C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\Git\\cmd',
+  'C:\\Program Files\\Git\\cmd',
+  'C:\\Program Files (x86)\\Git\\cmd'
+];
+for (const dir of gitDirs) {
+  if (fs.existsSync(dir) && !process.env.PATH.includes(dir)) {
+    process.env.PATH = `${dir};${process.env.PATH}`;
+  }
+}
+
 function run(cmd, cwd = rootDir) {
   console.log(`\x1b[36m➜ ${cmd}\x1b[0m (in ${cwd})`);
-  return execSync(cmd, { cwd, stdio: 'inherit' });
+  return execSync(cmd, { cwd, stdio: 'inherit', env: process.env });
 }
 
 function runSilent(cmd, cwd = rootDir) {
   try {
-    return execSync(cmd, { cwd, stdio: 'pipe' }).toString().trim();
+    return execSync(cmd, { cwd, stdio: 'pipe', env: process.env }).toString().trim();
   } catch {
     return '';
   }
