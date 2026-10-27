@@ -59,8 +59,14 @@ export const Sidebar = ({
         };
 
         updateSidebarCounters();
-        const intervalId = setInterval(updateSidebarCounters, 20000);
-        return () => clearInterval(intervalId);
+        window.addEventListener('alerts-updated', updateSidebarCounters);
+        window.addEventListener('storage', updateSidebarCounters);
+        const intervalId = setInterval(updateSidebarCounters, 15000);
+        return () => {
+            window.removeEventListener('alerts-updated', updateSidebarCounters);
+            window.removeEventListener('storage', updateSidebarCounters);
+            clearInterval(intervalId);
+        };
     }, [username]);
 
     // Determine user role badge display and styling

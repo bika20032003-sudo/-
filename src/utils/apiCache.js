@@ -391,9 +391,27 @@ export function getFallbackData(url) {
     };
   }
   if (url.includes('/api/alerts')) {
+    let currentAlerts = initialAlerts || [];
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem('system_alerts');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            currentAlerts = parsed;
+          } else {
+            localStorage.setItem('system_alerts', JSON.stringify(currentAlerts));
+          }
+        } else {
+          localStorage.setItem('system_alerts', JSON.stringify(currentAlerts));
+        }
+      }
+    } catch (e) {
+      console.warn('Error syncing alerts in apiCache:', e);
+    }
     return {
       success: true,
-      alerts: initialAlerts || []
+      alerts: currentAlerts
     };
   }
   if (url.includes('/api/plans')) {

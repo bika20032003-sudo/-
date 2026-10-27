@@ -6,9 +6,25 @@ import {
   X, Sparkles, AlertOctagon, Megaphone, ShieldCheck
 } from 'lucide-react';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { initialAlerts } from '../data/mockData.js';
 
 export const AlertsView = ({ currentUser, onNavigateTab }) => {
-  const [alerts, setAlerts] = useState([]);
+  const getStoredAlerts = () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem('system_alerts');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading stored alerts:', e);
+    }
+    return initialAlerts || [];
+  };
+
+  const [alerts, setAlerts] = useState(getStoredAlerts);
   const [filterCategory, setFilterCategory] = useState('all'); // 'all' | 'unread' | 'equipment' | 'fuel' | 'progress' | 'quality'
   const [filterSector, setFilterSector] = useState('all');
   const [filterType, setFilterType] = useState('all');
@@ -28,16 +44,31 @@ export const AlertsView = ({ currentUser, onNavigateTab }) => {
     actionLink: 'equipment'
   });
 
+  const persistAlerts = (newList) => {
+    setAlerts(newList);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('system_alerts', JSON.stringify(newList));
+        clearApiCache();
+        window.dispatchEvent(new Event('alerts-updated'));
+      }
+    } catch (e) {
+      console.warn('Error saving alerts to localStorage:', e);
+    }
+  };
+
   const fetchAlerts = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/alerts');
-      const data = await response.json();
-      if (data && data.success && Array.isArray(data.alerts)) {
+      const data = await fastFetch('/api/alerts');
+      if (data && data.success && Array.isArray(data.alerts) && data.alerts.length > 0) {
         setAlerts(data.alerts);
+        localStorage.setItem('system_alerts', JSON.stringify(data.alerts));
+      } else {
+        setAlerts(getStoredAlerts());
       }
     } catch (error) {
-      console.warn('Failed to fetch alerts from backend, using current local state:', error);
+      setAlerts(getStoredAlerts());
     } finally {
       setIsLoading(false);
     }
@@ -45,6 +76,15 @@ export const AlertsView = ({ currentUser, onNavigateTab }) => {
 
   useEffect(() => {
     fetchAlerts();
+    const handleStorageChange = () => {
+      setAlerts(getStoredAlerts());
+    };
+    window.addEventListener('alerts-updated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('alerts-updated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Auto-dismiss feedback
@@ -56,86 +96,52 @@ export const AlertsView = ({ currentUser, onNavigateTab }) => {
   }, [feedback]);
 
   // Mark all as read
-  const markAllRead = async () => {
-    try {
-      await fetch('/api/alerts/read-all', { method: 'PUT' });
-      setAlerts(prev => prev.map(a => ({ ...a, isRead: true })));
-      clearApiCache();
-      setFeedback({ type: 'success', text: 'تم تحديد جميع التنبيهات كمقروءة بنجاح' });
-    } catch (error) {
-      setAlerts(prev => prev.map(a => ({ ...a, isRead: true })));
-      setFeedback({ type: 'success', text: 'تم تحديد جميع التنبيهات كمقروءة محلياً' });
-    }
+  const markAllRead = () => {
+    const updated = alerts.map(a => ({ ...a, isRead: true }));
+    persistAlerts(updated);
+    setFeedback({ type: 'success', text: 'تم تحديد جميع التنبيهات كمقروءة بنجاح' });
   };
 
   // Toggle single alert read status
-  const toggleReadStatus = async (id) => {
-    try {
-      await fetch(`/api/alerts/${id}/toggle-read`, { method: 'PUT' });
-      setAlerts(prev => prev.map(a => a.id === id ? { ...a, isRead: !a.isRead } : a));
-      clearApiCache();
-    } catch (error) {
-      setAlerts(prev => prev.map(a => a.id === id ? { ...a, isRead: !a.isRead } : a));
-    }
+  const toggleReadStatus = (id) => {
+    const updated = alerts.map(a => a.id === id ? { ...a, isRead: !a.isRead } : a);
+    persistAlerts(updated);
   };
 
   // Clear single alert
-  const clearAlert = async (id) => {
-    try {
-      await fetch(`/api/alerts/${id}`, { method: 'DELETE' });
-    } catch (error) {
-      console.warn('Deleted alert locally');
-    }
-    setAlerts(prev => prev.filter(a => a.id !== id));
-    clearApiCache();
+  const clearAlert = (id) => {
+    const updated = alerts.filter(a => a.id !== id);
+    persistAlerts(updated);
     setFeedback({ type: 'success', text: 'تم حذف التنبيه بنجاح' });
   };
 
   // Submit new alert
-  const handleCreateAlert = async (e) => {
+  const handleCreateAlert = (e) => {
     e.preventDefault();
     if (!newAlertForm.title || !newAlertForm.message) return;
 
-    const payload = {
+    const newAlert = {
+      id: `ALT-${Date.now()}`,
       ...newAlertForm,
+      isRead: false,
       author: currentUser?.name || 'جهاز الإشراف والمتابعة',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      timestamp: 'الآن'
     };
 
-    try {
-      const res = await fetch('/api/alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.success && data.alert) {
-        setAlerts(prev => [data.alert, ...prev]);
-      } else {
-        const localAlert = {
-          id: Date.now(),
-          ...payload,
-          isRead: false,
-          timestamp: 'الآن'
-        };
-        setAlerts(prev => [localAlert, ...prev]);
-      }
-      clearApiCache();
-      setIsAddModalOpen(false);
-      setNewAlertForm({
-        title: '',
-        message: '',
-        type: 'warning',
-        category: 'equipment',
-        priority: 'high',
-        sector: 'المرحلة الأولى',
-        actionLink: 'equipment'
-      });
-      setFeedback({ type: 'success', text: 'تم نشر التنبيه / البلاغ الميداني بنجاح!' });
-    } catch (err) {
-      console.error(err);
-      setIsAddModalOpen(false);
-    }
+    const updated = [newAlert, ...alerts];
+    persistAlerts(updated);
+    setIsAddModalOpen(false);
+    setNewAlertForm({
+      title: '',
+      message: '',
+      type: 'warning',
+      category: 'equipment',
+      priority: 'high',
+      sector: 'المرحلة الأولى',
+      actionLink: 'equipment'
+    });
+    setFeedback({ type: 'success', text: 'تم نشر التنبيه / البلاغ الميداني وحفظه بنجاح!' });
   };
 
   // Calculations for Stat Cards
