@@ -69,24 +69,51 @@ export class ErrorBoundary extends React.Component {
               يرجى النقر على زر التحديث لتطبيق أحدث إصدار من المنظومة وحذف الملفات المؤقتة القديمة من المتصفح.
             </p>
 
-            <button
-              onClick={this.handleReload}
-              style={{
-                width: '100%',
-                padding: '0.85rem 1.5rem',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '0.95rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              تحديث المنظومة وإعادة التحميل الآن ⚡
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={this.handleReload}
+                style={{
+                  width: '100%',
+                  padding: '0.85rem 1.5rem',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                تحديث المنظومة وإعادة التحميل الآن ⚡
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('api_cache');
+                    sessionStorage.clear();
+                  } catch {}
+                  this.setState({ hasError: false, error: null });
+                  window.location.href = '/';
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: '#f8fafc',
+                  color: '#475569',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                العودة إلى لوحة التحكم الرئيسية 🏠
+              </button>
+            </div>
           </div>
         </div>
       );

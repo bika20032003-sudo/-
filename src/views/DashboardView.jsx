@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Fuel, UploadCloud, Factory, Truck, Mountain, CheckCircle2, X, RefreshCw, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3 } from 'lucide-react';
+import { Fuel, UploadCloud, Factory, Truck, CheckCircle2, X, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 export const DashboardView = ({ onNavigateTab }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -9,6 +9,9 @@ export const DashboardView = ({ onNavigateTab }) => {
     const [metrics, setMetrics] = useState({
         totalProduction: 0,
         totalFuel: 0,
+        totalSolar: 0,
+        totalFuelReceived: 0,
+        totalFuelRemaining: 0,
         totalSharshoor: 0,
         totalEquipment: 0,
         activeEquipment: 0,
@@ -22,80 +25,94 @@ export const DashboardView = ({ onNavigateTab }) => {
         recentAlerts: [],
         urgentIssues: [],
         tomorrowPlan: null,
-        // Road Project Progress Metrics from Excel
+        // Road Project Progress Metrics (360 KM Project)
         roadProgress: {
-            totalRoadLengthKm: 226.28,
-            overallPercentage: 95.0,
-            sectorAPercentage: 96.2,
-            sectorBPercentage: 93.8,
-            totalTodayMeters: 1060,
+            totalRoadLengthKm: 360.00,
+            overallPercentage: 65.9,
+            sectorAPercentage: 100.0,
+            sectorBPercentage: 8.4,
+            totalTodayMeters: 3820,
+            totalExecutedKm: 237.39,
+            remainingKm: 122.61,
             layers: [
-                { name: 'إعادة التدوير (FDR)', meters: 220203, percentage: 97.3, color: '#2563eb', sectorA: 97.5, sectorB: 97.1 },
-                { name: 'الأساس الحبيبي (الشرشور)', meters: 215483, percentage: 95.2, color: '#16a34a', sectorA: 95.8, sectorB: 94.6 },
-                { name: 'رش التشريب (MCO)', meters: 214303, percentage: 94.7, color: '#ea580c', sectorA: 95.1, sectorB: 94.3 },
-                { name: 'الاسفلت المحسن', meters: 209923, percentage: 92.8, color: '#7c3aed', sectorA: 93.5, sectorB: 92.1 }
+                { name: 'إعادة التدوير (FDR)', meters: 242323, percentage: 67.3, color: '#2563eb', sectorA: 100.0, sectorB: 12.1 },
+                { name: 'الأساس الحبيبي (الشرشور)', meters: 236493, percentage: 65.7, color: '#16a34a', sectorA: 100.0, sectorB: 7.8 },
+                { name: 'رش التشريب (MCO)', meters: 236493, percentage: 65.7, color: '#ea580c', sectorA: 100.0, sectorB: 7.8 },
+                { name: 'الاسفلت المحسن', meters: 234243, percentage: 65.1, color: '#7c3aed', sectorA: 100.0, sectorB: 6.1 }
             ]
         },
-        // Weekly Trend Data for Charting
+        // Weekly Trend Data for Charting (Starts at 0 until reports are logged)
         weeklyTrends: [
-            { day: 'السبت', production: 1150, fuel: 3400, sharshoor: 690, meters: 850 },
-            { day: 'الأحد', production: 1280, fuel: 3750, sharshoor: 760, meters: 920 },
-            { day: 'الإثنين', production: 1400, fuel: 4100, sharshoor: 840, meters: 1050 },
-            { day: 'الثلاثاء', production: 1350, fuel: 3900, sharshoor: 810, meters: 980 },
-            { day: 'الأربعاء', production: 1200, fuel: 3600, sharshoor: 720, meters: 890 },
-            { day: 'الخميس', production: 1450, fuel: 4250, sharshoor: 870, meters: 1060 },
-            { day: 'اليوم (الجمعة)', production: 1250, fuel: 3850, sharshoor: 750, meters: 1060 }
+            { day: 'السبت', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+            { day: 'الأحد', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+            { day: 'الإثنين', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+            { day: 'الثلاثاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+            { day: 'الأربعاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+            { day: 'الخميس', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+            { day: 'اليوم', production: 0, fuel: 0, sharshoor: 0, meters: 0 }
         ]
     });
     const fetchDashboardData = async () => {
         try {
-            const summaryRes = await fastFetch('http://localhost:5000/api/dashboard/summary');
+            const summaryRes = await fastFetch('/api/dashboard/summary');
             if (summaryRes && summaryRes.success) {
                 const roadRes = summaryRes.roadProgress;
-                const fdrP = roadRes?.kpis?.fdr?.percentage ? parseFloat(roadRes.kpis.fdr.percentage) : 97.3;
-                const asphP = roadRes?.kpis?.asphalt?.percentage ? parseFloat(roadRes.kpis.asphalt.percentage) : 92.8;
-                const aggP = roadRes?.kpis?.aggregateBase?.percentage ? parseFloat(roadRes.kpis.aggregateBase.percentage) : 95.2;
-                const mcoP = roadRes?.kpis?.mco?.percentage ? parseFloat(roadRes.kpis.mco.percentage) : 94.7;
-                const overallAvg = parseFloat(((fdrP + asphP + aggP + mcoP) / 4).toFixed(1));
+                const fdrP = roadRes?.kpis?.fdr?.percentage !== undefined ? parseFloat(roadRes.kpis.fdr.percentage) : 67.3;
+                const asphP = roadRes?.kpis?.asphalt?.percentage !== undefined ? parseFloat(roadRes.kpis.asphalt.percentage) : 65.1;
+                const aggP = roadRes?.kpis?.aggregateBase?.percentage !== undefined ? parseFloat(roadRes.kpis.aggregateBase.percentage) : 65.7;
+                const mcoP = roadRes?.kpis?.mco?.percentage !== undefined ? parseFloat(roadRes.kpis.mco.percentage) : 65.7;
+                
+                const overallVal = roadRes?.overallPercentage !== undefined ? parseFloat(roadRes.overallPercentage) : parseFloat(((fdrP + asphP + aggP + mcoP) / 4).toFixed(1));
+                const secAVal = roadRes?.sectorAPercentage !== undefined ? parseFloat(roadRes.sectorAPercentage) : 100.0;
+                const secBVal = roadRes?.sectorBPercentage !== undefined ? parseFloat(roadRes.sectorBPercentage) : 8.4;
+                const execKm = roadRes?.totalExecutedKm !== undefined ? parseFloat(roadRes.totalExecutedKm) : 237.39;
+                const remKm = roadRes?.remainingKm !== undefined ? parseFloat(roadRes.remainingKm) : 122.61;
+                const todayM = roadRes?.kpis?.totalTodayMeters !== undefined ? parseFloat(roadRes.kpis.totalTodayMeters) : 3820;
 
                 setMetrics(prev => ({
                     ...prev,
-                    totalProduction: summaryRes.totalProduction,
-                    totalFuel: summaryRes.totalFuel,
-                    totalSharshoor: summaryRes.totalSharshoor,
-                    totalEquipment: summaryRes.totalEquipment,
-                    activeEquipment: summaryRes.activeEquipment,
-                    stoppedEquipment: summaryRes.stoppedEquipment,
-                    operatingHours: summaryRes.operatingHours,
-                    sectorAFuel: summaryRes.sectorAFuel,
-                    sectorBFuel: summaryRes.sectorBFuel,
-                    sectorAProd: summaryRes.sectorAProd,
-                    sectorBProd: summaryRes.sectorBProd,
+                    totalProduction: summaryRes.totalProduction || 0,
+                    totalFuel: summaryRes.totalFuel || 0,
+                    totalSolar: summaryRes.totalSolar ?? summaryRes.totalFuel ?? 0,
+                    totalFuelReceived: summaryRes.totalFuelReceived || 0,
+                    totalFuelRemaining: summaryRes.totalFuelRemaining || 0,
+                    totalSharshoor: summaryRes.totalSharshoor || 0,
+                    totalEquipment: summaryRes.totalEquipment || 0,
+                    activeEquipment: summaryRes.activeEquipment || 0,
+                    stoppedEquipment: summaryRes.stoppedEquipment || 0,
+                    operatingHours: summaryRes.operatingHours || 0,
+                    sectorAFuel: summaryRes.sectorAFuel || 0,
+                    sectorBFuel: summaryRes.sectorBFuel || 0,
+                    sectorAProd: summaryRes.sectorAProd || 0,
+                    sectorBProd: summaryRes.sectorBProd || 0,
                     recentReports: summaryRes.recentReports || [],
                     recentAlerts: summaryRes.recentAlerts || [],
                     urgentIssues: summaryRes.urgentIssues || [],
                     tomorrowPlan: summaryRes.tomorrowPlan || null,
                     roadProgress: {
-                        totalRoadLengthKm: 226.28,
-                        overallPercentage: overallAvg || 95.0,
-                        sectorAPercentage: 96.2,
-                        sectorBPercentage: 93.8,
-                        totalTodayMeters: roadRes?.kpis?.totalTodayMeters || 1060,
+                        totalRoadLengthKm: 360.00,
+                        overallPercentage: overallVal || 65.9,
+                        sectorAPercentage: secAVal || 100.0,
+                        sectorBPercentage: secBVal || 8.4,
+                        totalExecutedKm: execKm,
+                        remainingKm: remKm,
+                        totalTodayMeters: todayM,
+                        latestTwoPhaseReport: roadRes?.latestTwoPhaseReport || null,
                         layers: [
-                            { name: 'إعادة التدوير (FDR)', meters: roadRes?.kpis?.fdr?.meters || 220203, percentage: fdrP, color: '#2563eb', sectorA: 97.5, sectorB: 97.1 },
-                            { name: 'الأساس الحبيبي (الشرشور)', meters: roadRes?.kpis?.aggregateBase?.meters || 215483, percentage: aggP, color: '#16a34a', sectorA: 95.8, sectorB: 94.6 },
-                            { name: 'رش التشريب (MCO)', meters: roadRes?.kpis?.mco?.meters || 214303, percentage: mcoP, color: '#ea580c', sectorA: 95.1, sectorB: 94.3 },
-                            { name: 'الاسفلت المحسن', meters: roadRes?.kpis?.asphalt?.meters || 209923, percentage: asphP, color: '#7c3aed', sectorA: 93.5, sectorB: 92.1 }
+                            { name: 'إعادة التدوير (FDR)', meters: roadRes?.kpis?.fdr?.meters || 242323, percentage: fdrP, color: '#2563eb', sectorA: 100.0, sectorB: 12.1 },
+                            { name: 'الأساس الحبيبي (الشرشور)', meters: roadRes?.kpis?.aggregateBase?.meters || 236493, percentage: aggP, color: '#16a34a', sectorA: 100.0, sectorB: 7.8 },
+                            { name: 'رش التشريب (MCO)', meters: roadRes?.kpis?.mco?.meters || 236493, percentage: mcoP, color: '#ea580c', sectorA: 100.0, sectorB: 7.8 },
+                            { name: 'الاسفلت المحسن', meters: roadRes?.kpis?.asphalt?.meters || 234243, percentage: asphP, color: '#7c3aed', sectorA: 100.0, sectorB: 6.1 }
                         ]
                     },
                     weeklyTrends: [
-                        { day: 'السبت', production: 1150, fuel: 3400, sharshoor: 690, meters: 850 },
-                        { day: 'الأحد', production: 1280, fuel: 3750, sharshoor: 760, meters: 920 },
-                        { day: 'الإثنين', production: 1400, fuel: 4100, sharshoor: 840, meters: 1050 },
-                        { day: 'الثلاثاء', production: 1350, fuel: 3900, sharshoor: 810, meters: 980 },
-                        { day: 'الأربعاء', production: 1200, fuel: 3600, sharshoor: 720, meters: 890 },
-                        { day: 'الخميس', production: 1450, fuel: 4250, sharshoor: 870, meters: 1060 },
-                        { day: 'اليوم', production: summaryRes.totalProduction || 1250, fuel: summaryRes.totalFuel || 3850, sharshoor: summaryRes.totalSharshoor || 750, meters: roadRes?.kpis?.totalTodayMeters || 1060 }
+                        { day: 'السبت', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                        { day: 'الأحد', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                        { day: 'الإثنين', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                        { day: 'الثلاثاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                        { day: 'الأربعاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                        { day: 'الخميس', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                        { day: 'اليوم', production: summaryRes.totalProduction || 0, fuel: summaryRes.totalFuel || 0, sharshoor: summaryRes.totalSharshoor || 0, meters: todayM }
                     ]
                 }));
             }
@@ -107,61 +124,23 @@ export const DashboardView = ({ onNavigateTab }) => {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
         fetchDashboardData();
+
+        // Reactive updates whenever a report is saved or uploaded
+        const handleSync = () => fetchDashboardData();
+        window.addEventListener('report-saved', handleSync);
+        window.addEventListener('road-progress-updated', handleSync);
+        window.addEventListener('report-deleted', handleSync);
+
+        return () => {
+            window.removeEventListener('report-saved', handleSync);
+            window.removeEventListener('road-progress-updated', handleSync);
+            window.removeEventListener('report-deleted', handleSync);
+        };
     }, []);
     return (<div className="view-content" style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Top Quick Links & Sector Selector Bar */}
-      <div style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '14px',
-            padding: '0.85rem 1.25rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem'
-        }}>
-        {/* Quick Navigation Shortcuts */}
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', marginLeft: '0.4rem' }}>الوصول السريع:</span>
-          
-          <button onClick={() => onNavigateTab('road-progress')} className="secondary-action-btn" style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', height: '34px', background: '#f0fdf4', borderColor: '#bbf7d0' }}>
-            <Milestone size={14} color="#16a34a"/>
-            <strong style={{ color: '#15803d' }}>🛣️ إنجاز الطريق</strong>
-          </button>
-
-          <button onClick={() => onNavigateTab('daily-reports')} className="secondary-action-btn" style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', height: '34px' }}>
-            <FileText size={14} color="#2563eb"/>
-            <span>📥 آخر تقرير</span>
-          </button>
-
-          <button onClick={() => onNavigateTab('daily-analysis')} className="secondary-action-btn" style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', height: '34px' }}>
-            <Layers size={14} color="#7c3aed"/>
-            <span>🔎 تحليل اليومية</span>
-          </button>
-
-          <button onClick={() => onNavigateTab('tomorrow-plan')} className="secondary-action-btn" style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem', height: '34px', background: '#eff6ff', borderColor: '#bfdbfe' }}>
-            <Calendar size={14} color="#2563eb"/>
-            <strong style={{ color: '#1d4ed8' }}>📅 خطة الغد</strong>
-          </button>
-        </div>
-
-        {/* Action Controls */}
-        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-          <button className="secondary-action-btn" onClick={fetchDashboardData} disabled={isLoading} style={{ height: '34px', padding: '0 0.75rem' }}>
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''}/>
-            <span>تحديث</span>
-          </button>
-
-          <button className="primary-action-btn" onClick={() => onNavigateTab('upload-reports')} style={{ height: '34px', padding: '0 1rem', fontSize: '0.85rem' }}>
-            <UploadCloud size={15}/>
-            <span>رفع تقرير ميداني</span>
-          </button>
-        </div>
-      </div>
 
       {/* ================= HERO CARD: OVERALL ROAD PROJECT PROGRESS ================= */}
       <div className="dashboard-white-card" style={{
@@ -181,7 +160,7 @@ export const DashboardView = ({ onNavigateTab }) => {
                 مشروع صيانة طريق أوباري - غات (نسبة الإنجاز التنفيذي العام)
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0.2rem 0 0' }}>
-                المرحلة الأولى بطول إجمالي: <strong>226.28 كم</strong> • معدل الإنجاز اليومي: <strong>+{metrics.roadProgress.totalTodayMeters} م.ط</strong>
+                المشروع العام للمرحلتين بطول إجمالي: <strong>360.00 كم</strong> (المرحلة الأولى: 226.08 كم • المرحلة الثانية: 133.92 كم) • معدل الإنجاز اليومي: <strong>+{metrics.roadProgress.totalTodayMeters.toLocaleString()} م.ط</strong>
               </p>
             </div>
           </div>
@@ -210,7 +189,7 @@ export const DashboardView = ({ onNavigateTab }) => {
               <div style={{ fontSize: '2.5rem', fontWeight: 900, lineHeight: 1.1, margin: '0.35rem 0' }}>
                 {metrics.roadProgress.overallPercentage}%
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#bfdbfe' }}>مكتمل من إجمالي 226.28 كم</span>
+              <span style={{ fontSize: '0.78rem', color: '#bfdbfe' }}>مكتمل من إجمالي 360.00 كم</span>
             </div>
 
             {/* Circular Visual Gauge */}
@@ -229,14 +208,14 @@ export const DashboardView = ({ onNavigateTab }) => {
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.2rem 1.35rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
               <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>🛣️ المسافة المنفذة والمتبقية</span>
-              <strong style={{ fontSize: '1.15rem', color: '#2563eb' }}>215.00 كم</strong>
+              <strong style={{ fontSize: '1.15rem', color: '#2563eb' }}>{(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</strong>
             </div>
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
-              <div style={{ width: `${(215 / 226.28) * 100}%`, height: '100%', background: '#2563eb', borderRadius: '4px' }}/>
+              <div style={{ width: `${Math.min(100, ((metrics.roadProgress.totalExecutedKm || 237.39) / 360.00) * 100)}%`, height: '100%', background: '#2563eb', borderRadius: '4px' }}/>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>المنجز: 215.00 كم</span>
-              <span style={{ color: '#dc2626', fontWeight: 700 }}>المتبقي: 11.28 كم فقط</span>
+              <span>المنجز: {(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</span>
+              <span style={{ color: '#dc2626', fontWeight: 700 }}>المتبقي: {(metrics.roadProgress.remainingKm || 122.61).toFixed(2)} كم</span>
             </div>
           </div>
 
@@ -287,7 +266,7 @@ export const DashboardView = ({ onNavigateTab }) => {
             cursor: 'pointer',
             boxShadow: activeChartTab === 'progress' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none'
         }}>
-              📊 نسب إنجاز طبقات الطريق
+              نسب إنجاز طبقات الطريق
             </button>
 
             <button onClick={() => setActiveChartTab('trends')} style={{
@@ -301,7 +280,7 @@ export const DashboardView = ({ onNavigateTab }) => {
             cursor: 'pointer',
             boxShadow: activeChartTab === 'trends' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none'
         }}>
-              📈 منحنى الإنتاج والوقود
+              منحنى الرصف والوقود
             </button>
 
             <button onClick={() => setActiveChartTab('fleet')} style={{
@@ -315,7 +294,7 @@ export const DashboardView = ({ onNavigateTab }) => {
             cursor: 'pointer',
             boxShadow: activeChartTab === 'fleet' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none'
         }}>
-              🚜 جاهزية أسطول المعدات
+              جاهزية أسطول المعدات
             </button>
           </div>
         </div>
@@ -397,23 +376,23 @@ export const DashboardView = ({ onNavigateTab }) => {
         {/* ================= CHART 2: WEEKLY PRODUCTION & FUEL TRENDS ================= */}
         {activeChartTab === 'trends' && (<div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
-              {/* Left Side: Production & Fuel Chart Columns */}
+              {/* Left Side: Road Paving Meters Chart Columns */}
               <div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginBottom: '0.75rem', display: 'block' }}>
-                  منحنى حركة الإنتاج اليومي للكسارات (طن / يوم):
+                  معدلات رصف الطريق اليومية (متر طولي / يوم):
                 </span>
 
                 <div style={{ height: '170px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '2px solid #e2e8f0', gap: '0.5rem' }}>
                   {metrics.weeklyTrends.map((trend, idx) => {
-                const heightPercent = Math.min(100, (trend.production / 1600) * 100);
+                const heightPercent = Math.min(100, ((trend.meters || 800) / 1200) * 100);
                 return (<div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563eb' }}>{trend.production}</span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563eb' }}>{trend.meters || 0}</span>
                         <div style={{
                         width: '100%',
                         height: `${heightPercent * 1.3}px`,
                         background: idx === metrics.weeklyTrends.length - 1 ? 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)' : '#93c5fd',
                         borderRadius: '4px 4px 0 0'
-                    }} title={`${trend.day}: ${trend.production} طن`}/>
+                    }} title={`${trend.day}: ${trend.meters || 0} م.ط`}/>
                         <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{trend.day.split(' ')[0]}</span>
                       </div>);
             })}
@@ -471,74 +450,176 @@ export const DashboardView = ({ onNavigateTab }) => {
               <span style={{ fontSize: '0.78rem', color: '#1d4ed8' }}>متوسط 8.2 ساعة / معدة</span>
             </div>
           </div>)}
+
+        {/* ================= LIVE TWO-PHASE REPORT FEED CARD ================= */}
+        <div style={{
+          marginTop: '1.5rem',
+          padding: '1.25rem 1.5rem',
+          borderRadius: '14px',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          border: '1px solid #cbd5e1',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#1e40af', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Layers size={18} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#0f172a' }}>
+                    بيانات تقرير إنجاز المرحلتين اليومي المعتمد
+                  </h4>
+                  <span style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px' }}>
+                    يغذي الداش بورد تلقائياً ⚡
+                  </span>
+                </div>
+                <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                  {metrics.roadProgress.latestTwoPhaseReport 
+                    ? `تاريخ آخر تقرير مرفوع: ${metrics.roadProgress.latestTwoPhaseReport.dayName || 'السبت'} ${metrics.roadProgress.latestTwoPhaseReport.dateFormatted || ''} • رقم: ${metrics.roadProgress.latestTwoPhaseReport.reportNumber}`
+                    : 'بمجرد رفع تقرير إنجاز المرحلتين الميداني اليومي؛ ستنزل أرقامه وجداوله فوراً هنا'}
+                </p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => onNavigateTab('upload-reports')} 
+              className="primary-action-btn"
+              style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', height: 'auto', background: 'linear-gradient(135deg, #1e40af, #2563eb)' }}
+            >
+              <UploadCloud size={15} />
+              <span>رفع تقرير إنجاز المرحلتين 📤</span>
+            </button>
+          </div>
+
+          {/* Quick Metrics of Phase 1 vs Phase 2 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '0.85rem' }}>
+            <div style={{ background: '#fff', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
+              <div style={{ fontSize: '0.76rem', color: '#1e40af', fontWeight: 800 }}>المرحلة الأولى (226.08 كم)</div>
+              <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#1d4ed8', marginTop: '0.2rem' }}>
+                {metrics.roadProgress.sectorAPercentage}%
+              </div>
+              <span style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 700 }}>مكتملة بالكامل (100%)</span>
+            </div>
+
+            <div style={{ background: '#fff', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid #a5f3fc' }}>
+              <div style={{ fontSize: '0.76rem', color: '#0891b2', fontWeight: 800 }}>المرحلة الثانية (133.92 كم)</div>
+              <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0284c7', marginTop: '0.2rem' }}>
+                {metrics.roadProgress.sectorBPercentage}%
+              </div>
+              <span style={{ fontSize: '0.74rem', color: '#64748b' }}>نسبة الإنجاز التراكمي للمرحلة</span>
+            </div>
+
+            <div style={{ background: '#fff', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '0.76rem', color: '#166534', fontWeight: 800 }}>إنجاز اليوم بالمرحلتين</div>
+              <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#16a34a', marginTop: '0.2rem' }}>
+                +{metrics.roadProgress.totalTodayMeters.toLocaleString()} <span style={{ fontSize: '0.85rem' }}>م.ط</span>
+              </div>
+              <span style={{ fontSize: '0.74rem', color: '#15803d' }}>معدل تقدم الرصف اليومي</span>
+            </div>
+          </div>
+
+          {/* Remaining Items Summary Table from the Two-Phase Report */}
+          {metrics.roadProgress.latestTwoPhaseReport?.remainingItems && metrics.roadProgress.latestTwoPhaseReport.remainingItems.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '0.85rem 1rem', marginTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155', marginBottom: '0.5rem' }}>
+                📋 جدول المتبقي من البنود (من واقع آخر تقرير مرفوع للمرحلتين):
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: '0.78rem', borderCollapse: 'collapse', textAlign: 'center' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #cbd5e1' }}>
+                      <th style={{ padding: '0.4rem', textAlign: 'right' }}>البند</th>
+                      <th style={{ padding: '0.4rem' }}>المرحلة الأولى</th>
+                      <th style={{ padding: '0.4rem' }}>المرحلة الثانية</th>
+                      <th style={{ padding: '0.4rem' }}>الإجمالي</th>
+                      <th style={{ padding: '0.4rem' }}>ملاحظات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.roadProgress.latestTwoPhaseReport.remainingItems.slice(0, 4).map((rem, rIdx) => (
+                      <tr key={rIdx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '0.4rem', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{rem.name}</td>
+                        <td style={{ padding: '0.4rem', color: '#2563eb', fontWeight: 700 }}>{rem.phase1 ? Number(rem.phase1).toLocaleString() : '-'}</td>
+                        <td style={{ padding: '0.4rem', color: '#0891b2', fontWeight: 700 }}>{rem.phase2 ? Number(rem.phase2).toLocaleString() : '-'}</td>
+                        <td style={{ padding: '0.4rem', fontWeight: 800, color: '#dc2626' }}>{rem.total ? Number(rem.total).toLocaleString() : '-'}</td>
+                        <td style={{ padding: '0.4rem', color: '#64748b' }}>{rem.notes || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ================= TOP 4 KPI CARDS ================= */}
+      {/* ================= TOP 4 KPI CARDS: ROAD, SOLAR, FUEL, FLEET ================= */}
       <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.5rem'
         }}>
-        {/* Card 1: إنتاج الكسارات */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('crushers')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer' }} title="فتح قسم الكسارات">
+        {/* Card 1: إنجاز رصف الطريق */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('road-progress')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer' }} title="فتح متابعة إنجاز الطريق">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem' }}>إجمالي إنتاج الكسارات</span>
-            <div className="kpi-icon-circle blue">
-              <Factory size={20} color="#2563eb"/>
-            </div>
-          </div>
-          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>
-              {metrics.totalProduction.toLocaleString()}
-            </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>طن</span>
-          </div>
-          <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>إنتاج يومي موثق</span>
-          </div>
-        </div>
-
-        {/* Card 2: الشرشور والركام */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('sharshoor')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer' }} title="فتح قسم الشرشور">
-          <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem' }}>أرصدة الشرشور والركام</span>
+            <span className="kpi-title" style={{ fontSize: '0.88rem' }}>إنجاز رصف الطريق اليوم</span>
             <div className="kpi-icon-circle green">
-              <Mountain size={20} color="#16a34a"/>
+              <Milestone size={20} color="#16a34a"/>
             </div>
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
             <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>
-              {metrics.totalSharshoor.toLocaleString()}
+              +{metrics.roadProgress.totalTodayMeters.toLocaleString()}
             </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>طن</span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>م.ط</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-gray-text" style={{ fontSize: '0.78rem' }}>حصة 60% وتوريدات الميزان</span>
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>نسبة الإنجاز العام {metrics.roadProgress.overallPercentage}%</span>
           </div>
         </div>
 
-        {/* Card 3: استهلاك الوقود */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer' }} title="فتح قسم الوقود والصهاريج">
+        {/* Card 2: عداد السولار وحده (المنصرف للآليات) */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #ea580c' }} title="فتح قسم إدارة الوقود">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem' }}>استهلاك السولار والوقود</span>
-            <div className="kpi-icon-circle orange">
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#9a3412', fontWeight: 800 }}>عداد السولار (المنصرف)</span>
+            <div className="kpi-icon-circle orange" style={{ background: '#ffedd5', color: '#ea580c' }}>
               <Fuel size={20} color="#ea580c"/>
             </div>
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>
-              {metrics.totalFuel.toLocaleString()}
+            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#c2410c' }}>
+              {(metrics.totalSolar || metrics.totalFuel).toLocaleString()}
             </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>لتر</span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#9a3412', fontWeight: 700 }}>لتر ديزل</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>بموجب أذونات الصرف</span>
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#ea580c' }}>منصرف تشغيل الآليات والمعدات الميدانية</span>
+          </div>
+        </div>
+
+        {/* Card 3: عداد وارد الوقود والمخزون وحده */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #2563eb' }} title="فتح قسم إدارة الوقود">
+          <div className="kpi-card-header">
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 800 }}>عداد وارد الوقود والمخزون</span>
+            <div className="kpi-icon-circle blue" style={{ background: '#eff6ff', color: '#2563eb' }}>
+              <Fuel size={20} color="#2563eb"/>
+            </div>
+          </div>
+          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
+            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#1d4ed8' }}>
+              {(metrics.totalFuelReceived || metrics.totalFuelRemaining || 0).toLocaleString()}
+            </span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 700 }}>لتر بالخزانات</span>
+          </div>
+          <div className="kpi-bottom-sub">
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#2563eb' }}>المخزون المتوفر بالصهاريج والخزانات</span>
           </div>
         </div>
 
         {/* Card 4: أسطول المعدات */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer' }} title="فتح قسم المعدات">
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #7c3aed' }} title="فتح قسم المعدات">
           <div className="kpi-card-header">
             <span className="kpi-title" style={{ fontSize: '0.88rem' }}>أسطول المعدات والآليات</span>
             <div className="kpi-icon-circle purple" style={{ background: '#f5f3ff', color: '#7c3aed' }}>
@@ -557,104 +638,15 @@ export const DashboardView = ({ onNavigateTab }) => {
         </div>
       </div>
 
-      {/* ================= SECTION: TOMORROW PLAN DECISION ================= */}
+      {/* ================= MIDDLE SECTION: RECENT REPORTS ================= */}
       <div style={{ marginBottom: '1.5rem' }}>
-        {/* Tomorrow Plan Executive Preview */}
-        <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={20} color="#2563eb"/>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                📅 خطة الغد المعتمدة ومعدل الإنجاز
-              </h3>
-            </div>
-            <button onClick={() => onNavigateTab('tomorrow-plan')} className="primary-action-btn" style={{ height: '32px', padding: '0 0.85rem', fontSize: '0.78rem' }}>
-              إعداد واعتماد خطة الغد
-            </button>
-          </div>
-
-          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-              <div>
-                <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
-                  {metrics.tomorrowPlan?.title || 'خطة العمليات الميدانية للغد'}
-                </h4>
-                <p style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  {metrics.tomorrowPlan?.status === 'approved' ? `معتمدة رسمياً بواسطة: ${metrics.tomorrowPlan.approvedBy}` : 'مقترح ذكي في انتظار اعتماد المسؤول'}
-                </p>
-              </div>
-
-              <span className={`status-pill ${metrics.tomorrowPlan?.status === 'approved' ? 'approved' : 'pending'}`}>
-                {metrics.tomorrowPlan?.status === 'approved' ? 'معتمدة' : 'مسودة مقترحة'}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#475569', paddingTop: '0.5rem', borderTop: '1px solid #e2e8f0' }}>
-              <span>إجمالي بنود الخطة: <strong>{metrics.tomorrowPlan?.items?.length || 4} بنود</strong></span>
-              <span>نسبة التنفيذ المتوقعة: <strong style={{ color: '#16a34a' }}>85% - 100%</strong></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ================= MIDDLE SECTION: EXECUTIVE BREAKDOWN & RECENT REPORTS ================= */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-        {/* Executive Table */}
-        <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
-              الموقف التنفيذي العام للعمليات والإنتاج الميداني
-            </h3>
-            <span style={{ fontSize: '0.75rem', color: '#15803d', background: '#dcfce7', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>
-              مؤشرات موحدة
-            </span>
-          </div>
-
-          <table className="daily-summary-table" style={{ width: '100%' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc' }}>
-                <th style={{ textAlign: 'right', padding: '0.65rem 0.85rem' }}>البيان الميداني</th>
-                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>المتحقق اليوم</th>
-                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>المستهدف</th>
-                <th style={{ textAlign: 'center', padding: '0.65rem 0.85rem' }}>نسبة التحقيق</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr onClick={() => onNavigateTab('crushers')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>🏭 إنتاج الكسارات</td>
-                <td style={{ textAlign: 'center', fontWeight: 700, color: '#2563eb' }}>{metrics.totalProduction.toLocaleString()} طن</td>
-                <td style={{ textAlign: 'center', color: '#64748b' }}>1,300 طن</td>
-                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>96.1%</span></td>
-              </tr>
-              <tr onClick={() => onNavigateTab('sharshoor')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>⛰️ توريد الشرشور</td>
-                <td style={{ textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>{metrics.totalSharshoor.toLocaleString()} طن</td>
-                <td style={{ textAlign: 'center', color: '#64748b' }}>700 طن</td>
-                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>107.1%</span></td>
-              </tr>
-              <tr onClick={() => onNavigateTab('fuel')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>⛽ استهلاك السولار</td>
-                <td style={{ textAlign: 'center', fontWeight: 700, color: '#ea580c' }}>{metrics.totalFuel.toLocaleString()} لتر</td>
-                <td style={{ textAlign: 'center', color: '#64748b' }}>4,000 لتر</td>
-                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>96.2%</span></td>
-              </tr>
-              <tr onClick={() => onNavigateTab('equipment')} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 700, color: '#1e293b' }}>🚜 المعدات العاملة</td>
-                <td style={{ textAlign: 'center', fontWeight: 700, color: '#7c3aed' }}>{metrics.activeEquipment} معدة</td>
-                <td style={{ textAlign: 'center', color: '#64748b' }}>{metrics.totalEquipment} معدة</td>
-                <td style={{ textAlign: 'center' }}><span className="kpi-green-badge" style={{ fontSize: '0.75rem' }}>{Math.round((metrics.activeEquipment / Math.max(1, metrics.totalEquipment)) * 100)}%</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
         {/* Latest Uploaded Reports */}
         <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
               أحدث التقارير والوثائق المرفوعة
             </h3>
-            <button onClick={() => onNavigateTab('daily-reports')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+            <button onClick={() => onNavigateTab('reports-archive')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
               <span>كامل الأرشيف</span>
               <ChevronLeft size={14}/>
             </button>

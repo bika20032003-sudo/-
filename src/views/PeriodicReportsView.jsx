@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   FileText, Calendar, CalendarRange, Printer, Download, RefreshCw, 
   CheckCircle2, TrendingUp, Factory, Fuel, Mountain, Truck, 
@@ -15,7 +16,7 @@ import { fastFetch } from '../utils/apiCache.js';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 
-export const PeriodicReportsView = ({ currentUser }) => {
+export const PeriodicReportsView = ({ currentUser, onNavigateTab }) => {
   const [reportType, setReportType] = useState('monthly'); // 'monthly' | 'annual'
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(9); // 9 = سبتمبر
@@ -116,14 +117,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
       { 'البيان': 'عنوان التقرير', 'القيمة': reportData.reportTitle, 'الوحدة': '' },
       { 'البيان': 'الفترة / النوع', 'القيمة': reportType === 'annual' ? `سنوي (${selectedYear})` : `شهري (${reportData.monthName} ${selectedYear})`, 'الوحدة': '' },
       { 'البيان': 'القطاع المعني', 'القيمة': reportData.sector, 'الوحدة': '' },
-      { 'البيان': 'تاريخ التوليد', 'القيمة': new Date(reportData.generatedAt).toLocaleDateString('ar-LY'), 'الوحدة': '' },
-      { 'البيان': 'إجمالي الإنتاج الركامي الفعلي', 'القيمة': reportData.kpis.totalProduction, 'الوحدة': 'طن' },
-      { 'البيان': 'الإنتاج المستهدف للفترة', 'القيمة': reportData.kpis.targetProduction, 'الوحدة': 'طن' },
-      { 'البيان': 'نسبة تحقيق مستهدف الإنتاج', 'القيمة': `${reportData.kpis.prodAchievementRate}%`, 'الوحدة': '' },
       { 'البيان': 'إجمالي استهلاك السولار / الوقود', 'القيمة': reportData.kpis.totalFuel, 'الوحدة': 'لتر' },
-      { 'البيان': 'معدل كفاءة الوقود', 'القيمة': reportData.kpis.fuelPerTon, 'الوحدة': 'لتر/طن' },
-      { 'البيان': 'إجمالي توريدات الشرشور', 'القيمة': reportData.kpis.sharshoorDelivered, 'الوحدة': 'طن' },
-      { 'البيان': 'رصيد مخزون الشرشور المتاح', 'القيمة': reportData.kpis.sharshoorStockBalance, 'الوحدة': 'طن' },
       { 'البيان': 'إجمالي المنجز من الطريق بالفترة', 'القيمة': reportData.kpis.totalRoadMeters, 'الوحدة': 'متر طولي' },
       { 'البيان': 'المسافة الكلية المنجزة من المشروع', 'القيمة': `${reportData.kpis.projectCompletedKm} من ${reportData.kpis.projectTotalKm}`, 'الوحدة': 'كم' },
       { 'البيان': 'نسبة الإنجاز الإجمالية للمشروع', 'القيمة': `${reportData.kpis.projectOverallPercentage}%`, 'الوحدة': '' },
@@ -462,9 +456,9 @@ export const PeriodicReportsView = ({ currentUser }) => {
             </div>
           )}
 
-          {/* Sector Selector */}
+          {/* Phase Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b' }}>القطاع:</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b' }}>المرحلة:</span>
             <select
               value={selectedSector}
               onChange={(e) => setSelectedSector(e.target.value)}
@@ -480,9 +474,9 @@ export const PeriodicReportsView = ({ currentUser }) => {
                 cursor: 'pointer'
               }}
             >
-              <option value="all">كافة القطاعات (المشروع بالكامل)</option>
-              <option value="A">القطعة (A) - شركة الرواد</option>
-              <option value="B">القطعة (B) - شركة نيوم</option>
+              <option value="all">كافة المراحل (المشروع بالكامل)</option>
+              <option value="A">المرحلة الأولى</option>
+              <option value="B">المرحلة الثانية</option>
             </select>
           </div>
         </div>
@@ -547,29 +541,11 @@ export const PeriodicReportsView = ({ currentUser }) => {
       )}
 
       {/* Main KPI Cards Grid */}
+      {/* Main KPI Cards Grid - Focused Strictly on Active Project Operations */}
       {reportData && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           
-          {/* Card 1: Production */}
-          <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #2563eb' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>الإنتاج الركامي الكلي</span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Factory size={18} />
-              </div>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.25rem' }}>
-              {reportData.kpis.totalProduction.toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>طن</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ color: '#64748b' }}>المستهدف: {reportData.kpis.targetProduction.toLocaleString()} طن</span>
-              <span style={{ fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                {reportData.kpis.prodAchievementRate}% إنجاز
-              </span>
-            </div>
-          </div>
-
-          {/* Card 2: Fuel */}
+          {/* Card 1: Fuel */}
           <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #ea580c' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>استهلاك الوقود والسولار</span>
@@ -581,33 +557,14 @@ export const PeriodicReportsView = ({ currentUser }) => {
               {reportData.kpis.totalFuel.toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>لتر</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ color: '#64748b' }}>كفاءة الإنتاج:</span>
+              <span style={{ color: '#64748b' }}>حالة التسجيل:</span>
               <span style={{ fontWeight: 800, color: '#ea580c', background: '#ffedd5', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                {reportData.kpis.fuelPerTon} لتر/طن
+                {reportData.kpis.totalFuel > 0 ? 'مسجل ومطابق للتقارير' : 'لا يوجد استهلاك مدخل'}
               </span>
             </div>
           </div>
 
-          {/* Card 3: Sharshoor */}
-          <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #16a34a' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>توريدات ورصيد الشرشور</span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Mountain size={18} />
-              </div>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0f172a', marginBottom: '0.25rem' }}>
-              {reportData.kpis.sharshoorDelivered.toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>طن مورد</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ color: '#64748b' }}>المخزون المتوفر:</span>
-              <span style={{ fontWeight: 800, color: '#16a34a' }}>
-                {reportData.kpis.sharshoorStockBalance.toLocaleString()} طن
-              </span>
-            </div>
-          </div>
-
-          {/* Card 4: Road Progress */}
+          {/* Card 2: Road Progress */}
           <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #7c3aed' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>طريق أوباري - غات</span>
@@ -626,7 +583,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
             </div>
           </div>
 
-          {/* Card 5: Fleet Readiness */}
+          {/* Card 3: Fleet Readiness - STRICT ACCURACY, NO FAKE NUMBERS */}
           <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #0891b2' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>جاهزية أسطول الآليات</span>
@@ -638,9 +595,13 @@ export const PeriodicReportsView = ({ currentUser }) => {
               {reportData.kpis.fleetReadinessRate}%
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ color: '#64748b' }}>الآليات العاملة: {reportData.kpis.activeMachines} من {reportData.kpis.totalMachines}</span>
+              <span style={{ color: '#64748b' }}>
+                {reportData.kpis.totalMachines > 0 
+                  ? `الآليات العاملة: ${reportData.kpis.activeMachines} من ${reportData.kpis.totalMachines}`
+                  : 'لا توجد معدات مسجلة بالقسم'}
+              </span>
               <span style={{ fontWeight: 800, color: '#0891b2' }}>
-                {reportData.kpis.totalOperatingHours.toLocaleString()} ساعة
+                {reportData.kpis.totalOperatingHours > 0 ? `${reportData.kpis.totalOperatingHours.toLocaleString()} ساعة` : '0 ساعة'}
               </span>
             </div>
           </div>
@@ -652,18 +613,18 @@ export const PeriodicReportsView = ({ currentUser }) => {
       {reportData && reportData.timeSeries && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
           
-          {/* Chart 1: Production & Fuel Trend */}
+          {/* Chart 1: Fuel Trend */}
           <div className="dashboard-white-card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div>
                 <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  {reportType === 'annual' ? 'تطور الإنتاج والوقود على مدار شهور السنة' : 'تطور الإنتاج والوقود على مدار أسابيع الشهر'}
+                  {reportType === 'annual' ? 'تطور استهلاك الوقود على مدار شهور السنة' : 'تطور استهلاك الوقود على مدار أسابيع الشهر'}
                 </h4>
                 <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>
-                  مقارنة كميات الإنتاج الركامي (طن) مقابل استهلاك السولار (لتر)
+                  كميات السولار المصروفة والمستهلكة للآليات ومواقع العمل (لتر)
                 </p>
               </div>
-              <BarChart3 size={20} color="#64748b" />
+              <Fuel size={20} color="#ea580c" />
             </div>
 
             <div style={{ width: '100%', height: '280px', direction: 'ltr' }}>
@@ -671,19 +632,17 @@ export const PeriodicReportsView = ({ currentUser }) => {
                 <BarChart data={reportData.timeSeries} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#475569' }} />
-                  <YAxis yAxisId="left" orientation="left" stroke="#2563eb" tick={{ fontSize: 11 }} />
-                  <YAxis yAxisId="right" orientation="right" stroke="#ea580c" tick={{ fontSize: 11 }} />
+                  <YAxis stroke="#ea580c" tick={{ fontSize: 11 }} />
                   <Tooltip 
-                    formatter={(value, name) => [
-                      value.toLocaleString(), 
-                      name === 'production' ? 'الإنتاج (طن)' : 'الوقود (لتر)'
+                    formatter={(value) => [
+                      `${value.toLocaleString()} لتر`, 
+                      'استهلاك الوقود'
                     ]}
                   />
                   <Legend 
-                    formatter={(val) => val === 'production' ? 'الإنتاج الركامي (طن)' : 'استهلاك الوقود (لتر)'}
+                    formatter={() => 'استهلاك الوقود الفعلي (لتر)'}
                   />
-                  <Bar yAxisId="left" dataKey="production" fill="#2563eb" radius={[4, 4, 0, 0]} name="production" />
-                  <Bar yAxisId="right" dataKey="fuel" fill="#ea580c" radius={[4, 4, 0, 0]} name="fuel" />
+                  <Bar dataKey="fuel" fill="#ea580c" radius={[4, 4, 0, 0]} name="fuel" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -728,7 +687,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
           <div className="dashboard-white-card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                مقارنة أداء القطاعات (القطعة A مقابل القطعة B)
+                مقارنة أداء المراحل (المرحلة الأولى مقابل المرحلة الثانية)
               </h4>
               <Building2 size={18} color="#64748b" />
             </div>
@@ -736,8 +695,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
             <table className="custom-table" style={{ width: '100%', fontSize: '0.84rem' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'right' }}>القطاع والشركة المنفذة</th>
-                  <th>الإنتاج الركامي</th>
+                  <th style={{ textAlign: 'right' }}>المرحلة</th>
                   <th>استهلاك الوقود</th>
                   <th>مسافة الرصف</th>
                   <th>نسبة الإنجاز</th>
@@ -748,7 +706,6 @@ export const PeriodicReportsView = ({ currentUser }) => {
                   <td style={{ fontWeight: 800, color: '#1e40af' }}>
                     {reportData.sectorComparison.sectorA.name}
                   </td>
-                  <td><strong>{reportData.sectorComparison.sectorA.productionTons.toLocaleString()}</strong> طن</td>
                   <td><strong>{reportData.sectorComparison.sectorA.fuelLiters.toLocaleString()}</strong> لتر</td>
                   <td>{reportData.sectorComparison.sectorA.roadMeters.toLocaleString()} م.ط</td>
                   <td>
@@ -761,7 +718,6 @@ export const PeriodicReportsView = ({ currentUser }) => {
                   <td style={{ fontWeight: 800, color: '#0369a1' }}>
                     {reportData.sectorComparison.sectorB.name}
                   </td>
-                  <td><strong>{reportData.sectorComparison.sectorB.productionTons.toLocaleString()}</strong> طن</td>
                   <td><strong>{reportData.sectorComparison.sectorB.fuelLiters.toLocaleString()}</strong> لتر</td>
                   <td>{reportData.sectorComparison.sectorB.roadMeters.toLocaleString()} م.ط</td>
                   <td>
@@ -880,9 +836,8 @@ export const PeriodicReportsView = ({ currentUser }) => {
                   <tr>
                     <th style={{ textAlign: 'right', padding: '0.75rem' }}>رقم التقرير</th>
                     <th>التاريخ</th>
-                    <th>القطاع / الموقع</th>
+                    <th>المرحلة / الموقع</th>
                     <th>نوع التقرير</th>
-                    <th>إنتاج الركام (طن)</th>
                     <th>استهلاك الوقود (لتر)</th>
                     <th>منجز الطريق (م.ط)</th>
                     <th>المهندس المُعد</th>
@@ -907,19 +862,14 @@ export const PeriodicReportsView = ({ currentUser }) => {
                           fontWeight: 700,
                           padding: '0.15rem 0.5rem',
                           borderRadius: '4px',
-                          background: String(r.sector).includes('A') ? '#e0f2fe' : '#fef3c7',
-                          color: String(r.sector).includes('A') ? '#0369a1' : '#b45309'
+                          background: String(r.sector).includes('A') || String(r.sector).includes('الأولى') ? '#e0f2fe' : '#fef3c7',
+                          color: String(r.sector).includes('A') || String(r.sector).includes('الأولى') ? '#0369a1' : '#b45309'
                         }}>
                           {r.sector}
                         </span>
                       </td>
                       <td style={{ fontWeight: 600, color: '#334155' }}>
                         {r.reportType}
-                      </td>
-                      <td>
-                        <strong style={{ color: '#0f172a' }}>
-                          {Number(r.productionAmount || 0).toLocaleString()}
-                        </strong> طن
                       </td>
                       <td>
                         <strong style={{ color: '#dc2626' }}>
@@ -976,9 +926,6 @@ export const PeriodicReportsView = ({ currentUser }) => {
                     <td colSpan={4} style={{ padding: '0.75rem', textAlign: 'right', color: '#0f172a' }}>
                       إجمالي المساهمة الميدانية الفعلية ({reportData.contributingReports.length} تقرير):
                     </td>
-                    <td style={{ color: '#1d4ed8' }}>
-                      {reportData.contributingReports.reduce((s, r) => s + (Number(r.productionAmount) || 0), 0).toLocaleString()} طن
-                    </td>
                     <td style={{ color: '#dc2626' }}>
                       {reportData.contributingReports.reduce((s, r) => s + (Number(r.fuelAmount) || 0), 0).toLocaleString()} لتر
                     </td>
@@ -1018,58 +965,11 @@ export const PeriodicReportsView = ({ currentUser }) => {
         </div>
       )}
 
-      {/* Executive Recommendations & Official Endorsement */}
-      {reportData && (
-        <div className="dashboard-white-card" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
-            <Award size={22} color="#2563eb" />
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-              ملاحظات وتوصيات الإدارة التنفيذية لجهاز مشروعات المواصلات
-            </h4>
-          </div>
 
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
-            <ul style={{ margin: 0, paddingRight: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {reportData.executiveNotes.map((note, idx) => (
-                <li key={idx} style={{ fontSize: '0.88rem', color: '#334155', lineHeight: '1.6' }}>
-                  {note}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Official Signatories Banner */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-            paddingTop: '1rem',
-            borderTop: '1px dashed #cbd5e1'
-          }}>
-            <div style={{ textAlign: 'center', padding: '0.75rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.4rem' }}>مهندس الموقع الميداني</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{reportData.signatories.siteEngineer}</div>
-              <div style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: '0.3rem' }}>✓ تم التدقيق الميداني</div>
-            </div>
-
-            <div style={{ textAlign: 'center', padding: '0.75rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.4rem' }}>مدير متابعة القطاعات</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{reportData.signatories.sectorManager}</div>
-              <div style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: '0.3rem' }}>✓ معتمد رسمياً</div>
-            </div>
-
-            <div style={{ textAlign: 'center', padding: '0.75rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.4rem' }}>مدير عام المشروع</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{reportData.signatories.projectDirector}</div>
-              <div style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: '0.3rem' }}>✓ مصادق وموجه للوزارة</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Official Print Preview Modal */}
-      {showPrintModal && reportData && (
-        <div className="modal-backdrop-overlay" style={{
+      {showPrintModal && reportData && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div className="official-print-modal-overlay" style={{
           position: 'fixed',
           top: 0,
           left: 0,
@@ -1080,10 +980,10 @@ export const PeriodicReportsView = ({ currentUser }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 9999,
+          zIndex: 99999,
           padding: '1.5rem'
         }}>
-          <div style={{
+          <div className="print-sheet-wrapper" style={{
             background: '#ffffff',
             borderRadius: '16px',
             width: '100%',
@@ -1095,10 +995,10 @@ export const PeriodicReportsView = ({ currentUser }) => {
             direction: 'rtl'
           }}>
             {/* Modal Controls Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
+            <div className="print-controls-bar no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button 
-                  className="primary-action-btn"
+                  className="primary-action-btn print-allowed"
                   onClick={handleExecuteBrowserPrint}
                   style={{ height: '38px', padding: '0 1.25rem', fontSize: '0.85rem' }}
                 >
@@ -1125,7 +1025,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
             </div>
 
             {/* Printable Document Container (A4 layout styling) */}
-            <div id="printable-periodic-report" style={{
+            <div id="printable-periodic-report" className="official-print-document" style={{
               background: '#ffffff',
               border: '2px solid #0f172a',
               borderRadius: '8px',
@@ -1172,9 +1072,8 @@ export const PeriodicReportsView = ({ currentUser }) => {
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '0.82rem' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9' }}>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>إجمالي الإنتاج الركامي</th>
                     <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>استهلاك السولار</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>توريد الشرشور</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>إنجاز الفترة (م.ط)</th>
                     <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>منجز الطريق التراكمي</th>
                     <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>جاهزية الأسطول</th>
                   </tr>
@@ -1182,13 +1081,10 @@ export const PeriodicReportsView = ({ currentUser }) => {
                 <tbody>
                   <tr style={{ textAlign: 'center' }}>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.6rem', fontWeight: 800 }}>
-                      {reportData.kpis.totalProduction.toLocaleString()} طن
-                    </td>
-                    <td style={{ border: '1px solid #cbd5e1', padding: '0.6rem', fontWeight: 800 }}>
                       {reportData.kpis.totalFuel.toLocaleString()} لتر
                     </td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.6rem', fontWeight: 800 }}>
-                      {reportData.kpis.sharshoorDelivered.toLocaleString()} طن
+                      {reportData.kpis.totalRoadMeters.toLocaleString()} م.ط
                     </td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.6rem', fontWeight: 800 }}>
                       {reportData.kpis.projectCompletedKm} كم ({reportData.kpis.projectOverallPercentage}%)
@@ -1200,13 +1096,12 @@ export const PeriodicReportsView = ({ currentUser }) => {
                 </tbody>
               </table>
 
-              {/* Sector Breakdown */}
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '0.5rem' }}>مقارنة أداء القطاعات:</h4>
+              {/* Phase Breakdown */}
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '0.5rem' }}>مقارنة أداء المراحل:</h4>
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '0.82rem' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem', textAlign: 'right' }}>القطاع والشركة</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>الإنتاج (طن)</th>
+                    <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem', textAlign: 'right' }}>المرحلة</th>
                     <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>الوقود (لتر)</th>
                     <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>مسافة الرصف</th>
                     <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>نسبة الإنجاز</th>
@@ -1217,7 +1112,6 @@ export const PeriodicReportsView = ({ currentUser }) => {
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem', textAlign: 'right', fontWeight: 700 }}>
                       {reportData.sectorComparison.sectorA.name}
                     </td>
-                    <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>{reportData.sectorComparison.sectorA.productionTons.toLocaleString()}</td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>{reportData.sectorComparison.sectorA.fuelLiters.toLocaleString()}</td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>{reportData.sectorComparison.sectorA.roadMeters.toLocaleString()} م.ط</td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem', fontWeight: 800 }}>{reportData.sectorComparison.sectorA.completionRate}%</td>
@@ -1226,7 +1120,6 @@ export const PeriodicReportsView = ({ currentUser }) => {
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem', textAlign: 'right', fontWeight: 700 }}>
                       {reportData.sectorComparison.sectorB.name}
                     </td>
-                    <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>{reportData.sectorComparison.sectorB.productionTons.toLocaleString()}</td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>{reportData.sectorComparison.sectorB.fuelLiters.toLocaleString()}</td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>{reportData.sectorComparison.sectorB.roadMeters.toLocaleString()} م.ط</td>
                     <td style={{ border: '1px solid #cbd5e1', padding: '0.5rem', fontWeight: 800 }}>{reportData.sectorComparison.sectorB.completionRate}%</td>
@@ -1245,8 +1138,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
                       <tr style={{ background: '#f1f5f9' }}>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>رقم التقرير</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>التاريخ</th>
-                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>القطاع</th>
-                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>الإنتاج (طن)</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>المرحلة</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>الوقود (لتر)</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>الرصف (م.ط)</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.4rem' }}>المسؤول</th>
@@ -1258,7 +1150,6 @@ export const PeriodicReportsView = ({ currentUser }) => {
                           <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem', fontWeight: 700 }}>{r.reportNumber}</td>
                           <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{r.date ? new Date(r.date).toLocaleDateString('ar-LY') : '-'}</td>
                           <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{r.sector}</td>
-                          <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{Number(r.productionAmount || 0).toLocaleString()}</td>
                           <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{Number(r.fuelAmount || 0).toLocaleString()}</td>
                           <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{Number(r.roadMeters || 0).toLocaleString()}</td>
                           <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>{r.uploadedBy}</td>
@@ -1269,40 +1160,24 @@ export const PeriodicReportsView = ({ currentUser }) => {
                 </>
               )}
 
-              {/* Notes */}
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '0.5rem' }}>ملاحظات وتوصيات الإدارة التنفيذية:</h4>
-              <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.85rem', marginBottom: '2rem', fontSize: '0.82rem', lineHeight: '1.6' }}>
-                <ul style={{ margin: 0, paddingRight: '1.25rem' }}>
-                  {reportData.executiveNotes.map((note, idx) => (
-                    <li key={idx}>{note}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Signatures and Stamp */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', textAlign: 'center', marginTop: '1.5rem' }}>
+              {/* Official Project Sign-off */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
                 <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, marginBottom: '2.5rem' }}>مهندس الموقع الميداني</div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>{reportData.signatories.siteEngineer}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>التوقيع: .....................</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e3a8a' }}>اعتماد مدير المشروع</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, marginTop: '0.4rem' }}>م. عبدالرحمن الأنصاري</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>الختم والتوقيع: .....................</div>
                 </div>
-
                 <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, marginBottom: '2.5rem' }}>مدير متابعة القطاعات</div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>{reportData.signatories.sectorManager}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>التوقيع: .....................</div>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, marginBottom: '2.5rem' }}>اعتماد مدير المشروع (الجهاز)</div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>{reportData.signatories.projectDirector}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>الختم والتوقيع الرسمي: .....................</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e3a8a' }}>رئيس جهاز الإشراف</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, marginTop: '0.4rem' }}>م. عبدالسلام ابريكاو</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>الختم والتوقيع: .....................</div>
                 </div>
               </div>
 
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal for Creating New Daily Report */}
@@ -1311,6 +1186,7 @@ export const PeriodicReportsView = ({ currentUser }) => {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           currentUser={currentUser}
+          onNavigateTab={onNavigateTab}
           onReportCreated={() => {
             setIsCreateModalOpen(false);
             fetchPeriodicReport();

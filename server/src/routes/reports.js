@@ -61,6 +61,7 @@ const handleCreateReport = (req, res) => {
   }
 };
 
+router.post('/', handleCreateReport);
 router.post('/upload', handleCreateReport);
 router.post('/create', handleCreateReport);
 

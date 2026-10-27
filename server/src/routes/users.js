@@ -26,7 +26,7 @@ router.post('/', (req, res) => {
 // Edit / Update existing user
 router.put('/:id', (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = isNaN(req.params.id) ? req.params.id : parseInt(req.params.id);
     const updatedUser = store.updateUser(id, req.body);
     res.json({ success: true, user: updatedUser });
   } catch (error) {

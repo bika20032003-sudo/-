@@ -9,10 +9,10 @@ import { getFallbackData } from './utils/apiCache.js';
 const originalFetch = window.fetch;
 window.fetch = async function (url, options = {}) {
   let requestUrl = url;
-  if (typeof url === 'string' && typeof window !== 'undefined') {
-    // If accessing via local network IP, redirect localhost:5000 to current host:5000 or relative /api
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('github.io')) {
-      requestUrl = url.replace('localhost:5000', `${window.location.hostname}:5000`);
+  if (typeof url === 'string') {
+    // Normalize localhost:5000 to relative path so it routes through Vite's fast proxy
+    if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
+      requestUrl = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
     }
   }
 

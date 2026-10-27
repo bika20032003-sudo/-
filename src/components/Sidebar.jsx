@@ -1,194 +1,385 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Home, Milestone, UploadCloud, FileText, 
-  Layers, CalendarDays, CalendarRange, Truck, Factory, 
-  Mountain, Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin
+  CalendarRange, Truck, 
+  Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin,
+  Camera, Mail, FilePlus, Target, Award
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
 /**
- * Role-aware sidebar that shows different menu items based on the user's role:
- * - مدير المشروع: Full access to everything
- * - مدير القطاعات: Full access (admin-level)
- * - مشرف القطاع (A/B): Restricted to sector-specific dashboard + limited items
+ * Role-aware sidebar with customized menus:
+ * 1. م. عبدالرحمن الأنصاري: مدير المشروع
+ * 2. م. عبدالسلام ابريكاو: رئيس جهاز الإشراف
+ * 3. م. صالح حماد: مسؤول الجودة
+ * 4. م. صلاح العربي: مهندس مشرف (المرحلة الأولى)
+ * 5. م. عيسى الطاهر: مهندس مشرف (المرحلة الثانية)
  */
-export const Sidebar = ({ activeTab, setActiveTab, onLogout, currentUser, isMobileOpen, onCloseMobile }) => {
+export const Sidebar = ({ 
+  activeTab, 
+  setActiveTab, 
+  onLogout, 
+  currentUser, 
+  isMobileOpen, 
+  onCloseMobile,
+  onOpenProfile
+}) => {
     const [unreadAlerts, setUnreadAlerts] = useState(0);
-    const [pendingReportsCount, setPendingReportsCount] = useState(0);
+    const [unreadMessages, setUnreadMessages] = useState(0);
 
     const userRole = currentUser?.role || '';
-    const isSectorSupervisor = userRole.includes('مشرف القطاع');
-    const isAdmin = userRole.includes('مدير المشروع') || userRole.includes('مدير القطاعات');
+    const username = currentUser?.username || '';
+
+    // Check specific roles
+    const isProjectManager = userRole.includes('مدير المشروع') || username === 'admin' || username === 'alansari';
+    const isHeadOfSupervision = userRole.includes('رئيس جهاز الإشراف') || username === 'abrikaw' || username === 'admin_sectors';
+    const isQualityOfficer = userRole.includes('الجودة') || username === 'saleh_quality' || username === 'quality';
+    const isSectorA = (userRole.includes('A') || (currentUser?.sector || '').includes('A') || username.includes('a') || username === 'salah_alarabi') && !isProjectManager && !isHeadOfSupervision && !isQualityOfficer;
+    const isSectorB = (userRole.includes('B') || (currentUser?.sector || '').includes('B') || username.includes('b') || username === 'issa_altahir') && !isProjectManager && !isHeadOfSupervision && !isQualityOfficer;
+    const isSectorSupervisor = isSectorA || isSectorB || userRole.includes('مشرف') || userRole.includes('مدير القطاع');
 
     useEffect(() => {
-        fastFetch('http://localhost:5000/api/alerts')
-            .then(data => {
-                const list = data?.alerts || (Array.isArray(data) ? data : []);
-                setUnreadAlerts(list.filter(a => !a.isRead).length);
-            })
-            .catch(() => { });
+        const updateSidebarCounters = () => {
+            fastFetch('/api/alerts')
+                .then(data => {
+                    const list = data?.alerts || (Array.isArray(data) ? data : []);
+                    setUnreadAlerts(list.filter(a => !a.isRead).length);
+                })
+                .catch(() => { });
 
-        fastFetch('http://localhost:5000/api/reports')
-            .then(data => {
-                const list = data?.reports || (Array.isArray(data) ? data : []);
-                const pending = list.filter(r => r.status === 'pending_review').length;
-                setPendingReportsCount(pending);
-            })
-            .catch(() => { });
-    }, [activeTab]);
+            if (username) {
+                fastFetch(`/api/messages?username=${encodeURIComponent(username)}`)
+                    .then(data => {
+                        const list = data?.messages || (Array.isArray(data) ? data : []);
+                        const unread = list.filter(m => !m.isRead && (m.toUsername === username || m.toUsername === 'all')).length;
+                        setUnreadMessages(unread);
+                    })
+                    .catch(() => { });
+            }
+        };
 
-    // ===== Build menu items based on role =====
-    let menuItems = [];
+        updateSidebarCounters();
+        const intervalId = setInterval(updateSidebarCounters, 20000);
+        return () => clearInterval(intervalId);
+    }, [username]);
 
-    if (isSectorSupervisor) {
-        // Sector supervisors see a restricted menu
-        const sectorLabel = userRole.includes('A') ? 'القطاع (A)' : 'القطاع (B)';
-        menuItems = [
-            { id: 'sector-dashboard', label: `لوحة العمليات - ${sectorLabel}`, icon: MapPin },
-            { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: Plus },
-            { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-            { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText },
-            { id: 'crushers', label: 'الكسارات ومعدلات الإنتاج', icon: Factory },
-            { id: 'sharshoor', label: 'الشرشور والركام', icon: Mountain },
-            { id: 'fuel', label: 'إدارة الوقود والصهاريج', icon: Fuel },
-            { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
-            { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
-        ];
-    } else {
-        // Admin users (مدير المشروع + مدير القطاعات) get full menu
-        menuItems = [
-            { id: 'dashboard', label: 'الرئيسية (لوحة التحكم العامة)', icon: Home },
-            { id: 'periodic-reports', label: 'التقارير الدورية (شهرية وسنوية)', icon: CalendarRange, badge: 'تلقائي' },
-            { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: Plus },
-            { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText, badge: pendingReportsCount > 0 ? `${pendingReportsCount} قيد الاعتماد` : undefined },
-            { id: 'daily-reports', label: 'اعتماد ومراجعة التقارير', icon: ShieldCheck },
-            { id: 'road-progress', label: 'إنجاز طريق أوباري - غات', icon: Milestone },
-            { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-            { id: 'daily-analysis', label: 'تحليل اليومية والأداء', icon: Layers },
-            { id: 'tomorrow-plan', label: 'خطة الغد والتنفيذ', icon: CalendarDays },
-            { id: 'crushers', label: 'الكسارات ومعدلات الإنتاج', icon: Factory },
-            { id: 'sharshoor', label: 'الشرشور والركام', icon: Mountain },
-            { id: 'fuel', label: 'إدارة الوقود والصهاريج', icon: Fuel },
-            { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
-            { id: 'users', label: 'مركز المستخدمين والصلاحيات', icon: Users },
-            { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
-        ];
-    }
-
-    // Determine the role display label and color
+    // Determine user role badge display and styling
     const getRoleDisplay = () => {
-        if (userRole.includes('مدير المشروع')) return { label: 'مدير المشروع', color: '#2563eb', bg: '#eff6ff' };
-        if (userRole.includes('مدير القطاعات')) return { label: 'مدير القطاعات', color: '#16a34a', bg: '#f0fdf4' };
-        if (userRole.includes('مشرف القطاع') && userRole.includes('A')) return { label: 'مشرف القطاع (A)', color: '#ea580c', bg: '#fff7ed' };
-        if (userRole.includes('مشرف القطاع') && userRole.includes('B')) return { label: 'مشرف القطاع (B)', color: '#7c3aed', bg: '#f5f3ff' };
-        return { label: userRole || 'مستخدم', color: '#64748b', bg: '#f8fafc' };
+        if (isProjectManager) {
+            return { 
+                label: 'مدير المشروع', 
+                color: '#3b82f6', 
+                bg: 'rgba(59, 130, 246, 0.15)', 
+                name: currentUser?.name || 'م. عبدالرحمن الأنصاري' 
+            };
+        }
+        if (isHeadOfSupervision) {
+            return { 
+                label: 'رئيس جهاز الإشراف', 
+                color: '#8b5cf6', 
+                bg: 'rgba(139, 92, 246, 0.15)', 
+                name: currentUser?.name || 'م. عبدالسلام ابريكاو' 
+            };
+        }
+        if (isQualityOfficer) {
+            return { 
+                label: 'مسؤول الجودة', 
+                color: '#10b981', 
+                bg: 'rgba(16, 185, 129, 0.15)', 
+                name: currentUser?.name || 'م. صالح حماد' 
+            };
+        }
+        if (isSectorA) {
+            return { 
+                label: 'مهندس مشرف (المرحلة الأولى)', 
+                color: '#f97316', 
+                bg: 'rgba(249, 115, 22, 0.15)', 
+                name: currentUser?.name || 'م. صلاح العربي' 
+            };
+        }
+        if (isSectorB) {
+            return { 
+                label: 'مهندس مشرف (المرحلة الثانية)', 
+                color: '#06b6d4', 
+                bg: 'rgba(6, 182, 212, 0.15)', 
+                name: currentUser?.name || 'م. عيسى الطاهر' 
+            };
+        }
+        return { 
+            label: userRole || 'جهاز الإشراف', 
+            color: '#94a3b8', 
+            bg: 'rgba(148, 163, 184, 0.15)', 
+            name: currentUser?.name || 'مستخدم' 
+        };
     };
 
     const roleDisplay = getRoleDisplay();
 
-    return (<aside className={`custom-app-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
-      {/* Brand Header with Agency Emblem */}
-      <div className="sidebar-app-brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="agency-logo-wrap">
-            <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" className="agency-sidebar-logo"/>
+    // Categorized navigation groups tailored by role
+    let menuGroups = [];
+
+    if (isHeadOfSupervision) {
+        // رئيس جهاز الإشراف (م. عبدالسلام ابريكاو)
+        menuGroups = [
+            {
+                title: 'الرئيسية والمتابعة الإشرافية',
+                items: [
+                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
+                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
+                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+                ]
+            },
+            {
+                title: 'التقارير الميدانية والاعتمادات',
+                items: [
+                    { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
+                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+                    { id: 'reports-archive', label: 'أرشيف التقارير والاعتماد', icon: FileText },
+                    { id: 'periodic-reports', label: 'التقارير الدورية الشاملة', icon: CalendarRange, badge: 'تلقائي' },
+                    { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
+                ]
+            },
+            {
+                title: 'الموارد والتشغيل',
+                items: [
+                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
+                ]
+            },
+            {
+                title: 'المراسلات والنظام',
+                items: [
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
+                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                ]
+            }
+        ];
+    } else if (isQualityOfficer) {
+        // مسؤول الجودة (م. صالح حماد)
+        menuGroups = [
+            {
+                title: 'الرئيسية والمتابعة',
+                items: [
+                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
+                    { id: 'road-progress', label: 'متابعة رصف الطبقات', icon: Milestone },
+                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+                ]
+            },
+            {
+                title: 'الفحوصات والتقارير الفنية',
+                items: [
+                    { id: 'create-report', label: 'تسجيل فحص / تقرير جديد', icon: FilePlus },
+                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+                    { id: 'upload-reports', label: 'رفع نتائج ومستندات الفحص', icon: UploadCloud },
+                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText },
+                    { id: 'analytics', label: 'مركز التحليلات والإحصائيات', icon: FileText },
+                ]
+            },
+            {
+                title: 'المراسلات والنظام',
+                items: [
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
+                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                ]
+            }
+        ];
+    } else if (isSectorSupervisor) {
+        // مهندسو الإشراف (م. صلاح العربي - المرحلة الأولى أو م. عيسى الطاهر - المرحلة الثانية)
+        const sectorLabel = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
+        menuGroups = [
+            {
+                title: 'الميدان والمتابعة',
+                items: [
+                    { id: 'sector-dashboard', label: `لوحة عمليات (${sectorLabel})`, icon: MapPin },
+                    { id: 'road-progress', label: 'متابعة مسار الطريق', icon: Milestone },
+                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+                ]
+            },
+            {
+                title: 'التقارير الميدانية',
+                items: [
+                    { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: FilePlus },
+                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+                    { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
+                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
+                ]
+            },
+            {
+                title: 'الموارد والتشغيل الميداني',
+                items: [
+                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
+                ]
+            },
+            {
+                title: 'المراسلات والنظام',
+                items: [
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
+                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                ]
+            }
+        ];
+    } else {
+        // مدير المشروع (م. عبدالرحمن الأنصاري) - صلاحيات وإشراف شامل
+        menuGroups = [
+            {
+                title: 'الرئيسية والقيادة',
+                items: [
+                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
+                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
+                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+                ]
+            },
+            {
+                title: 'التقارير والمستندات',
+                items: [
+                    { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
+                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+                    { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
+                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText },
+                    { id: 'periodic-reports', label: 'التقارير الدورية الشاملة', icon: CalendarRange, badge: 'تلقائي' }
+                ]
+            },
+            {
+                title: 'الموارد والتشغيل الميداني',
+                items: [
+                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
+                ]
+            },
+            {
+                title: 'الإدارة والمراسلات والنظام',
+                items: [
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
+                    { id: 'users', label: 'المستخدمين والصلاحيات', icon: Users },
+                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                ]
+            }
+        ];
+    }
+
+    const userAvatar = currentUser?.avatar || localStorage.getItem(`user_avatar_${currentUser?.username}`) || '';
+
+    return (
+      <aside className={`custom-app-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
+        {/* Brand Header with Agency Emblem */}
+        <div className="sidebar-app-brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="agency-logo-wrap">
+              <img src={`${import.meta.env.BASE_URL}logo-agency.jpg`} alt="شعار جهاز تنفيذ مشروعات المواصلات" className="agency-sidebar-logo"/>
+            </div>
+            <div className="brand-app-title">
+              <h2>جهاز الإشراف والمتابعة</h2>
+              <h3>مشروع طريق أوباري - غات (360 كم)</h3>
+            </div>
           </div>
-          <div className="brand-app-title">
-            <h2>منظومة متابعة الكسارات</h2>
-            <h3>والمعدات والوقود والتشغيل</h3>
-          </div>
+
+          {/* Mobile Close Button */}
+          <button
+            type="button"
+            className="sidebar-mobile-close-btn"
+            onClick={onCloseMobile}
+            title="إغلاق القائمة"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* Mobile Close Button */}
-        <button
-          type="button"
-          className="sidebar-mobile-close-btn"
-          onClick={onCloseMobile}
-          title="إغلاق القائمة"
+        {/* Modern Dark Glassmorphic User Profile Card */}
+        <div 
+          className="sidebar-user-card" 
+          onClick={onOpenProfile}
+          title="انقر لتعديل الملف الشخصي ورفع الصورة"
+          style={{ cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}
         >
-          ✕
-        </button>
-      </div>
+          {userAvatar ? (
+            <div className="sidebar-user-avatar" style={{ overflow: 'hidden', padding: 0, border: `2px solid ${roleDisplay.color}` }}>
+              <img 
+                src={userAvatar} 
+                alt={roleDisplay.name} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            </div>
+          ) : (
+            <div className="sidebar-user-avatar" style={{ background: roleDisplay.color }}>
+              {(roleDisplay.name || currentUser?.name || 'م')[0]}
+            </div>
+          )}
 
-      {/* Role Pill Banner - Shows actual user role with color */}
-      <div style={{
-        margin: '0.75rem 1rem 0.25rem 1rem',
-        padding: '0.55rem 0.85rem',
-        borderRadius: '10px',
-        background: roleDisplay.bg,
-        border: `1.5px solid ${roleDisplay.color}22`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '0.5rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
-            background: roleDisplay.color,
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '0.7rem',
-            fontWeight: 900
-          }}>
-            {(currentUser?.name || '?')[0]}
+          <div className="sidebar-user-info" style={{ flex: 1, minWidth: 0 }}>
+            <div className="sidebar-user-name" title={roleDisplay.name || currentUser?.name}>
+              {roleDisplay.name || currentUser?.name}
+            </div>
+            <div className="sidebar-user-role">
+              <span className="sidebar-role-indicator" style={{ background: roleDisplay.color }} />
+              <span style={{ color: roleDisplay.color, fontWeight: 700 }}>{roleDisplay.label}</span>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
-              {currentUser?.name || 'مدير المشروع'}
-            </div>
-            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: roleDisplay.color }}>
-              {roleDisplay.label}
-            </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', color: '#94a3b8' }}>
+            <Camera size={14} style={{ color: roleDisplay.color }} />
+            <span style={{ fontSize: '0.62rem', color: '#94a3b8' }}>الملف</span>
           </div>
         </div>
-        <ShieldCheck size={16} color={roleDisplay.color} />
-      </div>
 
-      {/* Nav List */}
-      <nav className="sidebar-app-nav">
-        {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (<button 
-              key={item.id} 
-              className={`nav-btn-link ${isActive ? 'active' : ''}`} 
-              onClick={() => {
-                setActiveTab(item.id);
-                if (onCloseMobile) onCloseMobile();
-              }}
-            >
-              <div className="nav-btn-inner">
-                <Icon size={18} className="nav-svg-icon"/>
-                <span className="nav-link-title">{item.label}</span>
+        {/* Categorized Nav Groups */}
+        <nav className="sidebar-app-nav">
+          {menuGroups.map((group, gIdx) => (
+            <div key={gIdx} className="sidebar-nav-group">
+              <div className="sidebar-group-header">
+                <span>{group.title}</span>
               </div>
 
-              {item.badge !== undefined && (<div className="nav-btn-extra">
-                  <span className="nav-badge-pill" style={item.id === 'daily-reports' && pendingReportsCount > 0 ? { background: '#d97706', color: '#fff', fontSize: '0.65rem' } : {}}>
-                    {item.badge}
-                  </span>
-                </div>)}
-            </button>);
-        })}
-      </nav>
+              <div className="sidebar-group-items">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  const isAction = item.isAction;
 
-      {/* Footer Section with Logout Button */}
-      <div className="sidebar-app-footer">
-        <div className="agency-meta-card">
-          <p className="agency-meta-title">جهاز تنفيذ مشروعات المواصلات</p>
-          <p className="agency-meta-sub">منظومة المتابعة والتشغيل اليومي</p>
+                  return (
+                    <button 
+                      key={item.id} 
+                      className={`nav-btn-link ${isActive ? 'active' : ''} ${isAction ? 'nav-action-link' : ''}`} 
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        if (onCloseMobile) onCloseMobile();
+                      }}
+                      title={item.label}
+                    >
+                      <div className="nav-btn-inner">
+                        <Icon size={18} className="nav-svg-icon" />
+                        <span className="nav-link-title">{item.label}</span>
+                      </div>
+
+                      {item.badge !== undefined && (
+                        <div className="nav-btn-extra">
+                          <span className={`nav-badge-pill ${item.badge === 'تلقائي' ? 'auto-badge' : 'alert-badge'}`}>
+                            {item.badge}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer Section with Logout Button */}
+        <div className="sidebar-app-footer">
+          <div className="agency-meta-card">
+            <p className="agency-meta-title">جهاز تنفيذ مشروعات المواصلات</p>
+            <p className="agency-meta-sub">منظومة الإشراف والمتابعة الميدانية</p>
+          </div>
+
+          <button className="nav-logout-btn" onClick={onLogout}>
+            <LogOut size={18}/>
+            <span>تسجيل الخروج</span>
+          </button>
         </div>
-
-        <button className="nav-logout-btn" onClick={onLogout}>
-          <LogOut size={18}/>
-          <span>تسجيل الخروج</span>
-        </button>
-      </div>
-    </aside>);
+      </aside>
+    );
 };
 
 export default Sidebar;

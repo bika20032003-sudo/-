@@ -1,47 +1,78 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Eye, EyeOff, AlertCircle, Facebook } from 'lucide-react';
 
-// ===== Default Users with Passwords =====
-// These are the base credentials. Passwords can be changed from UsersView
-// and will be persisted in localStorage.
+// ===== Official Supervision Agency Hierarchy (أعضاء جهاز الإشراف) =====
 const DEFAULT_USERS = [
   {
     id: 1,
     username: 'admin',
-    name: 'مدير المشروع',
+    name: 'م. عبدالرحمن الأنصاري',
     role: 'مدير المشروع',
+    title: 'مدير المشروع (جهاز الإشراف)',
     sector: 'all',
+    email: 'alansari@mot.gov.ly',
+    phone: '091-2345678',
     password: 'admin1234'
   },
   {
     id: 2,
-    username: 'admin_sectors',
-    name: 'مدير القطاعات',
-    role: 'مدير القطاعات',
+    username: 'abrikaw',
+    name: 'م. عبدالسلام ابريكاو',
+    role: 'رئيس جهاز الإشراف',
+    title: 'رئيس جهاز الإشراف والمتابعة',
     sector: 'all',
-    password: 'sectors123'
+    email: 'abrikaw@mot.gov.ly',
+    phone: '091-3456789',
+    password: 'abrikaw123'
   },
   {
     id: 3,
-    username: 'sector_a',
-    name: 'مشرف القطاع (A)',
-    role: 'مشرف القطاع (A)',
-    sector: 'القطعة A',
-    password: 'sectora123'
+    username: 'saleh_quality',
+    name: 'م. صالح حماد',
+    role: 'مسؤول الجودة',
+    title: 'مسؤول ضبط ومراقبة الجودة الفنية',
+    sector: 'all',
+    email: 'hammad.quality@mot.gov.ly',
+    phone: '091-4567890',
+    password: 'quality123'
   },
   {
     id: 4,
-    username: 'sector_b',
-    name: 'مشرف القطاع (B)',
-    role: 'مشرف القطاع (B)',
-    sector: 'القطعة B',
+    username: 'salah_alarabi',
+    name: 'م. صلاح العربي',
+    role: 'مهندس مشرف (المرحلة الأولى)',
+    title: 'مهندس مشرف - المرحلة الأولى',
+    sector: 'المرحلة الأولى',
+    email: 'alarabi.phase1@mot.gov.ly',
+    phone: '091-5678901',
+    password: 'sectora123'
+  },
+  {
+    id: 5,
+    username: 'issa_altahir',
+    name: 'م. عيسى الطاهر',
+    role: 'مهندس مشرف (المرحلة الثانية)',
+    title: 'مهندس مشرف - المرحلة الثانية',
+    sector: 'المرحلة الثانية',
+    email: 'altahir.phase2@mot.gov.ly',
+    phone: '091-6789012',
     password: 'sectorb123'
   }
 ];
 
+// Aliases for seamless login
+const ALIASES = {
+  'alansari': 'admin',
+  'admin_sectors': 'abrikaw',
+  'sectors': 'abrikaw',
+  'sector_a': 'salah_alarabi',
+  'sector_b': 'issa_altahir',
+  'quality': 'saleh_quality',
+  'hammad': 'saleh_quality'
+};
+
 /**
  * Get the current list of users with their latest passwords.
- * Merges default users with any password changes saved in localStorage.
  */
 export function getSystemUsers() {
   let users = JSON.parse(JSON.stringify(DEFAULT_USERS));
@@ -49,18 +80,26 @@ export function getSystemUsers() {
     const savedPasswords = JSON.parse(localStorage.getItem('system_user_passwords') || '{}');
     users = users.map(u => ({
       ...u,
-      password: savedPasswords[u.username] || u.password
+      password: savedPasswords[u.username] || u.password,
+      avatar: localStorage.getItem(`user_avatar_${u.username}`) || u.avatar || ''
     }));
 
-    // Also merge any custom users added via UsersView
+    // Merge custom users
     const customUsers = JSON.parse(localStorage.getItem('system_custom_users') || '[]');
     customUsers.forEach(cu => {
       const existingIdx = users.findIndex(u => u.username === cu.username);
       if (existingIdx === -1) {
         users.push({
           ...cu,
-          password: savedPasswords[cu.username] || cu.password || 'admin1234'
+          password: savedPasswords[cu.username] || cu.password || 'admin1234',
+          avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || ''
         });
+      } else {
+        users[existingIdx] = {
+          ...users[existingIdx],
+          ...cu,
+          avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[existingIdx].avatar || ''
+        };
       }
     });
   } catch (e) {
@@ -98,7 +137,6 @@ export function saveCustomUser(user) {
     }
     localStorage.setItem('system_custom_users', JSON.stringify(customUsers));
 
-    // Also save password
     if (user.password) {
       updateUserPassword(user.username, user.password);
     }
@@ -119,6 +157,7 @@ export function deleteCustomUser(userId) {
     localStorage.setItem('system_custom_users', JSON.stringify(filtered));
     return true;
   } catch (e) {
+    console.error('Error deleting custom user:', e);
     return false;
   }
 }
@@ -148,10 +187,12 @@ export const LoginPage = ({ onLoginSuccess }) => {
         setIsLoading(true);
         setTimeout(() => {
             const systemUsers = getSystemUsers();
+            const resolvedUsername = ALIASES[trimmedUser.toLowerCase()] || trimmedUser.toLowerCase();
 
             // Find matching user by username or email or name
             const matchedUser = systemUsers.find(
-              u => u.username.toLowerCase() === trimmedUser.toLowerCase() ||
+              u => u.username.toLowerCase() === resolvedUsername ||
+                   u.username.toLowerCase() === trimmedUser.toLowerCase() ||
                    (u.email && u.email.toLowerCase() === trimmedUser.toLowerCase()) ||
                    u.name.toLowerCase() === trimmedUser.toLowerCase()
             );
@@ -169,14 +210,19 @@ export const LoginPage = ({ onLoginSuccess }) => {
                 return;
             }
 
-            // Success - pass user data with role and sector
+            // Success - pass user data with role, sector, and avatar
             setIsLoading(false);
+            const userAvatar = localStorage.getItem(`user_avatar_${matchedUser.username}`) || matchedUser.avatar || '';
             onLoginSuccess({
                 id: matchedUser.id,
                 username: matchedUser.username,
                 name: matchedUser.name,
                 role: matchedUser.role,
-                sector: matchedUser.sector || 'all'
+                title: matchedUser.title || matchedUser.role,
+                sector: matchedUser.sector || 'all',
+                email: matchedUser.email || '',
+                phone: matchedUser.phone || '',
+                avatar: userAvatar
             });
         }, 300);
     };

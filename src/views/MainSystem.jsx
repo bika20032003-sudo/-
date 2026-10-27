@@ -6,13 +6,8 @@ import { DashboardView } from './DashboardView';
 import { SectorDashboardView } from './SectorDashboardView';
 import { UploadReportsView } from './UploadReportsView';
 import { RoadProgressView } from './RoadProgressView';
-import { DailyAnalysisView } from './DailyAnalysisView';
-import { TomorrowPlanView } from './TomorrowPlanView';
-import { DailyReportsView } from './DailyReportsView';
 import { ReportsView } from './ReportsView';
 import { EquipmentView } from './EquipmentView';
-import { CrushersView } from './CrushersView';
-import { SharshoorView } from './SharshoorView';
 import { FuelView } from './FuelView';
 import { AlertsView } from './AlertsView';
 import { UsersView } from './UsersView';
@@ -20,138 +15,184 @@ import { ReportsArchiveView } from './ReportsArchiveView';
 import { PeriodicReportsView } from './PeriodicReportsView';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
+import { UserProfileModal } from '../components/UserProfileModal';
+import { CreateReportView } from './CreateReportView';
+import { CorrespondenceView } from './CorrespondenceView';
+import { TargetedWorksView } from './TargetedWorksView';
+import { ExecutiveProgressView } from './ExecutiveProgressView';
 
 /**
- * Determines if the user is a Sector Supervisor (A or B)
- * Sector supervisors get a restricted, sector-specific dashboard
+ * Determine default dashboard based on supervision role
  */
-function isSectorSupervisor(user) {
-    if (!user || !user.role) return false;
-    return user.role.includes('مشرف القطاع');
+function getDefaultTabForUser(user) {
+    if (!user) return 'dashboard';
+    const role = user.role || '';
+    const username = user.username || '';
+
+    // Sector supervisors default to their dedicated sector dashboard
+    const isSectorSupervisor = (role.includes('مشرف') || role.includes('القطاع') || username === 'salah_alarabi' || username === 'issa_altahir') && 
+                               !role.includes('مدير المشروع') && 
+                               !role.includes('رئيس جهاز الإشراف') && 
+                               !role.includes('الجودة');
+
+    if (isSectorSupervisor) {
+        return 'sector-dashboard';
+    }
+    return 'dashboard';
 }
 
-/**
- * Determines if the user is an admin-level user (مدير المشروع or مدير القطاعات)
- */
-function isAdminUser(user) {
-    if (!user || !user.role) return false;
-    return user.role.includes('مدير المشروع') || user.role.includes('مدير القطاعات');
-}
-
-export const MainSystem = ({ onLogout, currentUser }) => {
-    // Sector supervisors default to their sector dashboard
-    const defaultTab = isSectorSupervisor(currentUser) ? 'sector-dashboard' : 'dashboard';
+export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
+    const defaultTab = getDefaultTabForUser(currentUser);
     const [activeTab, setActiveTab] = useState(defaultTab);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
 
-    // If activeTab is 'create-report', open the modal and stay on appropriate tab
     const handleTabChange = (tabId) => {
       setIsMobileSidebarOpen(false);
-      if (tabId === 'create-report') {
-        setIsCreateModalOpen(true);
-      } else {
-        setActiveTab(tabId);
-      }
+      setActiveTab(tabId);
     };
 
     const tabTitles = {
-        'dashboard': 'لوحة التحكم والمتابعة التنفيذية الشاملة',
-        'sector-dashboard': `لوحة العمليات الميدانية - ${currentUser?.role || 'القطاع'}`,
+        'dashboard': 'لوحة القيادة الموحدة - جهاز الإشراف والمتابعة',
+        'sector-dashboard': `لوحة العمليات الميدانية - ${currentUser?.title || currentUser?.role || 'القطاع'}`,
         'periodic-reports': 'مركز التقارير الدورية (الشهرية والسنوية التلقائية)',
-        'reports-archive': 'أرشيف تقارير المشروع ونظام الطباعة',
-        'create-report': 'إنشاء تقرير ميداني جديد',
-        'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات',
-        'upload-reports': 'رفع ومعالجة التقارير الميدانية',
-        'daily-analysis': 'تحليل اليومية والأداء التشغيلي',
-        'tomorrow-plan': 'إدارة واعتماد خطة الغد ومقارنة التنفيذ',
-        'daily-reports': 'أرشيف واعتماد التقارير الميدانية',
+        'reports-archive': 'أرشيف تقارير المشروع ونظام الاعتماد والطباعة',
+        'create-report': 'إنشاء وإدخال تقرير ميداني جديد',
+        'targeted-works': 'إدارة ومتابعة الأعمال المستهدفة',
+        'messages': 'البريد والمراسلات الرسمية وإحالة التقارير',
+        'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات (360 كم)',
+        'executive-progress': 'الموقف التنفيذي (360 كم) - المالي والفني المعتمد',
+        'upload-reports': 'رفع ومعالجة ملفات التقارير الميدانية',
         'analytics': 'مركز التقارير والتحليلات المعتمدة',
-        'crushers': 'الكسارات ومعدلات الإنتاج',
-        'sharshoor': 'أرصدة ومخزون الشرشور والركام',
-        'fuel': 'إدارة الوقود والصهاريج',
-        'equipment': 'إدارة وسجل المعدات والآليات',
-        'users': 'مركز المستخدمين والصلاحيات',
-        'alerts': 'مركز التنبيهات والإشعارات'
+        'fuel': 'إدارة الوقود',
+        'equipment': 'إدارة وسجل المعدات والآليات الميدانية',
+        'users': 'مركز المستخدمين والصلاحيات الرسمية للجهاز',
+        'alerts': 'مركز التنبيهات والإشعارات التشغيلية'
     };
 
-    return (<div className="custom-system-layout">
-      {/* Mobile Backdrop */}
-      {isMobileSidebarOpen && (
-        <div 
-          className="sidebar-mobile-backdrop"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
+    return (
+      <div className="custom-system-layout">
+        {/* Mobile Backdrop */}
+        {isMobileSidebarOpen && (
+          <div 
+            className="sidebar-mobile-backdrop"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
 
-      {/* Sidebar Navigation on Right (RTL) */}
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={handleTabChange} 
-        onLogout={onLogout}
-        currentUser={currentUser}
-        isMobileOpen={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
-      />
-
-      {/* Main Container */}
-      <div className="custom-system-main">
-        <Navbar 
-          currentTabName={tabTitles[activeTab] || 'لوحة التحكم'} 
-          onBellClick={() => setActiveTab('alerts')} 
-          onProfileClick={() => isAdminUser(currentUser) ? setActiveTab('users') : null}
+        {/* Sidebar Navigation on Right (RTL) */}
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={handleTabChange} 
+          onLogout={onLogout}
           currentUser={currentUser}
-          onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
+          isMobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
         />
 
-        <main className="custom-page-container">
-          {/* Admin Dashboard (مدير المشروع + مدير القطاعات) */}
-          {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
+        {/* Main Container */}
+        <div className="custom-system-main">
+          <Navbar 
+            currentTabName={tabTitles[activeTab] || 'لوحة التحكم'} 
+            onBellClick={() => setActiveTab('alerts')} 
+            onMailClick={() => setActiveTab('messages')}
+            onProfileClick={() => setIsProfileModalOpen(true)}
+            currentUser={currentUser}
+            onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
+          />
 
-          {/* Sector-Specific Dashboard (مشرف القطاع A / B) */}
-          {activeTab === 'sector-dashboard' && <SectorDashboardView currentUser={currentUser} />}
+          <main className="custom-page-container">
+            {/* 1. General Dashboard */}
+            {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
 
-          {activeTab === 'periodic-reports' && <PeriodicReportsView currentUser={currentUser} />}
-          {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} onNavigateTab={handleTabChange} />}
-          {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
-          {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
-          {activeTab === 'daily-analysis' && <DailyAnalysisView onNavigateTab={handleTabChange}/>}
-          {activeTab === 'tomorrow-plan' && <TomorrowPlanView />}
-          {activeTab === 'daily-reports' && <DailyReportsView currentUser={currentUser} onNavigateTab={handleTabChange} />}
-          {activeTab === 'analytics' && <ReportsView />}
-          {activeTab === 'crushers' && <CrushersView />}
-          {activeTab === 'sharshoor' && <SharshoorView />}
-          {activeTab === 'fuel' && <FuelView />}
-          {activeTab === 'equipment' && <EquipmentView />}
-          {activeTab === 'users' && <UsersView currentUser={currentUser} />}
-          {activeTab === 'alerts' && <AlertsView />}
-        </main>
+            {/* 2. Sector-Specific Dashboard (مهندس مشرف: م. صلاح العربي أو م. عيسى الطاهر) */}
+            {activeTab === 'sector-dashboard' && (
+              <SectorDashboardView currentUser={currentUser} />
+            )}
+
+            {/* 3. Dedicated Create Report Section */}
+            {activeTab === 'create-report' && (
+              <CreateReportView 
+                currentUser={currentUser} 
+                onNavigateTab={handleTabChange}
+                onPrintReport={(rep) => setSelectedReportForPrint(rep)}
+              />
+            )}
+
+            {/* 4. Dedicated Correspondence / Mail Section */}
+            {activeTab === 'messages' && (
+              <CorrespondenceView 
+                currentUser={currentUser} 
+                onNavigateTab={handleTabChange}
+                onPrintReport={(rep) => setSelectedReportForPrint(rep)}
+              />
+            )}
+
+            {/* 5. Dedicated Targeted Works Section (الأعمال المستهدفة) */}
+            {activeTab === 'targeted-works' && (
+              <TargetedWorksView 
+                currentUser={currentUser} 
+                onNavigateTab={handleTabChange}
+              />
+            )}
+
+            {activeTab === 'periodic-reports' && <PeriodicReportsView currentUser={currentUser} onNavigateTab={handleTabChange} />}
+            {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} onNavigateTab={handleTabChange} />}
+            {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
+            {activeTab === 'executive-progress' && (
+              <ExecutiveProgressView 
+                currentUser={currentUser} 
+                onNavigateTab={handleTabChange} 
+                onPrintReport={(rep) => setSelectedReportForPrint(rep)} 
+              />
+            )}
+            {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
+            {activeTab === 'analytics' && <ReportsView />}
+            {activeTab === 'fuel' && <FuelView currentUser={currentUser} onNavigateTab={handleTabChange} />}
+            {activeTab === 'equipment' && <EquipmentView />}
+            {activeTab === 'users' && <UsersView currentUser={currentUser} />}
+            {activeTab === 'alerts' && <AlertsView currentUser={currentUser} onNavigateTab={handleTabChange} />}
+          </main>
+        </div>
+
+        {/* Standalone Create Report Modal if triggered from sidebar */}
+        {isCreateModalOpen && (
+          <CreateReportModal
+            isOpen={isCreateModalOpen}
+            currentUser={currentUser}
+            onClose={() => setIsCreateModalOpen(false)}
+            onNavigateTab={handleTabChange}
+            onReportCreated={(rep) => {
+              console.log('Report created successfully:', rep);
+            }}
+            onPrintReport={(newRep) => {
+              setSelectedReportForPrint(newRep);
+            }}
+          />
+        )}
+
+        {/* Official Print Modal */}
+        {selectedReportForPrint && (
+          <OfficialPrintModal
+            report={selectedReportForPrint}
+            onClose={() => setSelectedReportForPrint(null)}
+          />
+        )}
+
+        {/* User Profile Modal with Photo Upload & Credentials */}
+        {isProfileModalOpen && (
+          <UserProfileModal
+            isOpen={isProfileModalOpen}
+            currentUser={currentUser}
+            onClose={() => setIsProfileModalOpen(false)}
+            onUpdateUser={onUpdateUser}
+          />
+        )}
       </div>
-
-      {/* Standalone Create Report Modal if triggered from sidebar */}
-      {isCreateModalOpen && (
-        <CreateReportModal
-          isOpen={isCreateModalOpen}
-          currentUser={currentUser}
-          onClose={() => setIsCreateModalOpen(false)}
-          onReportCreated={(rep) => {
-            console.log('Report created successfully:', rep);
-          }}
-          onPrintReport={(newRep) => {
-            setSelectedReportForPrint(newRep);
-          }}
-        />
-      )}
-
-      {/* Official Print Modal */}
-      {selectedReportForPrint && (
-        <OfficialPrintModal
-          report={selectedReportForPrint}
-          onClose={() => setSelectedReportForPrint(null)}
-        />
-      )}
-    </div>);
+    );
 };
 
 export default MainSystem;

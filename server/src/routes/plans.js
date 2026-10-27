@@ -15,10 +15,10 @@ router.get('/suggest', (req, res) => {
       title: `خطة التشغيل الميداني المقترحة ليوم ${tomorrowDate.toLocaleDateString('ar-LY')}`,
       description: 'مقترح ذكي مولد آلياً من نتائج اليومية وحالة المعدات والكسارات',
       items: [
-        { id: 1, targetType: 'crusher', targetCode: 'CRU-1', targetName: 'الكسارة رقم 1 (الشمالية)', sector: 'القطعة A', currentStatus: 'تشغيل', plannedDecision: 'تشغيل', targetQuantity: 900, targetUnit: 'طن', reason: 'أداء تشغيلي مستقر وتأمين رصيد الشرشور', notes: 'إنتاج مستهدف لطبقة الأساس الركامي' },
-        { id: 2, targetType: 'crusher', targetCode: 'CRU-2', targetName: 'الكسارة رقم 2 (الوسطى)', sector: 'القطعة B', currentStatus: 'تشغيل', plannedDecision: 'تشغيل', targetQuantity: 800, targetUnit: 'طن', reason: 'استمرار الإنتاج لتغذية القطاع الأوسط', notes: 'متابعة حرارة المولد' },
-        { id: 3, targetType: 'equipment', targetCode: 'EQ-101', targetName: 'لودر CAT 966H', sector: 'القطعة A', currentStatus: 'تشغيل', plannedDecision: 'تشغيل', targetQuantity: 8, targetUnit: 'ساعة', reason: 'تغذية الكسارة وتحميل الشاحنات', notes: 'السائق: سالم علي' },
-        { id: 4, targetType: 'fuel', targetCode: 'FUEL-RES', targetName: 'مخصصات السولار الميداني', sector: 'القطعة A + B', currentStatus: 'صرف', plannedDecision: 'تخصيص', targetQuantity: 4250, targetUnit: 'لتر', reason: 'تأمين وقود تشغيل الكسارات والحفارات', notes: 'توزيع الحصص على الصهاريج الرئيسية' }
+        { id: 1, targetType: 'crusher', targetCode: 'CRU-1', targetName: 'الكسارة رقم 1 (الشمالية)', sector: 'المرحلة الأولى', currentStatus: 'تشغيل', plannedDecision: 'تشغيل', targetQuantity: 900, targetUnit: 'طن', reason: 'أداء تشغيلي مستقر وتأمين رصيد الشرشور', notes: 'إنتاج مستهدف لطبقة الأساس الركامي' },
+        { id: 2, targetType: 'crusher', targetCode: 'CRU-2', targetName: 'الكسارة رقم 2 (الوسطى)', sector: 'المرحلة الثانية', currentStatus: 'تشغيل', plannedDecision: 'تشغيل', targetQuantity: 800, targetUnit: 'طن', reason: 'استمرار الإنتاج لتغذية القطاع الأوسط', notes: 'متابعة حرارة المولد' },
+        { id: 3, targetType: 'equipment', targetCode: 'EQ-101', targetName: 'لودر CAT 966H', sector: 'المرحلة الأولى', currentStatus: 'تشغيل', plannedDecision: 'تشغيل', targetQuantity: 8, targetUnit: 'ساعة', reason: 'تغذية الكسارة وتحميل الشاحنات', notes: 'السائق: سالم علي' },
+        { id: 4, targetType: 'fuel', targetCode: 'FUEL-RES', targetName: 'مخصصات السولار الميداني', sector: 'المرحلة الأولى + الثانية', currentStatus: 'صرف', plannedDecision: 'تخصيص', targetQuantity: 4250, targetUnit: 'لتر', reason: 'تأمين وقود تشغيل الكسارات والحفارات', notes: 'توزيع الحصص على الصهاريج الرئيسية' }
       ]
     }
   });

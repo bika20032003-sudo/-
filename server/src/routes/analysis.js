@@ -113,14 +113,14 @@ router.get('/daily', (req, res) => {
     warnings.push({
       type: 'warning',
       title: `لا توجد عمليات مسجلة بتاريخ (${targetDateStr})`,
-      message: `لم يتم رصد أي إنتاج أو صرف وقود للقطاع (${sectorFilter ? (sectorFilter.includes('A') ? 'القطعة A' : 'القطعة B') : 'كافة القطاعات'}) في هذا اليوم.`,
+      message: `لم يتم رصد أي إنتاج أو صرف وقود للمرحلة (${sectorFilter ? (sectorFilter.includes('A') || sectorFilter.includes('الأولى') ? 'المرحلة الأولى' : 'المرحلة الثانية') : 'كافة المراحل'}) في هذا اليوم.`,
       suggestedAction: 'اختر تاريخاً آخر من القائمة أو قم برفع تقرير تشغيل جديد.'
     });
   } else {
     if (stoppedEq > 0) {
       warnings.push({
         type: 'danger',
-        title: `توقف ${stoppedEq} معدات ميدانية في ${sectorFilter ? (sectorFilter.includes('A') ? 'القطعة A' : 'القطعة B') : 'الموقع'}`,
+        title: `توقف ${stoppedEq} معدات ميدانية في ${sectorFilter ? (sectorFilter.includes('A') || sectorFilter.includes('الأولى') ? 'المرحلة الأولى' : 'المرحلة الثانية') : 'الموقع'}`,
         message: 'يوجد معدات في حالة صيانة مجدولة أو توقف فني بالموقع.',
         suggestedAction: 'توجيه فريق الصيانة لسرعة إعادتها للخدمة.'
       });
@@ -130,7 +130,7 @@ router.get('/daily', (req, res) => {
         type: fuelVariance > 10 ? 'danger' : fuelVariance > 0 ? 'warning' : 'info',
         title: fuelVariance > 0 ? `استهلاك السولار أعلى من المتوسط بـ ${fuelVariance}%` : 'استهلاك السولار مستقر وضمن الخطة',
         message: `تم صرف ${fuelToday.toLocaleString()} لتر في (${targetDateStr}) مقارنة بمتوسط ${avg7DaysFuel.toLocaleString()} لتر.`,
-        suggestedAction: 'متابعة أذونات الصرف وجداول التزويد للصهاريج الميدانية.'
+        suggestedAction: 'متابعة تقارير كميات الوقود وجداول التزويد للصهاريج الميدانية.'
       });
     }
   }

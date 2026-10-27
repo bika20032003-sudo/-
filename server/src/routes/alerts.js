@@ -34,6 +34,17 @@ router.put('/:id/read', (req, res) => {
   }
 });
 
+// Toggle alert read status
+router.put('/:id/toggle-read', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const updated = store.toggleAlertRead(id);
+    res.json({ success: true, alert: updated });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
 // Mark all as read
 router.put('/read-all', (req, res) => {
   try {

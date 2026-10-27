@@ -21,26 +21,26 @@ export function getFallbackData(url) {
   if (url.includes('/api/dashboard/summary')) {
     return {
       success: true,
-      totalProduction: initialDailySummary?.totalProduction?.total || 1470,
-      totalFuel: initialDailySummary?.solarConsumption?.total || 4250,
-      totalSharshoor: initialDailySummary?.sharshoor?.total || 882,
-      totalEquipment: initialDailySummary?.workingEquipment?.total || 42,
-      activeEquipment: (initialDailySummary?.workingEquipment?.total || 42) - (initialDailySummary?.stoppedEquipment?.total || 4),
-      stoppedEquipment: initialDailySummary?.stoppedEquipment?.total || 4,
-      operatingHours: initialDailySummary?.operatingHours?.total || 312,
-      sectorAFuel: initialDailySummary?.solarConsumption?.sectorA || 2450,
-      sectorBFuel: initialDailySummary?.solarConsumption?.sectorB || 1800,
-      sectorAProd: initialDailySummary?.totalProduction?.sectorA || 850,
-      sectorBProd: initialDailySummary?.totalProduction?.sectorB || 620,
-      recentAlerts: initialAlerts || [],
-      recentReports: initialRecentReports || [],
+      totalProduction: initialDailySummary?.totalProduction?.total || 0,
+      totalFuel: initialDailySummary?.solarConsumption?.total || 0,
+      totalSharshoor: initialDailySummary?.sharshoor?.total || 0,
+      totalEquipment: initialDailySummary?.workingEquipment?.total || 0,
+      activeEquipment: 0,
+      stoppedEquipment: 0,
+      operatingHours: 0,
+      sectorAFuel: 0,
+      sectorBFuel: 0,
+      sectorAProd: 0,
+      sectorBProd: 0,
+      recentAlerts: [],
+      recentReports: [],
       roadProgress: {
         kpis: {
           fdr: { meters: 220203, percentage: 97.3 },
           asphalt: { meters: 209923, percentage: 92.8 },
           aggregateBase: { meters: 215483, percentage: 95.2 },
           mco: { meters: 214303, percentage: 94.7 },
-          totalTodayMeters: 1060
+          totalTodayMeters: 0
         }
       }
     };
@@ -58,11 +58,40 @@ export function getFallbackData(url) {
       items: initialRoadProgress || [],
       roadProgress: initialRoadProgress || [],
       summary: {
-        totalRoadLengthKm: 226.28,
-        overallPercentage: 95.0,
-        sectorAPercentage: 96.2,
-        sectorBPercentage: 93.8,
-        totalTodayMeters: 1060
+        totalRoadLengthKm: 360.00,
+        overallPercentage: 65.9,
+        sectorAPercentage: 100.0,
+        sectorBPercentage: 8.4,
+        totalTodayMeters: 3820
+      }
+    };
+  }
+  if (url.includes('/api/executive-progress')) {
+    let localData = null;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const item = localStorage.getItem('executive_progress_data');
+        if (item) localData = JSON.parse(item);
+      }
+    } catch (e) {}
+    return {
+      success: true,
+      data: localData || {
+        projectName: 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر',
+        reportTitle: 'الموقف التنفيذي.',
+        contractValue: 897665675.030,
+        currency: 'دينار',
+        reportDate: '2026-10-24',
+        reportNumber: '093436_24.10.2026',
+        basicTotals: { executedValue: 631848792.36, percentage: 70.19 },
+        additionalTotals: { executedValue: 93573854.26 },
+        grandTotals: {
+          contractValue: 897665675.030,
+          totalExecutedValue: 725422646.62,
+          totalRemainingValue: 172243028.41,
+          overallFinancialPercentage: 80.81,
+          basicItemsPercentage: 70.19
+        }
       }
     };
   }
@@ -128,17 +157,11 @@ export function getFallbackData(url) {
       return acc + Math.round((Number(r.productionAmount) || 0) * 0.32);
     }, 0);
 
-    // Standard base multipliers if fewer/no reports for that exact timeframe
-    const baseProd = isAnnual ? 448350 : 40513;
-    const baseFuel = isAnnual ? 308100 : 27836;
-    const baseSharshoor = isAnnual ? 269010 : 24308;
-    const baseRoadMeters = isAnnual ? 62010 : 15500;
-
-    // Combine real reported numbers with proportional scaling if user reports represent portion of period
-    const totalProd = hasRealReports ? Math.max(repProdSum, baseProd + repProdSum) : baseProd;
-    const totalFuel = hasRealReports ? Math.max(repFuelSum, baseFuel + repFuelSum) : baseFuel;
-    const totalSharshoor = hasRealReports ? Math.max(repSharshoorSum, baseSharshoor + repSharshoorSum) : baseSharshoor;
-    const totalRoadMeters = hasRealReports ? Math.max(repRoadSum, baseRoadMeters + repRoadSum) : baseRoadMeters;
+    // Real reported numbers (no fake baseline injected)
+    const totalProd = repProdSum;
+    const totalFuel = repFuelSum;
+    const totalSharshoor = repSharshoorSum;
+    const totalRoadMeters = repRoadSum;
 
     const reportCode = isAnnual ? `REP-YR-${year}` : `REP-MO-${year}-${String(month).padStart(2, '0')}`;
     const reportTitle = isAnnual 
@@ -171,18 +194,13 @@ export function getFallbackData(url) {
         const mRoad = mReports.reduce((acc, r) => acc + (Number(r.roadMeters || r.salesAmount) || 0), 0);
         const mShar = mReports.reduce((acc, r) => acc + (Number(r.productionAmount) || 0) * 0.32, 0);
 
-        const baseMonthProd = Math.round(34000 + (Math.sin(idx) * 4000));
-        const baseMonthFuel = Math.round(23000 + (Math.cos(idx) * 3000));
-        const baseMonthRoad = Math.round(5000 + (Math.sin(idx) * 800));
-        const baseMonthShar = Math.round(20000 + (Math.sin(idx) * 2000));
-
         return {
           period: m,
           monthIndex: mMonthNum,
-          production: mProd > 0 ? (baseMonthProd + mProd) : baseMonthProd,
-          fuel: mFuel > 0 ? (baseMonthFuel + mFuel) : baseMonthFuel,
-          roadMeters: mRoad > 0 ? (baseMonthRoad + mRoad) : baseMonthRoad,
-          sharshoor: mShar > 0 ? Math.round(baseMonthShar + mShar) : baseMonthShar,
+          production: mProd,
+          fuel: mFuel,
+          roadMeters: mRoad,
+          sharshoor: mShar,
           readiness: 88,
           reportsCount: mReports.length
         };
@@ -202,19 +220,14 @@ export function getFallbackData(url) {
         const wRoad = wReports.reduce((acc, r) => acc + (Number(r.roadMeters || r.salesAmount) || 0), 0);
         const wShar = wReports.reduce((acc, r) => acc + (Number(r.productionAmount) || 0) * 0.32, 0);
 
-        const baseWeekProd = Math.round(totalProd / 4);
-        const baseWeekFuel = Math.round(totalFuel / 4);
-        const baseWeekRoad = Math.round(totalRoadMeters / 4);
-        const baseWeekShar = Math.round(totalSharshoor / 4);
-
         return {
           period: w,
           weekIndex: idx + 1,
-          production: wProd > 0 ? (baseWeekProd + wProd) : baseWeekProd,
-          fuel: wFuel > 0 ? (baseWeekFuel + wFuel) : baseWeekFuel,
-          roadMeters: wRoad > 0 ? (baseWeekRoad + wRoad) : baseWeekRoad,
-          sharshoor: wShar > 0 ? Math.round(baseWeekShar + wShar) : baseWeekShar,
-          operatingHours: 312,
+          production: wProd,
+          fuel: wFuel,
+          roadMeters: wRoad,
+          sharshoor: Math.round(wShar),
+          operatingHours: 0,
           reportsCount: wReports.length
         };
       });
@@ -257,23 +270,23 @@ export function getFallbackData(url) {
         notes: r.notes || ''
       })),
       kpis: {
-        totalProduction: totalProd,
-        targetProduction: targetProd,
-        prodAchievementRate,
-        totalFuel,
-        fuelPerTon,
-        totalSharshoor,
-        sharshoorDelivered: Math.round(totalSharshoor * 0.88),
-        sharshoorStockBalance: 15659,
-        totalRoadMeters,
-        projectCompletedKm: 216.8,
-        projectTotalKm: 226.28,
-        projectOverallPercentage: 95.8,
-        fleetReadinessRate: 88.5,
-        totalOperatingHours: isAnnual ? 24500 : 1248,
-        activeMachines: 38,
-        maintenanceMachines: 4,
-        totalMachines: 42,
+        totalProduction: repProdSum,
+        targetProduction: repProdSum,
+        prodAchievementRate: 100,
+        totalFuel: repFuelSum,
+        fuelPerTon: 0,
+        totalSharshoor: 0,
+        sharshoorDelivered: 0,
+        sharshoorStockBalance: 0,
+        totalRoadMeters: repRoadSum,
+        projectCompletedKm: parseFloat((repRoadSum / 1000).toFixed(2)),
+        projectTotalKm: 360.00,
+        projectOverallPercentage: parseFloat(((repRoadSum / (360.00 * 1000)) * 100).toFixed(1)),
+        fleetReadinessRate: 0,
+        totalOperatingHours: 0,
+        activeMachines: 0,
+        maintenanceMachines: 0,
+        totalMachines: 0,
         directReportsProduction: repProdSum,
         directReportsFuel: repFuelSum,
         directReportsRoadMeters: repRoadSum
@@ -292,7 +305,7 @@ export function getFallbackData(url) {
       ],
       sectorComparison: {
         sectorA: {
-          name: 'القطعة (A) - شركة الرواد',
+          name: 'المرحلة الأولى',
           productionTons: Math.round(totalProd * 0.58) + secAProd,
           fuelLiters: Math.round(totalFuel * 0.57) + secAFuel,
           roadMeters: Math.round(totalRoadMeters * 0.54) + secARoad,
@@ -301,7 +314,7 @@ export function getFallbackData(url) {
           reportsCount: secAReports.length
         },
         sectorB: {
-          name: 'القطعة (B) - شركة نيوم',
+          name: 'المرحلة الثانية',
           productionTons: Math.round(totalProd * 0.42) + secBProd,
           fuelLiters: Math.round(totalFuel * 0.43) + secBFuel,
           roadMeters: Math.round(totalRoadMeters * 0.46) + secBRoad,
@@ -320,9 +333,9 @@ export function getFallbackData(url) {
         `التوصية: تعزيز وتيرة توريد مادة الشرشور الناعم للمحطة الإسفلتية لتسريع وتيرة الطبقة السطحية المتبقية.`
       ],
       signatories: {
-        siteEngineer: 'م. محمد المهدي (مهندس الموقع)',
+        siteEngineer: 'م. محمد المهدي (مدير القطاع الميداني)',
         sectorManager: 'م. أحمد التواتي (مدير القطاعات)',
-        projectDirector: 'م. عبدالرحمن الشريف (مدير المشروع المعتمد)'
+        projectDirector: 'المهندس عبدالرحمن الأنصاري (مدير المشروع - جهاز الإشراف)'
       }
     };
   }
@@ -468,7 +481,7 @@ export function getFallbackData(url) {
         type: fuelVariance > 10 ? 'danger' : fuelVariance > 0 ? 'warning' : 'info',
         title: fuelVariance > 0 ? `استهلاك السولار أعلى من المتوسط بـ ${fuelVariance}%` : 'استهلاك السولار مستقر وضمن الخطة',
         message: `تم صرف ${fuelToday.toLocaleString()} لتر في (${targetDateStr}) مقارنة بمتوسط ${avg7DaysFuel.toLocaleString()} لتر.`,
-        suggestedAction: 'متابعة أذونات الصرف وجداول التزويد للصهاريج الميدانية.'
+        suggestedAction: 'متابعة تقارير كميات الوقود وجداول التزويد للصهاريج الميدانية.'
       });
     }
 
@@ -518,10 +531,11 @@ export function getFallbackData(url) {
     return {
       success: true,
       users: [
-        { id: 1, name: 'مدير المشروع', username: 'admin', email: 'admin@mot.gov.ly', role: 'مدير المشروع', sector: 'all', createdAt: '2026-01-10' },
-        { id: 2, name: 'مدير القطاعات', username: 'admin_sectors', email: 'admin_sectors@mot.gov.ly', role: 'مدير القطاعات', sector: 'all', createdAt: '2026-01-15' },
-        { id: 3, name: 'مشرف القطاع (A)', username: 'sector_a', email: 'sector_a@mot.gov.ly', role: 'مشرف القطاع (A)', sector: 'القطعة A', createdAt: '2026-01-20' },
-        { id: 4, name: 'مشرف القطاع (B)', username: 'sector_b', email: 'sector_b@mot.gov.ly', role: 'مشرف القطاع (B)', sector: 'القطعة B', createdAt: '2026-01-25' }
+        { id: 1, name: 'م. عبدالرحمن الأنصاري', username: 'admin', email: 'alansari@mot.gov.ly', phone: '091-2345678', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)', sector: 'all', createdAt: '2026-01-10' },
+        { id: 2, name: 'م. عبدالسلام ابريكاو', username: 'abrikaw', email: 'abrikaw@mot.gov.ly', phone: '091-3456789', role: 'رئيس جهاز الإشراف', title: 'رئيس جهاز الإشراف والمتابعة', sector: 'all', createdAt: '2026-01-15' },
+        { id: 3, name: 'م. صالح حماد', username: 'saleh_quality', email: 'hammad.quality@mot.gov.ly', phone: '091-4567890', role: 'مسؤول الجودة', title: 'مسؤول ضبط ومراقبة الجودة الفنية', sector: 'all', createdAt: '2026-01-18' },
+        { id: 4, name: 'م. صلاح العربي', username: 'salah_alarabi', email: 'alarabi.phase1@mot.gov.ly', phone: '091-5678901', role: 'مهندس مشرف (المرحلة الأولى)', title: 'مهندس مشرف - المرحلة الأولى', sector: 'المرحلة الأولى', createdAt: '2026-01-20' },
+        { id: 5, name: 'م. عيسى الطاهر', username: 'issa_altahir', email: 'altahir.phase2@mot.gov.ly', phone: '091-6789012', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية', sector: 'المرحلة الثانية', createdAt: '2026-01-25' }
       ]
     };
   }
@@ -545,9 +559,10 @@ async function fetchWithTimeout(url, options, timeoutMs = 1200) {
 
 export async function fastFetch(rawUrl, options = {}) {
   let url = rawUrl;
-  if (typeof url === 'string' && typeof window !== 'undefined') {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('github.io')) {
-      url = url.replace('localhost:5000', `${window.location.hostname}:5000`);
+  if (typeof url === 'string') {
+    // Normalize localhost:5000 or 127.0.0.1:5000 to relative /api to use Vite proxy & eliminate CORS
+    if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
+      url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
     }
   }
 
@@ -579,19 +594,19 @@ export async function fastFetch(rawUrl, options = {}) {
     return getFallbackData(url);
   }
 
-  if (typeof url === 'string' && url.includes(':5000/api')) {
+  if (typeof url === 'string' && url.includes('/api/')) {
     if (isGitHubPages && apiBase) {
       url = url.replace(/https?:\/\/[^/]+/, apiBase);
     }
   }
-  const method = options.method || 'GET';
+  const method = (options.method || 'GET').toUpperCase();
 
   // For non-GET requests (mutations), clear all cache completely
   if (method !== 'GET') {
     cache.clear();
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       const res = await nativeFetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) return await res.json();
@@ -601,28 +616,29 @@ export async function fastFetch(rawUrl, options = {}) {
     return { success: true, message: 'Saved locally' };
   }
 
-  const isDynamicEndpoint = url.includes('/api/dashboard') || 
-                            url.includes('/api/analysis') || 
-                            url.includes('/api/reports') || 
-                            url.includes('/api/crushers') || 
-                            url.includes('/api/fuel') || 
-                            url.includes('/api/equipment');
-
   const cacheKey = `${url}`;
   const cached = cache.get(cacheKey);
   const now = Date.now();
 
-  // Return fresh cache only for static resources, never for live metrics
-  if (!isDynamicEndpoint && cached && (now - cached.timestamp < 3000)) {
+  // Stale-While-Revalidate: Return cached data instantly (< 5s old)
+  if (cached && (now - cached.timestamp < 5000)) {
     return cached.data;
   }
 
-  // Direct fetch with 4000ms timeout
-  const data = await fetchWithTimeout(url, options, 4000);
-  const finalData = data || getFallbackData(url);
-  if (!isDynamicEndpoint) {
-    cache.set(cacheKey, { data: finalData, timestamp: Date.now() });
+  // If cached data exists but is older, return it immediately and revalidate in background
+  if (cached) {
+    fetchWithTimeout(url, options, 1500).then(fresh => {
+      if (fresh) {
+        cache.set(cacheKey, { data: fresh, timestamp: Date.now() });
+      }
+    }).catch(() => {});
+    return cached.data;
   }
+
+  // Direct fast fetch with 1500ms timeout
+  const data = await fetchWithTimeout(url, options, 1500);
+  const finalData = data || getFallbackData(url);
+  cache.set(cacheKey, { data: finalData, timestamp: Date.now() });
   return finalData;
 }
 

@@ -32,7 +32,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const [editFormData, setEditFormData] = useState({
     reportNumber: '',
     date: '',
-    sector: 'القطعة A',
+    sector: 'المرحلة الأولى',
     companyName: '',
     reportType: 'تقرير يومي شامل',
     materialName: '',
@@ -50,7 +50,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     setEditFormData({
       reportNumber: r.reportNumber || '',
       date: (r.date || '').split('T')[0] || new Date().toISOString().split('T')[0],
-      sector: r.sector || 'القطعة A',
+      sector: r.sector || 'المرحلة الأولى',
       companyName: r.companyName || 'جهاز مشروعات المواصلات',
       reportType: r.reportType || 'تقرير يومي شامل',
       materialName: r.materialName || '',
@@ -157,7 +157,13 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
 
     // Type filter
-    if (typeFilter !== 'all' && r.reportType !== typeFilter) return false;
+    if (typeFilter !== 'all') {
+      if (typeFilter === 'تقرير كميات الوقود اليومية') {
+        if (!r.isFuelReport && r.reportType !== 'تقرير كميات الوقود اليومية' && r.title !== 'تقرير كميات الوقود اليومية') return false;
+      } else if (r.reportType !== typeFilter) {
+        return false;
+      }
+    }
 
     // Date range filter
     if (startDate && r.date && r.date.split('T')[0] < startDate) return false;
@@ -188,8 +194,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       'م': idx + 1,
       'رقم التقرير': r.reportNumber || `#REP-${r.id}`,
       'التاريخ': r.date ? r.date.split('T')[0] : '',
-      'القطاع الميداني': r.sector || '',
-      'الشركة المنفذة': (r.sector || '').includes('B') ? 'شركة نيوم للمقاولات' : 'شركة الرواد للمقاولات',
+      'المرحلة': (r.sector || '').includes('B') || (r.sector || '').includes('الثانية') ? 'المرحلة الثانية' : 'المرحلة الأولى',
       'نوع التقرير': r.reportType || 'شامل',
       'إنتاج الكسارة (طن)': Number(r.productionAmount) || 0,
       'أعمال الرصف (م.ط)': Number(r.roadMeters || r.salesAmount) || 0,
@@ -483,10 +488,12 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">كافة التقارير</option>
+            <option value="تقرير كميات الوقود اليومية">تقرير كميات الوقود اليومية ⛽</option>
+            <option value="تقرير أعمال الطريق اليومي">تقرير أعمال الطريق اليومي 🛣️</option>
             <option value="تقرير يومي شامل">تقرير يومي شامل</option>
             <option value="تقرير تقدم أعمال الرصف">تقرير أعمال الرصف</option>
             <option value="تقرير تشغيل وإنتاج الكسارة">تقرير إنتاج الكسارات</option>
-            <option value="تقرير تزويد واستهلاك الوقود">تقرير الوقود</option>
+            <option value="تقرير تزويد واستهلاك الوقود">تقرير الوقود الميداني</option>
             <option value="تقرير حركة وتشغيل المعدات">تقرير المعدات والآليات</option>
           </select>
         </div>
@@ -784,18 +791,41 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                 <span style={{ color: '#64748b' }}>تاريخ التقرير:</span>
                 <span style={{ fontWeight: 800 }}>{new Date(viewDetailsReport.date).toLocaleDateString('ar-LY')}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>إنتاج الكسارة:</span>
-                <span style={{ fontWeight: 800, color: '#2563eb' }}>{viewDetailsReport.productionAmount || 0} طن</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>أعمال الرصف المنجزة:</span>
-                <span style={{ fontWeight: 800, color: '#ea580c' }}>{viewDetailsReport.roadMeters || viewDetailsReport.salesAmount || 0} م.ط</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>الوقود المستهلك:</span>
-                <span style={{ fontWeight: 800, color: '#16a34a' }}>{viewDetailsReport.fuelAmount || 0} لتر</span>
-              </div>
+              {(viewDetailsReport.isFuelReport || viewDetailsReport.reportType === 'تقرير كميات الوقود اليومية') ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>إجمالي المنصرف:</span>
+                    <span style={{ fontWeight: 800, color: '#dc2626' }}>{Number(viewDetailsReport.totalDispatchedLiters || viewDetailsReport.fuelAmount || 0).toLocaleString()} لتر</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>إجمالي الوارد:</span>
+                    <span style={{ fontWeight: 800, color: '#16a34a' }}>{Number(viewDetailsReport.totalReceivedLiters || 0).toLocaleString()} لتر</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>إجمالي المتبقي بالخزانات:</span>
+                    <span style={{ fontWeight: 800, color: '#2563eb' }}>{Number(viewDetailsReport.totalRemainingLiters || 0).toLocaleString()} لتر</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>عدد الخزانات / المواقع:</span>
+                    <span style={{ fontWeight: 800, color: '#475569' }}>{(viewDetailsReport.fuelItems || []).length} مواقع</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>إنتاج الكسارة:</span>
+                    <span style={{ fontWeight: 800, color: '#2563eb' }}>{viewDetailsReport.productionAmount || 0} طن</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>أعمال الرصف المنجزة:</span>
+                    <span style={{ fontWeight: 800, color: '#ea580c' }}>{viewDetailsReport.roadMeters || viewDetailsReport.salesAmount || 0} م.ط</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <span style={{ color: '#64748b' }}>الوقود المستهلك:</span>
+                    <span style={{ fontWeight: 800, color: '#16a34a' }}>{viewDetailsReport.fuelAmount || 0} لتر</span>
+                  </div>
+                </>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>حالة الاعتماد:</span>
                 <span style={{ fontWeight: 800 }}>{viewDetailsReport.status === 'approved' ? 'معتمد رسمياً ✅' : 'قيد المراجعة ⏳'}</span>
@@ -858,6 +888,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
           isOpen={isCreateModalOpen}
           currentUser={currentUser}
           onClose={() => setIsCreateModalOpen(false)}
+          onNavigateTab={onNavigateTab}
           onReportCreated={(newRep) => {
             fetchReports();
           }}
@@ -1059,15 +1090,15 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    القطاع الميداني
+                    المرحلة الميدانية
                   </label>
                   <select
                     className="form-input"
                     value={editFormData.sector}
                     onChange={(e) => setEditFormData({ ...editFormData, sector: e.target.value })}
                   >
-                    <option value="القطعة A">القطعة A (القطاع الشمالي)</option>
-                    <option value="القطعة B">القطعة B (القطاع الأوسط)</option>
+                    <option value="المرحلة الأولى">المرحلة الأولى</option>
+                    <option value="المرحلة الثانية">المرحلة الثانية</option>
                   </select>
                 </div>
 

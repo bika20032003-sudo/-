@@ -13,6 +13,7 @@ import alertsRoutes from './routes/alerts.js';
 import analysisRoutes from './routes/analysis.js';
 import roadProgressRoutes from './routes/roadProgress.js';
 import dashboardRoutes from './routes/dashboard.js';
+import messagesRoutes from './routes/messages.js';
 
 dotenv.config();
 
@@ -35,6 +36,47 @@ app.use('/api/users', usersRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/road-progress', roadProgressRoutes);
+app.use('/api/messages', messagesRoutes);
+
+app.get('/api/executive-progress', (req, res) => {
+  const data = store.getExecutiveProgress();
+  res.json({ success: true, data });
+});
+
+app.post('/api/executive-progress', (req, res) => {
+  const updated = store.updateExecutiveProgress(req.body);
+  res.json({ success: true, data: updated, message: 'تم تحديث الموقف التنفيذي بنجاح' });
+});
+
+app.get('/api/road-daily-report', (req, res) => {
+  const data = store.getRoadDailyReport();
+  res.json({ success: true, data });
+});
+
+app.post('/api/road-daily-report', (req, res) => {
+  const updated = store.updateRoadDailyReport(req.body);
+  res.json({ success: true, data: updated, message: 'تم تحديث تقرير أعمال الطريق اليومي بنجاح' });
+});
+
+app.get('/api/fuel-daily-report', (req, res) => {
+  const data = store.getFuelDailyReport();
+  res.json({ success: true, data });
+});
+
+app.post('/api/fuel-daily-report', (req, res) => {
+  const updated = store.updateFuelDailyReport(req.body);
+  res.json({ success: true, data: updated, message: 'تم تحديث تقرير كميات الوقود اليومية بنجاح' });
+});
+
+app.get('/api/two-phase-report', (req, res) => {
+  const data = store.getTwoPhaseReport();
+  res.json({ success: true, data });
+});
+
+app.post('/api/two-phase-report', (req, res) => {
+  const updated = store.updateTwoPhaseReport(req.body);
+  res.json({ success: true, data: updated, message: 'تم تحديث تقرير إنجاز المرحلتين بنجاح' });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ 

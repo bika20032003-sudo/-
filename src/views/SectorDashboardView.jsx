@@ -11,10 +11,10 @@ import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
 export const SectorDashboardView = ({ currentUser }) => {
-  const isSectorA = (currentUser?.sector || '').includes('A') || (currentUser?.username || '').includes('a');
+  const isSectorA = (currentUser?.sector || '').includes('A') || (currentUser?.sector || '').includes('الأولى') || (currentUser?.username || '').includes('a');
   const sectorCode = isSectorA ? 'A' : 'B';
-  const sectorName = isSectorA ? 'القطاع (A)' : 'القطاع (B)';
-  const sectorArabic = isSectorA ? 'القطعة A' : 'القطعة B';
+  const sectorName = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
+  const sectorArabic = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
   const totalLengthKm = isSectorA ? '115.36' : '110.92';
 
   // Sector Overview Summary Data
@@ -52,7 +52,7 @@ export const SectorDashboardView = ({ currentUser }) => {
   const fetchSectorSummary = async () => {
     try {
       setIsDataLoading(true);
-      const res = await fastFetch(`http://localhost:5000/api/dashboard/sector/${sectorCode}`);
+      const res = await fastFetch(`/api/dashboard/sector/${sectorCode}`);
       if (res && res.success) {
         setSectorData(res);
       }
@@ -67,7 +67,7 @@ export const SectorDashboardView = ({ currentUser }) => {
   const fetchSectorReports = async () => {
     try {
       setIsLoadingReports(true);
-      const res = await fastFetch(`http://localhost:5000/api/reports?sector=${sectorCode}`);
+      const res = await fastFetch(`/api/reports?sector=${sectorCode}`);
       let list = [];
       if (res && res.reports) {
         list = res.reports;
@@ -132,7 +132,7 @@ export const SectorDashboardView = ({ currentUser }) => {
         notes: notes ? `${notes} (وقود: ${fuelAmount || 0} لتر - إنجاز رصف: ${todayMeters || 0} م.ط)` : `وقود: ${fuelAmount || 0} لتر - إنجاز رصف: ${todayMeters || 0} م.ط`
       };
 
-      const res = await fastFetch('http://localhost:5000/api/reports/upload', {
+      const res = await fastFetch('/api/reports/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -232,14 +232,16 @@ export const SectorDashboardView = ({ currentUser }) => {
                 fontWeight: 800,
                 color: '#fff'
               }}>
-                بوابة حصرية ومقفلة للقطاع
+                بوابة حصرية لجهاز الإشراف الميداني
               </span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.5rem', fontSize: '0.86rem', color: '#cbd5e1', flexWrap: 'wrap' }}>
-              <span>📍 <strong>المشروع:</strong> طريق أوباري - غات</span>
-              <span>📏 <strong>طول مسار القطاع:</strong> {totalLengthKm} كم</span>
-              <span>👤 <strong>المشرف المسؤول:</strong> {currentUser?.name || `مشرف ${sectorName}`}</span>
+              <span>📍 <strong>المشروع:</strong> طريق أوباري - غات (360 كم)</span>
+              <span>📏 <strong>طول مسار المرحلة:</strong> {totalLengthKm} كم</span>
+              <span>👤 <strong>المهندس المشرف:</strong> <strong style={{ color: '#fff' }}>{currentUser?.name || (isSectorA ? 'م. صلاح العربي' : 'م. عيسى الطاهر')}</strong></span>
+              <span>🛡️ <strong>رئيس جهاز الإشراف:</strong> <strong style={{ color: '#c4b5fd' }}>م. عبدالسلام ابريكاو</strong></span>
+              <span>👔 <strong>مدير المشروع:</strong> <strong style={{ color: '#93c5fd' }}>م. عبدالرحمن الأنصاري</strong></span>
             </div>
           </div>
         </div>
@@ -278,7 +280,7 @@ export const SectorDashboardView = ({ currentUser }) => {
         </div>
       </div>
 
-      {/* Sector Quick Actions Bar */}
+      {/* Sector Quick Actions Bar - The 5 Pillars for Sector Managers */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -293,10 +295,10 @@ export const SectorDashboardView = ({ currentUser }) => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#334155' }}>
-            العمليات الميدانية السريعة لـ {sectorName}:
+            وظائف جهاز الإشراف الميدانية ({sectorName}):
           </span>
           <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-            (سجل الأرشيف يحتوي على {reports.length} تقرير موثق)
+            (إنشاء • رفع • تحليل • عرض • طباعة وتصدير)
           </span>
         </div>
 
@@ -320,7 +322,7 @@ export const SectorDashboardView = ({ currentUser }) => {
             }}
           >
             <Plus size={16} />
-            <span>إنشاء تقرير ميداني جديد ✍️</span>
+            <span>➕ 1. إنشاء تقرير ميداني جديد</span>
           </button>
 
           {reports.length > 0 && (
@@ -342,7 +344,7 @@ export const SectorDashboardView = ({ currentUser }) => {
               }}
             >
               <Printer size={16} />
-              <span>طباعة أحدث تقرير معتمد 🖨️</span>
+              <span>🖨️ طباعة وتصدير التقرير الرسمي</span>
             </button>
           )}
         </div>

@@ -958,7 +958,7 @@
    ========================================================================= */
 
 @media print {
-  /* Hide all app chrome */
+  /* Reset document for clean printing */
   body, html {
     background: #ffffff !important;
     margin: 0 !important;
@@ -968,32 +968,35 @@
     overflow: visible !important;
   }
 
+  /* Hide app navigation and headers when printing */
   .sidebar,
   .navbar,
   .custom-app-sidebar,
-  .custom-system-main > header,
+  .custom-system-main-area > header,
   .reports-top-bar,
   .print-controls-bar,
-  .no-print,
-  .app-root > div:not(.official-print-modal-overlay),
-  .custom-system-layout {
+  .sidebar-mobile-backdrop,
+  .no-print {
     display: none !important;
   }
 
+  /* Ensure overlay and document are displayed cleanly */
   .official-print-modal-overlay {
     position: static !important;
     width: 100% !important;
     height: auto !important;
-    background: transparent !important;
+    background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
     display: block !important;
+    z-index: auto !important;
   }
 
   .print-sheet-wrapper {
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
     overflow: visible !important;
     display: block !important;
   }
@@ -1001,14 +1004,21 @@
   .official-print-document {
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 10mm 12mm !important;
+    border: none !important;
+    padding: 4mm 6mm !important;
     margin: 0 auto !important;
     width: 100% !important;
     min-height: auto !important;
-    page-break-inside: avoid !important;
+    page-break-inside: auto !important;
     page-break-after: auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    display: block !important;
+  }
+
+  .official-print-document table {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 

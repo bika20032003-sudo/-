@@ -13,11 +13,8 @@ export const ReportsView = () => {
     const reportTemplates = [
         { id: 'daily-comprehensive', title: 'تقرير يومي شامل للمشروع', icon: FileText, color: '#2563eb' },
         { id: 'equipment-movement', title: 'تقرير حركة وساعات عمل المعدات', icon: Truck, color: '#7c3aed' },
-        { id: 'crusher-production', title: 'تقرير إنتاج الكسارات والركام', icon: Factory, color: '#0284c7' },
-        { id: 'fuel-solar', title: 'تقرير استهلاك وأذونات السولار', icon: Fuel, color: '#ea580c' },
-        { id: 'sharshoor-aggregate', title: 'تقرير توريدات ورصيد الشرشور', icon: Mountain, color: '#16a34a' },
-        { id: 'issues-breakdowns', title: 'تقرير الأعطال والمشاكل الفنية', icon: AlertTriangle, color: '#dc2626' },
-        { id: 'tomorrow-plan-execution', title: 'تقرير مقارنة خطة الغد بالفعلي', icon: Calendar, color: '#0891b2' }
+        { id: 'fuel-solar', title: 'تقرير كميات واستهلاك السولار والوقود', icon: Fuel, color: '#ea580c' },
+        { id: 'issues-breakdowns', title: 'تقرير الأعطال والمشاكل الفنية', icon: AlertTriangle, color: '#dc2626' }
     ];
     const fetchReportsData = async () => {
         try {
@@ -44,7 +41,7 @@ export const ReportsView = () => {
             'م': idx + 1,
             'رقم التقرير': `#REP-0${r.id}`,
             'التاريخ': r.date?.split('T')[0],
-            'القطعة': r.crusherName,
+            'القطاع': r.crusherName,
             'نوع التقرير / المادة': r.materialName,
             'الكمية المسجلة': r.productionAmount,
             'المسؤول': r.uploadedBy || 'م. عبدالرحمن',
@@ -133,9 +130,9 @@ export const ReportsView = () => {
           <input type="date" className="form-input" value={dateRange.endDate} onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })} style={{ width: '140px', height: '36px', fontSize: '0.82rem' }}/>
 
           <select className="filter-select" value={selectedSector} onChange={(e) => setSelectedSector(e.target.value)} style={{ height: '36px', fontSize: '0.82rem' }}>
-            <option value="all">كافة القطاعات (الإجمالي)</option>
-            <option value="A">القطعة A</option>
-            <option value="B">القطعة B</option>
+            <option value="all">كافة المراحل (الإجمالي)</option>
+            <option value="A">المرحلة الأولى</option>
+            <option value="B">المرحلة الثانية</option>
           </select>
         </div>
 
@@ -170,7 +167,7 @@ export const ReportsView = () => {
             <tr>
               <th>كود التقرير</th>
               <th>التاريخ</th>
-              <th>الموقع / القطعة</th>
+              <th>الموقع / القطاع</th>
               <th>نوع التقرير / المادة</th>
               <th>الكمية المعتمدة</th>
               <th>المسؤول المعتمد</th>
