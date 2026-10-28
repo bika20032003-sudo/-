@@ -414,7 +414,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
                 </td>
                 <td>
                   {editingId === item.id ? (
-                    <input type="number" className="form-input" value={editMeters} onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)} style={{ width: '90px', height: '32px', padding: '0.2rem' }}/>
+                    <input type="number" lang="en-US" dir="ltr" inputMode="decimal" className="form-input" value={editMeters} onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)} style={{ width: '90px', height: '32px', padding: '0.2rem' }}/>
                   ) : (
                     <strong style={{ color: item.todayMeters > 0 ? '#16a34a' : '#64748b' }}>
                       {item.todayMeters.toLocaleString()}

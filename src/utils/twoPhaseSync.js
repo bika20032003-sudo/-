@@ -342,3 +342,4 @@ export function updateRoadProgressItem(id, todayMeters, notes) {
   saveStoredTwoPhaseReport(rep);
   return rep;
 }
+

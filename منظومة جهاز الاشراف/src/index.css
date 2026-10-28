@@ -3,7 +3,7 @@
 :root {
   --sidebar-width: 240px;
   --navbar-height: 52px;
-  --font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  --font-family: 'Segoe UI', Roboto, -apple-system, 'Cairo', sans-serif;
   --bg-page: #f1f5f9;
   --card-bg: #ffffff;
   --border-color: #e2e8f0;
@@ -19,7 +19,7 @@
   box-sizing: border-box;
   font-family: var(--font-family);
   font-variant-numeric: lining-nums tabular-nums !important;
-  -webkit-font-feature-settings: "lnum" 1, "tnum" 1, "locl" 0 !important;
+  -webkit-font-feature-settings: "lnum" 1, "tnum" 1, "locl" 0, "numr" 0, "onum" 0 !important;
   font-feature-settings: "lnum" 1, "tnum" 1, "locl" 0 !important;
 }
 

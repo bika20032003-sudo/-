@@ -635,7 +635,7 @@ export const SectorDashboardView = ({ currentUser }) => {
                 إنتاج الكسارة اليوم (طن)
               </label>
               <input
-                type="number"
+                type="number" lang="en-US" dir="ltr" inputMode="decimal"
                 placeholder="مثال: 850"
                 value={productionAmount}
                 onChange={(e) => setProductionAmount(e.target.value)}
@@ -648,7 +648,7 @@ export const SectorDashboardView = ({ currentUser }) => {
                 الوقود المنصرف بالقطاع (لتر)
               </label>
               <input
-                type="number"
+                type="number" lang="en-US" dir="ltr" inputMode="decimal"
                 placeholder="مثال: 1850"
                 value={fuelAmount}
                 onChange={(e) => setFuelAmount(e.target.value)}
@@ -661,7 +661,7 @@ export const SectorDashboardView = ({ currentUser }) => {
                 أعمال الرصف المنجزة اليوم (م.ط)
               </label>
               <input
-                type="number"
+                type="number" lang="en-US" dir="ltr" inputMode="decimal"
                 placeholder="مثال: 650"
                 value={todayMeters}
                 onChange={(e) => setTodayMeters(e.target.value)}

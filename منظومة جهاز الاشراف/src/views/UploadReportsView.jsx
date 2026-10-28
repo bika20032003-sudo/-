@@ -945,7 +945,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   الكمية المصروفة (لتر) *
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 2850"
                   value={fuelDispatched}
@@ -959,7 +959,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   الوارد الجديد (لتر)
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 0"
                   value={fuelReceived}
@@ -973,7 +973,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   الكمية المتبقية (لتر)
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 4500"
                   value={fuelRemaining}
@@ -1010,7 +1010,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   إجمالي الأطوال المستهدفة (م.ط) *
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 1400"
                   value={targetLength}
@@ -1024,7 +1024,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   إجمالي المعدات والأطقم المطلوبة
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 12"
                   value={targetEquipment}
@@ -1056,7 +1056,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   إنجاز FDR اليوم (م.ط) *
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 1220"
                   value={twoPhaseFdr}
@@ -1070,7 +1070,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   إنجاز التشريب MCO اليوم (م.ط) *
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 460"
                   value={twoPhaseMco}
@@ -1084,7 +1084,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   إنجاز الأسفلت المحسن اليوم (م.ط) *
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 1140"
                   value={twoPhaseAsphalt}
@@ -1098,7 +1098,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   فرمة بدون أسمنت (م.ط)
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 500"
                   value={twoPhaseFdrNoCement}
@@ -1112,7 +1112,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   طبقة أساس حبيبي (م.ط)
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 500"
                   value={twoPhaseAggBase}
@@ -1126,7 +1126,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   المستهدف اليومي المعتمد (م.ط)
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 1500"
                   value={twoPhaseDailyTarget}
@@ -1208,7 +1208,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   طول الرصف المنفذ (م.ط) *
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 850"
                   value={roadMeters}
@@ -1226,7 +1226,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   المساحة المنجزة (م٢)
                 </label>
                 <input
-                  type="number"
+                  type="number" lang="en-US" dir="ltr" inputMode="decimal"
                   className="form-input"
                   placeholder="مثال: 6375"
                   value={roadArea}

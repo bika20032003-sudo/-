@@ -577,7 +577,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                     {/* Dispatched */}
                     <td style={{ border: '2px solid #000000', padding: '0.35rem' }}>
                       <input
-                        type="number"
+                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
                         step="any"
                         placeholder="0.00"
                         value={row.dispatchedLiters}
@@ -598,7 +598,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                     {/* Received */}
                     <td style={{ border: '2px solid #000000', padding: '0.35rem' }}>
                       <input
-                        type="number"
+                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
                         step="any"
                         placeholder="0.00"
                         value={row.receivedLiters}
@@ -619,7 +619,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                     {/* Remaining */}
                     <td style={{ border: '2px solid #000000', padding: '0.35rem' }}>
                       <input
-                        type="number"
+                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
                         step="any"
                         placeholder="0.00"
                         value={row.remainingLiters}

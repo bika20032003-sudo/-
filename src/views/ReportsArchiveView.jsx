@@ -1104,7 +1104,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                     الكمية / الإنتاج (طن أو لتر)
                   </label>
                   <input
-                    type="number"
+                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
                     className="form-input"
                     value={editFormData.productionAmount}
                     onChange={(e) => setEditFormData({ ...editFormData, productionAmount: parseFloat(e.target.value) || 0 })}
@@ -1116,7 +1116,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                     إنجاز الرصف اليومي (م.ط)
                   </label>
                   <input
-                    type="number"
+                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
                     className="form-input"
                     value={editFormData.roadMeters}
                     onChange={(e) => setEditFormData({ ...editFormData, roadMeters: parseFloat(e.target.value) || 0 })}
@@ -1128,7 +1128,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                     الوقود المستهلك (لتر)
                   </label>
                   <input
-                    type="number"
+                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
                     className="form-input"
                     value={editFormData.fuelAmount}
                     onChange={(e) => setEditFormData({ ...editFormData, fuelAmount: parseFloat(e.target.value) || 0 })}
