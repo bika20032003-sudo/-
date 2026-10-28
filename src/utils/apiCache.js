@@ -87,6 +87,35 @@ export function getFallbackData(url) {
       }
     };
   }
+    if (url.includes('/api/road-daily-report')) {
+    let localData = null;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('road_daily_report_data');
+        if (raw) localData = JSON.parse(raw);
+      }
+    } catch {}
+    if (localData && typeof localData === 'object' && Array.isArray(localData.items) && localData.items.length > 0) {
+      return { success: true, data: localData };
+    }
+    return { success: true, data: null };
+  }
+  if (url.includes('/api/fuel-daily-report')) {
+    let localData = null;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('fuel_daily_report_data');
+        if (raw) localData = JSON.parse(raw);
+      }
+    } catch {}
+    if (localData && typeof localData === 'object' && Array.isArray(localData.fuelItems) && localData.fuelItems.length > 0) {
+      return { success: true, data: localData };
+    }
+    return { success: true, data: null };
+  }
+  if (url.includes('/api/two-phase-report')) {
+    return { success: true, data: null };
+  }
   if (url.includes('/api/dashboard/sector')) {
     return {
       success: true,

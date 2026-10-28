@@ -174,6 +174,11 @@ export const RoadDailyReportForm = ({
     return val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   };
 
+  // Safe accessor guaranteed to always be a valid report object with an items array
+  const currentData = (reportData && typeof reportData === 'object' && Array.isArray(reportData.items) && reportData.items.length > 0)
+    ? reportData
+    : initialRoadDailyData;
+
   // Load from backend on mount
   useEffect(() => {
     let isMounted = true;
@@ -181,16 +186,28 @@ export const RoadDailyReportForm = ({
       try {
         setIsLoading(true);
         const res = await fastFetch('http://localhost:5000/api/road-daily-report');
-        if (res && res.success && res.data && isMounted) {
+        if (res && res.success && res.data && typeof res.data === 'object' && Array.isArray(res.data.items) && res.data.items.length > 0 && isMounted) {
           setReportData(res.data);
-        } else {
-          const local = localStorage.getItem('road_daily_report_data');
-          if (local && isMounted) {
-            setReportData(JSON.parse(local));
-          }
+          return;
+        }
+        
+        const local = typeof window !== 'undefined' ? localStorage.getItem('road_daily_report_data') : null;
+        if (local && isMounted) {
+          try {
+            const parsed = JSON.parse(local);
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.items) && parsed.items.length > 0) {
+              setReportData(parsed);
+              return;
+            }
+          } catch {}
+        }
+
+        if (isMounted) {
+          setReportData(initialRoadDailyData);
         }
       } catch (e) {
         console.warn('Could not load road daily report from server, using default:', e);
+        if (isMounted) setReportData(initialRoadDailyData);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -203,68 +220,78 @@ export const RoadDailyReportForm = ({
   const calculatedTotals = useMemo(() => {
     let totalLen = 0;
     let totalAr = 0;
-    (reportData.items || []).forEach(row => {
+    (currentData.items || []).forEach(row => {
       totalLen += parseNum(row.length);
       totalAr += parseNum(row.area);
     });
     return {
       totalLength: totalLen,
       totalArea: totalAr,
-      itemsCount: (reportData.items || []).length
+      itemsCount: (currentData.items || []).length
     };
-  }, [reportData.items]);
+  }, [currentData.items]);
 
   // Handle row changes
   const handleRowChange = (id, field, value) => {
-    setReportData(prev => ({
-      ...prev,
-      items: prev.items.map(row => {
-        if (row.id === id) {
-          const updated = { ...row, [field]: value };
-          if (field === 'notes') {
-            const valStr = String(value).trim();
-            updated.noteHighlight = valStr === 'معمل ومساحه' || valStr === 'جاري العمل';
+    setReportData(prev => {
+      const base = (prev && typeof prev === 'object' && Array.isArray(prev.items) && prev.items.length > 0) ? prev : initialRoadDailyData;
+      return {
+        ...base,
+        items: base.items.map(row => {
+          if (row.id === id) {
+            const updated = { ...row, [field]: value };
+            if (field === 'notes') {
+              const valStr = String(value).trim();
+              updated.noteHighlight = valStr === 'معمل ومساحه' || valStr === 'جاري العمل';
+            }
+            return updated;
           }
-          return updated;
-        }
-        return row;
-      })
-    }));
+          return row;
+        })
+      };
+    });
   };
 
   // Add new row
   const handleAddRow = () => {
     const nextId = Date.now() + Math.random();
-    const nextNum = String(reportData.items.length + 1);
-    setReportData(prev => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        {
-          id: nextId,
-          itemNumber: nextNum,
-          item: '',
-          stationFrom: '',
-          stationTo: '',
-          length: '',
-          area: '',
-          notes: '—',
-          noteHighlight: false
-        }
-      ]
-    }));
+    setReportData(prev => {
+      const base = (prev && typeof prev === 'object' && Array.isArray(prev.items) && prev.items.length > 0) ? prev : initialRoadDailyData;
+      const nextNum = String(base.items.length + 1);
+      return {
+        ...base,
+        items: [
+          ...base.items,
+          {
+            id: nextId,
+            itemNumber: nextNum,
+            item: '',
+            stationFrom: '',
+            stationTo: '',
+            length: '',
+            area: '',
+            notes: '—',
+            noteHighlight: false
+          }
+        ]
+      };
+    });
   };
 
   // Remove row
   const handleRemoveRow = (id) => {
-    if (reportData.items.length <= 1) {
+    const items = currentData.items || [];
+    if (items.length <= 1) {
       alert('لا يمكن حذف البند الأخير بالتقرير');
       return;
     }
-    setReportData(prev => ({
-      ...prev,
-      items: prev.items.filter(r => r.id !== id)
-    }));
+    setReportData(prev => {
+      const base = (prev && typeof prev === 'object' && Array.isArray(prev.items) && prev.items.length > 0) ? prev : initialRoadDailyData;
+      return {
+        ...base,
+        items: base.items.filter(r => r.id !== id)
+      };
+    });
   };
 
   // Reset to default approved data (24/10/2026)
@@ -287,7 +314,7 @@ export const RoadDailyReportForm = ({
         ['م', 'البند', 'من', 'الى', 'طول (م.ط)', 'م٢', 'ملاحظات']
       ];
 
-      reportData.items.forEach((row, idx) => {
+      (currentData.items || []).forEach((row, idx) => {
         dataRows.push([
           row.itemNumber || idx + 1,
           row.item || '—',
@@ -307,7 +334,7 @@ export const RoadDailyReportForm = ({
         '',
         calculatedTotals.totalLength,
         calculatedTotals.totalArea,
-        `${reportData.items.length} بنود منجزة`
+        `${(currentData.items || []).length} بنود منجزة`
       ]);
       dataRows.push([]);
       dataRows.push([
@@ -342,7 +369,7 @@ export const RoadDailyReportForm = ({
     ownerRepresentative: reportData.ownerRepresentative || '................................',
     totalLength: calculatedTotals.totalLength,
     totalArea: calculatedTotals.totalArea,
-    items: reportData.items.map((it, idx) => ({
+    items: (currentData.items || []).map((it, idx) => ({
       index: idx + 1,
       itemNumber: it.itemNumber || String(idx + 1),
       item: it.item,
@@ -926,7 +953,7 @@ export const RoadDailyReportForm = ({
               </tr>
             </thead>
             <tbody>
-              {reportData.items.map((row, idx) => {
+              {(currentData.items || []).map((row, idx) => {
                 const isNoteYellow = row.noteHighlight || row.notes === 'معمل ومساحه' || row.notes === 'جاري العمل';
 
                 return (

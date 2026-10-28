@@ -89,6 +89,11 @@ export const FuelDailyReportForm = ({
     return val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   };
 
+  // Safe accessor guaranteed to always be a valid report object with a fuelItems array
+  const currentData = (reportData && typeof reportData === 'object' && Array.isArray(reportData.fuelItems) && reportData.fuelItems.length > 0)
+    ? reportData
+    : initialFuelDailyData;
+
   // Load from backend or localStorage on mount
   useEffect(() => {
     let isMounted = true;
@@ -96,16 +101,28 @@ export const FuelDailyReportForm = ({
       try {
         setIsLoading(true);
         const res = await fastFetch('http://localhost:5000/api/fuel-daily-report');
-        if (res && res.success && res.data && isMounted) {
+        if (res && res.success && res.data && typeof res.data === 'object' && Array.isArray(res.data.fuelItems) && res.data.fuelItems.length > 0 && isMounted) {
           setReportData(res.data);
-        } else {
-          const local = localStorage.getItem('fuel_daily_report_data');
-          if (local && isMounted) {
-            setReportData(JSON.parse(local));
-          }
+          return;
+        }
+        
+        const local = typeof window !== 'undefined' ? localStorage.getItem('fuel_daily_report_data') : null;
+        if (local && isMounted) {
+          try {
+            const parsed = JSON.parse(local);
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.fuelItems) && parsed.fuelItems.length > 0) {
+              setReportData(parsed);
+              return;
+            }
+          } catch {}
+        }
+
+        if (isMounted) {
+          setReportData(initialFuelDailyData);
         }
       } catch (e) {
         console.warn('Could not load fuel daily report from server, using default:', e);
+        if (isMounted) setReportData(initialFuelDailyData);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -119,7 +136,7 @@ export const FuelDailyReportForm = ({
     let disp = 0;
     let rec = 0;
     let rem = 0;
-    (reportData.fuelItems || []).forEach(row => {
+    (currentData.fuelItems || []).forEach(row => {
       disp += parseNum(row.dispatchedLiters);
       rec += parseNum(row.receivedLiters);
       rem += parseNum(row.remainingLiters);
@@ -128,42 +145,48 @@ export const FuelDailyReportForm = ({
       totalDispatched: disp,
       totalReceived: rec,
       totalRemaining: rem,
-      itemsCount: (reportData.fuelItems || []).length
+      itemsCount: (currentData.fuelItems || []).length
     };
-  }, [reportData.fuelItems]);
+  }, [currentData.fuelItems]);
 
   // Handle row changes
   const handleRowChange = (id, field, value) => {
-    setReportData(prev => ({
-      ...prev,
-      fuelItems: prev.fuelItems.map(row => {
-        if (row.id === id) {
-          return { ...row, [field]: value };
-        }
-        return row;
-      })
-    }));
+    setReportData(prev => {
+      const base = (prev && typeof prev === 'object' && Array.isArray(prev.fuelItems) && prev.fuelItems.length > 0) ? prev : initialFuelDailyData;
+      return {
+        ...base,
+        fuelItems: base.fuelItems.map(row => {
+          if (row.id === id) {
+            return { ...row, [field]: value };
+          }
+          return row;
+        })
+      };
+    });
   };
 
   // Add new location / tank row
   const handleAddRow = () => {
     const nextId = Date.now() + Math.random();
-    const nextSeq = String(reportData.fuelItems.length + 1);
-    setReportData(prev => ({
-      ...prev,
-      fuelItems: [
-        ...prev.fuelItems,
-        {
-          id: nextId,
-          seq: nextSeq,
-          location: '',
-          dispatchedLiters: '0.00',
-          receivedLiters: '0.00',
-          remainingLiters: '0.00',
-          notes: ''
-        }
-      ]
-    }));
+    setReportData(prev => {
+      const base = (prev && typeof prev === 'object' && Array.isArray(prev.fuelItems) && prev.fuelItems.length > 0) ? prev : initialFuelDailyData;
+      const nextSeq = String(base.fuelItems.length + 1);
+      return {
+        ...base,
+        fuelItems: [
+          ...base.fuelItems,
+          {
+            id: nextId,
+            seq: nextSeq,
+            location: '',
+            dispatchedLiters: '0.00',
+            receivedLiters: '0.00',
+            remainingLiters: '0.00',
+            notes: ''
+          }
+        ]
+      };
+    });
   };
 
   // Remove row
@@ -198,7 +221,7 @@ export const FuelDailyReportForm = ({
         ['ت', 'الموقع', 'الكمية المصروفة (لتر)', 'الوارد (لتر)', 'الكمية المتبقية (لتر)']
       ];
 
-      reportData.fuelItems.forEach((row, idx) => {
+      (currentData.fuelItems || []).forEach((row, idx) => {
         dataRows.push([
           row.seq || idx + 1,
           row.location || '—',
@@ -251,7 +274,7 @@ export const FuelDailyReportForm = ({
     totalRemainingLiters: calculatedTotals.totalRemaining,
     uploadedBy: reportData.fuelOfficer || 'مسؤول الوقود بالموقع',
     approvedBy: reportData.headOfSupervision || 'م. عبدالسلام ابريكاو',
-    fuelItems: reportData.fuelItems.map((r, idx) => ({
+    fuelItems: (currentData.fuelItems || []).map((r, idx) => ({
       index: idx + 1,
       seq: r.seq || String(idx + 1),
       location: r.location,
@@ -868,7 +891,7 @@ export const FuelDailyReportForm = ({
               </tr>
             </thead>
             <tbody>
-              {reportData.fuelItems.map((row, idx) => (
+              {(currentData.fuelItems || []).map((row, idx) => (
                 <tr key={row.id} style={{ background: '#ffffff' }}>
                   
                   {/* Sequence */}
