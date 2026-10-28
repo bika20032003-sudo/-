@@ -1366,7 +1366,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                         </td>
                         <td style={{ border: '2px solid #000000', padding: '0.25rem 0.4rem' }}>
                           <input
-                            type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                            type="text" inputMode="decimal" dir="ltr" lang="en"
                             step="any"
                             placeholder="0.00"
                             value={row.length}
@@ -1454,7 +1454,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                         </td>
                         <td style={{ border: '2px solid #000000', padding: '0.25rem 0.5rem' }}>
                           <input
-                            type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                            type="text" inputMode="decimal" dir="ltr" lang="en"
                             step="any"
                             placeholder="0"
                             value={eq.count}
@@ -1634,7 +1634,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
                     <td style={{ border: '2px solid #000000', padding: '0.35rem' }}>
                       <input
-                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                        type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
                         value={row.dispatchedLiters}
@@ -1654,7 +1654,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
                     <td style={{ border: '2px solid #000000', padding: '0.35rem' }}>
                       <input
-                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                        type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
                         value={row.receivedLiters}
@@ -1674,7 +1674,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
                     <td style={{ border: '2px solid #000000', padding: '0.35rem' }}>
                       <input
-                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                        type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
                         value={row.remainingLiters}
@@ -1881,7 +1881,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
                     <td style={{ border: '2px solid #000000', padding: '0.4rem' }}>
                       <input
-                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                        type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
                         value={row.length}
@@ -1900,7 +1900,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
                     <td style={{ border: '2px solid #000000', padding: '0.4rem' }}>
                       <input
-                        type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                        type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
                         value={row.area}

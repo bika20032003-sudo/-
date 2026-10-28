@@ -524,7 +524,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.todayMeters}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
@@ -543,7 +543,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.totalMeters}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
@@ -562,7 +562,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.dailyTarget}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
@@ -630,7 +630,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.todayMeters}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
@@ -649,7 +649,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.totalMeters}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
@@ -668,7 +668,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.dailyTarget}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
@@ -790,7 +790,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0', background: '#fffbeb' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.readyToWorkMeters}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
@@ -849,7 +849,7 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0', background: '#fffbeb' }}>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
                     value={item.readyToWorkMeters}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
@@ -1541,7 +1541,7 @@ export const TwoPhaseDailyReportForm = ({
                   </td>
                   <td style={{ padding: '3px', borderRight: '1px solid #e2e8f0' }}>
                     <input
-                      type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                      type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
                       value={item.phase1}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
@@ -1559,7 +1559,7 @@ export const TwoPhaseDailyReportForm = ({
                   </td>
                   <td style={{ padding: '3px', borderRight: '1px solid #e2e8f0' }}>
                     <input
-                      type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                      type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
                       value={item.phase2}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
@@ -1617,7 +1617,7 @@ export const TwoPhaseDailyReportForm = ({
                   </td>
                   <td style={{ padding: '3px', borderRight: '1px solid #e2e8f0' }}>
                     <input
-                      type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                      type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
                       value={item.phase1}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
@@ -1635,7 +1635,7 @@ export const TwoPhaseDailyReportForm = ({
                   </td>
                   <td style={{ padding: '3px', borderRight: '1px solid #e2e8f0' }}>
                     <input
-                      type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                      type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
                       value={item.phase2}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}

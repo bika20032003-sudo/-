@@ -866,7 +866,7 @@ export const EquipmentView = ({ currentUser }) => {
                     العدد الإجمالي المتوفر *
                   </label>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     className="form-input"
                     min="1"
                     value={formData.count}
@@ -893,7 +893,7 @@ export const EquipmentView = ({ currentUser }) => {
                     العدد في المرحلة الأولى
                   </label>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     className="form-input"
                     min="0"
                     value={formData.phase1Count}
@@ -907,7 +907,7 @@ export const EquipmentView = ({ currentUser }) => {
                     العدد في المرحلة الثانية
                   </label>
                   <input
-                    type="number" lang="en-US" dir="ltr" inputMode="decimal"
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
                     className="form-input"
                     min="0"
                     value={formData.phase2Count}

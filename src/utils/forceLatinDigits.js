@@ -47,15 +47,34 @@ export const toCleanLatinDigits = (val) => {
     .replace(/[٬،]/g, '');
 };
 
-// 5. Intercept all user typing / pasting to auto-convert any Arabic-Indic digits to Latin
+// 5. Scrubber for localStorage: cleanse any existing stored reports or data of Arabic numerals
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const keysToClean = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k) keysToClean.push(k);
+    }
+    keysToClean.forEach(key => {
+      try {
+        const val = localStorage.getItem(key);
+        if (val && /[\u0660-\u0669\u06F0-\u06F9]/.test(val)) {
+          const cleaned = toCleanLatinDigits(val);
+          localStorage.setItem(key, cleaned);
+        }
+      } catch (_) {}
+    });
+  } catch (_) {}
+}
+
+// 6. Intercept all user typing / pasting to auto-convert any Arabic-Indic digits to Latin
 if (typeof window !== 'undefined') {
   // Ensure documentElement has lang="en" to stop browser form controls from localizing numbers
   if (document.documentElement) {
     document.documentElement.setAttribute('lang', 'en');
   }
 
-  // Intercept inputs
-  window.addEventListener('input', (e) => {
+  const handleInputCleanse = (e) => {
     const target = e.target;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
       const val = target.value;
@@ -64,7 +83,11 @@ if (typeof window !== 'undefined') {
         target.value = cleaned;
       }
     }
-  }, true);
+  };
+
+  window.addEventListener('input', handleInputCleanse, true);
+  window.addEventListener('change', handleInputCleanse, true);
+  window.addEventListener('paste', handleInputCleanse, true);
 
   // Auto-tag all input elements with lang="en-US" so browser number steppers never localize to Arabic
   const tagInputsWithEn = () => {
