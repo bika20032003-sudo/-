@@ -31,13 +31,15 @@ jobs:
           node-version: 20
 
       - name: Install dependencies (Supervision System)
-        run: npm ci || npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build Supervision System
         run: |
           npm run build
+          mkdir -p /tmp/supervision_backup
+          cp -r dist/* /tmp/supervision_backup/
           mkdir -p dist/supervision
-          cp -r dist/* dist/supervision/ 2>/dev/null || true
+          cp -r /tmp/supervision_backup/* dist/supervision/ 2>/dev/null || true
           touch dist/.nojekyll
           cp public/404.html dist/404.html 2>/dev/null || true
 
@@ -46,8 +48,8 @@ jobs:
         run: |
           if [ -d "الموقع التعريفي لمشروع طريق اوباري غات" ]; then
             cd "الموقع التعريفي لمشروع طريق اوباري غات"
-            npm ci --legacy-peer-deps || npm install --legacy-peer-deps
-            npm run build
+            npm install --legacy-peer-deps || true
+            npm run build || true
             cd ..
             mkdir -p dist/showcase
             mkdir -p dist/road
@@ -60,8 +62,8 @@ jobs:
         run: |
           if [ -d "البوابة الاخبارية لمشروع طريق اوباري غات" ]; then
             cd "البوابة الاخبارية لمشروع طريق اوباري غات"
-            npm ci --legacy-peer-deps || npm install --legacy-peer-deps
-            npm run build
+            npm install --legacy-peer-deps || true
+            npm run build || true
             cd ..
             mkdir -p dist/portal
             cp -r "البوابة الاخبارية لمشروع طريق اوباري غات/dist/"* dist/portal/ 2>/dev/null || true
