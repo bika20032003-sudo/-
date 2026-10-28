@@ -424,7 +424,7 @@ export const DashboardView = ({ onNavigateTab }) => {
               {/* Right Side: Fuel Consumption Chart Columns */}
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ea580c', marginBottom: '0.75rem', display: 'block' }}>
-                  استهلاك السولار الأسبوعي (لتر / يوم):
+                  استهلاك الوقود الأسبوعي (لتر / يوم):
                 </span>
 
                 <div style={{ height: '140px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '2px solid #fed7aa', gap: '0.4rem' }}>
@@ -602,10 +602,10 @@ export const DashboardView = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 2: عداد السولار وحده (المنصرف للآليات) */}
+        {/* Card 2: عداد الوقود وحده (المنصرف للآليات) */}
         <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #ea580c' }} title="فتح قسم إدارة الوقود">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#9a3412', fontWeight: 800 }}>عداد السولار (المنصرف)</span>
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#9a3412', fontWeight: 800 }}>عداد الوقود (المنصرف)</span>
             <div className="kpi-icon-circle orange" style={{ background: '#ffedd5', color: '#ea580c' }}>
               <Fuel size={20} color="#ea580c"/>
             </div>

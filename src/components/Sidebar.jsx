@@ -141,7 +141,6 @@ export const Sidebar = ({
                     { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
                     { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
                     { id: 'reports-archive', label: 'أرشيف التقارير والاعتماد', icon: FileText },
-                    { id: 'periodic-reports', label: 'التقارير الدورية الشاملة', icon: CalendarRange, badge: 'تلقائي' },
                     { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
                 ]
             },

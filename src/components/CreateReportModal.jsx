@@ -611,7 +611,7 @@ export const CreateReportModal = ({
                     <strong style={{ fontSize: '0.88rem' }}>تقرير كميات الوقود</strong>
                   </div>
                   <p style={{ margin: '0.35rem 0 0', fontSize: '0.74rem', color: '#64748b' }}>
-                    السولار المنصرف، الوارد، رصيد الخزانات
+                    الوقود المنصرف، الوارد، رصيد الخزانات
                   </p>
                 </div>
 
@@ -822,7 +822,7 @@ export const CreateReportModal = ({
                     <thead>
                       <tr style={{ background: '#fef3c7', color: '#b45309' }}>
                         <th style={{ padding: '0.5rem', border: '1px solid #fde68a' }}>الموقع / الخزان</th>
-                        <th style={{ padding: '0.5rem', border: '1px solid #fde68a', color: '#ea580c' }}>السولار المصروف (لتر)</th>
+                        <th style={{ padding: '0.5rem', border: '1px solid #fde68a', color: '#ea580c' }}>الوقود المصروف (لتر)</th>
                         <th style={{ padding: '0.5rem', border: '1px solid #fde68a', color: '#2563eb' }}>الوارد (لتر)</th>
                         <th style={{ padding: '0.5rem', border: '1px solid #fde68a', color: '#16a34a' }}>الرصيد المتبقي (لتر)</th>
                       </tr>

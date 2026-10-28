@@ -11,7 +11,6 @@ import { EquipmentView } from './EquipmentView';
 import { FuelView } from './FuelView';
 import { UsersView } from './UsersView';
 import { ReportsArchiveView } from './ReportsArchiveView';
-import { PeriodicReportsView } from './PeriodicReportsView';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { UserProfileModal } from '../components/UserProfileModal';

@@ -74,7 +74,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
       bgLight: '#fffbeb',
       borderColor: '#f59e0b',
       badgeText: 'يوجه تلقائياً إلى: قسم إدارة الوقود والمحروقات ⛽',
-      description: 'رفع كشف كميات السولار المنصرف، الوارد، والمخزون المتبقي بالخزانات والصهاريج الميدانية',
+      description: 'رفع كشف كميات الوقود المنصرف، الوارد، والمخزون المتبقي بالخزانات والصهاريج الميدانية',
       defaultLocation: 'خزان 107'
     }
   ];

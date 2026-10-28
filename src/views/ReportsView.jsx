@@ -13,7 +13,7 @@ export const ReportsView = () => {
     const reportTemplates = [
         { id: 'daily-comprehensive', title: 'تقرير يومي شامل للمشروع', icon: FileText, color: '#2563eb' },
         { id: 'equipment-movement', title: 'تقرير حركة وساعات عمل المعدات', icon: Truck, color: '#7c3aed' },
-        { id: 'fuel-solar', title: 'تقرير كميات واستهلاك السولار والوقود', icon: Fuel, color: '#ea580c' },
+        { id: 'fuel-solar', title: 'تقرير كميات واستهلاك الوقود والمحروقات', icon: Fuel, color: '#ea580c' },
         { id: 'issues-breakdowns', title: 'تقرير الأعطال والمشاكل الفنية', icon: AlertTriangle, color: '#dc2626' }
     ];
     const fetchReportsData = async () => {
