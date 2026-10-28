@@ -28,14 +28,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies (Supervision System)
-        run: npm install --legacy-peer-deps
+        run: npm install --include=dev --legacy-peer-deps
 
       - name: Build Supervision System
         run: |
-          npm run build
+          npx vite build
           mkdir -p /tmp/supervision_backup
           cp -r dist/* /tmp/supervision_backup/
           mkdir -p dist/supervision
@@ -48,8 +48,8 @@ jobs:
         run: |
           if [ -d "الموقع التعريفي لمشروع طريق اوباري غات" ]; then
             cd "الموقع التعريفي لمشروع طريق اوباري غات"
-            npm install --legacy-peer-deps || true
-            npm run build || true
+            npm install --include=dev --legacy-peer-deps || true
+            npx vite build || npm run build || true
             cd ..
             mkdir -p dist/showcase
             mkdir -p dist/road
@@ -62,8 +62,8 @@ jobs:
         run: |
           if [ -d "البوابة الاخبارية لمشروع طريق اوباري غات" ]; then
             cd "البوابة الاخبارية لمشروع طريق اوباري غات"
-            npm install --legacy-peer-deps || true
-            npm run build || true
+            npm install --include=dev --legacy-peer-deps || true
+            npx vite build || npm run build || true
             cd ..
             mkdir -p dist/portal
             cp -r "البوابة الاخبارية لمشروع طريق اوباري غات/dist/"* dist/portal/ 2>/dev/null || true
