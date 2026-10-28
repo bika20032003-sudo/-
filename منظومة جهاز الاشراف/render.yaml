@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: crusher-portal
+    env: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build && cd server && npm install
+    startCommand: node server/src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
