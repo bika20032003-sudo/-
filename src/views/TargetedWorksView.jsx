@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { 
   Target, Plus, Search, FileSpreadsheet, RefreshCw, 
   Printer, Eye, Trash2, Calendar, Milestone, Truck, 
-  Layers, CheckCircle2, AlertCircle, FileText, Send, Clock
+  Layers, CheckCircle2, AlertCircle, FileText, Send, Clock, Edit3
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
-import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
+import { CreateTargetedWorksReportModal, defaultApprovedTargetedWorksReport } from '../components/CreateTargetedWorksReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 
 export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
@@ -15,6 +15,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
   const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
   const [viewDetailsReport, setViewDetailsReport] = useState(null);
   const [reportToDelete, setReportToDelete] = useState(null);
@@ -41,6 +42,20 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
         }
       });
       const uniqueList = Array.from(uniqueMap.values());
+
+      // If no targeted reports exist, include the official approved report for Sunday 25/10/2026
+      const hasApproved = uniqueList.some(r => r.reportNumber === defaultApprovedTargetedWorksReport.reportNumber || r.id === defaultApprovedTargetedWorksReport.id);
+      if (!hasApproved) {
+        uniqueList.unshift(defaultApprovedTargetedWorksReport);
+        try {
+          const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+          const exists = local.some(r => r.reportNumber === defaultApprovedTargetedWorksReport.reportNumber);
+          if (!exists) {
+            local.unshift(defaultApprovedTargetedWorksReport);
+            localStorage.setItem('local_reports', JSON.stringify(local));
+          }
+        } catch (e) {}
+      }
 
       const targeted = uniqueList.filter(r => 
         r.isTargetedWorksReport || 
@@ -159,7 +174,10 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
           <button
             type="button"
             id="create-targeted-report-btn"
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setEditingReport(null);
+              setIsCreateModalOpen(true);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -322,7 +340,10 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
             </p>
             <button
               type="button"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setEditingReport(null);
+                setIsCreateModalOpen(true);
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -433,6 +454,31 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
                       <button
                         type="button"
+                        onClick={() => {
+                          setEditingReport(report);
+                          setIsCreateModalOpen(true);
+                        }}
+                        style={{
+                          background: '#f0fdf4',
+                          border: '1px solid #bbf7d0',
+                          color: '#166534',
+                          borderRadius: '6px',
+                          padding: '0.4rem 0.65rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          fontSize: '0.82rem',
+                          fontWeight: 800
+                        }}
+                        title="تعديل بيانات التقرير"
+                      >
+                        <Edit3 size={15} />
+                        <span>تعديل</span>
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setSelectedReportForPrint(report)}
                         style={{
                           background: '#eff6ff',
@@ -493,12 +539,16 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
         )}
       </div>
 
-      {/* Create Targeted Works Modal */}
+      {/* Create / Edit Targeted Works Modal */}
       {isCreateModalOpen && (
         <CreateTargetedWorksReportModal
           isOpen={isCreateModalOpen}
           currentUser={currentUser}
-          onClose={() => setIsCreateModalOpen(false)}
+          reportToEdit={editingReport}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setEditingReport(null);
+          }}
           onReportCreated={(newRep) => {
             fetchTargetedReports();
           }}

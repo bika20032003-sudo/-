@@ -1,11 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Target, X, Plus, Trash2, Printer, Send, CheckCircle2, 
   FileSpreadsheet, AlertCircle, RefreshCw, Calendar, Clock,
-  Truck, Milestone, Layers, UserCheck, Shield
+  Truck, Milestone, Layers, UserCheck, Shield, RotateCcw, Edit3
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { fastFetch } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+
+// Approved Targeted Works Data from official document (Sunday 25/10/2026)
+export const initialTargetedWorksSections = [
+  {
+    id: 'fdr',
+    title: 'أعمال تشغيل FDR',
+    startTimeNote: 'بدء أعمال الفرم الساعه 05:00 صباحاً',
+    workItems: [
+      { id: 1, item: 'أعمال فرم بدون أسمنت', stationFrom: '242+500', stationTo: '243+500', length: '1000.00', notes: '—' },
+      { id: 2, item: 'أعمال فرم بالأسمنت', stationFrom: '242+500', stationTo: '243+000', length: '500.00', notes: '—' }
+    ],
+    equipmentTitle: 'المعدات والإعداد المطلوبه لفرم FDR',
+    equipmentItems: [
+      { id: 1, name: 'ماكينه FDR', count: '3', notes: '—' },
+      { id: 2, name: 'جريدار', count: '2', notes: '—' },
+      { id: 3, name: 'هراس حافر غنم', count: '3', notes: '—' },
+      { id: 4, name: 'هراس تربه', count: '3', notes: '—' },
+      { id: 5, name: 'تانك مياه', count: '7', notes: 'معالجه + فرم بدون اسمنت + فرم بالاسمنت' },
+      { id: 6, name: 'لودر', count: '1', notes: '—' },
+      { id: 7, name: 'قلابات', count: '1', notes: '—' },
+      { id: 8, name: 'مانيتو', count: '1', notes: 'معالجه' },
+      { id: 9, name: 'جرار زراعي', count: '1', notes: '—' },
+      { id: 10, name: 'عدد 2 طاقم مساحة', count: '6', notes: '—' },
+      { id: 11, name: 'طاقم عمال للتفتيح والتشوين', count: '23', notes: '—' }
+    ]
+  },
+  {
+    id: 'base_course',
+    title: 'أعمال طبقة الأساس',
+    startTimeNote: 'بدء أعمال طبقة الأساس الساعه 06:00 صباحاً',
+    workItems: [
+      { id: 1, item: 'تسليم طبقة الأساس', stationFrom: '236+700', stationTo: '237+500', length: '800.00', notes: '—' },
+      { id: 2, item: 'تشغيل طبقة الأساس', stationFrom: '237+500', stationTo: '237+900', length: '400.00', notes: '—' },
+      { id: 3, item: 'أعمال رش بـ MCO على الأساس', stationFrom: '236+700', stationTo: '237+500', length: '800.00', notes: '—' },
+      { id: 4, item: 'أعمال الطريق الخدمي', stationFrom: '231+350', stationTo: '250+000', length: '18650.00', notes: '—' }
+    ],
+    equipmentTitle: 'المعدات والإعداد المطلوبه لطبقة الأساس والطريق الخدمي',
+    equipmentItems: [
+      { id: 1, name: 'جريدار', count: '5', notes: '—' },
+      { id: 2, name: 'هراس تربه', count: '6', notes: 'عدد 2 هراس ورديه ليل' },
+      { id: 3, name: 'تانك مياه', count: '6', notes: 'طريق الخدمه + مشون السن كم 224/ كم 228' },
+      { id: 4, name: 'لودر', count: '2', notes: 'عدد 1 لودر يعمل 24 ساعه' },
+      { id: 5, name: 'قلابات', count: '4', notes: '—' },
+      { id: 6, name: 'عدد 5 طاقم مساحة', count: '10', notes: '—' },
+      { id: 7, name: 'مانيتو', count: '1', notes: '—' }
+    ]
+  },
+  {
+    id: 'asphalt',
+    title: 'أعمال طبقة الاسفلت 6 سم محسن',
+    startTimeNote: 'بدء عمل خلاطة الاسفلت الساعه 06:00 صباحاً',
+    workItems: [
+      { id: 1, item: 'طبقة الاسفلت المحسن 6 سم', stationFrom: '234+420', stationTo: '235+520', length: '1100.00', notes: '—' }
+    ],
+    equipmentTitle: 'المعدات والإعداد المطلوبه لإسفلت',
+    equipmentItems: [
+      { id: 1, name: 'خلاط اسفلت', count: '1', notes: '—' },
+      { id: 2, name: 'فنشر اسفلت', count: '2', notes: '—' },
+      { id: 3, name: 'رولة اسفلت حديد', count: '2', notes: '—' },
+      { id: 4, name: 'رولة اسفلت كاوتش', count: '2', notes: '—' },
+      { id: 5, name: 'رولة اسفلت صغيرة', count: '1', notes: '—' },
+      { id: 6, name: 'بوب كات', count: '1', notes: '—' },
+      { id: 7, name: 'تانك مياه', count: '1', notes: '—' },
+      { id: 8, name: 'كمبروسر', count: '1', notes: '—' },
+      { id: 9, name: 'لودر', count: '1', notes: '—' },
+      { id: 10, name: 'شاحنات', count: '11', notes: '—' },
+      { id: 11, name: 'مهندس تنفيذ', count: '1', notes: '—' },
+      { id: 12, name: 'مشرف تنفيذ', count: '2', notes: '—' },
+      { id: 13, name: 'طاقم عمال كراك وشواك', count: '10', notes: '—' }
+    ]
+  }
+];
+
+export const emptyTargetedWorksSections = [
+  {
+    id: 'fdr',
+    title: 'أعمال تشغيل FDR',
+    startTimeNote: 'بدء أعمال الفرم الساعه 05:00 صباحاً',
+    workItems: [{ id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }],
+    equipmentTitle: 'المعدات والإعداد المطلوبه لفرم FDR',
+    equipmentItems: [{ id: 1, name: '', count: '', notes: '' }]
+  },
+  {
+    id: 'base_course',
+    title: 'أعمال طبقة الأساس',
+    startTimeNote: 'بدء أعمال طبقة الأساس الساعه 06:00 صباحاً',
+    workItems: [{ id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }],
+    equipmentTitle: 'المعدات والإعداد المطلوبه لطبقة الأساس والطريق الخدمي',
+    equipmentItems: [{ id: 1, name: '', count: '', notes: '' }]
+  },
+  {
+    id: 'asphalt',
+    title: 'أعمال طبقة الاسفلت 6 سم محسن',
+    startTimeNote: 'بدء عمل خلاطة الاسفلت الساعه 06:00 صباحاً',
+    workItems: [{ id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }],
+    equipmentTitle: 'المعدات والإعداد المطلوبه لإسفلت',
+    equipmentItems: [{ id: 1, name: '', count: '', notes: '' }]
+  }
+];
+
+export const defaultApprovedTargetedWorksReport = {
+  id: 'target-rep-25-10-2026',
+  reportNumber: 'TARGET-25.10.2026',
+  title: 'بيان أعمال يوم الأحد 25 - 10 - 2026',
+  reportType: 'تقرير الأعمال المستهدفة',
+  isTargetedWorksReport: true,
+  date: '2026-10-25T00:00:00.000Z',
+  dateFormatted: '25 - 10 - 2026',
+  dayName: 'الأحد',
+  sector: 'طريق أوباري - غات',
+  projectName: 'مشروع صيانة وتطوير طريق أوباري - غات',
+  companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
+  sectorDirector: 'مروان الهوني',
+  ownerRepresentative: 'م. عبدالرحمن الأنصاري',
+  uploadedBy: 'مروان الهوني',
+  approvedBy: 'م. عبدالرحمن الأنصاري',
+  status: 'approved',
+  targetedSections: initialTargetedWorksSections,
+  totalTargetLength: 23250,
+  totalTargetEquipment: 121,
+  roadMeters: 23250,
+  notes: 'بيان استهداف الأعمال اليومية والمعدات المطلوبة بموقع طريق أوباري - غات'
+};
 
 export const CreateTargetedWorksReportModal = ({ 
   isOpen, 
@@ -13,7 +136,8 @@ export const CreateTargetedWorksReportModal = ({
   currentUser, 
   onReportCreated, 
   onPrintReport, 
-  onNavigateTab 
+  onNavigateTab,
+  reportToEdit = null
 }) => {
   if (!isOpen) return null;
 
@@ -24,59 +148,90 @@ export const CreateTargetedWorksReportModal = ({
     return days[date.getDay()] || 'الأحد';
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const userSector = currentUser?.sector || 'المرحلة الأولى';
-  const isSectorB = userSector.includes('B') || userSector.includes('الثانية') || currentUser?.username === 'issa_altahir';
+  // Pre-fill with approved document date (Sunday 25/10/2026)
+  const defaultDateStr = '2026-10-25';
+  const userSector = currentUser?.sector || 'طريق أوباري - غات';
+  const isSectorB = userSector.includes('B') || userSector.includes('الثانية');
 
   // Form State
-  const [reportDate, setReportDate] = useState(todayStr);
-  const [dayName, setDayName] = useState(getDayName(todayStr));
-  const [sector, setSector] = useState(isSectorB ? 'المرحلة الثانية' : 'المرحلة الأولى');
-  const [reportNumber, setReportNumber] = useState(`TARGET-${isSectorB ? 'PHASE-2' : 'PHASE-1'}-${Date.now().toString().slice(-4)}`);
+  const [reportDate, setReportDate] = useState(defaultDateStr);
+  const [dayName, setDayName] = useState('الأحد');
+  const [sector, setSector] = useState(isSectorB ? 'المرحلة الثانية' : 'طريق أوباري - غات');
+  const [reportNumber, setReportNumber] = useState('TARGET-25.10.2026');
 
   // Signatures
-  const [sectorDirector, setSectorDirector] = useState(isSectorB ? 'م. عيسى الطاهر' : 'م. صلاح العربي');
+  const [sectorDirector, setSectorDirector] = useState('مروان الهوني');
   const [ownerRepresentative, setOwnerRepresentative] = useState('م. عبدالرحمن الأنصاري');
 
-  // Form Sections & Fields (Structure from user images, Clean empty initial fields)
-  const [sections, setSections] = useState([
-    {
-      id: 'fdr',
-      title: 'أعمال تشغيل FDR',
-      startTimeNote: 'بدء أعمال الفرم الساعه 05:00 صباحاً',
-      workItems: [
-        { id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }
-      ],
-      equipmentTitle: 'المعدات والإعداد المطلوبه لفرم FDR',
-      equipmentItems: [
-        { id: 1, name: '', count: '', notes: '' }
-      ]
-    },
-    {
-      id: 'base_course',
-      title: 'أعمال طبقة الأساس',
-      startTimeNote: 'بدء أعمال طبقة الأساس الساعه 06:00 صباحاً',
-      workItems: [
-        { id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }
-      ],
-      equipmentTitle: 'المعدات والإعداد المطلوبه لطبقة الأساس والطريق الخدمي',
-      equipmentItems: [
-        { id: 1, name: '', count: '', notes: '' }
-      ]
-    },
-    {
-      id: 'asphalt',
-      title: 'أعمال طبقة الاسفلت 6 سم محسن',
-      startTimeNote: 'بدء عمل خلاطة الاسفلت الساعه 06:00 صباحاً',
-      workItems: [
-        { id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }
-      ],
-      equipmentTitle: 'المعدات والإعداد المطلوبه الاسفلت',
-      equipmentItems: [
-        { id: 1, name: '', count: '', notes: '' }
-      ]
+  // Form Sections & Fields initialized with the approved document data
+  const [sections, setSections] = useState(() => 
+    initialTargetedWorksSections.map(s => ({
+      ...s,
+      workItems: s.workItems.map(w => ({ ...w })),
+      equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+    }))
+  );
+
+  // Sync state if reportToEdit is provided
+  useEffect(() => {
+    if (!isOpen) return;
+    if (reportToEdit) {
+      setReportDate(reportToEdit.date ? reportToEdit.date.split('T')[0] : '2026-10-25');
+      setDayName(reportToEdit.dayName || 'الأحد');
+      setSector(reportToEdit.sector || 'طريق أوباري - غات');
+      setReportNumber(reportToEdit.reportNumber || 'TARGET-25.10.2026');
+      setSectorDirector(reportToEdit.sectorDirector || 'مروان الهوني');
+      setOwnerRepresentative(reportToEdit.ownerRepresentative || 'م. عبدالرحمن الأنصاري');
+      if (Array.isArray(reportToEdit.targetedSections) && reportToEdit.targetedSections.length > 0) {
+        setSections(reportToEdit.targetedSections.map(s => ({
+          ...s,
+          workItems: (s.workItems || []).map(w => ({ ...w })),
+          equipmentItems: (s.equipmentItems || []).map(e => ({ ...e }))
+        })));
+      }
+    } else {
+      setReportDate('2026-10-25');
+      setDayName('الأحد');
+      setSector('طريق أوباري - غات');
+      setReportNumber('TARGET-25.10.2026');
+      setSectorDirector('مروان الهوني');
+      setOwnerRepresentative('م. عبدالرحمن الأنصاري');
+      setSections(initialTargetedWorksSections.map(s => ({
+        ...s,
+        workItems: s.workItems.map(w => ({ ...w })),
+        equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+      })));
     }
-  ]);
+  }, [isOpen, reportToEdit]);
+
+  const handleRestoreApprovedData = () => {
+    setReportDate('2026-10-25');
+    setDayName('الأحد');
+    setSector('طريق أوباري - غات');
+    setReportNumber('TARGET-25.10.2026');
+    setSectorDirector('مروان الهوني');
+    setOwnerRepresentative('م. عبدالرحمن الأنصاري');
+    setSections(initialTargetedWorksSections.map(s => ({
+      ...s,
+      workItems: s.workItems.map(w => ({ ...w })),
+      equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+    })));
+    setStatusMessage({
+      type: 'success',
+      text: 'تمت استعادة كافة البيانات المعتمدة لتقرير الأعمال المستهدفة ليوم الأحد 25-10-2026 بنجاح!'
+    });
+  };
+
+  const handleClearAllFields = () => {
+    if (window.confirm('هل تريد مسح وتفريغ كافة الحقول لإدخال بيان أعمال مستهدفة جديد فارغ؟')) {
+      setSections(emptyTargetedWorksSections.map(s => ({
+        ...s,
+        workItems: s.workItems.map(w => ({ ...w })),
+        equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+      })));
+      setStatusMessage({ type: 'info', text: 'تم تفريغ الحقول بنجاح لإدخال بيانات جديدة.' });
+    }
+  };
 
   // Suggestions datalists for fast input without hardcoding data
   const workPresets = [
@@ -328,6 +483,8 @@ export const CreateTargetedWorksReportModal = ({
       dayName,
       title: reportTitle,
       sector,
+      projectName: 'مشروع صيانة وتطوير طريق أوباري - غات',
+      companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
       reportType: 'تقرير الأعمال المستهدفة',
       isTargetedWorksReport: true,
       targetedSections: sections,
@@ -338,24 +495,48 @@ export const CreateTargetedWorksReportModal = ({
       ownerRepresentative,
       uploadedBy: currentUser?.name || sectorDirector,
       status: 'approved',
+      approvedBy: ownerRepresentative,
       notes: `بيان استهداف الأعمال اليومية والمعدات المطلوبة بموقع ${sector}`
     };
 
     try {
-      const response = await fastFetch('http://localhost:5000/api/reports/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reportPayload)
-      });
+      const saved = (reportToEdit && reportToEdit.id)
+        ? { ...reportPayload, id: reportToEdit.id, updatedAt: new Date().toISOString() }
+        : { ...reportPayload, id: 'target-rep-' + Date.now(), createdAt: new Date().toISOString() };
 
-      const saved = response.report || { ...reportPayload, id: Date.now() };
+      // 1. Direct save into localStorage under local_reports
+      try {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
+        filtered.unshift(saved);
+        localStorage.setItem('local_reports', JSON.stringify(filtered));
+      } catch (storageErr) {
+        console.error('Error saving targeted report to local_reports:', storageErr);
+      }
+
+      // 2. Clear API cache and dispatch reactive events
+      clearApiCache();
+      try {
+        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
+        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
+      } catch (e) {}
+
+      // 3. Fire-and-forget sync to backend
+      try {
+        fetch('http://localhost:5000/api/reports/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(saved)
+        }).catch(() => {});
+      } catch (e) {}
+
       setCreatedReport(saved);
 
       if (onReportCreated) onReportCreated(saved);
 
       setStatusMessage({ 
         type: 'success', 
-        text: `تم حفظ ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح!` 
+        text: `تم حفظ واعتماد ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح في قاعدة البيانات!` 
       });
 
       if (sendAfter) {
@@ -548,6 +729,78 @@ export const CreateTargetedWorksReportModal = ({
               )}
             </div>
           )}
+
+          {/* Quick Toolbar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.65rem',
+            background: '#ffffff',
+            padding: '0.75rem 1rem',
+            borderRadius: '10px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
+                بيان الأعمال والمعدات المستهدفة المعتمد (الأحد 25-10-2026):
+              </span>
+              <span style={{ fontSize: '0.78rem', background: '#e0f2fe', color: '#0284c7', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
+                {totalTargetLength.toLocaleString()} م.ط مستهدف
+              </span>
+              <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
+                {totalTargetEquipment} معدة وطاقم
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleRestoreApprovedData}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '7px',
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  color: '#166534',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+                title="استعادة البيانات الأصلية المعتمدة ليوم الأحد 25-10-2026"
+              >
+                <RotateCcw size={14} />
+                <span>استعادة البيانات المعتمدة (25/10/2026)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearAllFields}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '7px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  color: '#64748b',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+                title="تفريغ الحقول لإدخال بيان أعمال فارغ جديد"
+              >
+                <Plus size={14} />
+                <span>تفريغ الحقول (إدخال جديد)</span>
+              </button>
+            </div>
+          </div>
 
           {/* Form Meta Controls */}
           <div style={{

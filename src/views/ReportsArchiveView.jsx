@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
+import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
 
 export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -26,6 +27,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const [viewDetailsReport, setViewDetailsReport] = useState(null);
   const [reportToDelete, setReportToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingTargetedReport, setEditingTargetedReport] = useState(null);
 
   // Edit Modal State
   const [editingReport, setEditingReport] = useState(null);
@@ -46,6 +48,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const handleOpenEdit = (r) => {
+    if (r.isTargetedWorksReport || r.reportType === 'تقرير الأعمال المستهدفة') {
+      setEditingTargetedReport(r);
+      return;
+    }
     setEditingReport(r);
     setEditFormData({
       reportNumber: r.reportNumber || '',
@@ -160,6 +166,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     if (typeFilter !== 'all') {
       if (typeFilter === 'تقرير كميات الوقود اليومية') {
         if (!r.isFuelReport && r.reportType !== 'تقرير كميات الوقود اليومية' && r.title !== 'تقرير كميات الوقود اليومية') return false;
+      } else if (typeFilter === 'تقرير الأعمال المستهدفة') {
+        if (!r.isTargetedWorksReport && r.reportType !== 'تقرير الأعمال المستهدفة') return false;
       } else if (r.reportType !== typeFilter) {
         return false;
       }
@@ -488,6 +496,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">كافة التقارير</option>
+            <option value="تقرير الأعمال المستهدفة">تقرير الأعمال والمعدات المستهدفة 🎯</option>
             <option value="تقرير كميات الوقود اليومية">تقرير كميات الوقود اليومية ⛽</option>
             <option value="تقرير أعمال الطريق اليومي">تقرير أعمال الطريق اليومي 🛣️</option>
             <option value="تقرير يومي شامل">تقرير يومي شامل</option>
@@ -1215,6 +1224,22 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Targeted Works Edit Modal */}
+      {editingTargetedReport && (
+        <CreateTargetedWorksReportModal
+          currentUser={currentUser}
+          reportToEdit={editingTargetedReport}
+          onClose={() => {
+            setEditingTargetedReport(null);
+            fetchReports();
+          }}
+          onReportSaved={() => {
+            setEditingTargetedReport(null);
+            fetchReports();
+          }}
+        />
       )}
 
     </div>

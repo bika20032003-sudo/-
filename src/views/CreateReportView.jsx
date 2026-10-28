@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   FilePlus, Send, Printer, CheckCircle2, AlertCircle, RefreshCw, 
   MapPin, Calendar, Clock, Layers, Fuel, Truck, Milestone, 
-  FileText, Camera, Upload, Plus, Trash2, FileSpreadsheet, Eye, UserCheck, Target, Award
+  FileText, Camera, Upload, Plus, Trash2, FileSpreadsheet, Eye, UserCheck, Target, Award, RotateCcw
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
@@ -10,6 +10,11 @@ import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
 import { ExecutiveProgressForm } from '../components/ExecutiveProgressForm';
 import { RoadDailyReportForm } from '../components/RoadDailyReportForm';
 import { FuelDailyReportForm } from '../components/FuelDailyReportForm';
+import { 
+  initialTargetedWorksSections, 
+  emptyTargetedWorksSections, 
+  defaultApprovedTargetedWorksReport 
+} from '../components/CreateTargetedWorksReportModal';
 
 export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) => {
   const username = currentUser?.username || '';
@@ -73,45 +78,14 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
   const locationPresets = ['107', '240', 'الكسارات', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
 
-  // 3. Targeted Works Sections State (Exact from user's targeted works images)
-  const [targetedSections, setTargetedSections] = useState([
-    {
-      id: 'fdr',
-      title: 'أعمال تشغيل FDR',
-      startTimeNote: 'بدء أعمال الفرم الساعه 05:00 صباحاً',
-      workItems: [
-        { id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }
-      ],
-      equipmentTitle: 'المعدات والإعداد المطلوبه لفرم FDR',
-      equipmentItems: [
-        { id: 1, name: '', count: '', notes: '' }
-      ]
-    },
-    {
-      id: 'base_course',
-      title: 'أعمال طبقة الأساس',
-      startTimeNote: 'بدء أعمال طبقة الأساس الساعه 06:00 صباحاً',
-      workItems: [
-        { id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }
-      ],
-      equipmentTitle: 'المعدات والإعداد المطلوبه لطبقة الأساس والطريق الخدمي',
-      equipmentItems: [
-        { id: 1, name: '', count: '', notes: '' }
-      ]
-    },
-    {
-      id: 'asphalt',
-      title: 'أعمال طبقة الاسفلت 6 سم محسن',
-      startTimeNote: 'بدء عمل خلاطة الاسفلت الساعه 06:00 صباحاً',
-      workItems: [
-        { id: 1, item: '', stationFrom: '', stationTo: '', length: '', notes: '' }
-      ],
-      equipmentTitle: 'المعدات والإعداد المطلوبه الاسفلت',
-      equipmentItems: [
-        { id: 1, name: '', count: '', notes: '' }
-      ]
-    }
-  ]);
+  // 3. Targeted Works Sections State initialized with approved document data (Sunday 25/10/2026)
+  const [targetedSections, setTargetedSections] = useState(() => 
+    initialTargetedWorksSections.map(s => ({
+      ...s,
+      workItems: s.workItems.map(w => ({ ...w })),
+      equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+    }))
+  );
 
   const targetWorkPresets = [
     'أعمال فرم بدون أسمنت', 'أعمال فرم بالأسمنت', 'أعمال معالجه FDR بالمياه',
@@ -229,6 +203,34 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   };
   const handleRemoveTargetEquipItem = (sIdx, id) => {
     setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, equipmentItems: s.equipmentItems.filter(e => e.id !== id).length > 0 ? s.equipmentItems.filter(e => e.id !== id) : [{ id: Date.now(), name: '', count: '', notes: '' }] } : s));
+  };
+
+  const handleRestoreApprovedTargeted = () => {
+    setReportDate('2026-10-25');
+    setDayName('الأحد');
+    setSector('طريق أوباري - غات');
+    setReportNumber('TARGET-25.10.2026');
+    setSectorDirector('مروان الهوني');
+    setTargetedSections(initialTargetedWorksSections.map(s => ({
+      ...s,
+      workItems: s.workItems.map(w => ({ ...w })),
+      equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+    })));
+    setStatusMessage({
+      type: 'success',
+      text: 'تمت استعادة كافة البيانات المعتمدة لتقرير الأعمال المستهدفة ليوم الأحد 25-10-2026 بنجاح!'
+    });
+  };
+
+  const handleClearTargetedFields = () => {
+    if (window.confirm('هل تريد تفريغ حقول الأعمال المستهدفة لإدخال بيان جديد فارغ؟')) {
+      setTargetedSections(emptyTargetedWorksSections.map(s => ({
+        ...s,
+        workItems: s.workItems.map(w => ({ ...w })),
+        equipmentItems: s.equipmentItems.map(e => ({ ...e }))
+      })));
+      setStatusMessage({ type: 'info', text: 'تم تفريغ الحقول بنجاح لإدخال بيانات جديدة.' });
+    }
   };
 
   // Calculated Totals
@@ -1129,6 +1131,78 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
           marginBottom: '1.5rem'
         }}>
+          {/* Quick Toolbar for Approved Data & Reset */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.65rem',
+            background: '#f8fafc',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            border: '1.5px solid #cbd5e1',
+            marginBottom: '1rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
+                بيان الأعمال والمعدات المستهدفة المعتمد (الأحد 25-10-2026):
+              </span>
+              <span style={{ fontSize: '0.78rem', background: '#e0f2fe', color: '#0284c7', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
+                {totalTargetLength.toLocaleString()} م.ط مستهدف
+              </span>
+              <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
+                {totalTargetEquipment} معدة وطاقم
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleRestoreApprovedTargeted}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '7px',
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  color: '#166534',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+                title="استعادة البيانات الأصلية المعتمدة ليوم الأحد 25-10-2026"
+              >
+                <RotateCcw size={14} />
+                <span>استعادة البيانات المعتمدة (25/10/2026)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearTargetedFields}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '7px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  color: '#64748b',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+                title="تفريغ الحقول لإدخال بيان أعمال فارغ جديد"
+              >
+                <Plus size={14} />
+                <span>تفريغ الحقول (إدخال جديد)</span>
+              </button>
+            </div>
+          </div>
+
           {/* Top Blue Ribbon (Exact from User Photo 1 & 2) */}
           <div style={{
             background: '#0284c7',
