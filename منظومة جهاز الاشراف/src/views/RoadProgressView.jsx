@@ -4,6 +4,8 @@ import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { RoadDailyReportForm } from '../components/RoadDailyReportForm';
+import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
+import { CheckCircle2 } from 'lucide-react';
 
 export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
     const [activeViewMode, setActiveViewMode] = useState('matrix'); // 'matrix' | 'form'

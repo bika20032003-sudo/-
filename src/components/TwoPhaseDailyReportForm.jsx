@@ -10,7 +10,7 @@ import {
   CartesianGrid, Tooltip, Cell 
 } from 'recharts';
 import * as XLSX from 'xlsx';
-import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
 
 // Official Certified Items for Phase 1 (Matching Official Document 24/10/2026)
 export const initialPhase1ReportItems = [

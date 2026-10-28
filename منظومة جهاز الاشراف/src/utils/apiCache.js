@@ -1,4 +1,19 @@
 import {
+  getStoredTwoPhaseReport,
+  saveStoredTwoPhaseReport,
+  calculateTwoPhaseRoadMetrics,
+  generateRoadProgressItems,
+  updateRoadProgressItem
+} from './twoPhaseSync.js';
+
+export {
+  getStoredTwoPhaseReport,
+  saveStoredTwoPhaseReport,
+  calculateTwoPhaseRoadMetrics,
+  generateRoadProgressItems,
+  updateRoadProgressItem
+};
+import {
   initialDailySummary,
   initialRecentReports,
   initialCrushers,
@@ -76,15 +91,7 @@ export function getFallbackData(url) {
       sectorBProd: 0,
       recentAlerts: [],
       recentReports: recentReports,
-      roadProgress: {
-        kpis: {
-          fdr: { meters: 220203, percentage: 97.3 },
-          asphalt: { meters: 209923, percentage: 92.8 },
-          aggregateBase: { meters: 215483, percentage: 95.2 },
-          mco: { meters: 214303, percentage: 94.7 },
-          totalTodayMeters: 0
-        }
-      }
+      roadProgress: calculateTwoPhaseRoadMetrics(getStoredTwoPhaseReport())
     };
   }
     if (url.includes('/api/road-daily-report')) {
@@ -114,7 +121,8 @@ export function getFallbackData(url) {
     return { success: true, data: null };
   }
   if (url.includes('/api/two-phase-report')) {
-    return { success: true, data: null };
+    const rep = getStoredTwoPhaseReport();
+    return { success: true, data: rep };
   }
   if (url.includes('/api/dashboard/sector')) {
     return {
@@ -124,17 +132,14 @@ export function getFallbackData(url) {
     };
   }
   if (url.includes('/api/road-progress')) {
+    const rep = getStoredTwoPhaseReport();
+    const items = generateRoadProgressItems(rep);
+    const summary = calculateTwoPhaseRoadMetrics(rep);
     return {
       success: true,
-      items: initialRoadProgress || [],
-      roadProgress: initialRoadProgress || [],
-      summary: {
-        totalRoadLengthKm: 360.00,
-        overallPercentage: 65.9,
-        sectorAPercentage: 100.0,
-        sectorBPercentage: 8.4,
-        totalTodayMeters: 3820
-      }
+      items,
+      roadProgress: items,
+      summary
     };
   }
   if (url.includes('/api/executive-progress')) {
@@ -662,6 +667,28 @@ export async function fastFetch(rawUrl, options = {}) {
   if (isGitHubPages && !apiBase) {
     const method = (options.method || 'GET').toUpperCase();
     if (method !== 'GET') {
+            if (url.includes('/api/two-phase-report')) {
+        try {
+          if (options.body) {
+            const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+            saveStoredTwoPhaseReport(parsed);
+            return { success: true, message: 'Saved two-phase report locally', report: parsed };
+          }
+        } catch (e) {
+          console.error('Error saving two-phase report in fastFetch:', e);
+        }
+      }
+      if (url.includes('/api/road-progress/update-daily')) {
+        try {
+          if (options.body) {
+            const { id, todayMeters, notes } = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+            const updated = updateRoadProgressItem(id, todayMeters, notes);
+            return { success: true, message: 'Updated road item locally', report: updated };
+          }
+        } catch (e) {
+          console.error('Error updating road item in fastFetch:', e);
+        }
+      }
       if (method === 'DELETE' && url.includes('/api/reports/')) {
         const reportId = url.split('/api/reports/')[1]?.split('?')[0];
         if (reportId && typeof window !== 'undefined' && window.localStorage) {

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
-import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache, saveStoredTwoPhaseReport } from '../utils/apiCache.js';
 
 export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport }) => {
   // Days of week helper
