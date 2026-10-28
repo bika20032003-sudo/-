@@ -1133,10 +1133,10 @@ export const TwoPhaseDailyReportForm = ({
         }}>
           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>🎯 إنجاز اليوم المعتمد</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1d4ed8', margin: '4px 0 2px' }}>
-            {(phase1Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0) + phase2Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0)).toLocaleString()} م.ط
+            {(phase1Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0) + phase2Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0)).toLocaleString('en-US')} م.ط
           </div>
           <div style={{ fontSize: '0.72rem', color: '#3b82f6' }}>
-            المرحلة الأولى: {phase1Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString()} | المرحلة الثانية: {phase2Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString()}
+            المرحلة الأولى: {phase1Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString('en-US')} | المرحلة الثانية: {phase2Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString('en-US')}
           </div>
         </div>
 
@@ -1149,7 +1149,7 @@ export const TwoPhaseDailyReportForm = ({
         }}>
           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>🛣️ إجمالي المنفذ التراكمي</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#15803d', margin: '4px 0 2px' }}>
-            {Math.max(...combinedItems.map(c => parseFloat(c.totalMeters) || 0), 242323).toLocaleString()} م.ط
+            {Math.max(...combinedItems.map(c => parseFloat(c.totalMeters) || 0), 242323).toLocaleString('en-US')} م.ط
           </div>
           <div style={{ fontSize: '0.72rem', color: '#16a34a' }}>
             طبقة إعادة التدوير (242,323 م.ط)
@@ -1165,7 +1165,7 @@ export const TwoPhaseDailyReportForm = ({
         }}>
           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>⚡ الجاهز للعمل بالبنود</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#b45309', margin: '4px 0 2px' }}>
-            {combinedItems.reduce((acc, c) => acc + (parseFloat(c.readyToWorkMeters) || 0), 0).toLocaleString()} م.ط
+            {combinedItems.reduce((acc, c) => acc + (parseFloat(c.readyToWorkMeters) || 0), 0).toLocaleString('en-US')} م.ط
           </div>
           <div style={{ fontSize: '0.72rem', color: '#d97706' }}>
             أسفلت محسن (2,253) + أساس (5,717)
@@ -1276,46 +1276,138 @@ export const TwoPhaseDailyReportForm = ({
         gap: '1rem',
         alignItems: 'center'
       }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>
-            📅 تاريخ التقرير:
-          </label>
-          <input
-            type="date"
-            value={reportDate}
-            onChange={(e) => {
-              setReportDate(e.target.value);
-              setDayName(getDayName(e.target.value));
-            }}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e1',
-              fontWeight: 700,
-              fontSize: '0.85rem'
-            }}
-          />
-        </div>
+        {/* Modern Sleek Calendar Widget for Daily Work Report */}
+        <div style={{
+          gridColumn: '1 / -1',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)',
+          border: '1.5px solid #bae6fd',
+          borderRadius: '12px',
+          padding: '0.75rem 1.25rem',
+          boxShadow: '0 2px 10px rgba(2, 132, 199, 0.06)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: '#0284c7',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+            }}>
+              <Calendar size={20} />
+            </div>
 
-        <div>
-          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>
-            🗓️ اليوم:
-          </label>
-          <input
-            type="text"
-            value={dayName}
-            onChange={(e) => setDayName(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e1',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              background: '#f8fafc'
-            }}
-          />
+            <div>
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0369a1', display: 'block' }}>
+                تقويم وتاريخ بيان الأعمال اليومية
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px' }}>
+                <span style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 900,
+                  color: '#0369a1',
+                  background: '#e0f2fe',
+                  border: '1px solid #bae6fd',
+                  padding: '0.15rem 0.65rem',
+                  borderRadius: '6px'
+                }}>
+                  {dayName}
+                </span>
+
+                <input
+                  type="date"
+                  value={reportDate}
+                  onChange={(e) => {
+                    setReportDate(e.target.value);
+                    setDayName(getDayName(e.target.value));
+                  }}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                    cursor: 'pointer'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick presets */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b' }}>خيارات سريعة:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date().toISOString().split('T')[0];
+                setReportDate(today);
+                setDayName(getDayName(today));
+              }}
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.75rem',
+                borderRadius: '7px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
+                cursor: 'pointer'
+              }}
+            >
+              اليوم 📅
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const y = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                setReportDate(y);
+                setDayName(getDayName(y));
+              }}
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.75rem',
+                borderRadius: '7px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
+                cursor: 'pointer'
+              }}
+            >
+              أمس ⏪
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setReportDate('2026-10-24');
+                setDayName('السبت');
+              }}
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.75rem',
+                borderRadius: '7px',
+                background: '#e0f2fe',
+                border: '1px solid #7dd3fc',
+                color: '#0369a1',
+                cursor: 'pointer'
+              }}
+            >
+              السبت 24-10 (معتمد) 📌
+            </button>
+          </div>
         </div>
 
         <div>

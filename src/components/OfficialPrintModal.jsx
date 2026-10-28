@@ -957,7 +957,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                             {sec.title}
                           </td>
                           <td colSpan={3} style={{ border: '2px solid #000000', padding: '0.5rem', fontSize: '0.86rem' }}>
-                            {secLength > 0 ? `إجمالي الطول: ${secLength.toLocaleString()} م.ط` : ''}
+                            {secLength > 0 ? `إجمالي الطول: ${secLength.toLocaleString('en-US')} م.ط` : ''}
                           </td>
                           <td style={{ border: '2px solid #000000', padding: '0.5rem 0.75rem', textAlign: 'right', fontSize: '0.9rem' }}>
                             {sec.startTimeNote}
@@ -972,7 +972,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 800 }}>{w.stationFrom || '-'}</td>
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 800 }}>{w.stationTo || '-'}</td>
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 800 }}>
-                              {w.length ? Number(w.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                              {w.length ? Number(w.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
                             </td>
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 600 }}>{w.notes || '-'}</td>
                           </tr>
@@ -1001,7 +1001,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                           <tr key={eIdx} style={{ background: '#ffffff' }}>
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 900, background: '#fffbeb' }}>{eIdx + 1}</td>
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 800 }}>{eq.name || '-'}</td>
-                            <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 900 }}>{eq.count ? Number(eq.count).toLocaleString() : '-'}</td>
+                            <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 900 }}>{eq.count ? Number(eq.count).toLocaleString('en-US') : '-'}</td>
                             <td style={{ border: '2px solid #000000', padding: '0.5rem', fontWeight: 600 }}>{eq.notes || '-'}</td>
                           </tr>
                         ))}
@@ -1026,8 +1026,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               }}>
                 <span>الإجمالي العام للأعمال المستهدفة:</span>
                 <div style={{ display: 'flex', gap: '2rem' }}>
-                  <span>إجمالي الأطوال: {Number(report.totalTargetLength || report.roadMeters || 0).toLocaleString()} م.ط</span>
-                  <span>إجمالي المعدات والأطقم: {Number(report.totalTargetEquipment || 0).toLocaleString()} آلية/طاقم</span>
+                  <span>إجمالي الأطوال: {Number(report.totalTargetLength || report.roadMeters || 0).toLocaleString('en-US')} م.ط</span>
+                  <span>إجمالي المعدات والأطقم: {Number(report.totalTargetEquipment || 0).toLocaleString('en-US')} آلية/طاقم</span>
                 </div>
               </div>
 
@@ -1241,9 +1241,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString() : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -1255,9 +1255,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString() : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -1296,9 +1296,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString() : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -1310,9 +1310,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString() : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -1350,12 +1350,12 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString() : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>
                             {it.readyToWorkMeters !== '' && it.readyToWorkMeters !== null && it.readyToWorkMeters !== undefined && Number(it.readyToWorkMeters) > 0 
-                              ? Number(it.readyToWorkMeters).toLocaleString() 
-                              : (it.readyToWork ? Number(it.readyToWork).toLocaleString() : '—')}
+                              ? Number(it.readyToWorkMeters).toLocaleString('en-US') 
+                              : (it.readyToWork ? Number(it.readyToWork).toLocaleString('en-US') : '—')}
                           </td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -1367,12 +1367,12 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString() : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString() : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>
                             {it.readyToWorkMeters !== '' && it.readyToWorkMeters !== null && it.readyToWorkMeters !== undefined && Number(it.readyToWorkMeters) > 0 
-                              ? Number(it.readyToWorkMeters).toLocaleString() 
-                              : (it.readyToWork ? Number(it.readyToWork).toLocaleString() : '—')}
+                              ? Number(it.readyToWorkMeters).toLocaleString('en-US') 
+                              : (it.readyToWork ? Number(it.readyToWork).toLocaleString('en-US') : '—')}
                           </td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -1402,9 +1402,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     {(report.remainingItems || []).filter(r => r.group === 'A').map((r, idx) => (
                       <tr key={idx}>
                         <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800 }}>{r.name}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString() : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString() : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString() : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString('en-US') : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString('en-US') : '-'}</td>
                         <td style={{ border: '1px solid #000', padding: '4px', fontSize: '0.72rem' }}>{r.notes || '-'}</td>
                       </tr>
                     ))}
@@ -1426,9 +1426,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     {(report.remainingItems || []).filter(r => r.group === 'B').map((r, idx) => (
                       <tr key={idx}>
                         <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800 }}>{r.name}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString() : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString() : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString() : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString('en-US') : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString('en-US') : '-'}</td>
                         <td style={{ border: '1px solid #000', padding: '4px', fontSize: '0.72rem' }}>{r.notes || '-'}</td>
                       </tr>
                     ))}

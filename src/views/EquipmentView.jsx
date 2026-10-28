@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   Truck, Plus, Minus, Search, RefreshCw, FileSpreadsheet, Printer, 
   CheckCircle2, AlertOctagon, Wrench, Edit3, Trash2, X, Check,
-  Layers, MapPin, Eye, FileText, ShieldCheck
+  Layers, MapPin, Eye, FileText, ShieldCheck, ClipboardList
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { EquipmentInspectionModal } from '../components/EquipmentInspectionModal';
 
-export const EquipmentView = () => {
+export const EquipmentView = ({ currentUser }) => {
   // Official baseline equipment requirements for the 360 km project
   const initialDefaultEquipment = [
     { id: 1, name: 'ماكينة إعادة التدوير (FDR)', type: 'معدات تدوير وأساس', count: 3, operationalCount: 3, maintenanceCount: 0, phase1Count: 2, phase2Count: 1, status: 'operational', notes: 'ماكينات فرم وتأهيل طبقة الأساس والأسفلت' },
@@ -29,6 +30,7 @@ export const EquipmentView = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
 
   // Form State for Add / Edit
   const [formData, setFormData] = useState({
@@ -264,8 +266,6 @@ export const EquipmentView = () => {
       'اسم المعدة / الآلية': item.name,
       'التصنيف والنوع': item.type || 'معدات الطريق',
       'العدد الإجمالي المتوفر بالموقع': item.count,
-      'العدد في المرحلة الأولى': item.phase1Count ?? '-',
-      'العدد في المرحلة الثانية': item.phase2Count ?? '-',
       'العدد الجاهز والعامل': item.operationalCount ?? item.count,
       'العدد قيد الصيانة': item.maintenanceCount ?? 0,
       'ملاحظات التشغيل الميداني': item.notes || '—'
@@ -291,8 +291,8 @@ export const EquipmentView = () => {
     const matchSearch = item.name.toLowerCase().includes(term) || (item.type && item.type.toLowerCase().includes(term));
     if (!matchSearch) return false;
 
-    if (phaseFilter === 'phase1') return (item.phase1Count || 0) > 0;
-    if (phaseFilter === 'phase2') return (item.phase2Count || 0) > 0;
+    if (phaseFilter === 'operational') return (item.operationalCount ?? item.count) > 0;
+    if (phaseFilter === 'maintenance') return (item.maintenanceCount || 0) > 0;
     return true;
   });
 
@@ -352,6 +352,29 @@ export const EquipmentView = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <button 
+            type="button"
+            onClick={() => setIsInspectionModalOpen(true)}
+            style={{ 
+              height: '38px', 
+              padding: '0 1.25rem', 
+              fontSize: '0.85rem',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)'
+            }}
+          >
+            <ClipboardList size={16} />
+            <span>📋 فورم كشف المعدات الميداني</span>
+          </button>
+
           <button 
             className="primary-action-btn"
             onClick={handleOpenAdd}
@@ -433,28 +456,38 @@ export const EquipmentView = () => {
           </div>
         </div>
 
-        {/* Phase Distribution */}
-        <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #ea580c' }}>
+        {/* Inspection Sheet Card */}
+        <div className="dashboard-white-card" style={{ padding: '1.25rem', borderTop: '4px solid #0284c7', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>توزيع المعدات على المراحل</span>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MapPin size={18} />
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b' }}>كشف حصر وفحص المعدات</span>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f0f9ff', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ClipboardList size={18} />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'baseline', marginTop: '0.2rem' }}>
-            <div>
-              <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#ea580c' }}>{phase1Total}</span>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', marginRight: '0.25rem' }}>مرحلة أولى</span>
-            </div>
-            <span style={{ color: '#cbd5e1' }}>•</span>
-            <div>
-              <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0284c7' }}>{phase2Total}</span>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', marginRight: '0.25rem' }}>مرحلة ثانية</span>
-            </div>
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.3rem' }}>
-            تغطية كاملة لمسار الـ 360 كم
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsInspectionModalOpen(true)}
+            style={{
+              width: '100%',
+              marginTop: '0.35rem',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              color: '#ffffff',
+              border: 'none',
+              padding: '0.65rem 1rem',
+              borderRadius: '8px',
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)'
+            }}
+          >
+            <ClipboardList size={16} />
+            <span>فتح فورم كشف المعدات 📋</span>
+          </button>
         </div>
 
         {/* Maintenance */}
@@ -487,7 +520,7 @@ export const EquipmentView = () => {
           flexWrap: 'wrap',
           gap: '1rem'
         }}>
-          {/* Phase Filter Tabs */}
+          {/* Status Filter Tabs */}
           <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', gap: '4px' }}>
             <button
               onClick={() => setPhaseFilter('all')}
@@ -506,36 +539,36 @@ export const EquipmentView = () => {
               كافة المعدات ({equipmentList.length})
             </button>
             <button
-              onClick={() => setPhaseFilter('phase1')}
+              onClick={() => setPhaseFilter('operational')}
               style={{
                 border: 'none',
-                background: phaseFilter === 'phase1' ? '#ffffff' : 'transparent',
-                color: phaseFilter === 'phase1' ? '#ea580c' : '#64748b',
-                fontWeight: phaseFilter === 'phase1' ? 800 : 600,
+                background: phaseFilter === 'operational' ? '#ffffff' : 'transparent',
+                color: phaseFilter === 'operational' ? '#16a34a' : '#64748b',
+                fontWeight: phaseFilter === 'operational' ? 800 : 600,
                 padding: '0.4rem 1rem',
                 borderRadius: '8px',
                 fontSize: '0.84rem',
                 cursor: 'pointer',
-                boxShadow: phaseFilter === 'phase1' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                boxShadow: phaseFilter === 'operational' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
               }}
             >
-              المرحلة الأولى ({equipmentList.filter(i => (i.phase1Count || 0) > 0).length})
+              الجاهزة والعاملة ({equipmentList.filter(i => (i.operationalCount || i.count) > 0).length})
             </button>
             <button
-              onClick={() => setPhaseFilter('phase2')}
+              onClick={() => setPhaseFilter('maintenance')}
               style={{
                 border: 'none',
-                background: phaseFilter === 'phase2' ? '#ffffff' : 'transparent',
-                color: phaseFilter === 'phase2' ? '#0284c7' : '#64748b',
-                fontWeight: phaseFilter === 'phase2' ? 800 : 600,
+                background: phaseFilter === 'maintenance' ? '#ffffff' : 'transparent',
+                color: phaseFilter === 'maintenance' ? '#ca8a04' : '#64748b',
+                fontWeight: phaseFilter === 'maintenance' ? 800 : 600,
                 padding: '0.4rem 1rem',
                 borderRadius: '8px',
                 fontSize: '0.84rem',
                 cursor: 'pointer',
-                boxShadow: phaseFilter === 'phase2' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                boxShadow: phaseFilter === 'maintenance' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
               }}
             >
-              المرحلة الثانية ({equipmentList.filter(i => (i.phase2Count || 0) > 0).length})
+              قيد الصيانة ({equipmentList.filter(i => (i.maintenanceCount || 0) > 0).length})
             </button>
           </div>
 
@@ -555,14 +588,13 @@ export const EquipmentView = () => {
 
         {/* Responsive Table */}
         <div className="responsive-table-wrap">
-          <table className="custom-table" style={{ minWidth: '950px' }}>
+          <table className="custom-table" style={{ minWidth: '850px' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ width: '50px', textAlign: 'center' }}>م</th>
                 <th style={{ minWidth: '240px' }}>اسم المعدة / الآلية الميدانية</th>
                 <th style={{ width: '180px' }}>التصنيف الفني</th>
                 <th style={{ width: '180px', textAlign: 'center' }}>العدد الإجمالي المتوفر</th>
-                <th style={{ width: '180px', textAlign: 'center' }}>توزيع المراحل</th>
                 <th style={{ width: '140px', textAlign: 'center' }}>حالة الجاهزية</th>
                 <th style={{ width: '130px', textAlign: 'center' }}>الإجراءات</th>
               </tr>
@@ -684,17 +716,6 @@ export const EquipmentView = () => {
                         </div>
                       </td>
 
-                      {/* Phase Distribution */}
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
-                          <span style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: 700 }}>
-                            م1: {p1}
-                          </span>
-                          <span style={{ background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: 700 }}>
-                            م2: {p2}
-                          </span>
-                        </div>
-                      </td>
 
                       {/* Status */}
                       <td style={{ textAlign: 'center' }}>
@@ -940,6 +961,13 @@ export const EquipmentView = () => {
           </div>
         </div>
       )}
+
+      {/* Equipment Inspection Modal Form */}
+      <EquipmentInspectionModal
+        isOpen={isInspectionModalOpen}
+        onClose={() => setIsInspectionModalOpen(false)}
+        currentUser={currentUser}
+      />
 
     </div>
   );

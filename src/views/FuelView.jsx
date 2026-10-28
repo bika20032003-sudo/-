@@ -86,12 +86,13 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
   }, []);
 
   // Strict & Accurate Calculations directly from Daily Fuel Reports:
-  // 1. عداد السولار المصروف (ديزل الآليات والمعدات)
-  const totalSolarDispatched = fuelReports.reduce((acc, rep) => {
+  // 1. عداد الوقود المنصرف (وقود الآليات والمعدات الميدانية)
+  const totalFuelDispatched = fuelReports.reduce((acc, rep) => {
     const items = Array.isArray(rep?.fuelItems) ? rep.fuelItems : [];
     const disp = cleanNum(rep?.totalDispatchedLiters) || cleanNum(rep?.fuelAmount) || items.reduce((s, c) => s + cleanNum(c?.dispatchedLiters), 0);
     return acc + disp;
   }, 0);
+  const totalSolarDispatched = totalFuelDispatched;
 
   // 2. عداد وارد الوقود (الشحنات المستلمة بالخزانات)
   const totalFuelReceived = fuelReports.reduce((acc, rep) => {
@@ -178,7 +179,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
         'التاريخ': repDate,
         'اليوم': rep?.dayName || 'السبت',
         'المرحلة / الموقع': rep?.sector || 'المرحلة الأولى',
-        'السولار المصروف (لتر)': disp,
+        'الوقود المصروف (لتر)': disp,
         'الوارد (لتر)': rec,
         'الكمية المتبقية (لتر)': rem,
         'المواقع والخزانات': locations,
@@ -229,7 +230,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
               إدارة الوقود والمحروقات
             </h2>
             <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-              متابعة تقارير كميات السولار المنصرف، وارد الوقود، والمخزون المتبقي بالخزانات والصهاريج الميدانية
+              متابعة تقارير كميات الوقود المنصرف، وارد الوقود، والمخزون المتبقي بالخزانات والصهاريج الميدانية
             </p>
           </div>
         </div>
@@ -334,7 +335,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
       ) : (
         <>
       {/* =========================================================================
-          SEPARATE GAUGES: عداد السولار وحده و عداد الوقود وحده (عدادات دقيقة ومستقلة)
+          SEPARATE GAUGES: عداد الوقود المنصرف و عداد وارد الوقود (عدادات دقيقة ومستقلة)
          ========================================================================= */}
       <div style={{
         display: 'grid',
@@ -343,7 +344,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
         marginBottom: '1.75rem'
       }}>
         
-        {/* 1. عداد السولار وحده (المنصرف والمستهلك للآليات) */}
+        {/* 1. عداد الوقود المنصرف (المصروف والمستهلك للآليات) */}
         <div className="kpi-metric-card" style={{ 
           borderTop: '4px solid #ea580c',
           background: 'linear-gradient(180deg, #fffbf7 0%, #ffffff 100%)'
@@ -351,10 +352,10 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
           <div className="kpi-card-header">
             <div>
               <span className="kpi-title" style={{ fontSize: '0.92rem', color: '#9a3412', fontWeight: 900 }}>
-                عداد السولار (المنصرف)
+                عداد الوقود (المنصرف)
               </span>
               <div style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 700, marginTop: '2px' }}>
-                ديزل الآليات والكسارات الميدانية
+                وقود الآليات والكسارات والمعدات الميدانية
               </div>
             </div>
             <div className="kpi-icon-circle orange" style={{ background: '#ffedd5', color: '#ea580c' }}>
@@ -363,10 +364,10 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
           </div>
           <div className="kpi-value-center" style={{ margin: '0.75rem 0' }}>
             <span className="kpi-big-num" style={{ fontSize: '2.3rem', color: '#c2410c' }}>
-              {totalSolarDispatched.toLocaleString()}
+              {totalFuelDispatched.toLocaleString('en-US')}
             </span>
             <span className="kpi-unit-label" style={{ fontSize: '0.92rem', color: '#9a3412', fontWeight: 800 }}>
-              لتر ديزل
+              لتر وقود
             </span>
           </div>
           <div className="kpi-bottom-sub">
@@ -512,7 +513,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
               <th style={{ width: '130px' }}>رقم التقرير</th>
               <th style={{ width: '150px' }}>التاريخ واليوم</th>
               <th style={{ width: '130px' }}>المرحلة / الموقع</th>
-              <th style={{ width: '140px', background: '#fffbeb', color: '#b45309' }}>السولار المصروف (لتر)</th>
+              <th style={{ width: '140px', background: '#fffbeb', color: '#b45309' }}>الوقود المصروف (لتر)</th>
               <th style={{ width: '130px', background: '#eff6ff', color: '#1e40af' }}>وارد الوقود (لتر)</th>
               <th style={{ width: '140px', background: '#f0fdf4', color: '#166534' }}>رصيد الوقود المتبقي (لتر)</th>
               <th style={{ width: '140px' }}>المعد / المشرف</th>
@@ -802,9 +803,9 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
               {/* Summary KPIs Row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
                 <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '0.85rem', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.78rem', color: '#c2410c', fontWeight: 800 }}>السولار المنصرف</span>
+                  <span style={{ fontSize: '0.78rem', color: '#c2410c', fontWeight: 800 }}>الوقود المنصرف</span>
                   <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#9a3412', marginTop: '0.2rem' }}>
-                    {cleanNum(viewDetailsReport.totalDispatchedLiters || viewDetailsReport.fuelAmount || 0).toLocaleString()} لتر
+                    {cleanNum(viewDetailsReport.totalDispatchedLiters || viewDetailsReport.fuelAmount || 0).toLocaleString('en-US')} لتر
                   </div>
                 </div>
 
@@ -834,7 +835,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
                       <tr style={{ background: '#f8fafc', fontWeight: 800 }}>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>ت</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem' }}>الموقع / الخزان</th>
-                        <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem', color: '#ea580c' }}>السولار المصروف (لتر)</th>
+                        <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem', color: '#ea580c' }}>الوقود المصروف (لتر)</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem', color: '#2563eb' }}>الوارد (لتر)</th>
                         <th style={{ border: '1px solid #cbd5e1', padding: '0.5rem', color: '#16a34a' }}>الكمية المتبقية (لتر)</th>
                       </tr>
@@ -929,7 +930,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
               تأكيد حذف تقرير الوقود
             </h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: '0.88rem', color: '#64748b', lineHeight: 1.6 }}>
-              هل أنت متأكد من حذف تقرير الوقود رقم <strong>({reportToDelete.reportNumber || reportToDelete.id})</strong>؟ سيتم تحديث عدادات السولار والوقود الميدانية فوراً.
+              هل أنت متأكد من حذف تقرير الوقود رقم <strong>({reportToDelete.reportNumber || reportToDelete.id})</strong>؟ سيتم تحديث عدادات الوقود الميدانية فوراً.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
               <button

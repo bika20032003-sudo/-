@@ -1026,8 +1026,14 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         gap: '1.25rem'
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-            تاريخ التقرير
+          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Calendar size={16} color="#0284c7" />
+              <span>تاريخ التقرير</span>
+            </span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0284c7', background: '#e0f2fe', padding: '0.1rem 0.5rem', borderRadius: '4px' }}>
+              {dayName}
+            </span>
           </label>
           <input
             type="date"
@@ -1037,12 +1043,68 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
               width: '100%',
               padding: '0.65rem 0.85rem',
               borderRadius: '8px',
-              border: '1px solid #cbd5e1',
+              border: '1.5px solid #cbd5e1',
               fontSize: '0.92rem',
-              fontWeight: 700,
-              color: '#0f172a'
+              fontWeight: 800,
+              color: '#0f172a',
+              background: '#f8fafc',
+              cursor: 'pointer',
+              outline: 'none'
             }}
           />
+          <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.4rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date().toISOString().split('T')[0];
+                handleDateChange(today);
+              }}
+              style={{
+                padding: '0.2rem 0.5rem',
+                borderRadius: '5px',
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: '#475569',
+                cursor: 'pointer'
+              }}
+            >
+              اليوم 📅
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDateChange('2026-10-24')}
+              style={{
+                padding: '0.2rem 0.5rem',
+                borderRadius: '5px',
+                background: reportDate === '2026-10-24' ? '#0284c7' : '#e0f2fe',
+                border: '1px solid #bae6fd',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: reportDate === '2026-10-24' ? '#fff' : '#0369a1',
+                cursor: 'pointer'
+              }}
+            >
+              24-10 📌
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDateChange('2026-10-25')}
+              style={{
+                padding: '0.2rem 0.5rem',
+                borderRadius: '5px',
+                background: reportDate === '2026-10-25' ? '#0284c7' : '#e0f2fe',
+                border: '1px solid #bae6fd',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: reportDate === '2026-10-25' ? '#fff' : '#0369a1',
+                cursor: 'pointer'
+              }}
+            >
+              25-10 📌
+            </button>
+          </div>
         </div>
 
         <div>
@@ -1149,10 +1211,10 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                 بيان الأعمال والمعدات المستهدفة المعتمد (الأحد 25-10-2026):
               </span>
               <span style={{ fontSize: '0.78rem', background: '#e0f2fe', color: '#0284c7', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
-                {totalTargetLength.toLocaleString()} م.ط مستهدف
+                {totalTargetLength.toLocaleString('en-US')} م.ط مستهدف
               </span>
               <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
-                {totalTargetEquipment} معدة وطاقم
+                {totalTargetEquipment.toLocaleString('en-US')} معدة وطاقم
               </span>
             </div>
 

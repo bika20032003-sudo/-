@@ -477,45 +477,133 @@ export const FuelDailyReportForm = ({
             <span>إدارة الوقود والمحروقات</span>
           </div>
 
+          {/* Modern Sleek Calendar Widget */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.45rem',
-            background: '#f1f5f9',
-            color: '#334155',
+            gap: '0.65rem',
+            background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)',
+            border: '1.5px solid #fde68a',
             padding: '0.45rem 0.85rem',
-            borderRadius: '8px',
-            fontWeight: 800,
-            fontSize: '0.88rem'
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.08)'
           }}>
-            <Calendar size={16} />
-            <span>{reportData.dayName}</span>
-            <input 
-              type="date"
-              value={reportData.reportDate}
-              onChange={(e) => {
-                const newDate = e.target.value;
-                const dateObj = new Date(newDate);
-                const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                const dayStr = days[dateObj.getDay()] || 'السبت';
-                const parts = newDate.split('-');
-                const slashStr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : newDate;
-                setReportData(prev => ({
-                  ...prev,
-                  reportDate: newDate,
-                  formattedSlashDate: slashStr,
-                  dayName: `يوم ${dayStr}`
-                }));
-              }}
-              style={{
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                padding: '0.15rem 0.4rem',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                background: '#fff'
-              }}
-            />
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: '#fef3c7',
+              color: '#d97706',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Calendar size={18} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#b45309' }}>
+                تاريخ البيان والتقويم
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 900,
+                  color: '#92400e',
+                  background: '#fef3c7',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '6px'
+                }}>
+                  {reportData.dayName}
+                </span>
+
+                <input 
+                  type="date"
+                  value={reportData.reportDate}
+                  onChange={(e) => {
+                    const newDate = e.target.value;
+                    const dateObj = new Date(newDate);
+                    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                    const dayStr = days[dateObj.getDay()] || 'السبت';
+                    const parts = newDate.split('-');
+                    const slashStr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : newDate;
+                    setReportData(prev => ({
+                      ...prev,
+                      reportDate: newDate,
+                      formattedSlashDate: slashStr,
+                      dayName: `يوم ${dayStr}`
+                    }));
+                  }}
+                  style={{
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '7px',
+                    padding: '0.3rem 0.6rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Quick date presets */}
+            <div style={{ display: 'flex', gap: '0.25rem', marginRight: '0.25rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date().toISOString().split('T')[0];
+                  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                  const dayStr = days[new Date().getDay()] || 'السبت';
+                  const parts = d.split('-');
+                  setReportData(prev => ({
+                    ...prev,
+                    reportDate: d,
+                    formattedSlashDate: `${parts[2]}/${parts[1]}/${parts[0]}`,
+                    dayName: `يوم ${dayStr}`
+                  }));
+                }}
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '6px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  color: '#475569',
+                  cursor: 'pointer'
+                }}
+                title="تحديد تاريخ اليوم"
+              >
+                اليوم
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportData(prev => ({
+                    ...prev,
+                    reportDate: '2026-10-24',
+                    formattedSlashDate: '24/10/2026',
+                    dayName: 'يوم السبت'
+                  }));
+                }}
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '6px',
+                  background: '#fef3c7',
+                  border: '1px solid #fde68a',
+                  color: '#92400e',
+                  cursor: 'pointer'
+                }}
+                title="تحديد التاريخ المعتمد 24-10-2026"
+              >
+                24/10
+              </button>
+            </div>
           </div>
 
           <div style={{ fontSize: '0.84rem', color: '#64748b', fontWeight: 700 }}>

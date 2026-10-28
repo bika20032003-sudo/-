@@ -234,7 +234,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
             </div>
           </div>
           <div className="kpi-value-center">
-            <span className="kpi-big-num">{totalLengthMeters.toLocaleString()}</span>
+            <span className="kpi-big-num">{totalLengthMeters.toLocaleString('en-US')}</span>
             <span className="kpi-unit-label">متر طولي (م.ط)</span>
           </div>
           <div className="kpi-bottom-sub">
@@ -250,7 +250,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
             </div>
           </div>
           <div className="kpi-value-center">
-            <span className="kpi-big-num">{totalEquipmentCount.toLocaleString()}</span>
+            <span className="kpi-big-num">{totalEquipmentCount.toLocaleString('en-US')}</span>
             <span className="kpi-unit-label">آلية وطاقم تشغيل</span>
           </div>
           <div className="kpi-bottom-sub">
@@ -417,7 +417,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
 
                   <td>
                     <strong style={{ color: '#0284c7', fontSize: '0.95rem' }}>
-                      {Number(report.totalTargetLength || report.roadMeters || 0).toLocaleString()} م.ط
+                      {Number(report.totalTargetLength || report.roadMeters || 0).toLocaleString('en-US')} م.ط
                     </strong>
                   </td>
 
@@ -601,7 +601,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>إجمالي الأطوال المستهدفة:</span>
-                <span style={{ fontWeight: 800, color: '#0284c7' }}>{Number(viewDetailsReport.totalTargetLength || 0).toLocaleString()} م.ط</span>
+                <span style={{ fontWeight: 800, color: '#0284c7' }}>{Number(viewDetailsReport.totalTargetLength || 0).toLocaleString('en-US')} م.ط</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>إجمالي المعدات والأطقم:</span>

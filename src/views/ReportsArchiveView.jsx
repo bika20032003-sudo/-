@@ -345,31 +345,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             <span>إنشاء تقرير ميداني جديد ✍️</span>
           </button>
 
-          {onNavigateTab && (
-            <button
-              onClick={() => onNavigateTab('periodic-reports')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.7rem 1.35rem',
-                borderRadius: '10px',
-                fontWeight: 900,
-                fontSize: '0.92rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-              title="توليد التقرير الدوري الشهري والسنوي التلقائي"
-            >
-              <CalendarRange size={18} />
-              <span>التقارير الدورية (شهرية وسنوية) 📊</span>
-            </button>
-          )}
-
           <button
             onClick={handleExportExcel}
             style={{

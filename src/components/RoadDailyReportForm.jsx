@@ -575,16 +575,17 @@ export const RoadDailyReportForm = ({
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.45rem',
-            background: '#fef3c7',
-            color: '#b45309',
-            padding: '0.45rem 0.85rem',
-            borderRadius: '8px',
-            fontWeight: 800,
-            fontSize: '0.88rem'
+            gap: '0.6rem',
+            background: '#ffffff',
+            border: '1.5px solid #0284c7',
+            padding: '0.35rem 0.85rem',
+            borderRadius: '10px',
+            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.12)'
           }}>
-            <Calendar size={16} />
-            <span>يوم {reportData.dayName}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#0284c7', fontWeight: 800, fontSize: '0.85rem' }}>
+              <Calendar size={17} />
+              <span>يوم {reportData.dayName}:</span>
+            </div>
             <input 
               type="date"
               value={reportData.reportDate}
@@ -602,13 +603,68 @@ export const RoadDailyReportForm = ({
               }}
               style={{
                 border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                padding: '0.15rem 0.4rem',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                background: '#fff'
+                borderRadius: '6px',
+                padding: '0.3rem 0.6rem',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                background: '#f8fafc',
+                cursor: 'pointer',
+                outline: 'none'
               }}
             />
+            {/* Quick date presets */}
+            <div style={{ display: 'flex', gap: '0.3rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                  const dayStr = days[new Date(today).getDay()] || 'اليوم';
+                  setReportData(prev => ({
+                    ...prev,
+                    reportDate: today,
+                    dayName: dayStr,
+                    reportTitle: `تقرير أعمال يوم ${dayStr} ${today.split('-').reverse().join(' - ')}`
+                  }));
+                }}
+                style={{
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '5px',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  color: '#475569',
+                  cursor: 'pointer'
+                }}
+              >
+                اليوم
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportData(prev => ({
+                    ...prev,
+                    reportDate: '2026-10-24',
+                    dayName: 'السبت',
+                    reportTitle: 'تقرير أعمال يوم السبت 24 - 10 - 2026'
+                  }));
+                }}
+                style={{
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '5px',
+                  background: reportData.reportDate === '2026-10-24' ? '#0284c7' : '#e0f2fe',
+                  border: '1px solid #bae6fd',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  color: reportData.reportDate === '2026-10-24' ? '#fff' : '#0369a1',
+                  cursor: 'pointer'
+                }}
+              >
+                السبت 24-10 (معتمد) 📌
+              </button>
+            </div>
           </div>
 
           <div style={{ fontSize: '0.84rem', color: '#64748b', fontWeight: 700 }}>
