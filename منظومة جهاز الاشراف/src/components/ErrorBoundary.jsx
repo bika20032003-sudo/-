@@ -15,12 +15,29 @@ export class ErrorBoundary extends React.Component {
   }
 
   handleReload = () => {
-    // Clear potentially corrupt local cache and perform hard reload
+    // Clear all potentially corrupt local cache from older builds
     try {
-      localStorage.removeItem('api_cache');
+      localStorage.clear();
+      sessionStorage.clear();
+      if ('caches' in window) {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+        });
+      }
+    } catch {}
+    const cleanUrl = window.location.pathname + '?v=' + Date.now();
+    window.location.replace(cleanUrl);
+  };
+
+  handleBypass = () => {
+    try {
+      localStorage.clear();
       sessionStorage.clear();
     } catch {}
-    window.location.reload(true);
+    this.setState({ hasError: false, error: null });
   };
 
   render() {
@@ -66,11 +83,12 @@ export class ErrorBoundary extends React.Component {
             </h2>
 
             <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.65, marginBottom: '1.75rem' }}>
-              يرجى النقر على زر التحديث لتطبيق أحدث إصدار من المنظومة وحذف الملفات المؤقتة القديمة من المتصفح.
+              تم رفع أحدث إصدار من منظومة جهاز الإشراف. انقر على الزر بالأسفل لتحديث المنظومة وتفريغ الذاكرة المؤقتة القديمة والدخول مباشرة.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button
+                type="button"
                 onClick={this.handleReload}
                 style={{
                   width: '100%',
@@ -86,24 +104,17 @@ export class ErrorBoundary extends React.Component {
                   transition: 'all 0.2s ease'
                 }}
               >
-                تحديث المنظومة وإعادة التحميل الآن ⚡
+                تحديث المنظومة وتفريغ الذاكرة المؤقتة الآن ⚡
               </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  try {
-                    localStorage.removeItem('api_cache');
-                    sessionStorage.clear();
-                  } catch {}
-                  this.setState({ hasError: false, error: null });
-                  window.location.href = '/';
-                }}
+                onClick={this.handleBypass}
                 style={{
                   width: '100%',
                   padding: '0.75rem 1.5rem',
                   backgroundColor: '#f8fafc',
-                  color: '#475569',
+                  color: '#1e293b',
                   border: '1.5px solid #cbd5e1',
                   borderRadius: '10px',
                   fontSize: '0.88rem',
@@ -111,9 +122,20 @@ export class ErrorBoundary extends React.Component {
                   cursor: 'pointer'
                 }}
               >
-                العودة إلى لوحة التحكم الرئيسية 🏠
+                الدخول إلى شاشة تسجيل الدخول مباشرة 🚀
               </button>
             </div>
+
+            {this.state.error && (
+              <details style={{ marginTop: '1.25rem', textAlign: 'left', direction: 'ltr', fontSize: '0.75rem', color: '#64748b' }}>
+                <summary style={{ cursor: 'pointer', direction: 'rtl', textAlign: 'center', color: '#2563eb', fontWeight: 700 }}>
+                  تفاصيل التحديث / الخطأ الفني
+                </summary>
+                <pre style={{ background: '#f1f5f9', padding: '0.75rem', borderRadius: '8px', overflowX: 'auto', marginTop: '0.5rem', whiteSpace: 'pre-wrap', maxHeight: '150px' }}>
+                  {this.state.error?.message || String(this.state.error)}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );

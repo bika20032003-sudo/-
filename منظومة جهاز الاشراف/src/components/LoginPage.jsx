@@ -77,31 +77,38 @@ const ALIASES = {
 export function getSystemUsers() {
   let users = JSON.parse(JSON.stringify(DEFAULT_USERS));
   try {
-    const savedPasswords = JSON.parse(localStorage.getItem('system_user_passwords') || '{}');
-    users = users.map(u => ({
-      ...u,
-      password: savedPasswords[u.username] || u.password,
-      avatar: localStorage.getItem(`user_avatar_${u.username}`) || u.avatar || ''
-    }));
+    const rawPasswords = localStorage.getItem('system_user_passwords');
+    const savedPasswords = rawPasswords ? JSON.parse(rawPasswords) : {};
+    if (savedPasswords && typeof savedPasswords === 'object') {
+      users = users.map(u => ({
+        ...u,
+        password: savedPasswords[u.username] || u.password,
+        avatar: localStorage.getItem(`user_avatar_${u.username}`) || u.avatar || ''
+      }));
+    }
 
-    // Merge custom users
-    const customUsers = JSON.parse(localStorage.getItem('system_custom_users') || '[]');
-    customUsers.forEach(cu => {
-      const existingIdx = users.findIndex(u => u.username === cu.username);
-      if (existingIdx === -1) {
-        users.push({
-          ...cu,
-          password: savedPasswords[cu.username] || cu.password || 'admin1234',
-          avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || ''
-        });
-      } else {
-        users[existingIdx] = {
-          ...users[existingIdx],
-          ...cu,
-          avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[existingIdx].avatar || ''
-        };
-      }
-    });
+    // Merge custom users safely
+    const rawCustom = localStorage.getItem('system_custom_users');
+    const customUsers = rawCustom ? JSON.parse(rawCustom) : [];
+    if (Array.isArray(customUsers)) {
+      customUsers.forEach(cu => {
+        if (!cu || typeof cu !== 'object') return;
+        const existingIdx = users.findIndex(u => u.username === cu.username);
+        if (existingIdx === -1) {
+          users.push({
+            ...cu,
+            password: (savedPasswords && savedPasswords[cu.username]) || cu.password || 'admin1234',
+            avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || ''
+          });
+        } else {
+          users[existingIdx] = {
+            ...users[existingIdx],
+            ...cu,
+            avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[existingIdx]?.avatar || ''
+          };
+        }
+      });
+    }
   } catch (e) {
     console.warn('Error reading saved passwords:', e);
   }

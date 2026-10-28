@@ -17,14 +17,30 @@ const TTL = 60000; // 60 seconds fresh cache
 // Keep a reference to the unpatched native fetch before any overrides
 const nativeFetch = (typeof window !== 'undefined' && window.fetch) ? window.fetch.bind(window) : fetch;
 
+export function safeGetStorageArray(key) {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return [];
+    const val = localStorage.getItem(key);
+    if (!val) return [];
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function safeGetStorageSet(key) {
+  return new Set(safeGetStorageArray(key).map(String));
+}
+
 export function getFallbackData(url) {
   if (url.includes('/api/dashboard/summary')) {
     let allReports = [...(initialRecentReports || [])];
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+        const deleted = safeGetStorageSet('deleted_report_ids');
         allReports = allReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const local = safeGetStorageArray('local_reports');
         const existingIds = new Set(allReports.map(r => String(r.id || r.reportNumber)));
         const validLocal = local.filter(r => 
           !deleted.has(String(r.id)) && 

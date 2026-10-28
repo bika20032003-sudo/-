@@ -290,7 +290,3 @@ export const initialRoadProgress = [
     notes: 'منجز معتمد بالتقرير اليومي'
   }
 ];
-
-export { initialRoadDailyData } from '../components/RoadDailyReportForm';
-export { initialFuelDailyData } from '../components/FuelDailyReportForm';
-export { initialExecutiveData } from '../components/ExecutiveProgressForm';
