@@ -293,28 +293,6 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
             type="button"
-            onClick={() => setActiveSubTab('compose')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.65rem 1.15rem',
-              borderRadius: '10px',
-              background: '#2563eb',
-              border: 'none',
-              color: '#fff',
-              fontSize: '0.88rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)'
-            }}
-          >
-            <PlusCircle size={17} />
-            <span>مراسلة / إحالة جديدة</span>
-          </button>
-
-          <button
-            type="button"
             onClick={fetchMessages}
             title="تحديث صندوق البريد"
             style={{
@@ -460,27 +438,6 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
               <span style={{ background: '#e2e8f0', color: '#475569', fontSize: '0.72rem', padding: '0.1rem 0.45rem', borderRadius: '10px', fontWeight: 700 }}>
                 {sentMessages.length}
               </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { setActiveSubTab('compose'); setSelectedMessage(null); }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.9rem 1.25rem',
-                border: 'none',
-                background: 'transparent',
-                borderBottom: activeSubTab === 'compose' ? '3px solid #2563eb' : '3px solid transparent',
-                color: activeSubTab === 'compose' ? '#2563eb' : '#64748b',
-                fontWeight: activeSubTab === 'compose' ? 800 : 600,
-                fontSize: '0.92rem',
-                cursor: 'pointer'
-              }}
-            >
-              <Send size={18} />
-              <span>إنشاء مراسلة جديدة</span>
             </button>
           </div>
 
@@ -679,23 +636,6 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                           </span>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onClick={() => handleReplyTo(msg)}
-                              title="الرد على المراسلة"
-                              style={{
-                                padding: '0.35rem 0.65rem',
-                                borderRadius: '6px',
-                                background: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                color: '#1d4ed8',
-                                fontSize: '0.74rem',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              رد
-                            </button>
 
                             <button
                               type="button"
@@ -807,25 +747,6 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#334155', margin: 0 }}>
                   لا توجد مراسلات صادرة
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.35rem 0 1.25rem' }}>
-                  لم تقم بإرسال أي مراسلات أو إحالات تقارير حتى الآن.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveSubTab('compose')}
-                  style={{
-                    padding: '0.6rem 1.25rem',
-                    borderRadius: '8px',
-                    background: '#2563eb',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  إنشاء مراسلة جديدة
-                </button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -906,228 +827,6 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                 })}
               </div>
             )}
-          </div>
-        )}
-
-        {/* Tab 3: COMPOSE */}
-        {activeSubTab === 'compose' && (
-          <div style={{ padding: '1.75rem' }}>
-            <form onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '850px' }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Send size={20} color="#2563eb" />
-                <span>إرسال مراسلة رسمية / إحالة تقرير</span>
-              </h2>
-
-              {/* Recipient Picker */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.5rem' }}>
-                  المرسل إليه (تحديد المسؤول من جهاز الإشراف):
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '0.65rem' }}>
-                  {officialSupervisors.map((user) => {
-                    const isSelected = composeRecipient === user.username;
-                    return (
-                      <div
-                        key={user.username}
-                        onClick={() => setComposeRecipient(user.username)}
-                        style={{
-                          padding: '0.85rem',
-                          borderRadius: '10px',
-                          border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                          background: isSelected ? '#eff6ff' : '#fff',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isSelected ? '#1d4ed8' : '#0f172a' }}>
-                            {user.name}
-                          </span>
-                          {isSelected && <CheckCircle2 size={16} color="#2563eb" />}
-                        </div>
-                        <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>{user.role}</div>
-                        <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>@{user.username}</span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Option: Broadcast to all */}
-                  <div
-                    onClick={() => setComposeRecipient('all')}
-                    style={{
-                      padding: '0.85rem',
-                      borderRadius: '10px',
-                      border: composeRecipient === 'all' ? '2px solid #8b5cf6' : '1px solid #e2e8f0',
-                      background: composeRecipient === 'all' ? '#f5f3ff' : '#fff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: composeRecipient === 'all' ? '#6d28d9' : '#0f172a' }}>
-                        تعميم لكافة أعضاء الجهاز
-                      </span>
-                      {composeRecipient === 'all' && <CheckCircle2 size={16} color="#8b5cf6" />}
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: '#64748b' }}>إرسال لجميع الحسابات الخمسة معاً</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Message Type & Attachment Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-                    نوع المراسلة:
-                  </label>
-                  <select
-                    value={composeType}
-                    onChange={(e) => setComposeType(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                      color: '#0f172a'
-                    }}
-                  >
-                    <option value="إحالة تقرير يومي">إحالة تقرير إنجاز يومي</option>
-                    <option value="توجيه فني وملاحظات ميدانية">توجيه فني وملاحظات ميدانية</option>
-                    <option value="إشعار اعتماد">إشعار اعتماد وموافقة</option>
-                    <option value="طلب فحص أو اختبار جودة">طلب فحص مختبري واختبار جودة</option>
-                    <option value="استفسار ميداني">استفسار ميداني وتشغيلي</option>
-                  </select>
-                </div>
-
-                {/* Attach Existing Report */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-                    إرفاق تقرير ميداني (اختياري):
-                  </label>
-                  <select
-                    value={attachedReportId}
-                    onChange={(e) => {
-                      setAttachedReportId(e.target.value);
-                      if (e.target.value && !composeSubject) {
-                        const rep = reportsList.find(r => String(r.id) === String(e.target.value));
-                        if (rep) {
-                          setComposeSubject(`إحالة ${rep.reportType} رقم (${rep.reportNumber}) - ${rep.sector}`);
-                        }
-                      }
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.9rem',
-                      color: '#0f172a'
-                    }}
-                  >
-                    <option value="">-- بدون إرفاق تقرير --</option>
-                    {reportsList.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.reportNumber} - {r.sector} ({new Date(r.date).toLocaleDateString('ar-LY')})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Subject */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-                  موضوع المراسلة:
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: إحالة تقرير إنجاز المرحلة الأولى ليوم الإثنين..."
-                  value={composeSubject}
-                  onChange={(e) => setComposeSubject(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.7rem 0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.92rem',
-                    fontWeight: 700,
-                    color: '#0f172a'
-                  }}
-                />
-              </div>
-
-              {/* Message Body */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-                  نص المراسلة أو التوجيه الرسمي:
-                </label>
-                <textarea
-                  rows={6}
-                  placeholder="اكتب التوجيه الفني، أو ملخص التقرير المحال، أو التعليمات المطلوبة من المهندس أو مدير المشروع..."
-                  value={composeBody}
-                  onChange={(e) => setComposeBody(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.92rem',
-                    lineHeight: 1.6,
-                    color: '#0f172a'
-                  }}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                <button
-                  type="submit"
-                  disabled={isSending}
-                  style={{
-                    padding: '0.85rem 1.75rem',
-                    borderRadius: '10px',
-                    background: '#2563eb',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '0.95rem',
-                    fontWeight: 800,
-                    cursor: isSending ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
-                  }}
-                >
-                  <Send size={18} />
-                  <span>{isSending ? 'جاري الإرسال...' : 'إرسال المراسلة الرسمية الآن'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setComposeSubject('');
-                    setComposeBody('');
-                    setAttachedReportId('');
-                  }}
-                  style={{
-                    padding: '0.85rem 1.25rem',
-                    borderRadius: '10px',
-                    background: '#f1f5f9',
-                    border: '1px solid #cbd5e1',
-                    color: '#475569',
-                    fontSize: '0.92rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  مسح الحقول
-                </button>
-              </div>
-            </form>
           </div>
         )}
       </div>

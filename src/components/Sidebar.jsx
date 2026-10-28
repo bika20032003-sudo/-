@@ -155,8 +155,7 @@ export const Sidebar = ({
             {
                 title: 'المراسلات والنظام',
                 items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
-                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
                 ]
             }
         ];
@@ -184,8 +183,7 @@ export const Sidebar = ({
             {
                 title: 'المراسلات والنظام',
                 items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
-                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
                 ]
             }
         ];
@@ -220,8 +218,7 @@ export const Sidebar = ({
             {
                 title: 'المراسلات والنظام',
                 items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
-                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
                 ]
             }
         ];
@@ -257,8 +254,7 @@ export const Sidebar = ({
                 title: 'الإدارة والمراسلات والنظام',
                 items: [
                     { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
-                    { id: 'users', label: 'المستخدمين والصلاحيات', icon: Users },
-                    { id: 'alerts', label: 'التنبيهات والإشعارات', icon: Bell, badge: unreadAlerts > 0 ? unreadAlerts : undefined }
+                    { id: 'users', label: 'المستخدمين والصلاحيات', icon: Users }
                 ]
             }
         ];

@@ -602,7 +602,7 @@
   ],
   "reports": [
     {
-      "id": 1793125794363,
+      "id": 1793172128709,
       "reportNumber": "PHASE-REP-4228",
       "date": "2026-10-27T00:00:00.000Z",
       "sector": "القطاع المشترك (المرحلتين الأولى والثانية)",
@@ -919,6 +919,326 @@
         "todayMeters": 3820,
         "totalCumulativeMeters": 1433293
       }
+    },
+    {
+      "id": 1793125794363,
+      "reportNumber": "PHASE-REP-4228",
+      "date": "2026-10-27T00:00:00.000Z",
+      "sector": "القطاع المشترك (المرحلتين الأولى والثانية)",
+      "companyName": "ائتلاف الشركات المنفذة لطريق أوباري غات",
+      "reportType": "تقرير إنجاز المرحلتين",
+      "shiftType": "دوام كامل",
+      "crusherName": "كسارة المرحلة الثانية",
+      "materialName": "تقرير إنجاز المرحلتين - القطاع المشترك (المرحلتين الأولى والثانية)",
+      "productionAmount": 0,
+      "salesAmount": 0,
+      "roadMeters": 3820,
+      "fuelAmount": 0,
+      "workingEquipmentCount": 0,
+      "stoppedEquipmentCount": 0,
+      "operatingHours": 8,
+      "uploadedBy": "م. عبدالرحمن الأنصاري",
+      "status": "approved",
+      "approvedBy": "مدير عام المشروع",
+      "notes": "تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: 3820 م.ط - الإجمالي التراكمي: 1433293 م.ط",
+      "items": [],
+      "dayName": "الثلاثاء",
+      "sectorDirector": "م. صلاح العربي",
+      "ownerRepresentative": "م. عبدالرحمن الأنصاري",
+      "totalLength": 3820,
+      "totalArea": 0,
+      "imageUrl": null,
+      "fileName": null,
+      "parsedData": null,
+      "isTargetedWorksReport": false,
+      "targetedSections": [],
+      "totalTargetLength": 0,
+      "totalTargetEquipment": 0,
+      "dateFormatted": "2026-10-27",
+      "title": "بيان أعمال إنجاز المرحلتين يوم الثلاثاء 2026-10-27",
+      "isFuelReport": false,
+      "fuelItems": [],
+      "totalDispatchedLiters": 0,
+      "totalReceivedLiters": 0,
+      "totalRemainingLiters": 0,
+      "isTwoPhaseProgressReport": true,
+      "phase1Items": [
+        {
+          "id": 1,
+          "category": "basic",
+          "name": "طبقة إعادة التدوير (FDR)",
+          "todayMeters": 0,
+          "totalMeters": 226083,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "مكتملة بالكامل بالمرحلة الأولى",
+          "color": "#16a34a",
+          "shortName": "إعادة تدوير"
+        },
+        {
+          "id": 2,
+          "category": "basic",
+          "name": "رش طبقة التشريب (MCO)",
+          "todayMeters": 0,
+          "totalMeters": 226083,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "مكتملة بالكامل بالمرحلة الأولى",
+          "color": "#0284c7",
+          "shortName": "رش تشريب"
+        },
+        {
+          "id": 3,
+          "category": "basic",
+          "name": "طبقة الاسفلت المحسن",
+          "todayMeters": 0,
+          "totalMeters": 226083,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "مكتملة بالكامل بالمرحلة الأولى",
+          "color": "#0f172a",
+          "shortName": "اسفلت محسن"
+        },
+        {
+          "id": 4,
+          "category": "additional",
+          "name": "فرمة اولي بدون اسمنت(FDR)",
+          "todayMeters": 0,
+          "totalMeters": 226083,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "مكتملة بالكامل بالمرحلة الأولى",
+          "color": "#22c55e",
+          "shortName": "فرم بدون أسمنت"
+        },
+        {
+          "id": 5,
+          "category": "additional",
+          "name": "طبقة أساس حبيبي",
+          "todayMeters": 0,
+          "totalMeters": 226083,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "مكتملة بالكامل بالمرحلة الأولى",
+          "color": "#ea580c",
+          "shortName": "أساس حبيبي"
+        },
+        {
+          "id": 6,
+          "category": "additional",
+          "name": "الطريق الخدمي",
+          "todayMeters": 0,
+          "totalMeters": 226218,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "مكتملة بالكامل بالمرحلة الأولى",
+          "color": "#eab308",
+          "shortName": "طريق خدمي"
+        }
+      ],
+      "phase2Items": [
+        {
+          "id": 1,
+          "category": "basic",
+          "name": "طبقة إعادة التدوير (FDR)",
+          "todayMeters": 1220,
+          "totalMeters": 16240,
+          "dailyTarget": 800,
+          "varianceMeters": 420,
+          "notes": "منجز معتمد بالتقرير اليومي",
+          "color": "#16a34a",
+          "shortName": "إعادة تدوير"
+        },
+        {
+          "id": 2,
+          "category": "basic",
+          "name": "رش طبقة التشريب (MCO)",
+          "todayMeters": 460,
+          "totalMeters": 10410,
+          "dailyTarget": 800,
+          "varianceMeters": -340,
+          "notes": "منجز معتمد بالتقرير اليومي",
+          "color": "#0284c7",
+          "shortName": "رش تشريب"
+        },
+        {
+          "id": 3,
+          "category": "basic",
+          "name": "طبقة الاسفلت المحسن",
+          "todayMeters": 1140,
+          "totalMeters": 8160,
+          "dailyTarget": 800,
+          "varianceMeters": 340,
+          "notes": "منجز معتمد بالتقرير اليومي",
+          "color": "#0f172a",
+          "shortName": "اسفلت محسن"
+        },
+        {
+          "id": 4,
+          "category": "additional",
+          "name": "فرمة اولي بدون اسمنت(FDR)",
+          "todayMeters": 500,
+          "totalMeters": 16210,
+          "dailyTarget": 800,
+          "varianceMeters": -300,
+          "notes": "منجز معتمد بالتقرير اليومي",
+          "color": "#22c55e",
+          "shortName": "فرم بدون أسمنت"
+        },
+        {
+          "id": 5,
+          "category": "additional",
+          "name": "طبقة أساس حبيبي",
+          "todayMeters": 500,
+          "totalMeters": 10410,
+          "dailyTarget": 800,
+          "varianceMeters": -300,
+          "notes": "منجز معتمد بالتقرير اليومي",
+          "color": "#ea580c",
+          "shortName": "أساس حبيبي"
+        },
+        {
+          "id": 6,
+          "category": "additional",
+          "name": "الطريق الخدمي",
+          "todayMeters": 0,
+          "totalMeters": 15230,
+          "dailyTarget": 800,
+          "varianceMeters": 0,
+          "notes": "منجز معتمد بالتقرير اليومي",
+          "color": "#eab308",
+          "shortName": "طريق خدمي"
+        }
+      ],
+      "combinedItems": [
+        {
+          "id": 1,
+          "category": "basic",
+          "name": "طبقة إعادة التدوير (FDR)",
+          "shortName": "إعادة تدوير",
+          "color": "#16a34a",
+          "todayMeters": "1220",
+          "totalMeters": "242323",
+          "readyToWorkMeters": 30,
+          "notes": "الخلطة رابطة قري وقير سائل خربة غات"
+        },
+        {
+          "id": 2,
+          "category": "basic",
+          "name": "رش طبقة التشريب (MCO)",
+          "shortName": "رش تشريب",
+          "color": "#0284c7",
+          "todayMeters": "460",
+          "totalMeters": "236493",
+          "readyToWorkMeters": 0,
+          "notes": "طبقة أساس وقير ماكوكلي قطاع"
+        },
+        {
+          "id": 3,
+          "category": "basic",
+          "name": "طبقة الاسفلت المحسن",
+          "shortName": "اسفلت محسن",
+          "color": "#0f172a",
+          "todayMeters": "1140",
+          "totalMeters": "234243",
+          "readyToWorkMeters": 2268,
+          "notes": "الجاهز للعمل بالبند"
+        },
+        {
+          "id": 4,
+          "category": "additional",
+          "name": "فرمة اولي بدون اسمنت(FDR)",
+          "shortName": "فرم بدون أسمنت",
+          "color": "#22c55e",
+          "todayMeters": "500",
+          "totalMeters": "242293",
+          "readyToWorkMeters": 0,
+          "notes": ""
+        },
+        {
+          "id": 5,
+          "category": "additional",
+          "name": "طبقة أساس حبيبي",
+          "shortName": "أساس حبيبي",
+          "color": "#ea580c",
+          "todayMeters": "500",
+          "totalMeters": "236493",
+          "readyToWorkMeters": 5717,
+          "notes": "الجاهز للعمل بالبند"
+        },
+        {
+          "id": 6,
+          "category": "additional",
+          "name": "الطريق الخدمي",
+          "shortName": "طريق خدمي",
+          "color": "#eab308",
+          "todayMeters": "",
+          "totalMeters": "241448",
+          "readyToWorkMeters": 0,
+          "notes": ""
+        }
+      ],
+      "remainingItems": [
+        {
+          "id": 1,
+          "group": "A",
+          "name": "المتبقي من الفرمة الأولى",
+          "phase1": "150.00",
+          "phase2": "117677.00",
+          "total": "117677.00",
+          "notes": "من احتياج الصيانة"
+        },
+        {
+          "id": 2,
+          "group": "A",
+          "name": "المتبقي من الفرمة الثانية",
+          "phase1": "183.00",
+          "phase2": "117777.00",
+          "total": "117777.00",
+          "notes": "جزء السنارة المنهارة 1"
+        },
+        {
+          "id": 3,
+          "group": "A",
+          "name": "المتبقي من الأساس",
+          "phase1": "183.00",
+          "phase2": "123507.00",
+          "total": "123507.00",
+          "notes": ""
+        },
+        {
+          "id": 4,
+          "group": "B",
+          "name": "المتبقي من طبقة التشريب",
+          "phase1": "150.00",
+          "phase2": "123507.00",
+          "total": "123507.00",
+          "notes": ""
+        },
+        {
+          "id": 5,
+          "group": "B",
+          "name": "المتبقي من الاسفلت",
+          "phase1": "150.00",
+          "phase2": "125625.00",
+          "total": "125775.00",
+          "notes": ""
+        },
+        {
+          "id": 6,
+          "group": "B",
+          "name": "طول الطريق الخدمي العامل",
+          "phase1": "0.00",
+          "phase2": "0.00",
+          "total": "8080.00",
+          "notes": "كيلومتر"
+        }
+      ],
+      "twoPhaseTotals": {
+        "todayMeters": 3820,
+        "totalCumulativeMeters": 1433293
+      },
+      "projectName": "مشروع صيانة طريق أوباري غات"
     },
     {
       "id": 1793125792958,
@@ -2188,7 +2508,7 @@
   "savedPeriodicReports": [],
   "messages": [],
   "latestTwoPhaseReport": {
-    "id": 1793125794363,
+    "id": 1793172128709,
     "reportNumber": "PHASE-REP-4228",
     "date": "2026-10-27T00:00:00.000Z",
     "dateFormatted": "2026-10-27",

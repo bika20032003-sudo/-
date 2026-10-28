@@ -379,46 +379,59 @@ export const RoadDailyReportForm = ({
         updatedAt: new Date().toISOString()
       };
 
-      // 1. Save to dedicated Road Daily endpoint
-      let backendSuccess = false;
+      // 1. Prepare full printable report object
+      const printableObj = {
+        ...getFullPrintableReport(),
+        id: Date.now(),
+        roadMeters: calculatedTotals.totalLength,
+        salesAmount: calculatedTotals.totalLength,
+        totalLength: calculatedTotals.totalLength,
+        totalArea: calculatedTotals.totalArea,
+        notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - إجمالي الأطوال: ${fmtNum(calculatedTotals.totalLength)} م.ط - إجمالي المساحة: ${fmtNum(calculatedTotals.totalArea)} م²`,
+        createdAt: new Date().toISOString()
+      };
+
+      // 2. Save directly into localStorage under local_reports
       try {
-        const res = await fastFetch('http://localhost:5000/api/road-daily-report', {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const filtered = local.filter(r => r.reportNumber !== printableObj.reportNumber);
+        filtered.unshift(printableObj);
+        localStorage.setItem('local_reports', JSON.stringify(filtered));
+      } catch (storageErr) {
+        console.error('Error saving to local_reports:', storageErr);
+      }
+
+      // 3. Save into dedicated road_daily_report_data
+      localStorage.setItem('road_daily_report_data', JSON.stringify(payload));
+
+      // 4. Fire-and-forget sync to backend without blocking
+      try {
+        fetch('http://localhost:5000/api/road-daily-report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        });
-        if (res && res.success) backendSuccess = true;
-      } catch (err) {
-        console.warn('Dedicated endpoint error:', err);
-      }
+        }).catch(() => {});
 
-      // 2. Also register in the reports archive so it appears across the whole system
-      const printableObj = getFullPrintableReport();
-      try {
-        await fastFetch('http://localhost:5000/api/reports/create', {
+        fetch('http://localhost:5000/api/reports/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...printableObj,
-            roadMeters: calculatedTotals.totalLength,
-            salesAmount: calculatedTotals.totalLength,
-            notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - إجمالي الأطوال: ${fmtNum(calculatedTotals.totalLength)} م.ط - إجمالي المساحة: ${fmtNum(calculatedTotals.totalArea)} م²`
-          })
-        });
-      } catch (err) {
-        console.warn('Archive report creation fallback:', err);
-      }
+          body: JSON.stringify(printableObj)
+        }).catch(() => {});
+      } catch (e) {}
 
-      // 3. Save to localStorage
-      localStorage.setItem('road_daily_report_data', JSON.stringify(payload));
+      // 5. Invalidate caches and dispatch reactive events
       clearApiCache();
+      try {
+        window.dispatchEvent(new CustomEvent('report-saved', { detail: printableObj }));
+        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: printableObj }));
+      } catch (e) {}
 
       setStatusMessage({
         type: 'success',
-        text: 'تم حفظ واعتماد تقرير أعمال الطريق اليومي بنجاح، وتحديث الأرشيف وقاعدة البيانات.'
+        text: `تم حفظ واعتماد تقرير أعمال الطريق اليومي برقم (${printableObj.reportNumber}) بنجاح، وتحديث الأرشيف وقاعدة البيانات.`
       });
 
-      if (onSaved) onSaved(payload);
+      if (onSaved) onSaved(printableObj);
     } catch (e) {
       setStatusMessage({
         type: 'error',
@@ -432,23 +445,99 @@ export const RoadDailyReportForm = ({
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', direction: 'rtl', fontFamily: 'inherit' }}>
       
-      {/* Status Alert Banner */}
+      {/* Status Alert Banner with Direct Action Buttons */}
       {statusMessage && (
         <div style={{
-          padding: '0.85rem 1.25rem',
-          borderRadius: '10px',
-          marginBottom: '1rem',
+          padding: '1rem 1.25rem',
+          borderRadius: '12px',
+          marginBottom: '1.25rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.65rem',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
           background: statusMessage.type === 'success' ? '#f0fdf4' : '#fef2f2',
           border: statusMessage.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca',
           color: statusMessage.type === 'success' ? '#166534' : '#991b1b',
           fontSize: '0.92rem',
-          fontWeight: 800
+          fontWeight: 800,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
         }}>
-          {statusMessage.type === 'success' ? <CheckCircle2 size={19} color="#22c55e" /> : <AlertCircle size={19} color="#ef4444" />}
-          <span>{statusMessage.text}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {statusMessage.type === 'success' ? <CheckCircle2 size={22} color="#22c55e" /> : <AlertCircle size={22} color="#ef4444" />}
+            <span>{statusMessage.text}</span>
+          </div>
+
+          {statusMessage.type === 'success' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {onNavigateTab && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('road-progress')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.45rem 0.95rem',
+                    borderRadius: '8px',
+                    background: '#16a34a',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)'
+                  }}
+                >
+                  <Milestone size={15} />
+                  <span>الانتقال فوراً لقسم مسار الطريق 🛣️</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleTriggerPrint}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '8px',
+                  background: '#2563eb',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                }}
+              >
+                <Printer size={15} />
+                <span>طباعة النموذج المعتمد 🖨️</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '8px',
+                  background: '#047857',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                <FileSpreadsheet size={15} />
+                <span>تصدير إكسل 📊</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 

@@ -9,7 +9,6 @@ import { RoadProgressView } from './RoadProgressView';
 import { ReportsView } from './ReportsView';
 import { EquipmentView } from './EquipmentView';
 import { FuelView } from './FuelView';
-import { AlertsView } from './AlertsView';
 import { UsersView } from './UsersView';
 import { ReportsArchiveView } from './ReportsArchiveView';
 import { PeriodicReportsView } from './PeriodicReportsView';
@@ -68,8 +67,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'analytics': 'مركز التقارير والتحليلات المعتمدة',
         'fuel': 'إدارة الوقود',
         'equipment': 'إدارة وسجل المعدات والآليات الميدانية',
-        'users': 'مركز المستخدمين والصلاحيات الرسمية للجهاز',
-        'alerts': 'مركز التنبيهات والإشعارات التشغيلية'
+        'users': 'مركز المستخدمين والصلاحيات الرسمية للجهاز'
     };
 
     return (
@@ -97,7 +95,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         <div className="custom-system-main">
           <Navbar 
             currentTabName={tabTitles[activeTab] || 'لوحة التحكم'} 
-            onBellClick={() => setActiveTab('alerts')} 
             onMailClick={() => setActiveTab('messages')}
             onProfileClick={() => setIsProfileModalOpen(true)}
             currentUser={currentUser}
@@ -154,7 +151,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             {activeTab === 'fuel' && <FuelView currentUser={currentUser} onNavigateTab={handleTabChange} />}
             {activeTab === 'equipment' && <EquipmentView />}
             {activeTab === 'users' && <UsersView currentUser={currentUser} />}
-            {activeTab === 'alerts' && <AlertsView currentUser={currentUser} onNavigateTab={handleTabChange} />}
           </main>
         </div>
 

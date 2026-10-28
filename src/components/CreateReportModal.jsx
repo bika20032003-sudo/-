@@ -365,6 +365,7 @@ export const CreateReportModal = ({
       try {
         window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
+        window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
       } catch (evErr) {}
 
       setCreatedReportData({

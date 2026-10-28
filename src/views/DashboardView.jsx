@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Fuel, UploadCloud, Factory, Truck, CheckCircle2, X, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3 } from 'lucide-react';
+import { Fuel, UploadCloud, Factory, Truck, CheckCircle2, X, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3, Printer, ExternalLink } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
+import { OfficialPrintModal } from '../components/OfficialPrintModal';
+
 export const DashboardView = ({ onNavigateTab }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeChartTab, setActiveChartTab] = useState('progress');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
     // Live Metrics State
     const [metrics, setMetrics] = useState({
         totalProduction: 0,
@@ -69,6 +72,23 @@ export const DashboardView = ({ onNavigateTab }) => {
                 const remKm = roadRes?.remainingKm !== undefined ? parseFloat(roadRes.remainingKm) : 122.61;
                 const todayM = roadRes?.kpis?.totalTodayMeters !== undefined ? parseFloat(roadRes.kpis.totalTodayMeters) : 3820;
 
+                let reportsList = summaryRes.recentReports || [];
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                        const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+                        const existingIds = new Set(reportsList.map(r => String(r.id || r.reportNumber)));
+                        const validLocal = local.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)) && !existingIds.has(String(r.id || r.reportNumber)));
+                        reportsList = [...validLocal, ...reportsList];
+                        reportsList = reportsList.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+                        reportsList.sort((a, b) => {
+                            const dateA = a.date ? new Date(a.date).getTime() : (Number(a.id) || 0);
+                            const dateB = b.date ? new Date(b.date).getTime() : (Number(b.id) || 0);
+                            return dateB - dateA;
+                        });
+                    } catch (storageErr) {}
+                }
+
                 setMetrics(prev => ({
                     ...prev,
                     totalProduction: summaryRes.totalProduction || 0,
@@ -85,7 +105,7 @@ export const DashboardView = ({ onNavigateTab }) => {
                     sectorBFuel: summaryRes.sectorBFuel || 0,
                     sectorAProd: summaryRes.sectorAProd || 0,
                     sectorBProd: summaryRes.sectorBProd || 0,
-                    recentReports: summaryRes.recentReports || [],
+                    recentReports: reportsList,
                     recentAlerts: summaryRes.recentAlerts || [],
                     urgentIssues: summaryRes.urgentIssues || [],
                     tomorrowPlan: summaryRes.tomorrowPlan || null,
@@ -132,11 +152,13 @@ export const DashboardView = ({ onNavigateTab }) => {
         const handleSync = () => fetchDashboardData();
         window.addEventListener('report-saved', handleSync);
         window.addEventListener('road-progress-updated', handleSync);
+        window.addEventListener('fuel-updated', handleSync);
         window.addEventListener('report-deleted', handleSync);
 
         return () => {
             window.removeEventListener('report-saved', handleSync);
             window.removeEventListener('road-progress-updated', handleSync);
+            window.removeEventListener('fuel-updated', handleSync);
             window.removeEventListener('report-deleted', handleSync);
         };
     }, []);
@@ -642,50 +664,227 @@ export const DashboardView = ({ onNavigateTab }) => {
       <div style={{ marginBottom: '1.5rem' }}>
         {/* Latest Uploaded Reports */}
         <div className="dashboard-white-card" style={{ padding: '1.35rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
-              أحدث التقارير والوثائق المرفوعة
-            </h3>
-            <button onClick={() => onNavigateTab('reports-archive')} style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-              <span>كامل الأرشيف</span>
-              <ChevronLeft size={14}/>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FileText size={20}/>
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                  أحدث التقارير والوثائق المرفوعة
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.15rem 0 0' }}>
+                  سجل التقارير الميدانية والمستندات المعتمدة - انقر على أي تقرير للمعاينة والطباعة الفورية
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button 
+                onClick={() => onNavigateTab && onNavigateTab('create-report')} 
+                style={{ 
+                  background: '#2563eb', 
+                  border: 'none', 
+                  color: '#ffffff', 
+                  padding: '0.5rem 0.95rem', 
+                  borderRadius: '8px', 
+                  fontSize: '0.82rem', 
+                  fontWeight: 800, 
+                  cursor: 'pointer',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.4rem',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                }}
+              >
+                <span>+ إنشاء تقرير جديد</span>
+              </button>
+              <button 
+                onClick={() => onNavigateTab && onNavigateTab('reports-archive')} 
+                style={{ 
+                  background: '#f8fafc', 
+                  border: '1px solid #cbd5e1', 
+                  color: '#334155', 
+                  padding: '0.5rem 0.95rem', 
+                  borderRadius: '8px', 
+                  fontSize: '0.82rem', 
+                  fontWeight: 800, 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.3rem' 
+                }}
+              >
+                <span>كامل الأرشيف ({metrics.recentReports.length})</span>
+                <ChevronLeft size={15}/>
+              </button>
+            </div>
           </div>
 
-          {metrics.recentReports.length > 0 ? (<div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {metrics.recentReports.map((rep) => (<div key={rep.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.65rem 0.85rem',
-                    background: '#f8fafc',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {rep.imageUrl ? (<img src={rep.imageUrl} alt="معاينة" onClick={() => setSelectedImage(rep.imageUrl)} style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer', border: '1.5px solid #2563eb' }} title="انقر لتكبير الصورة"/>) : (<div style={{ width: '38px', height: '38px', borderRadius: '6px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <FileText size={18}/>
-                      </div>)}
-                    <div>
-                      <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
-                        {rep.materialName || 'تقرير ميداني'}
-                      </h4>
-                      <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.1rem' }}>
-                        {rep.crusherName} • {rep.date ? new Date(rep.date).toLocaleDateString('en-GB') : ''}
-                      </p>
+          {metrics.recentReports.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {metrics.recentReports.slice(0, 8).map((rep) => {
+                const repTypeStr = String(rep.reportType || '');
+                const repTitleStr = String(rep.title || '');
+                const isRoad = rep.reportCategory === 'road' || repTypeStr.includes('طريق') || repTitleStr.includes('طريق') || (rep.roadMeters && !repTypeStr.includes('المرحلتين'));
+                const isFuel = rep.reportCategory === 'fuel' || rep.isFuelReport || repTypeStr.includes('وقود') || repTitleStr.includes('وقود');
+                const isTargeted = rep.reportCategory === 'targeted' || rep.isTargetedWorksReport || repTypeStr.includes('مستهدف');
+                const isTwoPhase = rep.reportCategory === 'two_phase' || rep.isTwoPhaseProgressReport || repTypeStr.includes('المرحلتين');
+                const isExecutive = rep.reportCategory === 'executive' || repTypeStr.includes('تنفيذي') || repTitleStr.includes('الموقف التنفيذي');
+
+                let badgeColor = '#2563eb';
+                let badgeBg = '#eff6ff';
+                let typeLabel = rep.reportType || 'تقرير ميداني';
+                if (isFuel) {
+                  badgeColor = '#ea580c';
+                  badgeBg = '#ffedd5';
+                  typeLabel = '⛽ تقرير كميات الوقود';
+                } else if (isTwoPhase) {
+                  badgeColor = '#7c3aed';
+                  badgeBg = '#f3e8ff';
+                  typeLabel = '📊 إنجاز المرحلتين (360 كم)';
+                } else if (isRoad) {
+                  badgeColor = '#16a34a';
+                  badgeBg = '#dcfce7';
+                  typeLabel = '🛣️ أعمال الطريق اليومية';
+                } else if (isExecutive) {
+                  badgeColor = '#0f172a';
+                  badgeBg = '#e2e8f0';
+                  typeLabel = '📑 الموقف التنفيذي العام';
+                } else if (isTargeted) {
+                  badgeColor = '#0284c7';
+                  badgeBg = '#e0f2fe';
+                  typeLabel = '🎯 الأعمال المستهدفة';
+                }
+
+                const repTitle = rep.title || (isRoad ? 'تقرير أعمال الطريق اليومي' : (isFuel ? 'تقرير كميات الوقود اليومية' : (rep.materialName || 'تقرير ميداني معتمد')));
+                const repDate = rep.dateFormatted || (rep.date ? new Date(rep.date).toLocaleDateString('ar-LY') : '2026-10-24');
+                const repSector = rep.sector || rep.crusherName || 'مشروع صيانة طريق أوباري - غات';
+                const repNumber = rep.reportNumber || (rep.id ? `REP-${rep.id}` : 'REP-001');
+
+                return (
+                  <div 
+                    key={rep.id || rep.reportNumber} 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.85rem 1.15rem',
+                      background: '#ffffff',
+                      borderRadius: '10px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                      transition: 'all 0.2s ease',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      {rep.imageUrl ? (
+                        <img 
+                          src={rep.imageUrl} 
+                          alt="معاينة" 
+                          onClick={() => setSelectedImage(rep.imageUrl)} 
+                          style={{ width: '46px', height: '46px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer', border: '2px solid #2563eb' }} 
+                          title="انقر لتكبير الوثيقة المرفوعة"
+                        />
+                      ) : (
+                        <div style={{ width: '46px', height: '46px', borderRadius: '8px', background: badgeBg, color: badgeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <FileText size={22}/>
+                        </div>
+                      )}
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <h4 
+                            onClick={() => setSelectedReportForPrint(rep)}
+                            style={{ fontSize: '0.94rem', fontWeight: 900, color: '#0f172a', margin: 0, cursor: 'pointer' }}
+                            title="انقر لمعاينة التقرير وطباعته"
+                          >
+                            {repTitle}
+                          </h4>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '0.15rem 0.55rem', borderRadius: '6px', background: badgeBg, color: badgeColor }}>
+                            {typeLabel}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace', background: '#f8fafc', padding: '0.15rem 0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                            {repNumber}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.76rem', color: '#64748b', margin: '0.3rem 0 0', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                          <span>📍 {repSector}</span>
+                          <span>📅 {repDate} {rep.dayName ? `(${rep.dayName})` : ''}</span>
+                          {rep.uploadedBy && <span>👤 المشرف: {rep.uploadedBy}</span>}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      {/* Metric Value Pill */}
+                      {rep.roadMeters ? (
+                        <span style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', background: '#dcfce7', color: '#166534', fontSize: '0.82rem', fontWeight: 800 }}>
+                          {Number(rep.roadMeters).toLocaleString()} م.ط
+                        </span>
+                      ) : rep.fuelAmount ? (
+                        <span style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', background: '#ffedd5', color: '#9a3412', fontSize: '0.82rem', fontWeight: 800 }}>
+                          {Number(rep.fuelAmount).toLocaleString()} لتر
+                        </span>
+                      ) : rep.productionAmount ? (
+                        <span style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontSize: '0.82rem', fontWeight: 800 }}>
+                          {Number(rep.productionAmount).toLocaleString()} طن
+                        </span>
+                      ) : null}
+
+                      {/* Official Print & Preview Button */}
+                      <button
+                        onClick={() => setSelectedReportForPrint(rep)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.48rem 0.95rem',
+                          borderRadius: '8px',
+                          background: '#ffffff',
+                          border: '1.5px solid #2563eb',
+                          color: '#2563eb',
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 1px 3px rgba(37, 99, 235, 0.1)'
+                        }}
+                        title="معاينة وطباعة النموذج الرسمي المعتمد"
+                      >
+                        <Printer size={15} />
+                        <span>معاينة / طباعة 🖨️</span>
+                      </button>
                     </div>
                   </div>
-
-                  <span className="stock-pill" style={{ fontSize: '0.78rem' }}>
-                    {rep.productionAmount || 0}
-                  </span>
-                </div>))}
-            </div>) : (<div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
-              <FileText size={32} style={{ margin: '0 auto 0.4rem', opacity: 0.35 }}/>
-              <p style={{ fontSize: '0.82rem' }}>لا توجد تقارير مرفوعة بعد.</p>
-            </div>)}
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+              <FileText size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.35 }}/>
+              <p style={{ fontSize: '0.88rem', fontWeight: 700 }}>لا توجد تقارير مسجلة بعد.</p>
+              <button 
+                onClick={() => onNavigateTab && onNavigateTab('create-report')} 
+                style={{ marginTop: '0.5rem', background: '#2563eb', border: 'none', color: '#fff', padding: '0.5rem 1.1rem', borderRadius: '6px', fontSize: '0.84rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                + إنشاء أول تقرير ميداني الآن
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Official Print Modal */}
+      {selectedReportForPrint && (
+        <OfficialPrintModal
+          isOpen={!!selectedReportForPrint}
+          report={selectedReportForPrint}
+          onClose={() => setSelectedReportForPrint(null)}
+        />
+      )}
 
       {/* Lightbox Modal for Photo Zoom */}
       {selectedImage && (<div style={{

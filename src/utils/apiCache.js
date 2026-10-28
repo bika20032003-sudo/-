@@ -19,6 +19,32 @@ const nativeFetch = (typeof window !== 'undefined' && window.fetch) ? window.fet
 
 export function getFallbackData(url) {
   if (url.includes('/api/dashboard/summary')) {
+    let allReports = [...(initialRecentReports || [])];
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+        allReports = allReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const existingIds = new Set(allReports.map(r => String(r.id || r.reportNumber)));
+        const validLocal = local.filter(r => 
+          !deleted.has(String(r.id)) && 
+          !deleted.has(String(r.reportNumber)) && 
+          !existingIds.has(String(r.id || r.reportNumber))
+        );
+        allReports = [...validLocal, ...allReports];
+      }
+    } catch (e) {
+      console.warn('Error reading reports for dashboard summary:', e);
+    }
+
+    allReports.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : (Number(a.id) || 0);
+      const dateB = b.date ? new Date(b.date).getTime() : (Number(b.id) || 0);
+      return dateB - dateA;
+    });
+
+    const recentReports = allReports.slice(0, 10);
+
     return {
       success: true,
       totalProduction: initialDailySummary?.totalProduction?.total || 0,
@@ -33,7 +59,7 @@ export function getFallbackData(url) {
       sectorAProd: 0,
       sectorBProd: 0,
       recentAlerts: [],
-      recentReports: [],
+      recentReports: recentReports,
       roadProgress: {
         kpis: {
           fdr: { meters: 220203, percentage: 97.3 },

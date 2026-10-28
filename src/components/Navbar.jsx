@@ -124,32 +124,6 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
             <span>متصل ومحدث</span>
           </div>
 
-          {/* Notification Bell */}
-          <button 
-            onClick={onBellClick} 
-            style={{
-              position: 'relative',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              width: '34px',
-              height: '34px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#475569'
-            }} 
-            title={`${unreadCount} تنبيهات جديدة`}
-          >
-            <Bell size={16}/>
-            {unreadCount > 0 && (
-              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#ef4444', color: '#fff', fontSize: '0.68rem', fontWeight: 800, width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}>
-                {unreadCount}
-              </span>
-            )}
-          </button>
-
           {/* Mail & Correspondence Button */}
           <button 
             onClick={onMailClick} 
