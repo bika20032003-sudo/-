@@ -6,6 +6,7 @@ echo   جاري رفع منظومة متابعة الكسارات إلى GitHub.
 echo ====================================================
 echo.
 cd /d "%~dp0"
+call npm run build
 git add -A
 git diff-index --quiet HEAD || git commit -m "update: مزامنة التحديثات البرمجية وحل مشكلة شاشة التحديث المؤقتة"
 git push -u origin main
