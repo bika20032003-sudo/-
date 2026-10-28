@@ -1,3 +1,5 @@
+import { deepSanitizeLatinDigits, toCleanLatinDigits } from './forceLatinDigits.js';
+
 // Unified synchronization utility linking Two-Phase Achievement Report (تقرير إنجاز المرحلتين)
 // directly with the Dashboard (الداشبورد) and the 360 Road Progress View (متابعة إنجاز الطريق 360 كم).
 
@@ -90,33 +92,34 @@ export function getCertifiedBaselineTwoPhaseReport() {
 
 export function getStoredTwoPhaseReport() {
   if (typeof window === 'undefined' || !window.localStorage) {
-    return getCertifiedBaselineTwoPhaseReport();
+    return deepSanitizeLatinDigits(getCertifiedBaselineTwoPhaseReport());
   }
   try {
     const raw = localStorage.getItem('two_phase_report_data');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.phase1Items) && parsed.phase1Items.length > 0) {
-        return parsed;
+        return deepSanitizeLatinDigits(parsed);
       }
     }
     const localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
     const tpRep = localReports.find(r => r && (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين') && Array.isArray(r.phase1Items));
     if (tpRep) {
-      return tpRep;
+      return deepSanitizeLatinDigits(tpRep);
     }
   } catch (e) {
     console.warn('Error reading stored two phase report:', e);
   }
-  return getCertifiedBaselineTwoPhaseReport();
+  return deepSanitizeLatinDigits(getCertifiedBaselineTwoPhaseReport());
 }
 
 export function saveStoredTwoPhaseReport(report) {
   if (!report || typeof report !== 'object') return;
   if (typeof window === 'undefined' || !window.localStorage) return;
   try {
+    const sanitized = deepSanitizeLatinDigits(report);
     const enriched = {
-      ...report,
+      ...sanitized,
       isTwoPhaseProgressReport: true,
       updatedAt: new Date().toISOString()
     };
@@ -342,3 +345,4 @@ export function updateRoadProgressItem(id, todayMeters, notes) {
   saveStoredTwoPhaseReport(rep);
   return rep;
 }
+

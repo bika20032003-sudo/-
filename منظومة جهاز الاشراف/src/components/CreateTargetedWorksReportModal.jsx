@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 
 // Approved Targeted Works Data from official document (Sunday 25/10/2026)
 export const initialTargetedWorksSections = [
@@ -314,9 +315,10 @@ export const CreateTargetedWorksReportModal = ({
 
   // Work items manipulation
   const handleWorkItemChange = (sectionIndex, itemId, field, value) => {
+    const cleanVal = (field === 'length' || field === 'stationFrom' || field === 'stationTo') ? toCleanLatinDigits(value) : value;
     setSections(prev => prev.map((sec, idx) => {
       if (idx === sectionIndex) {
-        const updated = sec.workItems.map(row => row.id === itemId ? { ...row, [field]: value } : row);
+        const updated = sec.workItems.map(row => row.id === itemId ? { ...row, [field]: cleanVal } : row);
         return { ...sec, workItems: updated };
       }
       return sec;
@@ -353,9 +355,10 @@ export const CreateTargetedWorksReportModal = ({
 
   // Equipment manipulation
   const handleEquipmentItemChange = (sectionIndex, itemId, field, value) => {
+    const cleanVal = field === 'count' ? toCleanLatinDigits(value) : value;
     setSections(prev => prev.map((sec, idx) => {
       if (idx === sectionIndex) {
-        const updated = sec.equipmentItems.map(row => row.id === itemId ? { ...row, [field]: value } : row);
+        const updated = sec.equipmentItems.map(row => row.id === itemId ? { ...row, [field]: cleanVal } : row);
         return { ...sec, equipmentItems: updated };
       }
       return sec;
@@ -1273,7 +1276,7 @@ export const CreateTargetedWorksReportModal = ({
                               type="text" inputMode="decimal" dir="ltr" lang="en"
                               step="any"
                               placeholder="0"
-                              value={eq.count}
+                              value={toCleanLatinDigits(eq.count)}
                               onChange={(e) => handleEquipmentItemChange(sIdx, eq.id, 'count', e.target.value)}
                               style={{
                                 width: '100%',

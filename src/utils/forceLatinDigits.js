@@ -43,8 +43,29 @@ export const toCleanLatinDigits = (val) => {
   return String(val)
     .replace(/[\u0660-\u0669]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 48))
     .replace(/[\u06F0-\u06F9]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x06F0 + 48))
-    .replace(/٫/g, '.')
-    .replace(/[٬،]/g, '');
+    .replace(/٫/g, '.');
+};
+
+// Deeply sanitize all strings/numbers inside an object or array to ensure pure Latin digits
+export const deepSanitizeLatinDigits = (data) => {
+  if (data === null || data === undefined) return data;
+  if (typeof data === 'string') {
+    return /[\u0660-\u0669\u06F0-\u06F9]/.test(data) ? toCleanLatinDigits(data) : data;
+  }
+  if (typeof data === 'number' || typeof data === 'boolean') {
+    return data;
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => deepSanitizeLatinDigits(item));
+  }
+  if (typeof data === 'object') {
+    const copy = {};
+    for (const key of Object.keys(data)) {
+      copy[key] = deepSanitizeLatinDigits(data[key]);
+    }
+    return copy;
+  }
+  return data;
 };
 
 // 5. Scrubber for localStorage: cleanse any existing stored reports or data of Arabic numerals
@@ -95,6 +116,11 @@ if (typeof window !== 'undefined') {
       document.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.getAttribute('lang') !== 'en-US') {
           el.setAttribute('lang', 'en-US');
+        }
+        if (el.getAttribute('inputmode') === 'decimal' || el.getAttribute('dir') === 'ltr') {
+          el.style.fontFamily = "'Segoe UI', Roboto, Tahoma, Arial, sans-serif";
+          el.style.direction = "ltr";
+          el.style.unicodeBidi = "plaintext";
         }
       });
     } catch (_) {}

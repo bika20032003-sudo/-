@@ -1369,7 +1369,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                             type="text" inputMode="decimal" dir="ltr" lang="en"
                             step="any"
                             placeholder="0.00"
-                            value={row.length}
+                            value={toCleanLatinDigits(row.length)}
                             onChange={(e) => handleTargetWorkItemChange(sIdx, row.id, 'length', e.target.value)}
                             style={{ width: '100%', padding: '0.45rem', textAlign: 'center', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.9rem', fontWeight: 800 }}
                           />
@@ -1884,7 +1884,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                         type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
-                        value={row.length}
+                        value={toCleanLatinDigits(row.length)}
                         onChange={(e) => handleRoadRowChange(row.id, 'length', e.target.value)}
                         style={{
                           width: '100%',

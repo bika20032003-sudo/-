@@ -580,7 +580,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                         type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
-                        value={row.dispatchedLiters}
+                        value={toCleanLatinDigits(row.dispatchedLiters)}
                         onChange={(e) => handleRowChange(row.id, 'dispatchedLiters', e.target.value)}
                         style={{
                           width: '100%',
@@ -601,7 +601,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                         type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
-                        value={row.receivedLiters}
+                        value={toCleanLatinDigits(row.receivedLiters)}
                         onChange={(e) => handleRowChange(row.id, 'receivedLiters', e.target.value)}
                         style={{
                           width: '100%',
@@ -622,7 +622,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                         type="text" inputMode="decimal" dir="ltr" lang="en"
                         step="any"
                         placeholder="0.00"
-                        value={row.remainingLiters}
+                        value={toCleanLatinDigits(row.remainingLiters)}
                         onChange={(e) => handleRowChange(row.id, 'remainingLiters', e.target.value)}
                         style={{
                           width: '100%',

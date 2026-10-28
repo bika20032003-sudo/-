@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const buildTimestamp = Date.now();
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -9,9 +11,13 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: true,
+    emptyOutDir: true,
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
+        entryFileNames: `assets/[name]-[hash]-${buildTimestamp}.js`,
+        chunkFileNames: `assets/[name]-[hash]-${buildTimestamp}.js`,
+        assetFileNames: `assets/[name]-[hash]-${buildTimestamp}[extname]`,
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('xlsx')) return 'vendor-xlsx';

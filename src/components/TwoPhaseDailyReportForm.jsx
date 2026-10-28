@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
+import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 
 // Official Certified Items for Phase 1 (Matching Official Document 24/10/2026)
 export const initialPhase1ReportItems = [
@@ -154,9 +155,12 @@ export const TwoPhaseDailyReportForm = ({
 
   // Handlers for Phase 1 updates
   const handleUpdatePhase1 = (id, field, value) => {
+    const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget') 
+      ? toCleanLatinDigits(value) 
+      : value;
     setPhase1Items(prev => prev.map(item => {
       if (item.id !== id) return item;
-      const updated = { ...item, [field]: value };
+      const updated = { ...item, [field]: cleanVal };
       if (field === 'todayMeters' || field === 'dailyTarget') {
         const today = field === 'todayMeters' ? parseFloat(value) : parseFloat(item.todayMeters);
         const target = field === 'dailyTarget' ? parseFloat(value) : parseFloat(item.dailyTarget);
@@ -172,9 +176,12 @@ export const TwoPhaseDailyReportForm = ({
 
   // Handlers for Phase 2 updates
   const handleUpdatePhase2 = (id, field, value) => {
+    const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget') 
+      ? toCleanLatinDigits(value) 
+      : value;
     setPhase2Items(prev => prev.map(item => {
       if (item.id !== id) return item;
-      const updated = { ...item, [field]: value };
+      const updated = { ...item, [field]: cleanVal };
       if (field === 'todayMeters' || field === 'dailyTarget') {
         const today = field === 'todayMeters' ? parseFloat(value) : parseFloat(item.todayMeters);
         const target = field === 'dailyTarget' ? parseFloat(value) : parseFloat(item.dailyTarget);
@@ -190,17 +197,19 @@ export const TwoPhaseDailyReportForm = ({
 
   // Handler for Combined Table updates (readyToWorkMeters & notes)
   const handleUpdateCombined = (id, field, value) => {
+    const cleanVal = field === 'readyToWorkMeters' ? toCleanLatinDigits(value) : value;
     setCombinedCustom(prev => prev.map(item => {
       if (item.id !== id) return item;
-      return { ...item, [field]: value };
+      return { ...item, [field]: cleanVal };
     }));
   };
 
   // Handlers for Remaining Items updates
   const handleUpdateRemaining = (id, field, value) => {
+    const cleanVal = (field === 'phase1' || field === 'phase2') ? toCleanLatinDigits(value) : value;
     setRemainingItems(prev => prev.map(item => {
       if (item.id !== id) return item;
-      const updated = { ...item, [field]: value };
+      const updated = { ...item, [field]: cleanVal };
       if (field === 'phase1' || field === 'phase2') {
         const p1 = field === 'phase1' ? parseFloat(value) : parseFloat(item.phase1);
         const p2 = field === 'phase2' ? parseFloat(value) : parseFloat(item.phase2);
@@ -526,7 +535,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.todayMeters}
+                    value={toCleanLatinDigits(item.todayMeters)}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -545,7 +554,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.totalMeters}
+                    value={toCleanLatinDigits(item.totalMeters)}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -564,7 +573,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.dailyTarget}
+                    value={toCleanLatinDigits(item.dailyTarget)}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -632,7 +641,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.todayMeters}
+                    value={toCleanLatinDigits(item.todayMeters)}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -651,7 +660,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.totalMeters}
+                    value={toCleanLatinDigits(item.totalMeters)}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -670,7 +679,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.dailyTarget}
+                    value={toCleanLatinDigits(item.dailyTarget)}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -792,7 +801,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.readyToWorkMeters}
+                    value={toCleanLatinDigits(item.readyToWorkMeters)}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -851,7 +860,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={item.readyToWorkMeters}
+                    value={toCleanLatinDigits(item.readyToWorkMeters)}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
                     placeholder="0.00"
                     style={{
@@ -1543,7 +1552,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={item.phase1}
+                      value={toCleanLatinDigits(item.phase1)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
                       placeholder="0.00"
                       style={{
@@ -1561,7 +1570,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={item.phase2}
+                      value={toCleanLatinDigits(item.phase2)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
                       placeholder="0.00"
                       style={{
@@ -1576,7 +1585,7 @@ export const TwoPhaseDailyReportForm = ({
                     />
                   </td>
                   <td style={{ padding: '4px', fontWeight: 900, color: '#0f172a', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
-                    {item.total ? item.total : '—'}
+                    {item.total ? toCleanLatinDigits(item.total) : '—'}
                   </td>
                   <td style={{ padding: '3px' }}>
                     <input
@@ -1619,7 +1628,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={item.phase1}
+                      value={toCleanLatinDigits(item.phase1)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
                       placeholder="0.00"
                       style={{
@@ -1637,7 +1646,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={item.phase2}
+                      value={toCleanLatinDigits(item.phase2)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
                       placeholder="0.00"
                       style={{
@@ -1652,7 +1661,7 @@ export const TwoPhaseDailyReportForm = ({
                     />
                   </td>
                   <td style={{ padding: '4px', fontWeight: 900, color: '#0f172a', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
-                    {item.total ? item.total : '—'}
+                    {item.total ? toCleanLatinDigits(item.total) : '—'}
                   </td>
                   <td style={{ padding: '3px' }}>
                     <input
