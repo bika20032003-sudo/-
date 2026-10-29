@@ -124,39 +124,7 @@ export const Sidebar = ({
     // Categorized navigation groups tailored by role
     let menuGroups = [];
 
-    if (isProjectManager) {
-        // مدير المشروع (م. عبدالرحمن الأنصاري) - يظهر له داشبورد إنجاز المرحلتين، البريد، الأرشيف، الأعمال المستهدفة، الوقود، الكسارات
-        menuGroups = [
-            {
-                title: 'الرئيسية والقيادة',
-                items: [
-                    { id: 'dashboard', label: 'داشبورد إنجاز المرحلتين واللوحة الموحدة', icon: Home },
-                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
-                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-                ]
-            },
-            {
-                title: 'التقارير الميدانية والمستندات',
-                items: [
-                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
-                ]
-            },
-            {
-                title: 'الموارد والتشغيل الميداني',
-                items: [
-                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck }
-                ]
-            },
-            {
-                title: 'المراسلات والتواصل',
-                items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
-                ]
-            }
-        ];
-    } else if (isHeadOfSupervision) {
+    if (isHeadOfSupervision) {
         // رئيس جهاز الإشراف (م. عبدالسلام ابريكاو)
         menuGroups = [
             {
@@ -180,7 +148,7 @@ export const Sidebar = ({
                 title: 'الموارد والتشغيل',
                 items: [
                     { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
+                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck },
                 ]
             },
             {
@@ -243,7 +211,7 @@ export const Sidebar = ({
                 title: 'الموارد والتشغيل الميداني',
                 items: [
                     { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
+                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck }
                 ]
             },
             {
@@ -254,7 +222,7 @@ export const Sidebar = ({
             }
         ];
     } else {
-        // م. حساب التطوير (dev / admin) - صلاحيات وإشراف شامل وتحكم بالنظام
+        // مدير المشروع (م. عبدالرحمن الأنصاري) - صلاحيات وإشراف شامل
         menuGroups = [
             {
                 title: 'الرئيسية والقيادة',
