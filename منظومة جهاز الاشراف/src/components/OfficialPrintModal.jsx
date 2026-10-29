@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -87,6 +87,31 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   const sectorTitle = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
   const companyTitle = report.companyName && !report.companyName.includes('شركة') ? report.companyName : sectorTitle;
   const totalLengthKm = isSectorA ? '115.36 كم' : '110.92 كم';
+
+  // Controlled Signatures (مدير القطاع وممثل الجهة المالكة)
+  const [customSectorDirector, setCustomSectorDirector] = useState(
+    report.sectorDirector || report.uploadedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي'
+  );
+  const [customOwnerRep, setCustomOwnerRep] = useState(
+    report.ownerRepresentative || report.approvedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري'
+  );
+
+  useEffect(() => {
+    if (report) {
+      setCustomSectorDirector(report.sectorDirector || report.uploadedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
+      setCustomOwnerRep(report.ownerRepresentative || report.approvedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري');
+    }
+  }, [report]);
+
+  const handleSectorDirectorChange = (val) => {
+    setCustomSectorDirector(val);
+    if (typeof window !== 'undefined') localStorage.setItem('system_default_sector_director', val);
+  };
+
+  const handleOwnerRepChange = (val) => {
+    setCustomOwnerRep(val);
+    if (typeof window !== 'undefined') localStorage.setItem('system_default_owner_representative', val);
+  };
 
   // Force clean Latin numerals (0-9)
   const fmtNum = (val, minF = 2, maxF = 2) => {
@@ -208,7 +233,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
         dataRows.push(['الإجمالي العام للأطوال المستهدفة (م.ط):', Number(report.totalTargetLength || 0)]);
         dataRows.push(['إجمالي المعدات والأطقم المستهدفة:', Number(report.totalTargetEquipment || 0)]);
         dataRows.push([]);
-        dataRows.push(['مدير القطاع:', report.sectorDirector || report.uploadedBy || '', '', 'ممثل الجهة المالكة:', report.ownerRepresentative || '']);
+        dataRows.push(['مدير القطاع:', customSectorDirector || '', '', 'ممثل الجهة المالكة:', customOwnerRep || '']);
       } else if (report.isFuelReport || report.reportType === 'تقرير كميات الوقود اليومية' || (Array.isArray(report.fuelItems) && report.fuelItems.length > 0)) {
         dataRows = [
           ['تقرير كميات الوقود اليومية'],
@@ -265,7 +290,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           dataRows.push([r.name, r.phase1 || 0, r.phase2 || 0, r.total || 0, r.notes || '']);
         });
         dataRows.push([]);
-        dataRows.push(['مدير القطاع:', report.sectorDirector || report.uploadedBy || '', '', 'ممثل الجهة المالكة:', report.ownerRepresentative || report.approvedBy || '']);
+        dataRows.push(['مدير القطاع:', customSectorDirector || '', '', 'ممثل الجهة المالكة:', customOwnerRep || '']);
       } else if (Array.isArray(report.items) && report.items.length > 0) {
         dataRows = [
           [report.title || `تقرير أعمال يوم ${report.dayName || ''} ${reportDateStr}`],
@@ -289,7 +314,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
         dataRows.push([]);
         dataRows.push(['الإجمالي العام للأعمال', '', '', '', report.totalLength || report.roadMeters || 0, report.totalArea || 0, '']);
         dataRows.push([]);
-        dataRows.push([`مدير القطاع: ${report.sectorDirector || report.uploadedBy || '................'}`, '', '', `ممثل الجهة المالكة: ${report.ownerRepresentative || report.approvedBy || '................'}`]);
+        dataRows.push([`مدير القطاع: ${customSectorDirector || '................'}`, '', '', `ممثل الجهة المالكة: ${customOwnerRep || '................'}`]);
       } else {
         dataRows = [
           ['مكتب جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)'],
@@ -356,6 +381,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   const [printOrientation, setPrintOrientation] = useState(
     isExecutiveDoc ? 'portrait' : (isTwoPhaseDoc ? 'landscape' : 'portrait')
   );
+  const [zoomLevel, setZoomLevel] = useState(isTwoPhaseDoc ? 85 : 100);
 
   const reportDateStr = report.date ? new Date(report.date).toLocaleDateString('ar-LY', {
     weekday: 'long',
@@ -522,6 +548,80 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             </button>
           </div>
 
+          
+          {/* Zoom Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: '#e2e8f0',
+            borderRadius: '8px',
+            padding: '3px',
+            gap: '3px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(prev => Math.max(50, prev - 10))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer'
+              }}
+              title="تصغير العرض"
+            >
+              <ZoomOut size={16} />
+            </button>
+            <span style={{ padding: '0 6px', fontSize: '0.82rem', fontWeight: 800, color: '#334155', minWidth: '42px', textAlign: 'center' }}>
+              {zoomLevel}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(prev => Math.min(150, prev + 10))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer'
+              }}
+              title="تكبير العرض"
+            >
+              <ZoomIn size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(isTwoPhaseDoc ? 85 : 100)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '0.45rem 0.7rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
+              title="ملاءمة الشاشة"
+            >
+              <Maximize2 size={14} />
+              <span>ملاءمة</span>
+            </button>
+          </div>
+
           <button
             onClick={handleExportExcel}
             style={{
@@ -584,6 +684,93 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             <X size={17} />
             <span>إغلاق</span>
           </button>
+        </div>
+      </div>
+
+      {/* Signature Controls Bar (No Print) */}
+      <div className="no-print" style={{
+        background: '#ffffff',
+        borderBottom: '2px solid #e2e8f0',
+        padding: '0.65rem 1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            👷 <span>مدير القطاع:</span>
+          </span>
+          <input 
+            type="text" 
+            value={customSectorDirector} 
+            onChange={(e) => handleSectorDirectorChange(e.target.value)}
+            placeholder="اسم مدير القطاع"
+            style={{
+              padding: '5px 10px',
+              borderRadius: '6px',
+              border: '1.5px solid #cbd5e1',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              width: '190px',
+              color: '#0f172a'
+            }}
+          />
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button 
+              type="button" 
+              onClick={() => handleSectorDirectorChange('م. صلاح العربي')} 
+              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. صلاح العربي' ? '#dbeafe' : '#f8fafc', color: '#1e40af', fontWeight: 800, cursor: 'pointer' }}
+            >
+              م. صلاح العربي (المرحلة 1)
+            </button>
+            <button 
+              type="button" 
+              onClick={() => handleSectorDirectorChange('م. عيسى الطاهر')} 
+              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. عيسى الطاهر' ? '#dbeafe' : '#f8fafc', color: '#0e7490', fontWeight: 800, cursor: 'pointer' }}
+            >
+              م. عيسى الطاهر (المرحلة 2)
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            🏛️ <span>ممثل الجهة المالكة:</span>
+          </span>
+          <input 
+            type="text" 
+            value={customOwnerRep} 
+            onChange={(e) => handleOwnerRepChange(e.target.value)}
+            placeholder="اسم ممثل الجهة المالكة"
+            style={{
+              padding: '5px 10px',
+              borderRadius: '6px',
+              border: '1.5px solid #cbd5e1',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              width: '190px',
+              color: '#0f172a'
+            }}
+          />
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button 
+              type="button" 
+              onClick={() => handleOwnerRepChange('م. عبدالرحمن الأنصاري')} 
+              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالرحمن الأنصاري' ? '#dcfce7' : '#f8fafc', color: '#166534', fontWeight: 800, cursor: 'pointer' }}
+            >
+              م. عبدالرحمن الأنصاري
+            </button>
+            <button 
+              type="button" 
+              onClick={() => handleOwnerRepChange('م. عبدالسلام ابريكاو')} 
+              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالسلام ابريكاو' ? '#ede9fe' : '#f8fafc', color: '#5b21b6', fontWeight: 800, cursor: 'pointer' }}
+            >
+              م. عبدالسلام ابريكاو
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1073,7 +1260,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     مدير القطاع
                   </h3>
                   <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-                    مهندس : <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.sectorDirector || report.uploadedBy || '................................'}</span>
+                    مهندس : <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customSectorDirector || '................................'}</span>
                   </div>
                 </div>
 
@@ -1082,7 +1269,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     ممثل الجهة المالكة
                   </h3>
                   <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-                    مهندس : <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.ownerRepresentative || '................................'}</span>
+                    مهندس : <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customOwnerRep || '................................'}</span>
                   </div>
                 </div>
               </div>
@@ -1202,7 +1389,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </div>
             </div>
           ) : isTwoPhaseDoc ? (
-            <div style={{ marginBottom: '1.5rem', direction: 'rtl' }}>
+            <div style={{ marginBottom: '1.5rem', direction: 'rtl', width: '100%', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
               {/* Document Title Header matching the Photo */}
               <div style={{
                 display: 'flex',
@@ -1244,7 +1431,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
               {/* ROW 1: Phase 1 Table (Right) & Chart (Left) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ border: '1.5px solid #000000' }}>
+                <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#1e40af', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
                     المرحلة الأولى
                   </div>
@@ -1299,11 +1486,11 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
               {/* ROW 2: Phase 2 Table (Right) & Chart (Left) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ border: '1.5px solid #000000' }}>
+                <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#0284c7', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
                     المرحلة الثانية
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
                         <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
@@ -1354,11 +1541,11 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
               {/* ROW 3: Combined Two-Phase Table (Right) & Chart (Left) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ border: '1.5px solid #000000' }}>
+                <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#0f172a', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
                     إجمالي المنجز للمرحلتين (تجميع آلي فوري)
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
                         <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
@@ -1415,7 +1602,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               {/* ROW 4: Remaining Balances Dual Tables */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem', border: '1.5px solid #000000', padding: '6px', background: '#ffffff', backgroundColor: '#ffffff' }}>
                 {/* Sub-table A */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #000' }}>
                       <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>المتبقي من البند</th>
@@ -1439,7 +1626,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 </table>
 
                 {/* Sub-table B */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #000' }}>
                       <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>المتبقي من البند</th>
@@ -1479,7 +1666,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   </h3>
                   <div style={{ marginTop: '0.8rem', fontSize: '0.95rem', fontWeight: 800 }}>
                     <span>مهندس: </span>
-                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.sectorDirector || report.uploadedBy || '................................'}</span>
+                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customSectorDirector || '................................'}</span>
                   </div>
                 </div>
 
@@ -1489,7 +1676,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   </h3>
                   <div style={{ marginTop: '0.8rem', fontSize: '0.95rem', fontWeight: 800 }}>
                     <span>مهندس: </span>
-                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.ownerRepresentative || report.approvedBy || '................................'}</span>
+                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customOwnerRep || '................................'}</span>
                   </div>
                 </div>
               </div>
@@ -1607,7 +1794,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     مدير القطاع
                   </h3>
                   <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-                    مهندس: <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.sectorDirector || report.uploadedBy || '................................'}</span>
+                    مهندس: <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customSectorDirector || '................................'}</span>
                   </div>
                 </div>
 
@@ -1616,7 +1803,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     ممثل الجهة المالكة
                   </h3>
                   <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-                    مهندس: <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.ownerRepresentative || report.approvedBy || '................................'}</span>
+                    مهندس: <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customOwnerRep || '................................'}</span>
                   </div>
                 </div>
               </div>

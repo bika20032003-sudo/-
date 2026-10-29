@@ -45,8 +45,8 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   const [reportNumber, setReportNumber] = useState(`REP-${isSectorB ? 'PHASE-2' : 'PHASE-1'}-${Date.now().toString().slice(-4)}`);
 
   // Signatures for Road Report
-  const defaultDirector = isSectorB ? 'م. عيسى الطاهر' : 'م. صلاح العربي';
-  const defaultOwner = 'م. عبدالرحمن الأنصاري';
+  const defaultDirector = (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || (isSectorB ? 'م. عيسى الطاهر' : 'م. صلاح العربي');
+  const defaultOwner = (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري';
   const [sectorDirector, setSectorDirector] = useState(defaultDirector);
   const [ownerRepresentative, setOwnerRepresentative] = useState(defaultOwner);
 
@@ -1024,7 +1024,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         marginBottom: '1.5rem',
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
         gap: '1.25rem'
       }}>
         <div>
@@ -1178,6 +1178,90 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
               fontWeight: 800,
               color: '#0f172a',
               background: '#f8fafc'
+            }}
+          />
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#334155' }}>
+              👷 مدير القطاع:
+            </label>
+            <div style={{ display: 'flex', gap: '3px' }}>
+              <button 
+                type="button" 
+                onClick={() => { setSectorDirector('م. صلاح العربي'); if (typeof window !== 'undefined') localStorage.setItem('system_default_sector_director', 'م. صلاح العربي'); }}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: sectorDirector === 'م. صلاح العربي' ? '#dbeafe' : '#fff', color: '#1e40af', cursor: 'pointer', fontWeight: 700 }}
+              >
+                المرحلة 1
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setSectorDirector('م. عيسى الطاهر'); if (typeof window !== 'undefined') localStorage.setItem('system_default_sector_director', 'م. عيسى الطاهر'); }}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: sectorDirector === 'م. عيسى الطاهر' ? '#dbeafe' : '#fff', color: '#0e7490', cursor: 'pointer', fontWeight: 700 }}
+              >
+                المرحلة 2
+              </button>
+            </div>
+          </div>
+          <input
+            type="text"
+            value={sectorDirector}
+            onChange={(e) => {
+              setSectorDirector(e.target.value);
+              if (typeof window !== 'undefined') localStorage.setItem('system_default_sector_director', e.target.value);
+            }}
+            placeholder="اسم مدير القطاع"
+            style={{
+              width: '100%',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              border: '1.5px solid #cbd5e1',
+              fontSize: '0.92rem',
+              fontWeight: 800,
+              color: '#0f172a'
+            }}
+          />
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#334155' }}>
+              🏛️ ممثل الجهة المالكة:
+            </label>
+            <div style={{ display: 'flex', gap: '3px' }}>
+              <button 
+                type="button" 
+                onClick={() => { setOwnerRepresentative('م. عبدالرحمن الأنصاري'); if (typeof window !== 'undefined') localStorage.setItem('system_default_owner_representative', 'م. عبدالرحمن الأنصاري'); }}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: ownerRepresentative === 'م. عبدالرحمن الأنصاري' ? '#dcfce7' : '#fff', color: '#166534', cursor: 'pointer', fontWeight: 700 }}
+              >
+                الأنصاري
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setOwnerRepresentative('م. عبدالسلام ابريكاو'); if (typeof window !== 'undefined') localStorage.setItem('system_default_owner_representative', 'م. عبدالسلام ابريكاو'); }}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: ownerRepresentative === 'م. عبدالسلام ابريكاو' ? '#ede9fe' : '#fff', color: '#5b21b6', cursor: 'pointer', fontWeight: 700 }}
+              >
+                ابريكاو
+              </button>
+            </div>
+          </div>
+          <input
+            type="text"
+            value={ownerRepresentative}
+            onChange={(e) => {
+              setOwnerRepresentative(e.target.value);
+              if (typeof window !== 'undefined') localStorage.setItem('system_default_owner_representative', e.target.value);
+            }}
+            placeholder="اسم ممثل الجهة المالكة"
+            style={{
+              width: '100%',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              border: '1.5px solid #cbd5e1',
+              fontSize: '0.92rem',
+              fontWeight: 800,
+              color: '#0f172a'
             }}
           />
         </div>

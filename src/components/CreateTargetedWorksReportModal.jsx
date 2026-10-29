@@ -119,9 +119,9 @@ export const defaultApprovedTargetedWorksReport = {
   sector: 'طريق أوباري - غات',
   projectName: 'مشروع صيانة وتطوير طريق أوباري - غات',
   companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
-  sectorDirector: 'مروان الهوني',
+  sectorDirector: (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي',
   ownerRepresentative: 'م. عبدالرحمن الأنصاري',
-  uploadedBy: 'مروان الهوني',
+  uploadedBy: (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي',
   approvedBy: 'م. عبدالرحمن الأنصاري',
   status: 'approved',
   targetedSections: initialTargetedWorksSections,
@@ -161,7 +161,7 @@ export const CreateTargetedWorksReportModal = ({
   const [reportNumber, setReportNumber] = useState('TARGET-25.10.2026');
 
   // Signatures
-  const [sectorDirector, setSectorDirector] = useState('مروان الهوني');
+  const [sectorDirector, setSectorDirector] = useState((typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
   const [ownerRepresentative, setOwnerRepresentative] = useState('م. عبدالرحمن الأنصاري');
 
   // Form Sections & Fields initialized with the approved document data
@@ -181,7 +181,7 @@ export const CreateTargetedWorksReportModal = ({
       setDayName(reportToEdit.dayName || 'الأحد');
       setSector(reportToEdit.sector || 'طريق أوباري - غات');
       setReportNumber(reportToEdit.reportNumber || 'TARGET-25.10.2026');
-      setSectorDirector(reportToEdit.sectorDirector || 'مروان الهوني');
+      setSectorDirector(reportToEdit.sectorDirector || (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
       setOwnerRepresentative(reportToEdit.ownerRepresentative || 'م. عبدالرحمن الأنصاري');
       if (Array.isArray(reportToEdit.targetedSections) && reportToEdit.targetedSections.length > 0) {
         setSections(reportToEdit.targetedSections.map(s => ({
@@ -201,7 +201,7 @@ export const CreateTargetedWorksReportModal = ({
       setDayName('الأحد');
       setSector('طريق أوباري - غات');
       setReportNumber('TARGET-25.10.2026');
-      setSectorDirector('مروان الهوني');
+      setSectorDirector((typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
       setOwnerRepresentative('م. عبدالرحمن الأنصاري');
       setSections(initialTargetedWorksSections.map(s => ({
         ...s,
@@ -216,7 +216,7 @@ export const CreateTargetedWorksReportModal = ({
     setDayName('الأحد');
     setSector('طريق أوباري - غات');
     setReportNumber('TARGET-25.10.2026');
-    setSectorDirector('مروان الهوني');
+    setSectorDirector((typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
     setOwnerRepresentative('م. عبدالرحمن الأنصاري');
     setSections(initialTargetedWorksSections.map(s => ({
       ...s,

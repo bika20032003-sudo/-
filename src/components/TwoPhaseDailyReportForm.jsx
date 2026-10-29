@@ -77,8 +77,22 @@ export const TwoPhaseDailyReportForm = ({
   const [reportTitle, setReportTitle] = useState('الأعمال المنجزة للمرحلتين');
 
   // Signatures
-  const [sectorDirector, setSectorDirector] = useState('م. صلاح العربي');
-  const [ownerRepresentative, setOwnerRepresentative] = useState('م. عبدالرحمن الأنصاري');
+  const [sectorDirector, setSectorDirector] = useState(
+    (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي'
+  );
+  const [ownerRepresentative, setOwnerRepresentative] = useState(
+    (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري'
+  );
+
+  const handleUpdateSectorDirector = (val) => {
+    setSectorDirector(val);
+    if (typeof window !== 'undefined') localStorage.setItem('system_default_sector_director', val);
+  };
+
+  const handleUpdateOwnerRepresentative = (val) => {
+    setOwnerRepresentative(val);
+    if (typeof window !== 'undefined') localStorage.setItem('system_default_owner_representative', val);
+  };
 
   // Tables State (Phase 1, Phase 2, Remaining, and Combined Custom Fields)
   const [phase1Items, setPhase1Items] = useState(initialPhase1ReportItems.map(i => ({ ...i })));
@@ -1436,13 +1450,31 @@ export const TwoPhaseDailyReportForm = ({
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>
-            👷 مدير القطاع / المشرف:
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
+              👷 مدير القطاع / المشرف:
+            </label>
+            <div style={{ display: 'flex', gap: '3px' }}>
+              <button 
+                type="button" 
+                onClick={() => handleUpdateSectorDirector('م. صلاح العربي')}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: sectorDirector === 'م. صلاح العربي' ? '#dbeafe' : '#fff', color: '#1e40af', cursor: 'pointer', fontWeight: 700 }}
+              >
+                المرحلة 1
+              </button>
+              <button 
+                type="button" 
+                onClick={() => handleUpdateSectorDirector('م. عيسى الطاهر')}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: sectorDirector === 'م. عيسى الطاهر' ? '#dbeafe' : '#fff', color: '#0e7490', cursor: 'pointer', fontWeight: 700 }}
+              >
+                المرحلة 2
+              </button>
+            </div>
+          </div>
           <input
             type="text"
             value={sectorDirector}
-            onChange={(e) => setSectorDirector(e.target.value)}
+            onChange={(e) => handleUpdateSectorDirector(e.target.value)}
             style={{
               width: '100%',
               padding: '6px 10px',
@@ -1455,13 +1487,31 @@ export const TwoPhaseDailyReportForm = ({
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>
-            🏛️ ممثل الجهة المالكة:
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
+              🏛️ ممثل الجهة المالكة:
+            </label>
+            <div style={{ display: 'flex', gap: '3px' }}>
+              <button 
+                type="button" 
+                onClick={() => handleUpdateOwnerRepresentative('م. عبدالرحمن الأنصاري')}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: ownerRepresentative === 'م. عبدالرحمن الأنصاري' ? '#dcfce7' : '#fff', color: '#166534', cursor: 'pointer', fontWeight: 700 }}
+              >
+                الأنصاري
+              </button>
+              <button 
+                type="button" 
+                onClick={() => handleUpdateOwnerRepresentative('م. عبدالسلام ابريكاو')}
+                style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', border: '1px solid #cbd5e1', background: ownerRepresentative === 'م. عبدالسلام ابريكاو' ? '#ede9fe' : '#fff', color: '#5b21b6', cursor: 'pointer', fontWeight: 700 }}
+              >
+                ابريكاو
+              </button>
+            </div>
+          </div>
           <input
             type="text"
             value={ownerRepresentative}
-            onChange={(e) => setOwnerRepresentative(e.target.value)}
+            onChange={(e) => handleUpdateOwnerRepresentative(e.target.value)}
             style={{
               width: '100%',
               padding: '6px 10px',

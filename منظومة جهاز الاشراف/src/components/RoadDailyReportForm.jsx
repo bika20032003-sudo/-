@@ -26,7 +26,7 @@ export const initialRoadDailyData = {
   reportDate: '2026-10-24',
   dayName: 'السبت',
   reportNumber: 'ROAD-REP-24.10.2026',
-  sectorDirector: 'مروان الهوني',
+  sectorDirector: (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي',
   ownerRepresentative: '................................',
   items: [
     {

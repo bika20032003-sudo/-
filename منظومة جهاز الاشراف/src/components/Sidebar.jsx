@@ -148,7 +148,7 @@ export const Sidebar = ({
                 title: 'الموارد والتشغيل',
                 items: [
                     { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck },
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
                 ]
             },
             {
@@ -211,7 +211,7 @@ export const Sidebar = ({
                 title: 'الموارد والتشغيل الميداني',
                 items: [
                     { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck }
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
                 ]
             },
             {
@@ -245,7 +245,7 @@ export const Sidebar = ({
                 title: 'الموارد والتشغيل الميداني',
                 items: [
                     { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck }
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
                 ]
             },
             {
