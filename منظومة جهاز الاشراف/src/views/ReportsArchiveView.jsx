@@ -125,11 +125,21 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
 
         // 1. Deduplicate local_reports array itself
+        const getReportKey = (r) => {
+          if (!r) return '';
+          const num = r.reportNumber ? String(r.reportNumber).trim() : '';
+          if (num) return `num_${num}`;
+          if (r.isTwoPhaseProgressReport) return `tp_${r.dateFormatted || (r.date ? r.date.split('T')[0] : '')}`;
+          if (r.isTargetedWorksReport) return `tw_${r.dateFormatted || (r.date ? r.date.split('T')[0] : '')}_${r.sector || ''}`;
+          if (r.isFuelReport) return `fuel_${r.dateFormatted || (r.date ? r.date.split('T')[0] : '')}_${r.sector || ''}`;
+          return `id_${r.id || ''}_${r.dateFormatted || r.date || ''}_${r.reportType || ''}`;
+        };
+
         const seenLocal = new Set();
         const deduplicatedLocal = [];
         local.forEach(r => {
           if (!r) return;
-          const key = r.reportNumber ? `num_${r.reportNumber}` : `id_${r.id}_${r.dateFormatted || r.date}_${r.reportType || r.title}`;
+          const key = getReportKey(r);
           if (!seenLocal.has(key) && !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber))) {
             seenLocal.add(key);
             deduplicatedLocal.push(r);
@@ -138,15 +148,19 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         localStorage.setItem('local_reports', JSON.stringify(deduplicatedLocal));
 
         const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
-        const newOnes = deduplicatedLocal.filter(r => !existingIds.has(String(r.id || r.reportNumber)));
+        const existingNums = new Set(list.filter(r => r.reportNumber).map(r => String(r.reportNumber).trim()));
+        const newOnes = deduplicatedLocal.filter(r => 
+          !existingIds.has(String(r.id)) && 
+          !(r.reportNumber && existingNums.has(String(r.reportNumber).trim()))
+        );
         list = [...newOnes, ...list];
         list = list.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
 
-        // 2. Strict final deduplication on all reports
+        // 2. Strict final deduplication on all reports - guarantees no report appears twice
         const finalSeen = new Set();
         list = list.filter(r => {
           if (!r) return false;
-          const key = r.reportNumber ? `num_${r.reportNumber}` : `id_${r.id}_${r.dateFormatted || r.date}_${r.reportType || r.title}`;
+          const key = getReportKey(r);
           if (finalSeen.has(key)) return false;
           finalSeen.add(key);
           return true;
@@ -172,8 +186,17 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         setReports(prev => prev.filter(r => String(r.id) !== delId && String(r.reportNumber) !== delNum));
       }
     };
+    const handleGlobalSaved = () => {
+      fetchReports();
+    };
     window.addEventListener('report-deleted', handleGlobalDelete);
-    return () => window.removeEventListener('report-deleted', handleGlobalDelete);
+    window.addEventListener('report-saved', handleGlobalSaved);
+    window.addEventListener('report-updated', handleGlobalSaved);
+    return () => {
+      window.removeEventListener('report-deleted', handleGlobalDelete);
+      window.removeEventListener('report-saved', handleGlobalSaved);
+      window.removeEventListener('report-updated', handleGlobalSaved);
+    };
   }, []);
 
   // Filtering Logic
@@ -184,7 +207,9 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
 
     // Type filter
     if (typeFilter !== 'all') {
-      if (typeFilter === 'تقرير كميات الوقود اليومية') {
+      if (typeFilter === 'تقرير إنجاز المرحلتين') {
+        if (!r.isTwoPhaseProgressReport && r.reportType !== 'تقرير إنجاز المرحلتين' && !r.title?.includes('المرحلتين')) return false;
+      } else if (typeFilter === 'تقرير كميات الوقود اليومية') {
         if (!r.isFuelReport && r.reportType !== 'تقرير كميات الوقود اليومية' && r.title !== 'تقرير كميات الوقود اليومية') return false;
       } else if (typeFilter === 'تقرير الأعمال المستهدفة') {
         if (!r.isTargetedWorksReport && r.reportType !== 'تقرير الأعمال المستهدفة') return false;
@@ -491,6 +516,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">كافة التقارير</option>
+            <option value="تقرير إنجاز المرحلتين">تقرير إنجاز المرحلتين 📊</option>
             <option value="تقرير الأعمال المستهدفة">تقرير الأعمال والمعدات المستهدفة 🎯</option>
             <option value="تقرير كميات الوقود اليومية">تقرير كميات الوقود اليومية ⛽</option>
             <option value="تقرير أعمال الطريق اليومي">تقرير أعمال الطريق اليومي 🛣️</option>

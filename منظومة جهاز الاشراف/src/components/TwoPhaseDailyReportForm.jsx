@@ -380,7 +380,7 @@ export const TwoPhaseDailyReportForm = ({
       // 1. Single Authoritative save with built-in deduplication
       const saved = saveStoredTwoPhaseReport(reportPayload) || { ...reportPayload, id: Date.now() };
 
-      // 2. Notify backend if active
+      // 2. Notify backend if active (single endpoint sync - avoids saving twice in archive)
       try {
         await fastFetch('http://localhost:5000/api/two-phase-report', {
           method: 'POST',
@@ -389,16 +389,6 @@ export const TwoPhaseDailyReportForm = ({
         });
       } catch (tpErr) {
         console.warn('Backend sync /api/two-phase-report:', tpErr);
-      }
-
-      try {
-        await fastFetch('http://localhost:5000/api/reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(saved)
-        });
-      } catch (repErr) {
-        console.warn('Backend sync /api/reports:', repErr);
       }
 
       setCreatedReport(saved);

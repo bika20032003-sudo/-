@@ -31,11 +31,12 @@ export const Sidebar = ({
     const username = currentUser?.username || '';
 
     // Check specific roles
-    const isProjectManager = userRole.includes('مدير المشروع') || username === 'admin' || username === 'alansari';
-    const isHeadOfSupervision = userRole.includes('رئيس جهاز الإشراف') || username === 'abrikaw' || username === 'admin_sectors';
-    const isQualityOfficer = userRole.includes('الجودة') || username === 'saleh_quality' || username === 'quality';
-    const isSectorA = (userRole.includes('A') || (currentUser?.sector || '').includes('A') || username.includes('a') || username === 'salah_alarabi') && !isProjectManager && !isHeadOfSupervision && !isQualityOfficer;
-    const isSectorB = (userRole.includes('B') || (currentUser?.sector || '').includes('B') || username.includes('b') || username === 'issa_altahir') && !isProjectManager && !isHeadOfSupervision && !isQualityOfficer;
+    const isDev = userRole.includes('حساب التطوير') || userRole.includes('التطوير') || username === 'admin' || username === 'dev';
+    const isProjectManager = (userRole.includes('مدير المشروع') || username === 'project_manager' || username === 'alansari' || username === 'manager') && !isDev;
+    const isHeadOfSupervision = (userRole.includes('رئيس جهاز الإشراف') || username === 'abrikaw' || username === 'admin_sectors') && !isDev;
+    const isQualityOfficer = (userRole.includes('الجودة') || username === 'saleh_quality' || username === 'quality') && !isDev;
+    const isSectorA = (userRole.includes('A') || (currentUser?.sector || '').includes('A') || username.includes('a') || username === 'salah_alarabi') && !isProjectManager && !isHeadOfSupervision && !isQualityOfficer && !isDev;
+    const isSectorB = (userRole.includes('B') || (currentUser?.sector || '').includes('B') || username.includes('b') || username === 'issa_altahir') && !isProjectManager && !isHeadOfSupervision && !isQualityOfficer && !isDev;
     const isSectorSupervisor = isSectorA || isSectorB || userRole.includes('مشرف') || userRole.includes('مدير القطاع');
 
     useEffect(() => {
@@ -71,6 +72,14 @@ export const Sidebar = ({
 
     // Determine user role badge display and styling
     const getRoleDisplay = () => {
+        if (isDev) {
+            return { 
+                label: 'حساب التطوير', 
+                color: '#10b981', 
+                bg: 'rgba(16, 185, 129, 0.15)', 
+                name: currentUser?.name || 'م. حساب التطوير' 
+            };
+        }
         if (isProjectManager) {
             return { 
                 label: 'مدير المشروع', 
@@ -221,11 +230,45 @@ export const Sidebar = ({
                 ]
             }
         ];
-    } else {
-        // مدير المشروع (م. عبدالرحمن الأنصاري) - صلاحيات وإشراف شامل
+    } else if (isProjectManager) {
+        // مدير المشروع (م. عبدالرحمن الأنصاري)
+        // يظهر فيه: داش بورد الخاصة بإنجاز المرحلتين، قسم البريد، قسم أرشيف التقارير، عداد الوقود، عداد إدارة ومتابعة المهام، لوحة التقارير، والأعمال المستهدفة
         menuGroups = [
             {
-                title: 'الرئيسية والقيادة',
+                title: 'القيادة والمتابعة الإشرافية',
+                items: [
+                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
+                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
+                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+                ]
+            },
+            {
+                title: 'الخطط والتقارير الميدانية',
+                items: [
+                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+                    { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
+                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
+                ]
+            },
+            {
+                title: 'الموارد والتشغيل الميداني',
+                items: [
+                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
+                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
+                ]
+            },
+            {
+                title: 'المراسلات والتواصل',
+                items: [
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
+                ]
+            }
+        ];
+    } else {
+        // م. حساب التطوير (Super Admin) - صلاحيات وإشراف برمجي ونظام شامل
+        menuGroups = [
+            {
+                title: 'الرئيسية والقيادة (شامل)',
                 items: [
                     { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
                     { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
@@ -249,7 +292,7 @@ export const Sidebar = ({
                 ]
             },
             {
-                title: 'الإدارة والمراسلات والنظام',
+                title: 'الإدارة والتحليلات والبريد',
                 items: [
                     { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
                     { id: 'users', label: 'المستخدمين والصلاحيات', icon: Users }

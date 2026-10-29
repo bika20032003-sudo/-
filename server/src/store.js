@@ -431,7 +431,18 @@ class Store {
     };
 
     this.data.reports = this.data.reports || [];
-    this.data.reports.unshift(newReport);
+    const repNum = newReport.reportNumber ? String(newReport.reportNumber).trim() : '';
+    const repId = newReport.id ? String(newReport.id) : '';
+    const existingIndex = this.data.reports.findIndex(r => 
+      (repId && String(r.id) === repId) ||
+      (repNum && String(r.reportNumber || '').trim() === repNum) ||
+      (newReport.isTwoPhaseProgressReport && r.isTwoPhaseProgressReport && (r.dateFormatted === newReport.dateFormatted || (repNum && String(r.reportNumber || '').trim() === repNum)))
+    );
+    if (existingIndex >= 0) {
+      this.data.reports[existingIndex] = { ...this.data.reports[existingIndex], ...newReport };
+    } else {
+      this.data.reports.unshift(newReport);
+    }
 
     // If it's a Fuel Report, calculate fuel parameters and sync to fuelDailyReport
     if (newReport.isFuelReport || newReport.reportType === 'تقرير كميات الوقود اليومية') {
@@ -612,15 +623,20 @@ class Store {
   updateTwoPhaseReport(report) {
     if (!report) return null;
     this.syncTwoPhaseReportToRoadProgress(report);
-    const existingIndex = (this.data.reports || []).findIndex(r => 
-      (report.id && r.id === report.id) || (report.reportNumber && r.reportNumber === report.reportNumber)
-    );
-    if (existingIndex >= 0) {
-      this.data.reports[existingIndex] = { ...this.data.reports[existingIndex], ...report };
-    } else {
-      this.data.reports = this.data.reports || [];
-      this.data.reports.unshift(report);
-    }
+    this.data.reports = this.data.reports || [];
+    const repNum = report.reportNumber ? String(report.reportNumber).trim() : '';
+    const repId = report.id ? String(report.id) : '';
+
+    // Remove any existing duplicate entries so exactly one remains
+    this.data.reports = this.data.reports.filter(r => {
+      if (!r) return false;
+      if (repId && String(r.id) === repId) return false;
+      if (repNum && String(r.reportNumber || '').trim() === repNum) return false;
+      if (report.isTwoPhaseProgressReport && r.isTwoPhaseProgressReport && (r.dateFormatted === report.dateFormatted || (repNum && String(r.reportNumber || '').trim() === repNum))) return false;
+      return true;
+    });
+
+    this.data.reports.unshift(report);
     this.saveToDiskSync();
     return this.data.latestTwoPhaseReport;
   }

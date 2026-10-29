@@ -5,7 +5,8 @@ import * as XLSX from 'xlsx';
 
 // Vector SVG Bar Chart for Two-Phase Print Layout (100% Crisp print fidelity)
 const TwoPhasePrintChart = ({ title, items }) => {
-  const maxVal = Math.max(...(items || []).map(i => parseFloat(i.totalMeters) || parseFloat(i.todayMeters) || 0), 100);
+  const validItems = (items || []).filter(Boolean);
+  const maxVal = Math.max(...validItems.map(i => parseFloat(i.totalMeters) || parseFloat(i.todayMeters) || 0), 100);
   return (
     <div style={{
       border: '1.5px solid #000000',
@@ -38,7 +39,8 @@ const TwoPhasePrintChart = ({ title, items }) => {
         padding: '0 4px 6px 4px',
         borderBottom: '1.5px solid #000000'
       }}>
-        {(items || []).map((it, idx) => {
+        {validItems.map((it, idx) => {
+          if (!it) return null;
           const val = parseFloat(it.totalMeters) || parseFloat(it.todayMeters) || 0;
           const heightPercent = maxVal > 0 ? Math.min(100, Math.max(val > 0 ? 8 : 2, (val / maxVal) * 95)) : 2;
           return (

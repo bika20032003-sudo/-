@@ -625,11 +625,12 @@ export function getFallbackData(url) {
     return {
       success: true,
       users: [
-        { id: 1, name: 'م. عبدالرحمن الأنصاري', username: 'admin', email: 'alansari@mot.gov.ly', phone: '091-2345678', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)', sector: 'all', createdAt: '2026-01-10' },
+        { id: 1, name: 'م. حساب التطوير', username: 'admin', email: 'dev@mot.gov.ly', phone: '091-2345678', role: 'حساب التطوير', title: 'حساب التطوير والإشراف البرمجي الكامل', sector: 'all', createdAt: '2026-01-10' },
         { id: 2, name: 'م. عبدالسلام ابريكاو', username: 'abrikaw', email: 'abrikaw@mot.gov.ly', phone: '091-3456789', role: 'رئيس جهاز الإشراف', title: 'رئيس جهاز الإشراف والمتابعة', sector: 'all', createdAt: '2026-01-15' },
         { id: 3, name: 'م. صالح حماد', username: 'saleh_quality', email: 'hammad.quality@mot.gov.ly', phone: '091-4567890', role: 'مسؤول الجودة', title: 'مسؤول ضبط ومراقبة الجودة الفنية', sector: 'all', createdAt: '2026-01-18' },
         { id: 4, name: 'م. صلاح العربي', username: 'salah_alarabi', email: 'alarabi.phase1@mot.gov.ly', phone: '091-5678901', role: 'مهندس مشرف (المرحلة الأولى)', title: 'مهندس مشرف - المرحلة الأولى', sector: 'المرحلة الأولى', createdAt: '2026-01-20' },
-        { id: 5, name: 'م. عيسى الطاهر', username: 'issa_altahir', email: 'altahir.phase2@mot.gov.ly', phone: '091-6789012', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية', sector: 'المرحلة الثانية', createdAt: '2026-01-25' }
+        { id: 5, name: 'م. عيسى الطاهر', username: 'issa_altahir', email: 'altahir.phase2@mot.gov.ly', phone: '091-6789012', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية', sector: 'المرحلة الثانية', createdAt: '2026-01-25' },
+        { id: 6, name: 'م. عبدالرحمن الأنصاري', username: 'project_manager', email: 'alansari@mot.gov.ly', phone: '091-2345678', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)', sector: 'all', createdAt: '2026-01-28' }
       ]
     };
   }

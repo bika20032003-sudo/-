@@ -6,11 +6,11 @@ const DEFAULT_USERS = [
   {
     id: 1,
     username: 'admin',
-    name: 'م. عبدالرحمن الأنصاري',
-    role: 'مدير المشروع',
-    title: 'مدير المشروع (جهاز الإشراف)',
+    name: 'م. حساب التطوير',
+    role: 'حساب التطوير',
+    title: 'حساب التطوير والإشراف البرمجي الكامل',
     sector: 'all',
-    email: 'alansari@mot.gov.ly',
+    email: 'dev@mot.gov.ly',
     phone: '091-2345678',
     password: 'admin1234'
   },
@@ -57,16 +57,31 @@ const DEFAULT_USERS = [
     email: 'altahir.phase2@mot.gov.ly',
     phone: '091-6789012',
     password: 'sectorb123'
+  },
+  {
+    id: 6,
+    username: 'project_manager',
+    name: 'م. عبدالرحمن الأنصاري',
+    role: 'مدير المشروع',
+    title: 'مدير المشروع (جهاز الإشراف)',
+    sector: 'all',
+    email: 'alansari@mot.gov.ly',
+    phone: '091-2345678',
+    password: 'admin1234'
   }
 ];
 
 // Aliases for seamless login
 const ALIASES = {
-  'alansari': 'admin',
-  'project_manager': 'admin',
-  'manager': 'admin',
   'dev': 'admin',
   'developer': 'admin',
+  'development': 'admin',
+  'تطوير': 'admin',
+  'حساب التطوير': 'admin',
+  'alansari': 'project_manager',
+  'project_manager': 'project_manager',
+  'manager': 'project_manager',
+  'مدير المشروع': 'project_manager',
   'admin_sectors': 'abrikaw',
   'sectors': 'abrikaw',
   'sector_a': 'salah_alarabi',
@@ -107,7 +122,7 @@ export function getSystemUsers() {
         } else {
           users[existingIdx] = {
             ...users[existingIdx],
-            ...cu,
+            password: (savedPasswords && savedPasswords[cu.username]) || cu.password || users[existingIdx].password,
             avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[existingIdx]?.avatar || ''
           };
         }
