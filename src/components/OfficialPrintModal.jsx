@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout } from 'lucide-react';
+import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Vector SVG Bar Chart for Two-Phase Print Layout (100% Crisp print fidelity)
@@ -356,6 +356,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   const [printOrientation, setPrintOrientation] = useState(
     isExecutiveDoc ? 'portrait' : (isTwoPhaseDoc ? 'landscape' : 'portrait')
   );
+  const [zoomLevel, setZoomLevel] = useState(isTwoPhaseDoc ? 85 : 100);
 
   const reportDateStr = report.date ? new Date(report.date).toLocaleDateString('ar-LY', {
     weekday: 'long',
@@ -522,6 +523,80 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             </button>
           </div>
 
+          
+          {/* Zoom Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: '#e2e8f0',
+            borderRadius: '8px',
+            padding: '3px',
+            gap: '3px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(prev => Math.max(50, prev - 10))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer'
+              }}
+              title="تصغير العرض"
+            >
+              <ZoomOut size={16} />
+            </button>
+            <span style={{ padding: '0 6px', fontSize: '0.82rem', fontWeight: 800, color: '#334155', minWidth: '42px', textAlign: 'center' }}>
+              {zoomLevel}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(prev => Math.min(150, prev + 10))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer'
+              }}
+              title="تكبير العرض"
+            >
+              <ZoomIn size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(isTwoPhaseDoc ? 85 : 100)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '0.45rem 0.7rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
+              title="ملاءمة الشاشة"
+            >
+              <Maximize2 size={14} />
+              <span>ملاءمة</span>
+            </button>
+          </div>
+
           <button
             onClick={handleExportExcel}
             style={{
@@ -588,8 +663,35 @@ export const OfficialPrintModal = ({ report, onClose }) => {
       </div>
 
       {/* Printable Sheet Container */}
-      <div className="print-sheet-wrapper">
-        <div className="official-print-document" id="printable-report-content">
+      <div 
+        className="print-sheet-wrapper"
+        style={{
+          width: '100%',
+          flex: 1,
+          overflowX: 'auto',
+          overflowY: 'auto',
+          padding: '1.5rem 1rem 3rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div 
+          className={`official-print-document ${printOrientation === 'landscape' ? 'landscape-mode' : ''}`}
+          id="printable-report-content"
+          style={{
+            width: printOrientation === 'landscape' ? '297mm' : '210mm',
+            minWidth: printOrientation === 'landscape' ? '297mm' : '210mm',
+            maxWidth: printOrientation === 'landscape' ? '297mm' : '210mm',
+            minHeight: printOrientation === 'landscape' ? '210mm' : '297mm',
+            backgroundColor: '#ffffff',
+            background: '#ffffff',
+            color: '#000000',
+            boxSizing: 'border-box',
+            zoom: zoomLevel !== 100 ? `${zoomLevel}%` : undefined
+          }}
+        >
 
           {/* 1. Official Header with Agency Logo and Libyan Emblems (Shown only for generic legacy reports) */}
           {!isStandardNewForm && (
@@ -1175,7 +1277,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </div>
             </div>
           ) : isTwoPhaseDoc ? (
-            <div style={{ marginBottom: '1.5rem', direction: 'rtl' }}>
+            <div style={{ marginBottom: '1.5rem', direction: 'rtl', width: '100%', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
               {/* Document Title Header matching the Photo */}
               <div style={{
                 display: 'flex',
@@ -1217,11 +1319,11 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
               {/* ROW 1: Phase 1 Table (Right) & Chart (Left) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ border: '1.5px solid #000000' }}>
+                <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#1e40af', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
                     المرحلة الأولى
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
                         <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
@@ -1238,8 +1340,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
                       </tr>
                       {(report.phase1Items || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
-                        <tr key={idx}>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
+                        <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
@@ -1252,8 +1354,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
                       </tr>
                       {(report.phase1Items || []).filter(i => i && i.category === 'additional').map((it, idx) => (
-                        <tr key={idx}>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
+                        <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
@@ -1272,11 +1374,11 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
               {/* ROW 2: Phase 2 Table (Right) & Chart (Left) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ border: '1.5px solid #000000' }}>
+                <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#0284c7', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
                     المرحلة الثانية
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
                         <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
@@ -1293,8 +1395,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
                       </tr>
                       {(report.phase2Items || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
-                        <tr key={idx}>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
+                        <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
@@ -1307,8 +1409,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
                       </tr>
                       {(report.phase2Items || []).filter(i => i && i.category === 'additional').map((it, idx) => (
-                        <tr key={idx}>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
+                        <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
@@ -1327,11 +1429,11 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
               {/* ROW 3: Combined Two-Phase Table (Right) & Chart (Left) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
-                <div style={{ border: '1.5px solid #000000' }}>
+                <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#0f172a', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
                     إجمالي المنجز للمرحلتين (تجميع آلي فوري)
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
                         <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
@@ -1347,8 +1449,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
                       </tr>
                       {(report.combinedItems || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
-                        <tr key={idx}>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
+                        <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
@@ -1364,8 +1466,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
                       </tr>
                       {(report.combinedItems || []).filter(i => i && i.category === 'additional').map((it, idx) => (
-                        <tr key={idx}>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
+                        <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
@@ -1386,9 +1488,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </div>
 
               {/* ROW 4: Remaining Balances Dual Tables */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem', border: '1.5px solid #000000', padding: '4px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem', border: '1.5px solid #000000', padding: '6px', background: '#ffffff', backgroundColor: '#ffffff' }}>
                 {/* Sub-table A */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #000' }}>
                       <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>المتبقي من البند</th>
@@ -1400,8 +1502,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   </thead>
                   <tbody>
                     {(report.remainingItems || []).filter(r => r && r.group === 'A').map((r, idx) => (
-                      <tr key={idx}>
-                        <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800 }}>{r.name}</td>
+                      <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                        <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
                         <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
                         <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString('en-US') : '-'}</td>
                         <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString('en-US') : '-'}</td>
@@ -1412,7 +1514,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 </table>
 
                 {/* Sub-table B */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #000' }}>
                       <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>المتبقي من البند</th>
@@ -1424,8 +1526,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   </thead>
                   <tbody>
                     {(report.remainingItems || []).filter(r => r && r.group === 'B').map((r, idx) => (
-                      <tr key={idx}>
-                        <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800 }}>{r.name}</td>
+                      <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                        <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
                         <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
                         <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString('en-US') : '-'}</td>
                         <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString('en-US') : '-'}</td>

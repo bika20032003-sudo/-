@@ -197,7 +197,8 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
     setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, workItems: s.workItems.filter(w => w.id !== id).length > 0 ? s.workItems.filter(w => w.id !== id) : [{ id: Date.now(), item: '', stationFrom: '', stationTo: '', length: '', notes: '' }] } : s));
   };
   const handleTargetEquipItemChange = (sIdx, id, field, val) => {
-    setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, equipmentItems: s.equipmentItems.map(e => e.id === id ? { ...e, [field]: val } : e) } : s));
+    const cleanVal = field === 'count' ? toCleanLatinDigits(val) : val;
+    setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, equipmentItems: s.equipmentItems.map(e => e.id === id ? { ...e, [field]: cleanVal } : e) } : s));
   };
   const handleAddTargetEquipItem = (sIdx) => {
     setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, equipmentItems: [...s.equipmentItems, { id: Date.now() + Math.random(), name: '', count: '', notes: '' }] } : s));
@@ -1458,7 +1459,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                             type="text" inputMode="decimal" dir="ltr" lang="en"
                             step="any"
                             placeholder="0"
-                            value={eq.count}
+                            value={toCleanLatinDigits(eq.count)}
                             onChange={(e) => handleTargetEquipItemChange(sIdx, eq.id, 'count', e.target.value)}
                             style={{ width: '100%', padding: '0.45rem', textAlign: 'center', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.92rem', fontWeight: 900 }}
                           />

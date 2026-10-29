@@ -56,3 +56,5 @@ server/.env.*
 *.sln
 *.sw?
 Thumbs.db
+
+.temp-edge-profile/
