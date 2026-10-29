@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { store } from './store.js';
 import reportRoutes from './routes/reports.js';
@@ -21,8 +22,29 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Database Backup & Resilience endpoints
+app.get('/api/backup/export', (req, res) => {
+  res.json({ 
+    success: true, 
+    app: 'منظومة جهاز الإشراف والمتابعة - صيانة طريق أوباري غات (360 كم)',
+    timestamp: new Date().toISOString(),
+    data: store.data 
+  });
+});
+
+app.post('/api/backup/restore', (req, res) => {
+  if (req.body && typeof req.body === 'object') {
+    store.data = { ...store.data, ...req.body };
+    store.saveToDiskSync();
+    res.json({ success: true, message: 'تم استعادة وتحديث قاعدة بيانات السيرفر بنجاح' });
+  } else {
+    res.status(400).json({ success: false, message: 'ملف أو بيانات غير صالحة' });
+  }
+});
 
 // Routes
 app.use('/api/dashboard', dashboardRoutes);

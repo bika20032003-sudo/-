@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail } from 'lucide-react';
+import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail, Database } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
-export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClick, currentUser, onToggleMobileSidebar }) => {
+export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClick, onBackupClick, currentUser, onToggleMobileSidebar }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [unreadMessages, setUnreadMessages] = useState(0);
 
@@ -123,6 +123,30 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }}/>
             <span>متصل ومحدث</span>
           </div>
+
+          {/* Database Backup & Restore Tool */}
+          <button 
+            onClick={onBackupClick} 
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              padding: '0 0.65rem',
+              height: '34px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: 'pointer',
+              color: '#1e40af',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            }} 
+            title="إدارة قاعدة البيانات، النسخ الاحتياطي، والاستعادة الفورية"
+          >
+            <Database size={15} color="#2563eb"/>
+            <span>النسخ الاحتياطي</span>
+          </button>
 
           {/* Mail & Correspondence Button */}
           <button 

@@ -56,9 +56,26 @@ class Store {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
+
+      let parsed = null;
       if (fs.existsSync(DB_FILE)) {
-        const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        const parsed = JSON.parse(raw);
+        try {
+          const raw = fs.readFileSync(DB_FILE, 'utf-8');
+          parsed = JSON.parse(raw);
+        } catch (parseErr) {
+          console.warn('[FastStore] Warning: Main db.json was corrupted. Attempting recovery from rolling backup...', parseErr.message);
+          const bakFile = path.join(DATA_DIR, 'db.json.bak');
+          if (fs.existsSync(bakFile)) {
+            try {
+              const rawBak = fs.readFileSync(bakFile, 'utf-8');
+              parsed = JSON.parse(rawBak);
+              console.log('[FastStore] ✅ Successfully auto-recovered database from db.json.bak!');
+            } catch (_) {}
+          }
+        }
+      }
+
+      if (parsed && typeof parsed === 'object') {
         this.data = { ...this.data, ...parsed };
         if (Array.isArray(parsed.equipment) && parsed.equipment.length > 0) {
           this.data.equipment = parsed.equipment;
@@ -98,9 +115,43 @@ class Store {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+
+      const tempFile = path.join(DATA_DIR, 'db.json.tmp');
+      const bakFile1 = path.join(DATA_DIR, 'db.json.bak');
+      const bakFile2 = path.join(DATA_DIR, 'db.json.bak2');
+
+      // 1. Write to temporary file first (Crash-Safe Atomic Pattern)
+      const jsonString = JSON.stringify(this.data, null, 2);
+      fs.writeFileSync(tempFile, jsonString, 'utf-8');
+
+      // 2. Rotate rolling backups if existing file is valid
+      if (fs.existsSync(DB_FILE)) {
+        try {
+          const stat = fs.statSync(DB_FILE);
+          if (stat.size > 100) {
+            if (fs.existsSync(bakFile1)) {
+              try { fs.copyFileSync(bakFile1, bakFile2); } catch (_) {}
+            }
+            fs.copyFileSync(DB_FILE, bakFile1);
+          }
+        } catch (_) {}
+      }
+
+      // 3. Atomic rename to DB_FILE
+      fs.renameSync(tempFile, DB_FILE);
+
+      // 4. Hourly snapshot backup
+      const backupsDir = path.join(DATA_DIR, 'backups');
+      if (!fs.existsSync(backupsDir)) {
+        try { fs.mkdirSync(backupsDir, { recursive: true }); } catch (_) {}
+      }
+      const todayStr = new Date().toISOString().split('T')[0];
+      const dailyBackup = path.join(backupsDir, `db_backup_${todayStr}.json`);
+      if (!fs.existsSync(dailyBackup)) {
+        try { fs.copyFileSync(DB_FILE, dailyBackup); } catch (_) {}
+      }
     } catch (e) {
-      console.error('[FastStore] Error saving store to disk:', e.message);
+      console.error('[FastStore] Error saving store atomically to disk:', e.message);
     }
   }
 

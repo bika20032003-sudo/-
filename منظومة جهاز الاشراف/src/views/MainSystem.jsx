@@ -14,6 +14,8 @@ import { ReportsArchiveView } from './ReportsArchiveView';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { UserProfileModal } from '../components/UserProfileModal';
+import { DataBackupModal } from '../components/DataBackupModal';
+import '../utils/secureDatabase.js';
 import { CreateReportView } from './CreateReportView';
 import { CorrespondenceView } from './CorrespondenceView';
 import { TargetedWorksView } from './TargetedWorksView';
@@ -44,6 +46,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
     const [activeTab, setActiveTab] = useState(defaultTab);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
 
@@ -95,6 +98,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             currentTabName={tabTitles[activeTab] || 'لوحة التحكم'} 
             onMailClick={() => setActiveTab('messages')}
             onProfileClick={() => setIsProfileModalOpen(true)}
+            onBackupClick={() => setIsBackupModalOpen(true)}
             currentUser={currentUser}
             onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
           />
@@ -182,6 +186,15 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             currentUser={currentUser}
             onClose={() => setIsProfileModalOpen(false)}
             onUpdateUser={onUpdateUser}
+          />
+        )}
+
+        {/* Database & Data Backup Management Modal */}
+        {isBackupModalOpen && (
+          <DataBackupModal
+            isOpen={isBackupModalOpen}
+            currentUser={currentUser}
+            onClose={() => setIsBackupModalOpen(false)}
           />
         )}
       </div>
