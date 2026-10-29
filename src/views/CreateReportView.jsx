@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
+import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
 import { ExecutiveProgressForm } from '../components/ExecutiveProgressForm';
 import { RoadDailyReportForm } from '../components/RoadDailyReportForm';

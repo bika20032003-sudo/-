@@ -1237,7 +1237,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
                       </tr>
-                      {(report.phase1Items || []).filter(i => i.category === 'basic').map((it, idx) => (
+                      {(report.phase1Items || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
@@ -1251,7 +1251,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
                       </tr>
-                      {(report.phase1Items || []).filter(i => i.category === 'additional').map((it, idx) => (
+                      {(report.phase1Items || []).filter(i => i && i.category === 'additional').map((it, idx) => (
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
@@ -1292,7 +1292,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
                       </tr>
-                      {(report.phase2Items || []).filter(i => i.category === 'basic').map((it, idx) => (
+                      {(report.phase2Items || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
@@ -1306,7 +1306,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
                         <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
                       </tr>
-                      {(report.phase2Items || []).filter(i => i.category === 'additional').map((it, idx) => (
+                      {(report.phase2Items || []).filter(i => i && i.category === 'additional').map((it, idx) => (
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
@@ -1346,7 +1346,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
                         <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
                       </tr>
-                      {(report.combinedItems || []).filter(i => i.category === 'basic').map((it, idx) => (
+                      {(report.combinedItems || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
@@ -1363,7 +1363,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
                         <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
                       </tr>
-                      {(report.combinedItems || []).filter(i => i.category === 'additional').map((it, idx) => (
+                      {(report.combinedItems || []).filter(i => i && i.category === 'additional').map((it, idx) => (
                         <tr key={idx}>
                           <td style={{ border: '1px solid #000', padding: '3px' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
@@ -1399,7 +1399,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(report.remainingItems || []).filter(r => r.group === 'A').map((r, idx) => (
+                    {(report.remainingItems || []).filter(r => r && r.group === 'A').map((r, idx) => (
                       <tr key={idx}>
                         <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800 }}>{r.name}</td>
                         <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
@@ -1423,7 +1423,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(report.remainingItems || []).filter(r => r.group === 'B').map((r, idx) => (
+                    {(report.remainingItems || []).filter(r => r && r.group === 'B').map((r, idx) => (
                       <tr key={idx}>
                         <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800 }}>{r.name}</td>
                         <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>

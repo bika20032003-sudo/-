@@ -328,8 +328,8 @@ export const TwoPhaseDailyReportForm = ({
     setIsSubmitting(true);
     setStatusMessage(null);
 
-    const totalTodayMeters = combinedItems.reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0);
-    const totalCumulativeMeters = combinedItems.reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0);
+    const totalTodayMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0);
+    const totalCumulativeMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0);
 
     const reportPayload = {
       reportNumber,
@@ -1079,8 +1079,8 @@ export const TwoPhaseDailyReportForm = ({
               combinedItems,
               remainingItems,
               twoPhaseTotals: {
-                todayMeters: combinedItems.reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0),
-                totalCumulativeMeters: combinedItems.reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0)
+                todayMeters: (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0),
+                totalCumulativeMeters: (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0)
               }
             })}
             style={{
@@ -1142,10 +1142,10 @@ export const TwoPhaseDailyReportForm = ({
         }}>
           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>🎯 إنجاز اليوم المعتمد</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1d4ed8', margin: '4px 0 2px' }}>
-            {(phase1Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0) + phase2Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0)).toLocaleString('en-US')} م.ط
+            {((phase1Items || []).reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0) + (phase2Items || []).reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0)).toLocaleString('en-US')} م.ط
           </div>
           <div style={{ fontSize: '0.72rem', color: '#3b82f6' }}>
-            المرحلة الأولى: {phase1Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString('en-US')} | المرحلة الثانية: {phase2Items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString('en-US')}
+            المرحلة الأولى: {(phase1Items || []).reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString('en-US')} | المرحلة الثانية: {(phase2Items || []).reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0).toLocaleString('en-US')}
           </div>
         </div>
 
@@ -1174,7 +1174,7 @@ export const TwoPhaseDailyReportForm = ({
         }}>
           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>⚡ الجاهز للعمل بالبنود</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#b45309', margin: '4px 0 2px' }}>
-            {combinedItems.reduce((acc, c) => acc + (parseFloat(c.readyToWorkMeters) || 0), 0).toLocaleString('en-US')} م.ط
+            {(combinedItems || []).reduce((acc, c) => acc + (parseFloat(c.readyToWorkMeters) || 0), 0).toLocaleString('en-US')} م.ط
           </div>
           <div style={{ fontSize: '0.72rem', color: '#d97706' }}>
             أسفلت محسن (2,253) + أساس (5,717)
@@ -1190,7 +1190,7 @@ export const TwoPhaseDailyReportForm = ({
         }}>
           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>🚗 طول الطريق الخدمي العامل</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#7e22ce', margin: '4px 0 2px' }}>
-            {remainingItems.find(r => r.name.includes('الخدمي'))?.total || '8,080.00'} كم
+            {(Array.isArray(remainingItems) ? remainingItems : initialRemainingReportItems).find(r => r && typeof r.name === 'string' && r.name.includes('الخدمي'))?.total || '8,080.00'} كم
           </div>
           <div style={{ fontSize: '0.72rem', color: '#9333ea' }}>
             مسار الخدمة المشترك العامل
@@ -1543,7 +1543,7 @@ export const TwoPhaseDailyReportForm = ({
               </tr>
             </thead>
             <tbody>
-              {remainingItems.filter(r => r.group === 'A').map(item => (
+              {(Array.isArray(remainingItems) && remainingItems.length > 0 ? remainingItems : initialRemainingReportItems).filter(r => r && r.group === 'A').map(item => (
                 <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: '6px', textAlign: 'right', fontWeight: 800, color: '#0f172a', borderRight: '1px solid #e2e8f0' }}>
                     {item.name}
@@ -1619,7 +1619,7 @@ export const TwoPhaseDailyReportForm = ({
               </tr>
             </thead>
             <tbody>
-              {remainingItems.filter(r => r.group === 'B').map(item => (
+              {(Array.isArray(remainingItems) && remainingItems.length > 0 ? remainingItems : initialRemainingReportItems).filter(r => r && r.group === 'B').map(item => (
                 <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: '6px', textAlign: 'right', fontWeight: 800, color: '#0f172a', borderRight: '1px solid #e2e8f0' }}>
                     {item.name}

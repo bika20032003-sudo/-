@@ -91,26 +91,71 @@ export function getCertifiedBaselineTwoPhaseReport() {
 }
 
 export function getStoredTwoPhaseReport() {
+  const baseline = getCertifiedBaselineTwoPhaseReport();
   if (typeof window === 'undefined' || !window.localStorage) {
-    return deepSanitizeLatinDigits(getCertifiedBaselineTwoPhaseReport());
+    return deepSanitizeLatinDigits(baseline);
   }
   try {
+    let rep = null;
     const raw = localStorage.getItem('two_phase_report_data');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.phase1Items) && parsed.phase1Items.length > 0) {
-        return deepSanitizeLatinDigits(parsed);
+        rep = parsed;
       }
     }
-    const localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
-    const tpRep = localReports.find(r => r && (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين') && Array.isArray(r.phase1Items));
-    if (tpRep) {
-      return deepSanitizeLatinDigits(tpRep);
+    if (!rep) {
+      const localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
+      const tpRep = localReports.find(r => r && (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين') && Array.isArray(r.phase1Items));
+      if (tpRep) {
+        rep = tpRep;
+      }
+    }
+    if (rep) {
+      // Normalize and backfill any missing items or categories
+      const p1 = (Array.isArray(rep.phase1Items) && rep.phase1Items.length >= 6)
+        ? rep.phase1Items
+        : baseline.phase1Items.map((base, idx) => ({ ...base, ...(rep.phase1Items?.[idx] || {}) }));
+      const p2 = (Array.isArray(rep.phase2Items) && rep.phase2Items.length >= 6)
+        ? rep.phase2Items
+        : baseline.phase2Items.map((base, idx) => ({ ...base, ...(rep.phase2Items?.[idx] || {}) }));
+      const remaining = (Array.isArray(rep.remainingItems) && rep.remainingItems.length >= 6)
+        ? rep.remainingItems
+        : baseline.remainingItems.map((base, idx) => ({ ...base, ...(rep.remainingItems?.[idx] || {}) }));
+      const combined = (Array.isArray(rep.combinedItems) && rep.combinedItems.length >= 6)
+        ? rep.combinedItems
+        : baseline.combinedItems.map((base, idx) => ({ ...base, ...(rep.combinedItems?.[idx] || {}) }));
+
+      const merged = {
+        ...baseline,
+        ...rep,
+        phase1Items: p1.map((item, idx) => ({
+          ...baseline.phase1Items[idx],
+          ...item,
+          category: item.category || (idx < 3 ? 'basic' : 'additional')
+        })),
+        phase2Items: p2.map((item, idx) => ({
+          ...baseline.phase2Items[idx],
+          ...item,
+          category: item.category || (idx < 3 ? 'basic' : 'additional')
+        })),
+        remainingItems: remaining.map((item, idx) => ({
+          ...baseline.remainingItems[idx],
+          ...item,
+          group: item.group || (idx < 3 ? 'A' : 'B')
+        })),
+        combinedItems: combined.map((item, idx) => ({
+          ...baseline.combinedItems[idx],
+          ...item,
+          category: item.category || (idx < 3 ? 'basic' : 'additional')
+        }))
+      };
+      return deepSanitizeLatinDigits(merged);
     }
   } catch (e) {
     console.warn('Error reading stored two phase report:', e);
   }
-  return deepSanitizeLatinDigits(getCertifiedBaselineTwoPhaseReport());
+  return deepSanitizeLatinDigits(baseline);
 }
 
 export function saveStoredTwoPhaseReport(report) {

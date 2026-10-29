@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
+import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 
 export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCreated, onPrintReport, onNavigateTab }) => {
   if (!isOpen) return null;
