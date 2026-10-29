@@ -290,6 +290,8 @@ export const Sidebar = ({
         ];
     }
 
+    const userAvatar = currentUser?.avatar || (typeof window !== 'undefined' && localStorage.getItem(`user_avatar_${currentUser?.username}`)) || '';
+
     return (
       <aside className={`custom-app-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
         {/* Brand Header with Agency Emblem */}
