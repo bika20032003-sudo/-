@@ -119,18 +119,38 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         list = res;
       }
       
-      // Merge with locally created reports & filter deleted
+      // Merge with locally created reports, filter deleted, and strictly deduplicate
       try {
         const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+
+        // 1. Deduplicate local_reports array itself
+        const seenLocal = new Set();
+        const deduplicatedLocal = [];
+        local.forEach(r => {
+          if (!r) return;
+          const key = r.reportNumber ? `num_${r.reportNumber}` : `id_${r.id}_${r.dateFormatted || r.date}_${r.reportType || r.title}`;
+          if (!seenLocal.has(key) && !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber))) {
+            seenLocal.add(key);
+            deduplicatedLocal.push(r);
+          }
+        });
+        localStorage.setItem('local_reports', JSON.stringify(deduplicatedLocal));
+
         const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
-        const newOnes = local.filter(r => 
-          !deletedSet.has(String(r.id)) && 
-          !deletedSet.has(String(r.reportNumber)) && 
-          !existingIds.has(String(r.id || r.reportNumber))
-        );
+        const newOnes = deduplicatedLocal.filter(r => !existingIds.has(String(r.id || r.reportNumber)));
         list = [...newOnes, ...list];
         list = list.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+
+        // 2. Strict final deduplication on all reports
+        const finalSeen = new Set();
+        list = list.filter(r => {
+          if (!r) return false;
+          const key = r.reportNumber ? `num_${r.reportNumber}` : `id_${r.id}_${r.dateFormatted || r.date}_${r.reportType || r.title}`;
+          if (finalSeen.has(key)) return false;
+          finalSeen.add(key);
+          return true;
+        });
       } catch (storageErr) {
         console.warn('Storage error in archive:', storageErr);
       }

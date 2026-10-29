@@ -165,14 +165,21 @@ export function saveStoredTwoPhaseReport(report) {
     const sanitized = deepSanitizeLatinDigits(report);
     const enriched = {
       ...sanitized,
+      id: sanitized.id || Date.now(),
+      reportNumber: sanitized.reportNumber || `REP-TWO-PHASE-${Date.now().toString().slice(-4)}`,
       isTwoPhaseProgressReport: true,
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem('two_phase_report_data', JSON.stringify(enriched));
 
-    // Also unshift or update in local_reports
+    // Also unshift or update in local_reports with strict deduplication
     const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-    const filtered = local.filter(r => String(r.id) !== String(enriched.id) && String(r.reportNumber) !== String(enriched.reportNumber));
+    const filtered = local.filter(r => 
+      r &&
+      String(r.id) !== String(enriched.id) && 
+      String(r.reportNumber) !== String(enriched.reportNumber) &&
+      !(r.isTwoPhaseProgressReport && (r.dateFormatted === enriched.dateFormatted || r.reportNumber === enriched.reportNumber))
+    );
     filtered.unshift(enriched);
     localStorage.setItem('local_reports', JSON.stringify(filtered));
 

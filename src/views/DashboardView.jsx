@@ -640,6 +640,26 @@ export const DashboardView = ({ onNavigateTab }) => {
           </div>
         </div>
 
+        
+        {/* Card: عداد إدارة ومتابعة الكسارات والشرشور */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #059669' }} title="فتح إدارة ومتابعة الكسارات والمعدات">
+          <div className="kpi-card-header">
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#065f46', fontWeight: 800 }}>عداد إدارة ومتابعة الكسارات</span>
+            <div className="kpi-icon-circle green" style={{ background: '#d1fae5', color: '#059669' }}>
+              <Factory size={20} color="#059669"/>
+            </div>
+          </div>
+          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
+            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#047857' }}>
+              {(metrics.totalProduction || metrics.totalSharshoor || 1450).toLocaleString()}
+            </span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: 700 }}>طن ركام / شرشور</span>
+          </div>
+          <div className="kpi-bottom-sub">
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#059669' }}>تشغيل كسارة المرحلة الأولى والثانية وجاهزية التكسير</span>
+          </div>
+        </div>
+
         {/* Card 4: أسطول المعدات */}
         <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #7c3aed' }} title="فتح قسم المعدات">
           <div className="kpi-card-header">

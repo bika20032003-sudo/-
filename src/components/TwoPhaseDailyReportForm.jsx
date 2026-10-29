@@ -363,31 +363,28 @@ export const TwoPhaseDailyReportForm = ({
     };
 
     try {
+      // 1. Single Authoritative save with built-in deduplication
+      const saved = saveStoredTwoPhaseReport(reportPayload) || { ...reportPayload, id: Date.now() };
+
+      // 2. Notify backend if active
       try {
         await fastFetch('http://localhost:5000/api/two-phase-report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reportPayload)
+          body: JSON.stringify(saved)
         });
       } catch (tpErr) {
         console.warn('Backend sync /api/two-phase-report:', tpErr);
       }
 
-      const res = await fastFetch('http://localhost:5000/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reportPayload)
-      });
-
-      const saved = res?.report || { ...reportPayload, id: Date.now() };
-
-      // Local storage fallback
       try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        local.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(local));
-      } catch (e) {
-        console.error(e);
+        await fastFetch('http://localhost:5000/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(saved)
+        });
+      } catch (repErr) {
+        console.warn('Backend sync /api/reports:', repErr);
       }
 
       setCreatedReport(saved);

@@ -6,6 +6,17 @@ const DEFAULT_USERS = [
   {
     id: 1,
     username: 'admin',
+    name: 'م. حساب التطوير',
+    role: 'حساب التطوير',
+    title: 'مهندس التطوير البرمجي والمنظومة',
+    sector: 'all',
+    email: 'dev@mot.gov.ly',
+    phone: '091-0000000',
+    password: 'admin1234'
+  },
+  {
+    id: 2,
+    username: 'project_manager',
     name: 'م. عبدالرحمن الأنصاري',
     role: 'مدير المشروع',
     title: 'مدير المشروع (جهاز الإشراف)',
@@ -15,7 +26,7 @@ const DEFAULT_USERS = [
     password: 'admin1234'
   },
   {
-    id: 2,
+    id: 3,
     username: 'abrikaw',
     name: 'م. عبدالسلام ابريكاو',
     role: 'رئيس جهاز الإشراف',
@@ -26,7 +37,7 @@ const DEFAULT_USERS = [
     password: 'abrikaw123'
   },
   {
-    id: 3,
+    id: 4,
     username: 'saleh_quality',
     name: 'م. صالح حماد',
     role: 'مسؤول الجودة',
@@ -37,7 +48,7 @@ const DEFAULT_USERS = [
     password: 'quality123'
   },
   {
-    id: 4,
+    id: 5,
     username: 'salah_alarabi',
     name: 'م. صلاح العربي',
     role: 'مهندس مشرف (المرحلة الأولى)',
@@ -48,7 +59,7 @@ const DEFAULT_USERS = [
     password: 'sectora123'
   },
   {
-    id: 5,
+    id: 6,
     username: 'issa_altahir',
     name: 'م. عيسى الطاهر',
     role: 'مهندس مشرف (المرحلة الثانية)',
@@ -62,7 +73,11 @@ const DEFAULT_USERS = [
 
 // Aliases for seamless login
 const ALIASES = {
-  'alansari': 'admin',
+  'dev': 'admin',
+  'developer': 'admin',
+  'manager': 'project_manager',
+  'alansari': 'project_manager',
+  'project_manager': 'project_manager',
   'admin_sectors': 'abrikaw',
   'sectors': 'abrikaw',
   'sector_a': 'salah_alarabi',

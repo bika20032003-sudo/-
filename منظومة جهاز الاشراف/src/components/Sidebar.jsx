@@ -124,7 +124,39 @@ export const Sidebar = ({
     // Categorized navigation groups tailored by role
     let menuGroups = [];
 
-    if (isHeadOfSupervision) {
+    if (isProjectManager) {
+        // مدير المشروع (م. عبدالرحمن الأنصاري) - يظهر له داشبورد إنجاز المرحلتين، البريد، الأرشيف، الأعمال المستهدفة، الوقود، الكسارات
+        menuGroups = [
+            {
+                title: 'الرئيسية والقيادة',
+                items: [
+                    { id: 'dashboard', label: 'داشبورد إنجاز المرحلتين واللوحة الموحدة', icon: Home },
+                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
+                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+                ]
+            },
+            {
+                title: 'التقارير الميدانية والمستندات',
+                items: [
+                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
+                ]
+            },
+            {
+                title: 'الموارد والتشغيل الميداني',
+                items: [
+                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
+                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck }
+                ]
+            },
+            {
+                title: 'المراسلات والتواصل',
+                items: [
+                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
+                ]
+            }
+        ];
+    } else if (isHeadOfSupervision) {
         // رئيس جهاز الإشراف (م. عبدالسلام ابريكاو)
         menuGroups = [
             {
@@ -222,7 +254,7 @@ export const Sidebar = ({
             }
         ];
     } else {
-        // مدير المشروع (م. عبدالرحمن الأنصاري) - صلاحيات وإشراف شامل
+        // م. حساب التطوير (dev / admin) - صلاحيات وإشراف شامل وتحكم بالنظام
         menuGroups = [
             {
                 title: 'الرئيسية والقيادة',
@@ -245,7 +277,7 @@ export const Sidebar = ({
                 title: 'الموارد والتشغيل الميداني',
                 items: [
                     { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
+                    { id: 'equipment', label: 'إدارة ومتابعة الكسارات والمعدات', icon: Truck }
                 ]
             },
             {
@@ -257,8 +289,6 @@ export const Sidebar = ({
             }
         ];
     }
-
-    const userAvatar = currentUser?.avatar || localStorage.getItem(`user_avatar_${currentUser?.username}`) || '';
 
     return (
       <aside className={`custom-app-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
