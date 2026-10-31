@@ -420,50 +420,6 @@ export const LoginPage = ({ onLoginSuccess }) => {
               </button>
             </form>
 
-            {/* Quick Demo Accounts Selection */}
-            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>
-                  حسابات الدخول المعتمدة (انقر للتعبئة الفورية):
-                </span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                {[
-                  { name: 'م. حساب التطوير', user: 'admin', pass: 'admin1234', role: 'حساب التطوير', color: '#059669', bg: '#ecfdf5' },
-                  { name: 'م. عبدالرحمن الأنصاري', user: 'project_manager', pass: 'admin1234', role: 'مدير المشروع', color: '#2563eb', bg: '#eff6ff' },
-                  { name: 'م. عبدالسلام ابريكاو', user: 'abrikaw', pass: 'abrikaw123', role: 'رئيس جهاز الإشراف', color: '#7c3aed', bg: '#f5f3ff' },
-                  { name: 'م. صالح حماد', user: 'saleh_quality', pass: 'quality123', role: 'مسؤول الجودة', color: '#047857', bg: '#ecfdf5' },
-                  { name: 'م. صلاح العربي', user: 'salah_alarabi', pass: 'sectora123', role: 'مشرف المرحلة 1', color: '#c2410c', bg: '#fff7ed' },
-                  { name: 'م. عيسى الطاهر', user: 'issa_altahir', pass: 'sectorb123', role: 'مشرف المرحلة 2', color: '#0f766e', bg: '#f0fdfa' }
-                ].map((acc) => (
-                  <button
-                    key={acc.user}
-                    type="button"
-                    onClick={() => {
-                      setUsername(acc.user);
-                      setPassword(acc.pass);
-                      setErrorMsg('');
-                    }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      padding: '0.45rem 0.65rem',
-                      borderRadius: '8px',
-                      background: username === acc.user ? acc.bg : '#f8fafc',
-                      border: `1.5px solid ${username === acc.user ? acc.color : '#e2e8f0'}`,
-                      cursor: 'pointer',
-                      textAlign: 'right',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a' }}>{acc.name}</span>
-                    <span style={{ fontSize: '0.68rem', color: acc.color, fontWeight: 700 }}>{acc.role}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Footer Support Social Icon */}
             <div className="portal-footer-actions">
               <button className="social-circle-btn" title="صفحتنا على فيسبوك" onClick={(e) => {
