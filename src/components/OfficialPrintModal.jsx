@@ -380,9 +380,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   const isStandardNewForm = isTargetedWorksDoc || isFuelDoc || isTwoPhaseDoc || isRoadDoc || isExecutiveDoc;
   
   // Default orientation: Portrait for executive progress report (matching the official 2-page document), landscape for two-phase report
-  const [printOrientation, setPrintOrientation] = useState(
-    isExecutiveDoc ? 'portrait' : (isTwoPhaseDoc ? 'landscape' : 'portrait')
-  );
+  // Default orientation: Landscape (أفقي) for all engineering reports to fit all tables and columns without clipping
+  const [printOrientation, setPrintOrientation] = useState('landscape');
   const [zoomLevel, setZoomLevel] = useState(isTwoPhaseDoc ? 85 : 100);
 
   const reportDateStr = report.date ? new Date(report.date).toLocaleDateString('ar-LY', {
@@ -424,13 +423,14 @@ export const OfficialPrintModal = ({ report, onClose }) => {
       <style>{`
         @media print {
           @page {
-            size: ${printOrientation};
-            margin: ${printOrientation === 'landscape' ? '4mm 6mm' : '6mm 8mm'};
+            size: ${printOrientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'} !important;
+            margin: ${printOrientation === 'portrait' ? '6mm 8mm' : '4mm 5mm'} !important;
           }
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
+            box-sizing: border-box !important;
           }
           tr {
             page-break-inside: avoid !important;
@@ -467,17 +467,36 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
+            max-width: 100% !important;
             overflow: visible !important;
             display: block !important;
           }
           .official-print-document {
-            padding: ${printOrientation === 'landscape' ? '3mm 4mm' : '4mm 6mm'} !important;
+            padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
             margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
             display: block !important;
+            box-sizing: border-box !important;
+            zoom: 1 !important;
+            transform: none !important;
+          }
+          .official-print-document table {
+            width: 100% !important;
+            max-width: 100% !important;
+            table-layout: auto !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            box-sizing: border-box !important;
+          }
+          .official-print-document th,
+          .official-print-document td {
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
           }
         }
       `}</style>
@@ -1782,14 +1801,16 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </table>
 
               {/* Exact Dual Signatures from Photo */}
-              <div style={{
+              <div className="signatures-block" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
                 paddingLeft: '3rem',
                 paddingRight: '3rem',
-                marginTop: '2rem',
-                marginBottom: '1rem'
+                marginTop: '1.25rem',
+                marginBottom: '0.5rem',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
               }}>
                 <div style={{ textAlign: 'center', minWidth: '220px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#000000' }}>

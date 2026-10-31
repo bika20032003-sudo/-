@@ -1590,6 +1590,10 @@ input[type="number"] {
 
 /* ========== PRINT MEDIA ========== */
 @media print {
+  @page {
+    size: A4 landscape !important;
+    margin: 5mm 6mm !important;
+  }
   .custom-app-sidebar,
   .custom-app-navbar,
   .sidebar-mobile-backdrop,
