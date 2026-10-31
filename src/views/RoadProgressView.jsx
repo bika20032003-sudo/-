@@ -157,6 +157,14 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
     const mcoStats = getLayerStats('التشريب', 236033, 65.6);
     const asphStats = getLayerStats('الاسفلت', 233103, 64.8);
 
+    // Cumulative totals for table summary row
+    const totalToday = filteredItems.reduce((acc, item) => acc + (parseFloat(item.todayMeters) || 0), 0);
+    const totalPrevious = filteredItems.reduce((acc, item) => acc + (parseFloat(item.previousMeters) || 0), 0);
+    const totalCumulative = filteredItems.reduce((acc, item) => acc + (parseFloat(item.totalMeters) || 0), 0);
+    const totalTarget = filteredItems.reduce((acc, item) => acc + (parseFloat(item.dailyTarget) || 0), 0);
+    const totalVariance = totalToday - totalTarget;
+    const totalReady = filteredItems.reduce((acc, item) => acc + (parseFloat(item.readyLength) || 0), 0);
+
     return (
     <div className="view-content" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Top Project Badge & Header */}
@@ -267,7 +275,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
       ) : (
         <>
       {/* 4 Main Layer Progress KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '1.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
         {/* Card 1: FDR */}
         <div className="dashboard-white-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
@@ -392,87 +400,201 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
           </div>
         </div>
 
-        <table className="custom-table">
-          <thead>
-            <tr>
-              <th>المرحلة / القطاع</th>
-              <th>البند / الوصف الميداني</th>
-              <th>التصنيف الفني</th>
-              <th>أعمال اليوم (م.ط)</th>
-              <th>الأعمال السابقة (م.ط)</th>
-              <th>الإجمالي المنفذ (م.ط)</th>
-              <th>المستهدف اليومي</th>
-              <th>الزيادة / الفارق</th>
-              <th>الجاهز للعمل بالبند</th>
-              <th>ملاحظات الموقع</th>
-              <th>تحديث</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.map((item) => (<tr key={item.id}>
-                <td>
+        <div className="responsive-table-wrap" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+          <table className="custom-table" style={{ width: '100%', minWidth: '1150px' }}>
+            <thead>
+              <tr>
+                <th style={{ width: '125px', textAlign: 'center' }}>المرحلة / القطاع</th>
+                <th style={{ minWidth: '200px', textAlign: 'right' }}>البند / الوصف الميداني</th>
+                <th style={{ width: '105px', textAlign: 'center' }}>التصنيف الفني</th>
+                <th style={{ width: '115px', textAlign: 'center' }}>أعمال اليوم (م.ط)</th>
+                <th style={{ width: '120px', textAlign: 'center' }}>الأعمال السابقة (م.ط)</th>
+                <th style={{ width: '130px', textAlign: 'center' }}>الإجمالي المنفذ (م.ط)</th>
+                <th style={{ width: '105px', textAlign: 'center' }}>المستهدف اليومي</th>
+                <th style={{ width: '120px', textAlign: 'center' }}>الزيادة / الفارق</th>
+                <th style={{ width: '120px', textAlign: 'center' }}>الجاهز للعمل بالبند</th>
+                <th style={{ minWidth: '150px', textAlign: 'right' }}>ملاحظات الموقع</th>
+                <th style={{ width: '75px', textAlign: 'center' }}>تحديث</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item) => (
+                <tr key={item.id}>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: '6px',
+                      background: (item.sector || '').includes('الأولى') ? '#fff7ed' : '#f0f9ff',
+                      color: (item.sector || '').includes('الأولى') ? '#c2410c' : '#0369a1',
+                      border: `1px solid ${(item.sector || '').includes('الأولى') ? '#fed7aa' : '#bae6fd'}`,
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {item.sector || 'المرحلة الأولى'}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                    <strong style={{ color: '#0f172a', fontSize: '0.86rem' }}>{item.itemName}</strong>
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      fontSize: '0.74rem',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      background: item.category.includes('أساسية') ? '#eff6ff' : '#f8fafc',
+                      color: item.category.includes('أساسية') ? '#2563eb' : '#64748b',
+                      border: `1px solid ${item.category.includes('أساسية') ? '#dbeafe' : '#e2e8f0'}`,
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {item.category}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    {editingId === item.id ? (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        dir="ltr"
+                        lang="en"
+                        className="form-input"
+                        value={editMeters}
+                        onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)}
+                        style={{ width: '85px', height: '32px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }}
+                      />
+                    ) : item.todayMeters > 0 ? (
+                      <span style={{
+                        display: 'inline-block',
+                        background: '#dcfce7',
+                        color: '#15803d',
+                        border: '1px solid #bbf7d0',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '6px',
+                        fontWeight: 900,
+                        fontSize: '0.88rem'
+                      }}>
+                        +{item.todayMeters.toLocaleString()}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#94a3b8', fontWeight: 600 }}>0</span>
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle', color: '#475569', fontWeight: 600, fontSize: '0.86rem' }}>
+                    {item.previousMeters.toLocaleString()}
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <strong style={{ color: '#0f172a', fontSize: '0.92rem', fontWeight: 900 }}>
+                      {item.totalMeters.toLocaleString()}
+                    </strong>
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle', color: '#475569', fontWeight: 700, fontSize: '0.86rem' }}>
+                    {item.dailyTarget.toLocaleString()}
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '6px',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      background: item.varianceMeters > 0 ? '#ecfdf5' : (item.varianceMeters < 0 ? '#fef2f2' : '#f8fafc'),
+                      color: item.varianceMeters > 0 ? '#059669' : (item.varianceMeters < 0 ? '#dc2626' : '#94a3b8'),
+                      border: `1px solid ${item.varianceMeters > 0 ? '#a7f3d0' : (item.varianceMeters < 0 ? '#fecaca' : '#e2e8f0')}`,
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {item.varianceMeters > 0 ? `+${item.varianceMeters.toLocaleString()}` : item.varianceMeters.toLocaleString()}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <span className="stock-pill" style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      color: '#334155',
+                      fontWeight: 800,
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '6px',
+                      display: 'inline-block',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {item.readyLength.toLocaleString()} م
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'right', verticalAlign: 'middle', fontSize: '0.82rem', color: '#475569' }}>
+                    {editingId === item.id ? (
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editNotes}
+                        onChange={(e) => setEditNotes(e.target.value)}
+                        style={{ height: '32px', fontSize: '0.8rem', width: '100%' }}
+                      />
+                    ) : (
+                      item.notes || '—'
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    {editingId === item.id ? (
+                      <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                        <button onClick={() => handleSaveEdit(item.id)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }} title="حفظ">
+                          <Check size={14}/>
+                        </button>
+                        <button onClick={() => setEditingId(null)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }} title="إلغاء">
+                          <X size={14}/>
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', color: '#2563eb' }} title="تحديث منجز اليوم">
+                        <Edit3 size={14}/>
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
+                <td colSpan={3} style={{ textAlign: 'center', color: '#1e293b', fontSize: '0.85rem', padding: '0.85rem' }}>
+                  الإجمالي العام للبنود المعروضة
+                </td>
+                <td style={{ textAlign: 'center', color: totalToday > 0 ? '#15803d' : '#475569', fontSize: '0.9rem' }}>
+                  {totalToday > 0 ? `+${totalToday.toLocaleString()}` : totalToday.toLocaleString()}
+                </td>
+                <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.88rem' }}>
+                  {totalPrevious.toLocaleString()}
+                </td>
+                <td style={{ textAlign: 'center', color: '#0f172a', fontSize: '0.92rem' }}>
+                  {totalCumulative.toLocaleString()}
+                </td>
+                <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.88rem' }}>
+                  {totalTarget.toLocaleString()}
+                </td>
+                <td style={{ textAlign: 'center', fontSize: '0.88rem' }}>
                   <span style={{
-                    fontSize: '0.76rem',
-                    fontWeight: 800,
+                    display: 'inline-block',
                     padding: '0.2rem 0.55rem',
                     borderRadius: '6px',
-                    background: (item.sector || '').includes('الأولى') ? '#fff7ed' : '#f0f9ff',
-                    color: (item.sector || '').includes('الأولى') ? '#c2410c' : '#0369a1',
-                    border: `1px solid ${(item.sector || '').includes('الأولى') ? '#fed7aa' : '#bae6fd'}`
+                    fontWeight: 800,
+                    background: totalVariance >= 0 ? '#ecfdf5' : '#fef2f2',
+                    color: totalVariance >= 0 ? '#059669' : '#dc2626',
+                    border: `1px solid ${totalVariance >= 0 ? '#a7f3d0' : '#fecaca'}`,
+                    whiteSpace: 'nowrap'
                   }}>
-                    {item.sector || 'المرحلة الأولى'}
+                    {totalVariance >= 0 ? `+${totalVariance.toLocaleString()}` : totalVariance.toLocaleString()}
                   </span>
                 </td>
-                <td><strong>{item.itemName}</strong></td>
-                <td>
-                  <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: item.category.includes('أساسية') ? '#eff6ff' : '#f8fafc', color: item.category.includes('أساسية') ? '#2563eb' : '#64748b', fontWeight: 700 }}>
-                    {item.category}
-                  </span>
+                <td style={{ textAlign: 'center', color: '#334155', fontSize: '0.85rem' }}>
+                  {totalReady.toLocaleString()} م
                 </td>
-                <td>
-                  {editingId === item.id ? (
-                    <input type="text" inputMode="decimal" dir="ltr" lang="en" className="form-input" value={editMeters} onChange={(e) => setEditMeters(parseFloat(e.target.value) || 0)} style={{ width: '90px', height: '32px', padding: '0.2rem' }}/>
-                  ) : (
-                    <strong style={{ color: item.todayMeters > 0 ? '#16a34a' : '#64748b' }}>
-                      {item.todayMeters.toLocaleString()}
-                    </strong>
-                  )}
+                <td colSpan={2} style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
+                  —
                 </td>
-                <td>{item.previousMeters.toLocaleString()}</td>
-                <td><strong>{item.totalMeters.toLocaleString()}</strong></td>
-                <td>{item.dailyTarget}</td>
-                <td>
-                  <span style={{ fontWeight: 800, color: item.varianceMeters >= 0 ? '#16a34a' : '#dc2626' }}>
-                    {item.varianceMeters > 0 ? `+${item.varianceMeters}` : item.varianceMeters}
-                  </span>
-                </td>
-                <td><span className="stock-pill">{item.readyLength.toLocaleString()} م</span></td>
-                <td style={{ fontSize: '0.8rem', color: '#475569' }}>
-                  {editingId === item.id ? (
-                    <input type="text" className="form-input" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} style={{ height: '32px', fontSize: '0.8rem' }}/>
-                  ) : (
-                    item.notes || '—'
-                  )}
-                </td>
-                <td>
-                  {editingId === item.id ? (
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      <button onClick={() => handleSaveEdit(item.id)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-                        <Check size={14}/>
-                      </button>
-                      <button onClick={() => setEditingId(null)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-                        <X size={14}/>
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', color: '#2563eb' }} title="تحديث منجز اليوم">
-                      <Edit3 size={14}/>
-                    </button>
-                  )}
-                </td>
-              </tr>))}
-          </tbody>
-        </table>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
       {/* 2. Uploaded / Approved Road Progress Reports Section */}
