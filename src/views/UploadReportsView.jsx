@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileText, CheckCircle2, X, Camera, FileSpreadsheet, AlertTriangle, 
   Eye, Calendar, Layers, Sparkles, Check, Fuel, Target, Milestone, 

@@ -16,6 +16,9 @@ export class ErrorBoundary extends React.Component {
 
   handleDismiss = () => {
     this.setState({ hasError: false, error: null });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('reset-to-dashboard'));
+    }
   };
 
   handleGoHome = () => {
@@ -23,6 +26,8 @@ export class ErrorBoundary extends React.Component {
     if (typeof window !== 'undefined') {
       window.location.hash = '';
       window.location.search = '';
+      window.dispatchEvent(new CustomEvent('reset-to-dashboard'));
+      window.location.reload();
     }
   };
 

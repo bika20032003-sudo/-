@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FilePlus, Send, Printer, CheckCircle2, AlertCircle, RefreshCw, 
   MapPin, Calendar, Clock, Layers, Fuel, Truck, Milestone, 

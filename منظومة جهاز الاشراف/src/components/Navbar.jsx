@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail, Database } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 

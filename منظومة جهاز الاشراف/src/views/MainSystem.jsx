@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
 
@@ -44,6 +44,14 @@ function getDefaultTabForUser(user) {
 export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
     const defaultTab = getDefaultTabForUser(currentUser);
     const [activeTab, setActiveTab] = useState(defaultTab);
+
+    useEffect(() => {
+      const handleResetTab = () => {
+        setActiveTab('dashboard');
+      };
+      window.addEventListener('reset-to-dashboard', handleResetTab);
+      return () => window.removeEventListener('reset-to-dashboard', handleResetTab);
+    }, []);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
