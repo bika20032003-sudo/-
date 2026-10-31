@@ -7,6 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport } from '../utils/apiCache.js';
+import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 
 export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport }) => {
   // Days of week helper
@@ -82,6 +83,12 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
   // Active Category State
   const [selectedCategory, setSelectedCategory] = useState('road');
 
+  useEffect(() => {
+    if (selectedCategory === 'two_phase' && !canAccessTwoPhaseReport(currentUser)) {
+      setSelectedCategory('road');
+    }
+  }, [currentUser, selectedCategory]);
+
   // File & Form State
   const [attachedFile, setAttachedFile] = useState(null);
   const [fileName, setFileName] = useState('');
@@ -139,7 +146,11 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
 
   const fileInputRef = useRef(null);
 
-  const activeCatConfig = REPORT_CATEGORIES.find(c => c.id === selectedCategory) || REPORT_CATEGORIES[0];
+  const availableCategories = canAccessTwoPhaseReport(currentUser)
+    ? REPORT_CATEGORIES
+    : REPORT_CATEGORIES.filter(c => c.id !== 'two_phase');
+
+  const activeCatConfig = availableCategories.find(c => c.id === selectedCategory) || availableCategories[0];
 
   // Parse & Extract tabular data from file (Excel, PDF, Image)
   const processAndExtractData = (file, fileContent) => {
@@ -762,7 +773,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '0.85rem'
           }}>
-            {REPORT_CATEGORIES.map(cat => {
+            {availableCategories.map(cat => {
               const Icon = cat.icon;
               const isSelected = selectedCategory === cat.id;
 

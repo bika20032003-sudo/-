@@ -105,7 +105,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
 
           <main className="custom-page-container">
             {/* 1. General Dashboard */}
-            {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange}/>}
+            {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange} currentUser={currentUser} />}
 
             {/* 2. Sector-Specific Dashboard (مهندس مشرف: م. صلاح العربي أو م. عيسى الطاهر) */}
             {activeTab === 'sector-dashboard' && (
@@ -139,7 +139,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             )}
 
             {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} onNavigateTab={handleTabChange} />}
-            {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange}/>}
+            {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange} currentUser={currentUser} />}
             {activeTab === 'executive-progress' && (
               <ExecutiveProgressView 
                 currentUser={currentUser} 

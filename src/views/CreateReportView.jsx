@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
+import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 import { ExecutiveProgressForm } from '../components/ExecutiveProgressForm';
 import { RoadDailyReportForm } from '../components/RoadDailyReportForm';
 import { FuelDailyReportForm } from '../components/FuelDailyReportForm';
@@ -37,6 +38,12 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
   // Active Report Category: 'road' | 'fuel'
   const [reportCategory, setReportCategory] = useState('road');
+
+  useEffect(() => {
+    if (reportCategory === 'two_phase' && !canAccessTwoPhaseReport(currentUser)) {
+      setReportCategory('road');
+    }
+  }, [currentUser, reportCategory]);
 
   // Common Form States
   const [reportDate, setReportDate] = useState(todayStr);
@@ -760,31 +767,33 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           <span>تقرير أعمال الطريق اليومي</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setReportCategory('two_phase');
-            setReportNumber(`PHASE-REP-${Date.now().toString().slice(-4)}`);
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.65rem 1.25rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: reportCategory === 'two_phase' ? 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' : 'transparent',
-            color: reportCategory === 'two_phase' ? '#ffffff' : '#64748b',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: reportCategory === 'two_phase' ? '0 2px 8px rgba(30, 58, 138, 0.25)' : 'none'
-          }}
-        >
-          <Layers size={17} />
-          <span>تقرير الأعمال المنجزة للمرحلتين</span>
-        </button>
+        {canAccessTwoPhaseReport(currentUser) && (
+          <button
+            type="button"
+            onClick={() => {
+              setReportCategory('two_phase');
+              setReportNumber(`PHASE-REP-${Date.now().toString().slice(-4)}`);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: reportCategory === 'two_phase' ? 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' : 'transparent',
+              color: reportCategory === 'two_phase' ? '#ffffff' : '#64748b',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: reportCategory === 'two_phase' ? '0 2px 8px rgba(30, 58, 138, 0.25)' : 'none'
+            }}
+          >
+            <Layers size={17} />
+            <span>تقرير الأعمال المنجزة للمرحلتين</span>
+          </button>
+        )}
 
         <button
           type="button"

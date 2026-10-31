@@ -7,6 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
+import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
 
@@ -204,6 +205,13 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
 
     // Status filter
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+
+    // Two-Phase report visibility restriction: Only Project Manager and M. Saleh
+    if (!canAccessTwoPhaseReport(currentUser)) {
+      if (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين' || r.reportCategory === 'two_phase' || r.title?.includes('المرحلتين')) {
+        return false;
+      }
+    }
 
     // Type filter
     if (typeFilter !== 'all') {
@@ -516,7 +524,9 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">كافة التقارير</option>
-            <option value="تقرير إنجاز المرحلتين">تقرير إنجاز المرحلتين 📊</option>
+            {canAccessTwoPhaseReport(currentUser) && (
+              <option value="تقرير إنجاز المرحلتين">تقرير إنجاز المرحلتين 📊</option>
+            )}
             <option value="تقرير الأعمال المستهدفة">تقرير الأعمال والمعدات المستهدفة 🎯</option>
             <option value="تقرير كميات الوقود اليومية">تقرير كميات الوقود اليومية ⛽</option>
             <option value="تقرير أعمال الطريق اليومي">تقرير أعمال الطريق اليومي 🛣️</option>

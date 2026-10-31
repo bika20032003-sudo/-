@@ -130,176 +130,57 @@ export const Sidebar = ({
 
     const roleDisplay = getRoleDisplay();
 
-    // Categorized navigation groups tailored by role
-    let menuGroups = [];
-
-    if (isHeadOfSupervision) {
-        // رئيس جهاز الإشراف (م. عبدالسلام ابريكاو)
-        menuGroups = [
-            {
-                title: 'الرئيسية والمتابعة الإشرافية',
-                items: [
-                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
-                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
-                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-                ]
-            },
-            {
-                title: 'التقارير الميدانية والاعتمادات',
-                items: [
-                    { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
-                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-                    { id: 'reports-archive', label: 'أرشيف التقارير والاعتماد', icon: FileText },
-                    { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-                ]
-            },
-            {
-                title: 'الموارد والتشغيل',
-                items: [
-                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck },
-                ]
-            },
-            {
-                title: 'المراسلات والنظام',
-                items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
-                ]
-            }
-        ];
-    } else if (isQualityOfficer) {
-        // مسؤول الجودة (م. صالح حماد)
-        menuGroups = [
-            {
-                title: 'الرئيسية والمتابعة',
-                items: [
-                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
-                    { id: 'road-progress', label: 'متابعة رصف الطبقات', icon: Milestone },
-                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-                ]
-            },
-            {
-                title: 'الفحوصات والتقارير الفنية',
-                items: [
-                    { id: 'create-report', label: 'تسجيل فحص / تقرير جديد', icon: FilePlus },
-                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-                    { id: 'upload-reports', label: 'رفع نتائج ومستندات الفحص', icon: UploadCloud },
-                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText },
-                    { id: 'analytics', label: 'مركز التحليلات والإحصائيات', icon: FileText },
-                ]
-            },
-            {
-                title: 'المراسلات والنظام',
-                items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
-                ]
-            }
-        ];
-    } else if (isSectorSupervisor) {
-        // مهندسو الإشراف (م. صلاح العربي - المرحلة الأولى أو م. عيسى الطاهر - المرحلة الثانية)
-        const sectorLabel = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
-        menuGroups = [
-            {
-                title: 'الميدان والمتابعة',
-                items: [
-                    { id: 'sector-dashboard', label: `لوحة عمليات (${sectorLabel})`, icon: MapPin },
-                    { id: 'road-progress', label: 'متابعة مسار الطريق', icon: Milestone },
-                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-                ]
-            },
-            {
-                title: 'التقارير الميدانية',
-                items: [
-                    { id: 'create-report', label: 'إنشاء تقرير ميداني جديد', icon: FilePlus },
-                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-                    { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
-                ]
-            },
-            {
-                title: 'الموارد والتشغيل الميداني',
-                items: [
-                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
-                ]
-            },
-            {
-                title: 'المراسلات والنظام',
-                items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
-                ]
-            }
-        ];
-    } else if (isProjectManager) {
-        // مدير المشروع (م. عبدالرحمن الأنصاري)
-        // يظهر فيه: داش بورد الخاصة بإنجاز المرحلتين، قسم البريد، قسم أرشيف التقارير، عداد الوقود، عداد إدارة ومتابعة المهام، لوحة التقارير، والأعمال المستهدفة
-        menuGroups = [
-            {
-                title: 'القيادة والمتابعة الإشرافية',
-                items: [
-                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
-                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
-                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-                ]
-            },
-            {
-                title: 'الخطط والتقارير الميدانية',
-                items: [
-                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-                    { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
-                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
-                ]
-            },
-            {
-                title: 'الموارد والتشغيل الميداني',
-                items: [
-                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
-                ]
-            },
-            {
-                title: 'المراسلات والتواصل',
-                items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
-                ]
-            }
-        ];
-    } else {
-        // م. حساب التطوير (Super Admin) - صلاحيات وإشراف برمجي ونظام شامل
-        menuGroups = [
-            {
-                title: 'الرئيسية والقيادة (شامل)',
-                items: [
-                    { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
-                    { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
-                    { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-                ]
-            },
-            {
-                title: 'التقارير والمستندات',
-                items: [
-                    { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
-                    { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-                    { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-                    { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
-                ]
-            },
-            {
-                title: 'الموارد والتشغيل الميداني',
-                items: [
-                    { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
-                    { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
-                ]
-            },
-            {
-                title: 'الإدارة والتحليلات والبريد',
-                items: [
-                    { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined },
-                    { id: 'users', label: 'المستخدمين والصلاحيات', icon: Users }
-                ]
-            }
-        ];
+    // Categorized navigation groups: comprehensive access to all sections for all engineers
+    const mainItems = [
+      { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home }
+    ];
+    if (isSectorSupervisor) {
+      const sectorLabel = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
+      mainItems.push({ id: 'sector-dashboard', label: `لوحة عمليات (${sectorLabel})`, icon: MapPin });
     }
+    mainItems.push(
+      { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
+      { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award }
+    );
+
+    const reportItems = [
+      { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
+      { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+      { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
+      { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText },
+      { id: 'analytics', label: 'مركز التحليلات والإحصائيات', icon: FileText }
+    ];
+
+    const resourceItems = [
+      { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },
+      { id: 'equipment', label: 'سجل المعدات والآليات', icon: Truck }
+    ];
+
+    const commItems = [
+      { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
+    ];
+    if (isDev) {
+      commItems.push({ id: 'users', label: 'المستخدمين والصلاحيات', icon: Users });
+    }
+
+    menuGroups = [
+      {
+        title: 'الرئيسية والمتابعة الإشرافية',
+        items: mainItems
+      },
+      {
+        title: 'التقارير والمستندات الميدانية',
+        items: reportItems
+      },
+      {
+        title: 'الموارد والتشغيل الميداني',
+        items: resourceItems
+      },
+      {
+        title: 'المراسلات والتواصل والنظام',
+        items: commItems
+      }
+    ];
 
     const userAvatar = currentUser?.avatar || (typeof window !== 'undefined' && localStorage.getItem(`user_avatar_${currentUser?.username}`)) || '';
 

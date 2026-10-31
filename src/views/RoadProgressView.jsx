@@ -5,6 +5,7 @@ import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { RoadDailyReportForm } from '../components/RoadDailyReportForm';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
+import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 import { CheckCircle2 } from 'lucide-react';
 
 export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
@@ -191,19 +192,35 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-          <button 
-            className="primary-action-btn" 
-            onClick={() => onNavigateTab && onNavigateTab('create-report')} 
-            style={{ 
-              height: '38px', 
-              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', 
-              border: 'none',
-              boxShadow: '0 2px 8px rgba(30, 58, 138, 0.25)' 
-            }}
-          >
-            <Layers size={16}/>
-            <span>+ إنشاء تقرير إنجاز المرحلتين</span>
-          </button>
+          {canAccessTwoPhaseReport(currentUser) ? (
+            <button 
+              className="primary-action-btn" 
+              onClick={() => onNavigateTab && onNavigateTab('create-report')} 
+              style={{ 
+                height: '38px', 
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', 
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(30, 58, 138, 0.25)' 
+              }}
+            >
+              <Layers size={16}/>
+              <span>+ إنشاء تقرير إنجاز المرحلتين</span>
+            </button>
+          ) : (
+            <button 
+              className="primary-action-btn" 
+              onClick={() => onNavigateTab && onNavigateTab('create-report')} 
+              style={{ 
+                height: '38px', 
+                background: 'linear-gradient(135deg, #0f172a 0%, #16a34a 100%)', 
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)' 
+              }}
+            >
+              <Milestone size={16}/>
+              <span>+ إنشاء تقرير أعمال الطريق</span>
+            </button>
+          )}
 
           {/* Direct Edit of Road Daily Report (24/10/2026) */}
           <button 

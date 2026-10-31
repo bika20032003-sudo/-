@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Fuel, UploadCloud, Factory, Truck, CheckCircle2, X, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3, Printer, ExternalLink } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
+import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 
-export const DashboardView = ({ onNavigateTab }) => {
+export const DashboardView = ({ onNavigateTab, currentUser }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeChartTab, setActiveChartTab] = useState('progress');
     const [selectedImage, setSelectedImage] = useState(null);
@@ -510,7 +511,7 @@ export const DashboardView = ({ onNavigateTab }) => {
               style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', height: 'auto', background: 'linear-gradient(135deg, #1e40af, #2563eb)' }}
             >
               <UploadCloud size={15} />
-              <span>رفع تقرير إنجاز المرحلتين 📤</span>
+              <span>{canAccessTwoPhaseReport(currentUser) ? 'رفع تقرير إنجاز المرحلتين 📤' : 'رفع التقارير الميدانية 📤'}</span>
             </button>
           </div>
 

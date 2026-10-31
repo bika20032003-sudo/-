@@ -5,6 +5,7 @@ import {
   ArrowRight, ShieldCheck, Clock
 } from 'lucide-react';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 
 // Safe number parsing
 const cleanNum = (val) => {
@@ -658,26 +659,28 @@ export const CreateReportModal = ({
                   </p>
                 </div>
 
-                {/* 4. Two Phase */}
-                <div 
-                  onClick={() => handleTypeSelect('two_phase')}
-                  style={{
-                    padding: '0.85rem',
-                    borderRadius: '10px',
-                    border: activeType === 'two_phase' ? '2px solid #1e40af' : '1px solid #e2e8f0',
-                    background: activeType === 'two_phase' ? '#eff6ff' : '#ffffff',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e40af' }}>
-                    <Layers size={18} />
-                    <strong style={{ fontSize: '0.88rem' }}>تقرير إنجاز المرحلتين</strong>
+                {/* 4. Two Phase - Available only for Project Manager and M. Saleh */}
+                {canAccessTwoPhaseReport(currentUser) && (
+                  <div 
+                    onClick={() => handleTypeSelect('two_phase')}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: '10px',
+                      border: activeType === 'two_phase' ? '2px solid #1e40af' : '1px solid #e2e8f0',
+                      background: activeType === 'two_phase' ? '#eff6ff' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e40af' }}>
+                      <Layers size={18} />
+                      <strong style={{ fontSize: '0.88rem' }}>تقرير إنجاز المرحلتين</strong>
+                    </div>
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                      المرحلة 1 و 2، جدول المتبقي، نسب الإنجاز
+                    </p>
                   </div>
-                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.74rem', color: '#64748b' }}>
-                    المرحلة 1 و 2، جدول المتبقي، نسب الإنجاز
-                  </p>
-                </div>
+                )}
               </div>
             </div>
 

@@ -376,3 +376,4 @@ if (typeof window !== 'undefined') {
     initSecureDatabaseEngine();
   }
 }
+
