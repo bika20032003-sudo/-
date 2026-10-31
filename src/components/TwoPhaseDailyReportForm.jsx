@@ -502,7 +502,7 @@ export const TwoPhaseDailyReportForm = ({
           {title}
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
+        <div className="responsive-table-wrap"><table style={{ minWidth: '680px', width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ background: '#f1f5f9', color: '#1e293b', borderBottom: '2px solid #cbd5e1' }}>
               <th style={{ padding: '8px 4px', width: '38px', borderRight: '1px solid #e2e8f0' }}>م</th>
@@ -728,6 +728,7 @@ export const TwoPhaseDailyReportForm = ({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     );
   };
@@ -764,7 +765,7 @@ export const TwoPhaseDailyReportForm = ({
           <span>إجمالي المنجز للمرحلتين (تجميع آلي فوري)</span>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
+        <div className="responsive-table-wrap"><table style={{ minWidth: '680px', width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ background: '#f8fafc', color: '#0f172a', borderBottom: '2px solid #cbd5e1' }}>
               <th style={{ padding: '8px 4px', width: '38px', borderRight: '1px solid #e2e8f0' }}>م</th>
@@ -895,6 +896,7 @@ export const TwoPhaseDailyReportForm = ({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     );
   };
@@ -995,7 +997,7 @@ export const TwoPhaseDailyReportForm = ({
         </div>
 
         {/* Global Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div className="two-phase-actions-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={handleRestoreCertifiedData}
@@ -1515,7 +1517,7 @@ export const TwoPhaseDailyReportForm = ({
       </div>
 
       {/* SECTION 1: PHASE 1 TABLE (Right) + CHART (Left) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.75fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div className="two-phase-grid-split" style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           {renderPhaseTable('المرحلة الأولى', phase1Items, handleUpdatePhase1, '#1e40af')}
         </div>
@@ -1525,7 +1527,7 @@ export const TwoPhaseDailyReportForm = ({
       </div>
 
       {/* SECTION 2: PHASE 2 TABLE (Right) + CHART (Left) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.75fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div className="two-phase-grid-split" style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           {renderPhaseTable('المرحلة الثانية', phase2Items, handleUpdatePhase2, '#0284c7')}
         </div>
@@ -1535,7 +1537,7 @@ export const TwoPhaseDailyReportForm = ({
       </div>
 
       {/* SECTION 3: COMBINED TWO-PHASE TABLE (Right) + CHART (Left) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.75fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div className="two-phase-grid-split" style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           {renderCombinedTable()}
         </div>
@@ -1567,7 +1569,7 @@ export const TwoPhaseDailyReportForm = ({
           <span style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>حساب تلقائي للإجمالي عند إدخال كميات المرحلتين</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '0.75rem' }}>
+        <div className="two-phase-remaining-grid" style={{ display: 'grid', gap: '1rem', padding: '0.75rem' }}>
           {/* Sub-table A (Right) */}
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.84rem' }}>
             <thead>

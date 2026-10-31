@@ -1638,3 +1638,252 @@ input[type="number"] {
   -webkit-overflow-scrolling: touch;
   border-radius: 10px;
 }
+
+
+/* =========================================================================
+   COMPREHENSIVE MULTI-DEVICE SMARTPHONE & TOUCH RESPONSIVENESS SYSTEM
+   Compatible with all mobile screens (iOS, Android, Tablets, Notches)
+   ========================================================================= */
+
+/* Mobile viewports, touch optimizations and font auto-zoom prevention */
+html, body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Universal Table Horizontal Scrolling with Momentum */
+.responsive-table-wrap,
+.table-responsive,
+.table-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: block !important;
+  border-radius: 8px;
+}
+
+.responsive-table-wrap::-webkit-scrollbar {
+  height: 6px;
+}
+.responsive-table-wrap::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.responsive-table-wrap::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+/* Desktop default for split grids */
+.two-phase-grid-split {
+  grid-template-columns: 1.75fr 1fr;
+}
+.two-phase-remaining-grid {
+  grid-template-columns: 1fr 1fr;
+}
+.dashboard-charts-split {
+  grid-template-columns: 1.2fr 1fr;
+}
+.dashboard-fleet-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Breakpoint for Tablets and Split Grids (<= 992px) */
+@media (max-width: 992px) {
+  .two-phase-grid-split,
+  .two-phase-remaining-grid,
+  .dashboard-charts-split,
+  .dashboard-fleet-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tablet & Mobile Off-canvas Drawer Navigation (<= 1024px) */
+@media (max-width: 1024px) {
+  .custom-app-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: min(85vw, 300px) !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    z-index: 9999 !important;
+    box-shadow: none !important;
+  }
+
+  .custom-app-sidebar.mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .sidebar-mobile-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 9998 !important;
+  }
+
+  .custom-system-main {
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .navbar-mobile-toggle-btn {
+    display: flex !important;
+  }
+}
+
+/* All Mobile Phones (<= 768px) */
+@media (max-width: 768px) {
+  /* Prevent iOS zoom on input tap */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Touch targets minimum size */
+  button, .nav-btn-link {
+    min-height: 38px;
+  }
+
+  /* Compact Navbar */
+  .custom-app-navbar {
+    height: 52px !important;
+    min-height: 52px !important;
+    padding: 0 0.65rem !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Page Padding for Maximum Usable Space */
+  .custom-page-container {
+    padding: 0.5rem 0.4rem !important;
+  }
+
+  /* Two-Phase Action Buttons Row */
+  .two-phase-actions-bar {
+    width: 100%;
+  }
+  .two-phase-actions-bar button {
+    flex: 1 1 calc(50% - 0.5rem) !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* 2-column form grids stack to 1 column */
+  .form-row-2col,
+  div[style*="gridTemplateColumns: '1fr 1fr'"],
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Metrics & KPI Cards */
+  .metrics-grid,
+  .top-5-metrics-row {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .metric-card,
+  .kpi-metric-card {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .metric-value-wrap h2,
+  .kpi-big-num {
+    font-size: 1.35rem !important;
+  }
+
+  /* All Modals on Mobile Phones */
+  div[style*="position: fixed"][style*="z-index: 99"],
+  div[style*="position: fixed"][style*="zIndex: 99"],
+  .modal-overlay,
+  .official-print-modal-overlay {
+    padding: 0.35rem !important;
+    align-items: center !important;
+  }
+
+  div[style*="position: fixed"] > div[style*="max-width"],
+  div[style*="position: fixed"] > div[style*="maxWidth"],
+  .modal-box,
+  .modal-content,
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 94vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 14px !important;
+    margin: auto !important;
+  }
+
+  /* Login Screen on Mobile */
+  .login-page-screen {
+    padding: 0.75rem 0.5rem !important;
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    min-height: 100vh;
+  }
+
+  .portal-wrapper {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+    margin: auto 0 !important;
+  }
+
+  .promo-column {
+    display: none !important;
+  }
+
+  .login-column {
+    padding: 1.25rem 0.85rem !important;
+  }
+
+  /* Print Modal on Mobile */
+  .print-controls-bar {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  .print-sheet-wrapper {
+    padding: 0.25rem !important;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* Very Small Phones (<= 480px) */
+@media (max-width: 480px) {
+  .custom-page-container {
+    padding: 0.35rem 0.25rem !important;
+  }
+
+  .navbar-tab-title {
+    max-width: calc(100vw - 165px) !important;
+    font-size: 0.76rem !important;
+  }
+
+  .two-phase-actions-bar button {
+    flex: 1 1 100% !important;
+  }
+
+  .two-phase-grid-split,
+  .two-phase-remaining-grid {
+    gap: 0.75rem !important;
+  }
+}

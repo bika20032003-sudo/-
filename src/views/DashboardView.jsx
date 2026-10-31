@@ -324,7 +324,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
 
         {/* ================= CHART 1: 4-LAYER ROAD PROGRESS & COMPARATIVE BARS ================= */}
         {activeChartTab === 'progress' && (<div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
+            <div className="dashboard-charts-split" style={{ display: 'grid', gap: '1.25rem', alignItems: 'center' }}>
               {/* Left Side: Layer Completion Grouped Bars */}
               <div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginBottom: '1rem', display: 'block' }}>
@@ -398,7 +398,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
 
         {/* ================= CHART 2: WEEKLY PRODUCTION & FUEL TRENDS ================= */}
         {activeChartTab === 'trends' && (<div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
+            <div className="dashboard-charts-split" style={{ display: 'grid', gap: '1.25rem', alignItems: 'center' }}>
               {/* Left Side: Road Paving Meters Chart Columns */}
               <div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginBottom: '0.75rem', display: 'block' }}>
@@ -448,7 +448,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           </div>)}
 
         {/* ================= CHART 3: FLEET READINESS DONUT & RADIAL ================= */}
-        {activeChartTab === 'fleet' && (<div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', alignItems: 'center' }}>
+        {activeChartTab === 'fleet' && (<div className="dashboard-fleet-grid" style={{ display: 'grid', gap: '1.25rem', alignItems: 'center' }}>
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1.25rem', textAlign: 'center' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534' }}>المعدات العاملة بالموقع</span>
               <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#16a34a', margin: '0.4rem 0' }}>

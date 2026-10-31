@@ -98,7 +98,7 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)', flexShrink: 0 }}>
             <Gauge size={17}/>
           </div>
-          <h1 className="navbar-tab-title" style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+          <h1 className="navbar-tab-title" style={{ fontSize: '0.96rem', fontWeight: 800, color: '#0f172a', margin: 0, maxWidth: 'calc(100vw - 210px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {currentTabName}
           </h1>
           {sectorBadge && (
@@ -121,7 +121,7 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
           {/* Live Server Pulse */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '20px', padding: '0.2rem 0.65rem', fontSize: '0.76rem', color: '#166534', fontWeight: 700 }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }}/>
-            <span>متصل ومحدث</span>
+            <span className="hide-on-mobile">متصل ومحدث</span>
           </div>
 
           {/* Database Backup & Restore Tool */}
@@ -145,7 +145,7 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
             title="إدارة قاعدة البيانات، النسخ الاحتياطي، والاستعادة الفورية"
           >
             <Database size={15} color="#2563eb"/>
-            <span>النسخ الاحتياطي</span>
+            <span className="hide-on-mobile">النسخ الاحتياطي</span>
           </button>
 
           {/* Mail & Correspondence Button */}
@@ -200,11 +200,11 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
                 {displayName[0] || 'م'}
               </div>
             )}
-            <div style={{ lineHeight: 1.2 }}>
+            <div className="hide-on-mobile" style={{ lineHeight: 1.2 }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>{displayName}</div>
               <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>{displayRole}</div>
             </div>
-            <ChevronDown size={13} color="#94a3b8"/>
+            <ChevronDown size={13} color="#94a3b8" className="hide-on-mobile"/>
           </div>
         </div>
       </header>
