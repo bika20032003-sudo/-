@@ -382,6 +382,23 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   // Default orientation: Portrait for executive progress report (matching the official 2-page document), landscape for two-phase report
   // Default orientation: Landscape (أفقي) for all engineering reports to fit all tables and columns without clipping
   const [printOrientation, setPrintOrientation] = useState('landscape');
+
+  // Dynamically update document.head @page rule so Chromium/Edge instantly detects orientation
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let styleEl = document.getElementById('print-orientation-head-style');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'print-orientation-head-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = `
+      @page {
+        size: ${printOrientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'};
+        margin: ${printOrientation === 'portrait' ? '6mm 8mm' : '4mm 5mm'};
+      }
+    `;
+  }, [printOrientation]);
   const [zoomLevel, setZoomLevel] = useState(isTwoPhaseDoc ? 85 : 100);
 
   const reportDateStr = report.date ? new Date(report.date).toLocaleDateString('ar-LY', {
@@ -421,11 +438,12 @@ export const OfficialPrintModal = ({ report, onClose }) => {
     >
       {/* Dynamic Print Rules for Page Size and Exact Form Colors */}
       <style>{`
+        @page {
+          size: ${printOrientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'};
+          margin: ${printOrientation === 'portrait' ? '6mm 8mm' : '4mm 5mm'};
+        }
+
         @media print {
-          @page {
-            size: ${printOrientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'} !important;
-            margin: ${printOrientation === 'portrait' ? '6mm 8mm' : '4mm 5mm'} !important;
-          }
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -471,12 +489,14 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             overflow: visible !important;
             display: block !important;
           }
-          .official-print-document {
+          .official-print-document,
+          .official-print-document.landscape-mode {
             padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
             min-height: 0 !important;
+            height: auto !important;
             margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
@@ -484,6 +504,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             box-sizing: border-box !important;
             zoom: 1 !important;
             transform: none !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
           }
           .official-print-document table {
             width: 100% !important;
@@ -815,9 +837,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           id="printable-report-content"
           style={{
             width: printOrientation === 'landscape' ? '297mm' : '210mm',
-            minWidth: printOrientation === 'landscape' ? '297mm' : '210mm',
-            maxWidth: printOrientation === 'landscape' ? '297mm' : '210mm',
-            minHeight: printOrientation === 'landscape' ? '210mm' : '297mm',
+            maxWidth: '100%',
             backgroundColor: '#ffffff',
             background: '#ffffff',
             color: '#000000',
@@ -1296,14 +1316,14 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </div>
             </div>
           ) : (report.isFuelReport || report.reportType === 'تقرير كميات الوقود اليومية' || (Array.isArray(report.fuelItems) && report.fuelItems.length > 0)) ? (
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '0.5rem' }}>
               {/* Centered Document Title */}
               <h1 style={{
                 textAlign: 'center',
-                fontSize: '1.75rem',
+                fontSize: '1.6rem',
                 fontWeight: 900,
                 color: '#000000',
-                margin: '1.5rem 0 1rem'
+                margin: '0.6rem 0 0.4rem'
               }}>
                 تقرير كميات الوقود اليومية
               </h1>
@@ -1381,14 +1401,16 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </table>
 
               {/* Dual Signatures for Fuel Report */}
-              <div style={{
+              <div className="signatures-block" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
                 paddingLeft: '3rem',
                 paddingRight: '3rem',
-                marginTop: '2.5rem',
-                marginBottom: '1rem'
+                marginTop: '1.25rem',
+                marginBottom: '0.25rem',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
               }}>
                 <div style={{ textAlign: 'center', minWidth: '220px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#000000' }}>
@@ -1703,7 +1725,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               </div>
             </div>
           ) : isRoadDoc ? (
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '0.5rem' }}>
               {/* Official Cyan Banner Header (Matching Photo 1 exactly) */}
               <div style={{
                 background: '#38bdf8',

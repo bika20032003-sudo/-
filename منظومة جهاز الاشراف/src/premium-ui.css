@@ -614,18 +614,16 @@
 }
 
 .official-print-document.landscape-mode {
-  width: 297mm !important;
-  min-width: 297mm !important;
-  max-width: 297mm !important;
-  min-height: 210mm !important;
+  width: 297mm;
+  max-width: 100%;
   background: #ffffff !important;
   background-color: #ffffff !important;
-  padding: 6mm 8mm !important;
+  padding: 6mm 8mm;
 }
 
 .official-print-document {
   width: 210mm;
-  min-height: 297mm;
+  max-width: 100%;
   background: #ffffff !important;
   background-color: #ffffff !important;
   color: #0f172a;
@@ -1004,14 +1002,15 @@
    PURE PRINT RULES (@media print)
    ========================================================================= */
 
-@media print {
-  @page {
-    size: A4 landscape !important;
-    margin: 5mm 6mm !important;
-  }
+/* Top-level Page Rules */
+@page {
+  size: A4 landscape;
+  margin: 4mm 5mm;
+}
 
+@media print {
   /* Reset document for clean printing */
-  body, html {
+  html, body {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1049,11 +1048,13 @@
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     overflow: visible !important;
     display: block !important;
   }
 
-  .official-print-document {
+  .official-print-document,
+  .official-print-document.landscape-mode {
     box-shadow: none !important;
     border-radius: 0 !important;
     border: none !important;
@@ -1063,19 +1064,25 @@
     max-width: 100% !important;
     min-width: 0 !important;
     min-height: 0 !important;
+    height: auto !important;
     box-sizing: border-box !important;
     zoom: 1 !important;
     transform: none !important;
     page-break-inside: auto !important;
-    page-break-after: auto !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     display: block !important;
   }
 
   .official-print-document table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    box-sizing: border-box !important;
   }
 }
 

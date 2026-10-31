@@ -29,6 +29,13 @@
       window.location.replace('/-/');
     }
   </script>
+  <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
+  <style id="print-orientation-head-style">
+    @page {
+      size: A4 landscape;
+      margin: 4mm 5mm;
+    }
+  </style>
 </head>
 
 <body>
