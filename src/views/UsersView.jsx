@@ -62,7 +62,12 @@ export const UsersView = ({ currentUser }) => {
   };
 
   // Official Supervision Agency Roles & Authorities
-  const roleOptions = [
+    const roleOptions = [
+    { 
+      role: 'حساب التطوير', 
+      sector: 'all',
+      description: 'التطوير البرمجي الشامل، صيانة قواعد البيانات والتحكم بالنظام'
+    },
     { 
       role: 'مدير المشروع', 
       sector: 'all',
@@ -136,7 +141,7 @@ export const UsersView = ({ currentUser }) => {
       updateUserPassword(selectedUser.username, formData.password.trim());
     }
 
-    const isDefaultUser = [1, 2, 3, 4, 5].includes(selectedUser.id);
+    const isDefaultUser = [1, 2, 3, 4, 5, 6].includes(selectedUser.id) || ['admin', 'project_manager'].includes(selectedUser.username);
     if (!isDefaultUser) {
       saveCustomUser({
         ...selectedUser,
@@ -168,7 +173,7 @@ export const UsersView = ({ currentUser }) => {
 
   // Handle Delete User
   const handleDeleteUser = (id, name) => {
-    if ([1, 2, 3, 4, 5].includes(id)) {
+    if ([1, 2, 3, 4, 5, 6].includes(id)) {
       setFeedbackMsg({ type: 'error', text: 'لا يمكن حذف الأعضاء الأساسيين لجهاز الإشراف المعتمد' });
       return;
     }
@@ -207,6 +212,15 @@ export const UsersView = ({ currentUser }) => {
 
   // Get vibrant role badge styling
   const getRoleStyle = (role = '') => {
+    if (role.includes('التطوير') || role.includes('حساب التطوير')) {
+      return { 
+        bg: '#ecfdf5', 
+        color: '#065f46', 
+        border: '#a7f3d0', 
+        tag: 'التطوير البرمجي والتحكم الشامل',
+        accent: '#059669'
+      };
+    }
     if (role.includes('مدير المشروع')) {
       return { 
         bg: '#eff6ff', 
@@ -404,6 +418,35 @@ export const UsersView = ({ currentUser }) => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(235px, 1fr))',
           gap: '1rem'
         }}>
+                    {/* Card 0: حساب التطوير */}
+          <div style={{
+            background: 'linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%)',
+            border: '1.5px solid #a7f3d0',
+            borderRadius: '12px',
+            padding: '1rem',
+            position: 'relative',
+            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.6rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#059669', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>
+                ت
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.92rem', color: '#065f46', display: 'block' }}>
+                  م. حساب التطوير
+                </strong>
+                <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 800 }}>حساب التطوير والبرمجة</span>
+              </div>
+            </div>
+            <p style={{ margin: '0 0 0.65rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.4 }}>
+              التطوير البرمجي الشامل، صيانة قواعد البيانات والنسخ الاحتياطي، وإدارة أذونات النظام.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
+              <span style={{ color: '#64748b' }}>إدارة النظام الشاملة</span>
+              <span style={{ color: '#059669', fontWeight: 800, direction: 'ltr' }}>091-2345678</span>
+            </div>
+          </div>
+
           {/* Card 1: مدير المشروع */}
           <div style={{
             background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
@@ -648,7 +691,7 @@ export const UsersView = ({ currentUser }) => {
                 filteredUsers.map((user) => {
                   const roleStyle = getRoleStyle(user.role || '');
                   const isPasswordVisible = visiblePasswords[user.id];
-                  const isPermanent = [1, 2, 3, 4, 5].includes(user.id);
+                  const isPermanent = [1, 2, 3, 4, 5, 6].includes(user.id) || ['admin', 'project_manager'].includes(user.username);
                   const userAvatar = user.avatar || localStorage.getItem(`user_avatar_${user.username}`) || '';
 
                   return (

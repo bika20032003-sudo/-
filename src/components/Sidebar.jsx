@@ -159,11 +159,11 @@ export const Sidebar = ({
     const commItems = [
       { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
     ];
-    if (isDev) {
+    if (isDev || isProjectManager) {
       commItems.push({ id: 'users', label: 'المستخدمين والصلاحيات', icon: Users });
     }
 
-    menuGroups = [
+    const menuGroups = [
       {
         title: 'الرئيسية والمتابعة الإشرافية',
         items: mainItems

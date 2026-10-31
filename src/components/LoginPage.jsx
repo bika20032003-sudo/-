@@ -73,20 +73,36 @@ const DEFAULT_USERS = [
 
 // Aliases for seamless login
 const ALIASES = {
+  'admin': 'admin',
   'dev': 'admin',
   'developer': 'admin',
   'development': 'admin',
   'تطوير': 'admin',
   'حساب التطوير': 'admin',
+  'م. حساب التطوير': 'admin',
   'alansari': 'project_manager',
   'project_manager': 'project_manager',
   'manager': 'project_manager',
   'مدير المشروع': 'project_manager',
+  'م. عبدالرحمن الأنصاري': 'project_manager',
+  'عبدالرحمن': 'project_manager',
   'admin_sectors': 'abrikaw',
   'sectors': 'abrikaw',
+  'abrikaw': 'abrikaw',
+  'م. عبدالسلام ابريكاو': 'abrikaw',
+  'ابريكاو': 'abrikaw',
   'sector_a': 'salah_alarabi',
+  'salah_alarabi': 'salah_alarabi',
+  'صلاح': 'salah_alarabi',
+  'م. صلاح العربي': 'salah_alarabi',
   'sector_b': 'issa_altahir',
+  'issa_altahir': 'issa_altahir',
+  'عيسى': 'issa_altahir',
+  'م. عيسى الطاهر': 'issa_altahir',
   'quality': 'saleh_quality',
+  'saleh_quality': 'saleh_quality',
+  'صالح': 'saleh_quality',
+  'م. صالح حماد': 'saleh_quality',
   'hammad': 'saleh_quality'
 };
 
@@ -112,21 +128,34 @@ export function getSystemUsers() {
     if (Array.isArray(customUsers)) {
       customUsers.forEach(cu => {
         if (!cu || typeof cu !== 'object') return;
-        const existingIdx = users.findIndex(u => u.username === cu.username);
+        // Never allow legacy cache to overwrite core account identities
+        if (cu.username === 'admin' || cu.username === 'project_manager') {
+          return;
+        }
+        const existingIdx = users.findIndex(u => u.username === cu.username || u.id === cu.id);
         if (existingIdx === -1) {
           users.push({
             ...cu,
             password: (savedPasswords && savedPasswords[cu.username]) || cu.password || 'admin1234',
             avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || ''
           });
-        } else {
+        } else if (![1, 2, 3, 4, 5, 6].includes(users[existingIdx].id)) {
           users[existingIdx] = {
             ...users[existingIdx],
+            ...cu,
             password: (savedPasswords && savedPasswords[cu.username]) || cu.password || users[existingIdx].password,
             avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[existingIdx]?.avatar || ''
           };
         }
       });
+    }
+
+    // Guaranteed presence of dev account and project manager
+    if (!users.some(u => u.username === 'admin')) {
+      users.unshift(DEFAULT_USERS[0]);
+    }
+    if (!users.some(u => u.username === 'project_manager')) {
+      users.push(DEFAULT_USERS.find(u => u.username === 'project_manager'));
     }
   } catch (e) {
     console.warn('Error reading saved passwords:', e);
@@ -390,6 +419,50 @@ export const LoginPage = ({ onLoginSuccess }) => {
                 )}
               </button>
             </form>
+
+            {/* Quick Demo Accounts Selection */}
+            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>
+                  حسابات الدخول المعتمدة (انقر للتعبئة الفورية):
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                {[
+                  { name: 'م. حساب التطوير', user: 'admin', pass: 'admin1234', role: 'حساب التطوير', color: '#059669', bg: '#ecfdf5' },
+                  { name: 'م. عبدالرحمن الأنصاري', user: 'project_manager', pass: 'admin1234', role: 'مدير المشروع', color: '#2563eb', bg: '#eff6ff' },
+                  { name: 'م. عبدالسلام ابريكاو', user: 'abrikaw', pass: 'abrikaw123', role: 'رئيس جهاز الإشراف', color: '#7c3aed', bg: '#f5f3ff' },
+                  { name: 'م. صالح حماد', user: 'saleh_quality', pass: 'quality123', role: 'مسؤول الجودة', color: '#047857', bg: '#ecfdf5' },
+                  { name: 'م. صلاح العربي', user: 'salah_alarabi', pass: 'sectora123', role: 'مشرف المرحلة 1', color: '#c2410c', bg: '#fff7ed' },
+                  { name: 'م. عيسى الطاهر', user: 'issa_altahir', pass: 'sectorb123', role: 'مشرف المرحلة 2', color: '#0f766e', bg: '#f0fdfa' }
+                ].map((acc) => (
+                  <button
+                    key={acc.user}
+                    type="button"
+                    onClick={() => {
+                      setUsername(acc.user);
+                      setPassword(acc.pass);
+                      setErrorMsg('');
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: '8px',
+                      background: username === acc.user ? acc.bg : '#f8fafc',
+                      border: `1.5px solid ${username === acc.user ? acc.color : '#e2e8f0'}`,
+                      cursor: 'pointer',
+                      textAlign: 'right',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a' }}>{acc.name}</span>
+                    <span style={{ fontSize: '0.68rem', color: acc.color, fontWeight: 700 }}>{acc.role}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Footer Support Social Icon */}
             <div className="portal-footer-actions">

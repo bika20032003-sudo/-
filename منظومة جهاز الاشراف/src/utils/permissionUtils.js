@@ -47,3 +47,4 @@ export const canAccessTwoPhaseReport = (currentUser) => {
   if (!currentUser) return false;
   return isProjectManagerUser(currentUser) || isSalehUser(currentUser) || isDevUser(currentUser);
 };
+
