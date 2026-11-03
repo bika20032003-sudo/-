@@ -3,7 +3,7 @@ import {
   Home, Milestone, UploadCloud, FileText, 
   CalendarRange, Truck, 
   Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin,
-  Camera, Mail, FilePlus, Target, Award
+  Camera, Mail, Bot, Sparkles, FilePlus, Target, Award
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
@@ -140,7 +140,8 @@ export const Sidebar = ({
     }
     mainItems.push(
       { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
-      { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award }
+      { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+      { id: 'ai-agent', label: 'الوكيل الذكي للإشراف', icon: Bot, badge: 'AI' }
     );
 
     const reportItems = [

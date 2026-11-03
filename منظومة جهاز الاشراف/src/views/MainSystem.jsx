@@ -20,6 +20,8 @@ import { CreateReportView } from './CreateReportView';
 import { CorrespondenceView } from './CorrespondenceView';
 import { TargetedWorksView } from './TargetedWorksView';
 import { ExecutiveProgressView } from './ExecutiveProgressView';
+import { AIAgentView } from './AIAgentView';
+import { AIAgentWidget } from '../components/AIAgentWidget';
 
 /**
  * Determine default dashboard based on supervision role
@@ -72,6 +74,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'messages': 'البريد والمراسلات الرسمية وإحالة التقارير',
         'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات (360 كم)',
         'executive-progress': 'الموقف التنفيذي (360 كم) - المالي والفني المعتمد',
+        'ai-agent': 'الوكيل الذكي لجهاز الإشراف والمتابعة (AI Engineering Agent)',
         'upload-reports': 'رفع ومعالجة ملفات التقارير الميدانية',
         'analytics': 'مركز التقارير والتحليلات المعتمدة',
         'fuel': 'إدارة الوقود',
@@ -160,6 +163,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             {activeTab === 'fuel' && <FuelView currentUser={currentUser} onNavigateTab={handleTabChange} />}
             {activeTab === 'equipment' && <EquipmentView />}
             {activeTab === 'users' && <UsersView currentUser={currentUser} />}
+            {activeTab === 'ai-agent' && <AIAgentView currentUser={currentUser} onNavigateTab={handleTabChange} />}
           </main>
         </div>
 
@@ -186,6 +190,9 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             onClose={() => setSelectedReportForPrint(null)}
           />
         )}
+
+        {/* Global AI Agent Floating Assistant */}
+        <AIAgentWidget currentUser={currentUser} onNavigateTab={handleTabChange} />
 
         {/* User Profile Modal with Photo Upload & Credentials */}
         {isProfileModalOpen && (
