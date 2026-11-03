@@ -3,11 +3,13 @@ import {
   FileSpreadsheet, Printer, Save, RefreshCw, Plus, Trash2, 
   CheckCircle2, AlertCircle, Edit3, Eye, FileText, Send, 
   HelpCircle, UserCheck, Shield, Award, DollarSign, Calendar,
-  TrendingUp, BarChart3, ChevronLeft, ArrowDownRight, Layers
+  TrendingUp, BarChart3, ChevronLeft, ArrowDownRight, Layers, Calculator
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
+import { StationQuantitiesModal } from './StationQuantitiesModal';
+import { calculateExecutiveItem, calculateExecutiveTotals, parseCleanNumber, CERTIFIED_RATES } from '../utils/engineeringFormulas.js';
 
 // Default initial data matching the approved executive progress document (24/10/2026)
 export const initialExecutiveData = {
@@ -15,8 +17,8 @@ export const initialExecutiveData = {
   reportTitle: 'الموقف التنفيذي.',
   contractValue: 897665675.030,
   currency: 'دينار',
-  reportDate: '2026-10-24',
-  reportNumber: '093436_24.10.2026',
+  reportDate: '2026-10-29',
+  reportNumber: '093436_29.10.2026',
   basicItems: [
     {
       id: 1,
@@ -26,7 +28,8 @@ export const initialExecutiveData = {
       unit: 'مقطوعية',
       contractQuantity: 1,
       executedQuantity: 0.875,
-      remainingQuantity: 0.13,
+      remainingQuantity: 0.125,
+      unitRate: 17601287.75,
       executedValue: 15401126.78,
       percentage: 87.50,
       notes: ''
@@ -38,11 +41,12 @@ export const initialExecutiveData = {
       description: 'كشط جزء من طبقات الاسفلت والاساس الحبيبي القائم وإعادة تدوير المواد الناتجة من عملية الكشط باستخدام تقنية إعادة تدوير كامل الرصف Full Depth Reclamation FDR ( بعد تعديل خواصها بالإضافات اللازمة ) وفرشها في طبقة جديدة اسفل كأساس لجسم الطريق وتشمل كافة الاختبارات اللازمة لتحديد نسب خلط المواد الإضافية وأسمنت والبودرة واستخدام المعدات الخاصة بالعمل والايادي العاملة واختبارات ضبط الجودة حسب المواصفات الفنية وتعليمات المهندس المشرف.',
       unit: 'م2',
       contractQuantity: 3060000.00,
-      executedQuantity: 1211352.63,
-      remainingQuantity: 848647.37,
-      executedValue: 164113958.13,
-      percentage: 72.27,
-      notes: ''
+      executedQuantity: 2239792.63,
+      remainingQuantity: 820207.37,
+      unitRate: 119.44,
+      executedValue: 267520831.73,
+      percentage: 73.20,
+      notes: 'محسوبة من أطوال ومساحات المحطات (L41)'
     },
     {
       id: 3,
@@ -51,11 +55,12 @@ export const initialExecutiveData = {
       description: 'توريد ورش طبقة تشريب نوع ( MC0 ) بمعدل 1.5 كجم / م2 على السطح النهائي للأساس الحبيبي بعرض واجهة تشمل ثمن المواد وتكاليف النقل ونظافة السطح قبل رشه والآلات والمعدات والأيدي العاملة وكل ما يلزم لنهو العمل والمعتمدة بالمتر المسطح طبقاً للمواصفات الفنية وتعليمات المهندس المشرف',
       unit: 'م2',
       contractQuantity: 3060000.00,
-      executedQuantity: 2160442.47,
-      remainingQuantity: 899557.53,
-      executedValue: 29662875.11,
-      percentage: 70.60,
-      notes: ''
+      executedQuantity: 2179342.47,
+      remainingQuantity: 880657.53,
+      unitRate: 13.73,
+      executedValue: 29922372.11,
+      percentage: 71.22,
+      notes: 'محسوبة من أطوال ومساحات المحطات (F37)'
     },
     {
       id: 4,
@@ -64,11 +69,12 @@ export const initialExecutiveData = {
       description: 'توريد وفرش طبقة اسفلتية سطحية محسنة باستخدام البوليمر بسمك 6 سم وبعرض 9.00 م والدك والتسوية طبقاً للمواصفات الفنية وتعليمات المهندس المشرف',
       unit: 'م2',
       contractQuantity: 3060000.00,
-      executedQuantity: 2120114.47,
-      remainingQuantity: 939885.53,
-      executedValue: 308158638.21,
-      percentage: 69.28,
-      notes: ''
+      executedQuantity: 2139464.47,
+      remainingQuantity: 920535.53,
+      unitRate: 145.35,
+      executedValue: 310971160.71,
+      percentage: 69.92,
+      notes: 'محسوبة من أطوال ومساحات المحطات (R37)'
     },
     {
       id: 5,
@@ -79,6 +85,7 @@ export const initialExecutiveData = {
       contractQuantity: 72.00,
       executedQuantity: 0.00,
       remainingQuantity: 72.00,
+      unitRate: 1783.99,
       executedValue: 0.00,
       percentage: 0.00,
       notes: ''
@@ -92,6 +99,7 @@ export const initialExecutiveData = {
       contractQuantity: 1080.00,
       executedQuantity: 0.00,
       remainingQuantity: 1080.00,
+      unitRate: 135.04,
       executedValue: 0.00,
       percentage: 0.00,
       notes: ''
@@ -105,6 +113,7 @@ export const initialExecutiveData = {
       contractQuantity: 2160.00,
       executedQuantity: 500.00,
       remainingQuantity: 1660.00,
+      unitRate: 1205.23,
       executedValue: 602615.00,
       percentage: 23.15,
       notes: ''
@@ -118,7 +127,8 @@ export const initialExecutiveData = {
       contractQuantity: 720000.00,
       executedQuantity: 402403.00,
       remainingQuantity: 317597.00,
-      executedValue: 9281437.21,
+      unitRate: 23.07,
+      executedValue: 9283437.21,
       percentage: 55.89,
       notes: ''
     },
@@ -131,6 +141,7 @@ export const initialExecutiveData = {
       contractQuantity: 240000.00,
       executedQuantity: 180646.00,
       remainingQuantity: 59354.00,
+      unitRate: 23.07,
       executedValue: 4167503.22,
       percentage: 75.27,
       notes: ''
@@ -144,8 +155,23 @@ export const initialExecutiveData = {
       contractQuantity: 120000.00,
       executedQuantity: 19967.00,
       remainingQuantity: 100033.00,
+      unitRate: 23.07,
       executedValue: 460638.69,
       percentage: 16.64,
+      notes: ''
+    },
+    {
+      id: 11,
+      section: 'رابعاً: أعمال الطلاء',
+      itemNumber: '11',
+      description: 'خطوط بيضاء مستمرة بحواف الطريق بعرض 15 سم',
+      unit: 'م.ط',
+      contractQuantity: 240000.00,
+      executedQuantity: 0.00,
+      remainingQuantity: 240000.00,
+      unitRate: 23.07,
+      executedValue: 0.00,
+      percentage: 0.00,
       notes: ''
     }
   ],
@@ -156,11 +182,12 @@ export const initialExecutiveData = {
       description: 'طبقة أساس حبيبي',
       unit: 'م3',
       contractQuantity: '',
-      executedQuantity: 207597.43,
+      executedQuantity: 270078.68,
       remainingQuantity: '',
-      executedValue: 80149285.76,
+      unitRate: 299.52,
+      executedValue: 80893967.36,
       percentage: '',
-      notes: ''
+      notes: 'محسوبة من أطوال ومساحات المحطات بسماكة 12.5 سم (AA44)'
     },
     {
       id: 2,
@@ -170,6 +197,7 @@ export const initialExecutiveData = {
       contractQuantity: '',
       executedQuantity: 225.623,
       remainingQuantity: '',
+      unitRate: 59500.00,
       executedValue: 13424568.50,
       percentage: '',
       notes: ''
@@ -197,6 +225,7 @@ export const ExecutiveProgressForm = ({
   const [statusMessage, setStatusMessage] = useState(null);
   const [activeTabSection, setActiveTabSection] = useState('all'); // 'all' | 'basic' | 'additional'
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showStationModal, setShowStationModal] = useState(false);
   const printRef = useRef(null);
 
   // Clean text and force standard regular Latin digits (0-9)
@@ -302,6 +331,81 @@ export const ExecutiveProgressForm = ({
   }, [data]);
 
   // Handle Header field change
+  
+  // Sync quantities directly from Station Quantities Calculator (Excel Sheet 29/10/2026)
+  const handleApplyStationTotals = (stationTotals) => {
+    if (!stationTotals) return;
+    setData(prev => {
+      const updatedBasic = prev.basicItems.map(item => {
+        // FDR (Item 2) -> L41 (Area: 2,239,792.63 m2)
+        if (item.id === 2 || item.itemNumber === '2') {
+          const eQ = stationTotals.fdr?.area || 2239792.63;
+          const rate = parseFloat(toCleanLatin(item.unitRate)) || 119.44;
+          const cQ = parseFloat(toCleanLatin(item.contractQuantity)) || 3060000;
+          return {
+            ...item,
+            executedQuantity: String(eQ),
+            remainingQuantity: String(parseFloat(Math.max(0, cQ - eQ).toFixed(2))),
+            executedValue: String(parseFloat((eQ * rate).toFixed(2))),
+            percentage: String(parseFloat(((eQ / cQ) * 100).toFixed(2))),
+            notes: 'محسوبة تلقائياً من حاسبة المحطات (L41)'
+          };
+        }
+        // MCO (Item 3) -> F37 (Area: 2,179,342.47 m2)
+        if (item.id === 3 || item.itemNumber === '3') {
+          const eQ = stationTotals.mco?.area || 2179342.47;
+          const rate = parseFloat(toCleanLatin(item.unitRate)) || 13.73;
+          const cQ = parseFloat(toCleanLatin(item.contractQuantity)) || 3060000;
+          return {
+            ...item,
+            executedQuantity: String(eQ),
+            remainingQuantity: String(parseFloat(Math.max(0, cQ - eQ).toFixed(2))),
+            executedValue: String(parseFloat((eQ * rate).toFixed(2))),
+            percentage: String(parseFloat(((eQ / cQ) * 100).toFixed(2))),
+            notes: 'محسوبة تلقائياً من حاسبة المحطات (F37)'
+          };
+        }
+        // Asphalt (Item 4) -> R37 (Area: 2,139,464.47 m2)
+        if (item.id === 4 || item.itemNumber === '4') {
+          const eQ = stationTotals.asphalt?.area || 2139464.47;
+          const rate = parseFloat(toCleanLatin(item.unitRate)) || 145.35;
+          const cQ = parseFloat(toCleanLatin(item.contractQuantity)) || 3060000;
+          return {
+            ...item,
+            executedQuantity: String(eQ),
+            remainingQuantity: String(parseFloat(Math.max(0, cQ - eQ).toFixed(2))),
+            executedValue: String(parseFloat((eQ * rate).toFixed(2))),
+            percentage: String(parseFloat(((eQ / cQ) * 100).toFixed(2))),
+            notes: 'محسوبة تلقائياً من حاسبة المحطات (R37)'
+          };
+        }
+        return item;
+      });
+
+      const updatedAdd = prev.additionalItems.map(item => {
+        // Base Course Volume (Item 1) -> AA44 (Volume: 270,078.68 m3)
+        if (item.id === 1 || item.itemNumber === '1') {
+          const eQ = stationTotals.base?.volume || 270078.68;
+          const rate = parseFloat(toCleanLatin(item.unitRate)) || 299.52;
+          return {
+            ...item,
+            executedQuantity: String(eQ),
+            executedValue: String(parseFloat((eQ * rate).toFixed(2))),
+            notes: 'محسوبة تلقائياً من حاسبة المحطات (AA44)'
+          };
+        }
+        return item;
+      });
+
+      setStatusMessage({ type: 'success', text: 'تم تطبيق كميات المحطات الرسمية (FDR، MCO، الأسفلت، الأساس) وإعادة حساب القيم بدقة الإكسل!' });
+      return {
+        ...prev,
+        basicItems: updatedBasic,
+        additionalItems: updatedAdd
+      };
+    });
+  };
+
   const handleHeaderChange = (field, val) => {
     setData(prev => ({ ...prev, [field]: toCleanLatin(val) }));
   };
@@ -989,7 +1093,7 @@ export const ExecutiveProgressForm = ({
                   <React.Fragment key={item.id || idx}>
                     {showSectionHeader && item.section && (
                       <tr style={{ background: '#fef9c3', borderTop: '2px solid #facc15', borderBottom: '1px solid #fde047' }}>
-                        <td colSpan={readOnlyMode ? 8 : 9} style={{ padding: '0.45rem 1rem', fontWeight: 900, color: '#854d0e', fontSize: '0.86rem' }}>
+                        <td colSpan={readOnlyMode ? 9 : 10} style={{ padding: '0.45rem 1rem', fontWeight: 900, color: '#854d0e', fontSize: '0.86rem' }}>
                           📂 {item.section}
                         </td>
                       </tr>
@@ -1133,7 +1237,7 @@ export const ExecutiveProgressForm = ({
 
               {/* Subtotal of Basic Items (إجمالي البنود الأساسية) */}
               <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #0f172a' }}>
-                <td colSpan={6} style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#0f172a', fontSize: '0.92rem' }}>
+                <td colSpan={7} style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#0f172a', fontSize: '0.92rem' }}>
                   إجمالي البنود الأساسية:
                 </td>
                 <td style={{ textAlign: 'center', color: '#1e3a8a', fontSize: '0.95rem', direction: 'ltr' }}>
@@ -1342,6 +1446,12 @@ export const ExecutiveProgressForm = ({
       </div>
 
       {/* Official Print Modal (Direct trigger from Form) */}
+      <StationQuantitiesModal
+        isOpen={showStationModal}
+        onClose={() => setShowStationModal(false)}
+        onApplyTotals={handleApplyStationTotals}
+      />
+
       {showPrintModal && (
         <OfficialPrintModal
           report={getReportDataForPrint()}

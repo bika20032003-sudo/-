@@ -12,6 +12,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
+import { calculateReadyToWorkPipeline, calculateRemainingItems } from '../utils/engineeringFormulas.js';
 
 // Official Certified Items for Phase 1 (Matching Official Document 24/10/2026)
 export const initialPhase1ReportItems = [
@@ -20,37 +21,37 @@ export const initialPhase1ReportItems = [
   { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
   { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
   { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', todayMeters: '0', totalMeters: '226218', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', todayMeters: '0', totalMeters: '226213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 // Official Certified Items for Phase 2 (Matching Official Document 24/10/2026)
 export const initialPhase2ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', todayMeters: '1220', totalMeters: '16240', dailyTarget: '800', varianceMeters: '420.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', todayMeters: '460', totalMeters: '10410', dailyTarget: '800', varianceMeters: '-340.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', todayMeters: '1140', totalMeters: '8140', dailyTarget: '800', varianceMeters: '340.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', todayMeters: '500', totalMeters: '16210', dailyTarget: '800', varianceMeters: '-300.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', todayMeters: '500', totalMeters: '10410', dailyTarget: '800', varianceMeters: '-300.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', todayMeters: '0', totalMeters: '15230', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', todayMeters: '100', totalMeters: '19300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', todayMeters: '1150', totalMeters: '12520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', todayMeters: '0', totalMeters: '10290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', todayMeters: '600', totalMeters: '12630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 // Official Custom Fields for Combined Table ("الجاهز للعمل في البند" والملاحظات)
 export const initialCombinedCustomFields = [
-  { id: 1, readyToWorkMeters: '', notes: 'الجاهز للعمل بالبند (طبقة التشريب وقيد موافقة استشاري)' },
-  { id: 2, readyToWorkMeters: '', notes: 'الجاهز للعمل بالبند (طبقة الأساس وقيد موافقة استشاري)' },
-  { id: 3, readyToWorkMeters: '2253.00', notes: '' },
+  { id: 1, readyToWorkMeters: '20.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' },
+  { id: 2, readyToWorkMeters: '110.00', notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' },
+  { id: 3, readyToWorkMeters: '2230.00', notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' },
   { id: 4, readyToWorkMeters: '', notes: '' },
-  { id: 5, readyToWorkMeters: '5717.00', notes: 'الجاهز للعمل بالبند (فرم أولى وقيد موافقة استشاري)' },
+  { id: 5, readyToWorkMeters: '6670.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' },
   { id: 6, readyToWorkMeters: '', notes: '' },
 ];
 
 // Official Certified Remaining Items (Matching Official Document 24/10/2026)
 export const initialRemainingReportItems = [
-  { id: 1, group: 'A', name: 'المتبقي من الفرمة الأولى', phase1: '150.00', phase2: '117677.00', total: '117677.00', notes: 'من احتياج الصيانة' },
-  { id: 2, group: 'A', name: 'المتبقي من الفرمة الثانية', phase1: '183.00', phase2: '117777.00', total: '117777.00', notes: 'جزء السنارة المنهارة' },
-  { id: 3, group: 'A', name: 'المتبقي من الأساس', phase1: '183.00', phase2: '123507.00', total: '123507.00', notes: '' },
-  { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', phase1: '150.00', phase2: '123507.00', total: '123507.00', notes: '' },
-  { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '150.00', phase2: '125625.00', total: '125775.00', notes: '' },
-  { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '8080.00', notes: 'كيلومتر' },
+  { id: 1, group: 'A', name: 'المتبقي من الفرمة الأولى', phase1: '130.00', phase2: '114467.00', total: '114597.00', notes: 'جزء العبارة المنهارة' },
+  { id: 2, group: 'A', name: 'المتبقي من الفرمة الثانية', phase1: '130.00', phase2: '114487.00', total: '114617.00', notes: 'جزء العبارة المنهارة' },
+  { id: 3, group: 'A', name: 'المتبقي من الأساس', phase1: '130.00', phase2: '121157.00', total: '121287.00', notes: '' },
+  { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', phase1: '130.00', phase2: '121267.00', total: '121397.00', notes: '' },
+  { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '130.00', phase2: '123497.00', total: '123627.00', notes: '' },
+  { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9030.00', notes: 'كيلومتر' },
 ];
 
 export const createDefaultPhaseItems = () => initialPhase1ReportItems.map(item => ({ ...item }));
@@ -70,9 +71,9 @@ export const TwoPhaseDailyReportForm = ({
   };
 
   // Basic Header Info - Defaulting to Official Certified Document (Saturday 24/10/2026)
-  const [reportDate, setReportDate] = useState('2026-10-24');
-  const [dayName, setDayName] = useState('السبت');
-  const [reportNumber, setReportNumber] = useState('082024_24.10.2026');
+  const [reportDate, setReportDate] = useState('2026-10-29');
+  const [dayName, setDayName] = useState('الخميس');
+  const [reportNumber, setReportNumber] = useState('082024_29.10.2026');
   const [projectName, setProjectName] = useState('مشروع صيانة طريق أوباري غات');
   const [reportTitle, setReportTitle] = useState('الأعمال المنجزة للمرحلتين');
 
@@ -235,6 +236,38 @@ export const TwoPhaseDailyReportForm = ({
   };
 
   // Restore Official Certified Data (24/10/2026)
+  
+  // Auto-calculate construction pipeline (الجاهز للعمل في البند) & Remaining according to certified Excel engineering rules
+  const handleAutoCalculatePipeline = () => {
+    // 1. Gather combined totals for pipeline
+    const totalsMap = {};
+    phase1Items.forEach((p1, idx) => {
+      const p2 = phase2Items[idx] || {};
+      const t1 = parseFloat(toCleanLatinDigits(p1.totalMeters)) || 0;
+      const t2 = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+      totalsMap[p1.name] = t1 + t2;
+    });
+
+    const pipeline = calculateReadyToWorkPipeline(totalsMap);
+
+    // Update combinedCustom
+    setCombinedCustom(prev => prev.map(c => {
+      if (c.id === 1) return { ...c, readyToWorkMeters: String(pipeline.fdrReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' };
+      if (c.id === 2) return { ...c, readyToWorkMeters: String(pipeline.mcoReady), notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' };
+      if (c.id === 3) return { ...c, readyToWorkMeters: String(pipeline.asphaltReady), notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' };
+      if (c.id === 5) return { ...c, readyToWorkMeters: String(pipeline.baseReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' };
+      return c;
+    }));
+
+    // 2. Auto calculate remaining
+    const p2Map = {};
+    phase2Items.forEach(p2 => {
+      p2Map[p2.name] = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+    });
+    const calculatedRemaining = calculateRemainingItems(p2Map);
+    setRemainingItems(calculatedRemaining);
+  };
+
   const handleRestoreCertifiedData = () => {
     setReportDate('2026-10-24');
     setDayName('السبت');

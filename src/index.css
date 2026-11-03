@@ -1595,6 +1595,18 @@ input[type="number"] {
   margin: 4mm 5mm;
 }
 @media print {
+  html, body {
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+  #root {
+    min-height: 0 !important;
+    height: auto !important;
+  }
   .custom-app-sidebar,
   .custom-app-navbar,
   .sidebar-mobile-backdrop,
@@ -1605,11 +1617,15 @@ input[type="number"] {
   .custom-system-main {
     margin-right: 0 !important;
     width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
   }
   .custom-page-container {
     padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
   }
-  body { background: #fff !important; }
 }
 
 /* ========== CUSTOM SCROLLBARS ========== */

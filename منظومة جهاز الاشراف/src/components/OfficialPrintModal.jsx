@@ -469,12 +469,21 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             padding: 0 !important;
             width: 100% !important;
             height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
             overflow: visible !important;
+          }
+          #root {
+            display: none !important;
+            min-height: 0 !important;
+            height: 0 !important;
           }
           .official-print-modal-overlay {
             position: static !important;
             width: 100% !important;
             height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
             background: #ffffff !important;
             padding: 0 !important;
             margin: 0 !important;
@@ -486,6 +495,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             margin: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
             overflow: visible !important;
             display: block !important;
           }
@@ -497,15 +509,20 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             min-width: 0 !important;
             min-height: 0 !important;
             height: auto !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
             display: block !important;
             box-sizing: border-box !important;
             zoom: 1 !important;
             transform: none !important;
-            page-break-after: avoid !important;
-            break-after: avoid !important;
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
+          .official-print-document > *:last-child,
+          .official-print-document div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
           }
           .official-print-document table {
             width: 100% !important;
@@ -989,6 +1006,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '92px', fontWeight: 900 }}>كمية العقد</th>
                     <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '92px', fontWeight: 900 }}>المنفذ</th>
                     <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '92px', fontWeight: 900 }}>المتبقي</th>
+                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '85px', fontWeight: 900 }}>الفئة (د.ل)</th>
                     <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '120px', fontWeight: 900 }}>قيمة المنفذ</th>
                     <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '65px', fontWeight: 900 }}>النسبة %</th>
                   </tr>
@@ -996,7 +1014,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 <tbody>
                   {/* شريط الأقسام الأصفر: بنود أساسية */}
                   <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, pageBreakInside: 'avoid' }}>
-                    <td colSpan={8} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
+                    <td colSpan={9} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
                       بنود أساسية
                     </td>
                   </tr>
@@ -1008,7 +1026,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                       <React.Fragment key={item.id || idx}>
                         {showSec && item.section && (
                           <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, pageBreakInside: 'avoid' }}>
-                            <td colSpan={8} style={{ border: '1px solid #000000', padding: '3px 8px', textAlign: 'right', fontSize: '0.8rem' }}>
+                            <td colSpan={9} style={{ border: '1px solid #000000', padding: '3px 8px', textAlign: 'right', fontSize: '0.8rem' }}>
                               {item.section}
                             </td>
                           </tr>
@@ -1028,6 +1046,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                           <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 700, color: '#9a3412' }} dir="ltr">
                             {item.remainingQuantity !== '' && item.remainingQuantity !== null && item.remainingQuantity !== undefined && Number(item.remainingQuantity) > 0 ? fmtNum(item.remainingQuantity) : '—'}
                           </td>
+                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800 }} dir="ltr">
+                            {item.unitRate !== '' && item.unitRate !== null && item.unitRate !== undefined ? fmtNum(item.unitRate) : '—'}
+                          </td>
                           <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 900 }} dir="ltr">
                             {item.executedValue !== '' && item.executedValue !== null && item.executedValue !== undefined && Number(item.executedValue) > 0 ? fmtNum(item.executedValue) : '—'}
                           </td>
@@ -1041,7 +1062,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
                   {/* سطر إجمالي البنود الأساسية */}
                   <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000', borderBottom: '2px solid #000000', pageBreakInside: 'avoid' }}>
-                    <td colSpan={6} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
+                    <td colSpan={7} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
                       إجمالي البنود الأساسية
                     </td>
                     <td style={{ border: '1px solid #000000', padding: '5px', fontSize: '0.88rem', fontWeight: 900 }} dir="ltr">
@@ -1054,7 +1075,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
                   {/* شريط الأقسام الأصفر: بنود إضافية */}
                   <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, pageBreakInside: 'avoid' }}>
-                    <td colSpan={8} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
+                    <td colSpan={9} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
                       بنود إضافية
                     </td>
                   </tr>
@@ -1070,6 +1091,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                         {fmtNum(item.executedQuantity)}
                       </td>
                       <td style={{ border: '1px solid #000000', padding: '3px', color: '#64748b' }}>—</td>
+                      <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800 }} dir="ltr">
+                        {item.unitRate !== '' && item.unitRate !== null && item.unitRate !== undefined ? fmtNum(item.unitRate) : '—'}
+                      </td>
                       <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 900 }} dir="ltr">
                         {fmtNum(item.executedValue)}
                       </td>
@@ -1079,7 +1103,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
                   {/* سطر إجمالي البنود الإضافية */}
                   <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000', borderBottom: '2px solid #000000', pageBreakInside: 'avoid' }}>
-                    <td colSpan={6} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
+                    <td colSpan={7} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
                       إجمالي البنود الإضافية
                     </td>
                     <td style={{ border: '1px solid #000000', padding: '5px', fontSize: '0.88rem', fontWeight: 900 }} dir="ltr">

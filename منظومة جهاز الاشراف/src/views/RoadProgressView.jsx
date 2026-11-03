@@ -5,6 +5,8 @@ import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { RoadDailyReportForm } from '../components/RoadDailyReportForm';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
+import { StationQuantitiesModal } from '../components/StationQuantitiesModal';
+import { Calculator } from 'lucide-react';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -14,6 +16,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [progressReports, setProgressReports] = useState([]);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
+    const [showStationModal, setShowStationModal] = useState(false);
     const [activePhase, setActivePhase] = useState('all'); // 'all' | 'phase1' | 'phase2'
     // Quick Edit State
     const [editingId, setEditingId] = useState(null);
@@ -774,7 +777,12 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
       )}
 
       {/* Official Print Modal */}
-      {selectedReportForPrint && (
+      <StationQuantitiesModal
+                isOpen={showStationModal}
+                onClose={() => setShowStationModal(false)}
+            />
+
+            {selectedReportForPrint && (
         <OfficialPrintModal
           report={selectedReportForPrint}
           onClose={() => setSelectedReportForPrint(null)}
