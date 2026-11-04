@@ -1,3 +1,4 @@
+import { isDevUser } from '../utils/permissionUtils';
 import React, { useState, useEffect } from 'react';
 import { 
   Fuel, Search, FileSpreadsheet, Droplet, Calendar, X, 
@@ -727,21 +728,23 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
                         </button>
 
                         {/* Delete Report */}
-                        <button
-                          type="button"
-                          onClick={() => setReportToDelete(rep)}
-                          style={{
-                            background: '#fef2f2',
-                            border: '1px solid #fecaca',
-                            borderRadius: '6px',
-                            padding: '0.35rem 0.5rem',
-                            cursor: 'pointer',
-                            color: '#dc2626'
-                          }}
-                          title="حذف هذا التقرير"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {isDevUser(currentUser) && (
+                          <button
+                            type="button"
+                            onClick={() => setReportToDelete(rep)}
+                            style={{
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              borderRadius: '6px',
+                              padding: '0.35rem 0.5rem',
+                              cursor: 'pointer',
+                              color: '#dc2626'
+                            }}
+                            title="حذف هذا التقرير (صلاحية حساب التطوير)"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

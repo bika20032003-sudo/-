@@ -1,3 +1,4 @@
+import { isDevUser } from '../utils/permissionUtils';
 import React, { useState, useEffect } from 'react';
 import { 
   Target, Plus, Search, FileSpreadsheet, RefreshCw, 
@@ -515,6 +516,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                         <Eye size={15} />
                       </button>
 
+                      {isDevUser(currentUser) && (
                       <button
                         type="button"
                         onClick={() => setReportToDelete(report)}
@@ -530,6 +532,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                       >
                         <Trash2 size={15} />
                       </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -7,7 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
-import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
+import { canAccessTwoPhaseReport, isDevUser } from '../utils/permissionUtils';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
 
@@ -765,23 +765,25 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                             <Edit2 size={14} />
                           </button>
 
-                          {/* Delete */}
-                          <button
-                            type="button"
-                            onClick={() => setReportToDelete(r)}
-                            title="حذف التقرير"
-                            style={{
-                              background: '#fef2f2',
-                              color: '#dc2626',
-                              border: '1px solid #fecaca',
-                              padding: '0.4rem 0.65rem',
-                              borderRadius: '7px',
-                              fontSize: '0.78rem',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          {/* Delete (صلاحية خاصة بحساب التطوير والإدارة) */}
+                          {isDevUser(currentUser) && (
+                            <button
+                              type="button"
+                              onClick={() => setReportToDelete(r)}
+                              title="حذف التقرير (صلاحية حساب التطوير)"
+                              style={{
+                                background: '#fef2f2',
+                                color: '#dc2626',
+                                border: '1px solid #fecaca',
+                                padding: '0.4rem 0.65rem',
+                                borderRadius: '7px',
+                                fontSize: '0.78rem',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
 

@@ -13,6 +13,9 @@ const filesToSync = [
   'src/views/CreateReportView.jsx',
   'src/views/MainSystem.jsx',
   'src/views/AIAgentView.jsx',
+  'src/views/ReportsArchiveView.jsx',
+  'src/views/FuelView.jsx',
+  'src/views/TargetedWorksView.jsx',
   'src/utils/aiAgentEngine.js',
   'src/index.css',
   'src/premium-ui.css'
