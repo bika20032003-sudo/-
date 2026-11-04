@@ -5,14 +5,21 @@ import {
   AlertTriangle, FileText, Zap, HelpCircle, Terminal, CheckCircle2,
   TrendingUp, Award, BarChart3, Database
 } from 'lucide-react';
-import { processLocalQuery, callGeminiCloudAgent, getLiveSystemContext } from '../utils/aiAgentEngine.js';
+import { processLocalQuery, callGeminiCloudAgent, getLiveSystemContext, getDefaultApiKey } from '../utils/aiAgentEngine.js';
 
 export const AIAgentView = ({ currentUser, onNavigateTab }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
   const [useCloudLLM, setUseCloudLLM] = useState(true);
-  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' && (localStorage.getItem('gemini_api_key') || getDefaultApiKey())) || '');
+  const [apiKey, setApiKey] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      return localStorage.getItem('gemini_api_key') || (typeof getDefaultApiKey === 'function' ? getDefaultApiKey() : '');
+    } catch (_) {
+      return '';
+    }
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [activeQuickCategory, setActiveQuickCategory] = useState('all');
 
@@ -44,12 +51,13 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
 
   useEffect(() => {
     try {
-      const storedKey = localStorage.getItem('gemini_api_key') || getDefaultApiKey();
+      const defaultKey = typeof getDefaultApiKey === 'function' ? getDefaultApiKey() : '';
+      const storedKey = localStorage.getItem('gemini_api_key') || defaultKey;
       const storedPref = localStorage.getItem('use_cloud_llm') !== 'false';
       setApiKey(storedKey);
       setUseCloudLLM(storedPref);
-      if (!localStorage.getItem('gemini_api_key')) {
-        localStorage.setItem('gemini_api_key', getDefaultApiKey());
+      if (!localStorage.getItem('gemini_api_key') && defaultKey) {
+        localStorage.setItem('gemini_api_key', defaultKey);
       }
       if (!localStorage.getItem('use_cloud_llm')) {
         localStorage.setItem('use_cloud_llm', 'true');

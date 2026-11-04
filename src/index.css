@@ -1595,7 +1595,9 @@ input[type="number"] {
   margin: 4mm 5mm;
 }
 @media print {
-  body.has-print-modal #root {
+  body.has-print-modal #root,
+  body:has(.official-print-modal-overlay) #root,
+  .has-print-modal #root {
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -1610,10 +1612,7 @@ input[type="number"] {
     background: #fff !important;
     overflow: visible !important;
   }
-  #root {
-    min-height: 0 !important;
-    height: auto !important;
-  }
+  body:not(.has-print-modal) #root { min-height: 0 !important; height: auto !important; }
   .custom-app-sidebar,
   .custom-app-navbar,
   .sidebar-mobile-backdrop,

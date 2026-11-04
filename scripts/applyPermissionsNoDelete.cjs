@@ -237,3 +237,4 @@ if (targetedCode.includes(oldTargetedDelete)) {
 fs.writeFileSync(targetedPath, targetedCode, 'utf8');
 
 console.log('=== All Permission Updates Completed Successfully ===');
+

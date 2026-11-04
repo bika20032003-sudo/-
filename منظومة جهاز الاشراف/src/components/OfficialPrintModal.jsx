@@ -477,6 +477,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             break-inside: avoid !important;
           }
           body > *:not(.official-print-modal-overlay),
+          .official-print-modal-overlay ~ *,
           .no-print,
           .print-controls-bar {
             display: none !important;
@@ -491,11 +492,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             max-height: none !important;
             overflow: visible !important;
           }
-          #root {
-            display: none !important;
-            min-height: 0 !important;
-            height: 0 !important;
-          }
+          #root { display: none !important; min-height: 0 !important; height: 0 !important; max-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
           .official-print-modal-overlay {
             position: static !important;
             width: 100% !important;
@@ -534,8 +531,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             box-sizing: border-box !important;
             zoom: 1 !important;
             transform: none !important;
-            page-break-after: auto !important;
-            break-after: auto !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
           }
           .official-print-document > *:last-child,
           .official-print-document div:last-child {

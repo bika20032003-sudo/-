@@ -4,7 +4,7 @@ import {
   ChevronDown, Maximize2, Minimize2, MessageSquare, ShieldCheck, 
   Layers, Milestone, Fuel, AlertTriangle, FileText, Zap
 } from 'lucide-react';
-import { processLocalQuery, callGeminiCloudAgent, getLiveSystemContext } from '../utils/aiAgentEngine.js';
+import { processLocalQuery, callGeminiCloudAgent, getLiveSystemContext, getDefaultApiKey } from '../utils/aiAgentEngine.js';
 
 export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +13,14 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
   const [useCloudLLM, setUseCloudLLM] = useState(true);
-  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' && (localStorage.getItem('gemini_api_key') || getDefaultApiKey())) || '');
+  const [apiKey, setApiKey] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      return localStorage.getItem('gemini_api_key') || (typeof getDefaultApiKey === 'function' ? getDefaultApiKey() : '');
+    } catch (_) {
+      return '';
+    }
+  });
   const [showSettings, setShowSettings] = useState(false);
 
   // Initial welcome message
@@ -42,12 +49,13 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   // Load API Key from localStorage
   useEffect(() => {
     try {
-      const storedKey = localStorage.getItem('gemini_api_key') || getDefaultApiKey();
+      const defaultKey = typeof getDefaultApiKey === 'function' ? getDefaultApiKey() : '';
+      const storedKey = localStorage.getItem('gemini_api_key') || defaultKey;
       const storedPref = localStorage.getItem('use_cloud_llm') !== 'false';
       setApiKey(storedKey);
       setUseCloudLLM(storedPref);
-      if (!localStorage.getItem('gemini_api_key')) {
-        localStorage.setItem('gemini_api_key', getDefaultApiKey());
+      if (!localStorage.getItem('gemini_api_key') && defaultKey) {
+        localStorage.setItem('gemini_api_key', defaultKey);
       }
       if (!localStorage.getItem('use_cloud_llm')) {
         localStorage.setItem('use_cloud_llm', 'true');
