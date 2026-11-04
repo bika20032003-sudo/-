@@ -318,7 +318,19 @@ export const CreateTargetedWorksReportModal = ({
     const cleanVal = (field === 'length' || field === 'stationFrom' || field === 'stationTo') ? toCleanLatinDigits(value) : value;
     setSections(prev => prev.map((sec, idx) => {
       if (idx === sectionIndex) {
-        const updated = sec.workItems.map(row => row.id === itemId ? { ...row, [field]: cleanVal } : row);
+        const updated = sec.workItems.map(row => {
+          if (row.id !== itemId) return row;
+          const updatedRow = { ...row, [field]: cleanVal };
+          if (field === 'stationFrom' || field === 'stationTo') {
+            const fromVal = field === 'stationFrom' ? cleanVal : row.stationFrom;
+            const toVal = field === 'stationTo' ? cleanVal : row.stationTo;
+            const autoLen = calculateStationLength(fromVal, toVal);
+            if (autoLen !== null && !isNaN(autoLen) && autoLen > 0) {
+              updatedRow.length = autoLen.toFixed(2);
+            }
+          }
+          return updatedRow;
+        });
         return { ...sec, workItems: updated };
       }
       return sec;

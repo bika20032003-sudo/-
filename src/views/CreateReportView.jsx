@@ -7,6 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
+import { calculateStationLength, calculateDefaultArea } from '../utils/engineeringFormulas.js';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 import { ExecutiveProgressForm } from '../components/ExecutiveProgressForm';

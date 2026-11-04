@@ -770,7 +770,13 @@ export const CreateReportModal = ({
                               value={item.stationFrom}
                               onChange={(e) => {
                                 const val = e.target.value;
-                                setRoadItems(prev => prev.map(r => r.id === item.id ? { ...r, stationFrom: val } : r));
+                                setRoadItems(prev => prev.map(r => {
+                                  if (r.id !== item.id) return r;
+                                  const autoLen = calculateStationLength(val, r.stationTo);
+                                  const lenStr = (autoLen !== null && !isNaN(autoLen) && autoLen > 0) ? autoLen.toFixed(2) : r.length;
+                                  const areaStr = lenStr ? calculateDefaultArea(r.item, lenStr) : r.area;
+                                  return { ...r, stationFrom: val, length: lenStr, area: areaStr || r.area };
+                                }));
                               }}
                               style={{ width: '100%', border: 'none', textAlign: 'center', direction: 'ltr' }}
                             />
@@ -781,7 +787,13 @@ export const CreateReportModal = ({
                               value={item.stationTo}
                               onChange={(e) => {
                                 const val = e.target.value;
-                                setRoadItems(prev => prev.map(r => r.id === item.id ? { ...r, stationTo: val } : r));
+                                setRoadItems(prev => prev.map(r => {
+                                  if (r.id !== item.id) return r;
+                                  const autoLen = calculateStationLength(r.stationFrom, val);
+                                  const lenStr = (autoLen !== null && !isNaN(autoLen) && autoLen > 0) ? autoLen.toFixed(2) : r.length;
+                                  const areaStr = lenStr ? calculateDefaultArea(r.item, lenStr) : r.area;
+                                  return { ...r, stationTo: val, length: lenStr, area: areaStr || r.area };
+                                }));
                               }}
                               style={{ width: '100%', border: 'none', textAlign: 'center', direction: 'ltr' }}
                             />

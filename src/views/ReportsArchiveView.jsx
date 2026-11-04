@@ -468,12 +468,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.78rem', color: '#1e40af', fontWeight: 800 }}>إنتاج الكسارات الموثق</div>
-          <div style={{ fontSize: '1.7rem', fontWeight: 900, color: '#2563eb', marginTop: '0.2rem' }}>
-            {totalCrusherProduction.toLocaleString()} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1d4ed8' }}>طن</span>
-          </div>
-        </div>
+        {/* إنتاج الكسارات الموثق (مخفي بناء على تعليمات جهاز الإشراف) */}
 
         <div style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
           <div style={{ fontSize: '0.78rem', color: '#9a3412', fontWeight: 800 }}>الرصف المنجز بالأرشيف</div>
@@ -532,7 +527,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             <option value="تقرير أعمال الطريق اليومي">تقرير أعمال الطريق اليومي 🛣️</option>
             <option value="تقرير يومي شامل">تقرير يومي شامل</option>
             <option value="تقرير تقدم أعمال الرصف">تقرير أعمال الرصف</option>
-            <option value="تقرير تشغيل وإنتاج الكسارة">تقرير إنتاج الكسارات</option>
+            
             <option value="تقرير تزويد واستهلاك الوقود">تقرير الوقود الميداني</option>
             <option value="تقرير حركة وتشغيل المعدات">تقرير المعدات والآليات</option>
           </select>

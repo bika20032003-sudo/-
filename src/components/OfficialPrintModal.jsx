@@ -1325,6 +1325,77 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 </div>
               </div>
 
+              {/* تجميع إجمالي كميات الأعمال المنفذة لكل بند (كل بند يتجمع بروحة حسب توجيهات جهاز الإشراف) */}
+              {(() => {
+                const itemsList = Array.isArray(report.items) && report.items.length > 0 ? report.items : (Array.isArray(report.roadItems) ? report.roadItems : []);
+                if (itemsList.length === 0) return null;
+
+                const aggregatedMap = new Map();
+                itemsList.forEach((row) => {
+                  const rawName = (row.item || '').trim();
+                  if (!rawName) return;
+                  if (!aggregatedMap.has(rawName)) {
+                    aggregatedMap.set(rawName, {
+                      name: rawName,
+                      totalLength: 0,
+                      totalArea: 0,
+                      count: 0
+                    });
+                  }
+                  const entry = aggregatedMap.get(rawName);
+                  entry.totalLength += Number(row.length) || 0;
+                  entry.totalArea += Number(row.area) || 0;
+                  entry.count += 1;
+                });
+
+                const aggregatedList = Array.from(aggregatedMap.values());
+                if (aggregatedList.length <= 1) return null;
+
+                return (
+                  <div style={{
+                    marginBottom: '0.85rem',
+                    border: '1.5px solid #000000',
+                    borderRadius: '4px',
+                    padding: '0.45rem 0.75rem',
+                    background: '#f8fafc',
+                    pageBreakInside: 'avoid',
+                    breakInside: 'avoid'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem', borderBottom: '1.5px solid #cbd5e1', paddingBottom: '0.25rem' }}>
+                      <span style={{ fontWeight: 900, fontSize: '0.88rem', color: '#000000' }}>
+                        📊 ملخص تجميع كميات البنود المنفذة (كل بند مجمع بروحة):
+                      </span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#475569' }}>
+                        إجمالي {aggregatedList.length} بنود رئيسية
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.35rem' }}>
+                      {aggregatedList.map((agg, aIdx) => (
+                        <div key={aIdx} style={{
+                          background: '#ffffff',
+                          border: '1px solid #000000',
+                          borderRadius: '3px',
+                          padding: '0.35rem 0.55rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: '0.8rem'
+                        }}>
+                          <span style={{ fontWeight: 800, color: '#000000' }}>
+                            {agg.name} {agg.count > 1 && <span style={{ color: '#2563eb', fontSize: '0.72rem' }}>({agg.count} قطاعات)</span>}:
+                          </span>
+                          <span style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
+                            {agg.totalLength > 0 && <span><strong>{agg.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
+                            {agg.totalArea > 0 && <span style={{ marginRight: '6px', color: '#047857' }}> | <strong>{agg.totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م²</span>}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Exact Dual Signatures from Photo */}
               <div style={{
                 display: 'flex',

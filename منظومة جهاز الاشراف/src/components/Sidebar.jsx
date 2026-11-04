@@ -174,8 +174,7 @@ export const Sidebar = ({
       { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
       { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-      { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText },
-      { id: 'analytics', label: 'مركز التحليلات والإحصائيات', icon: FileText }
+      { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
     ];
 
     const resourceItems = [

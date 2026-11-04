@@ -233,3 +233,66 @@ export const CERTIFIED_PROJECT_META = {
   projectName: 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر',
   currency: 'دينار'
 };
+
+
+/**
+ * Convert any station format to meters:
+ * '241+200' -> 241200
+ * '-00+640' -> -640
+ * '241.200' (km) -> 241200
+ * '1200' (meters) -> 1200
+ */
+export const parseStationToMeters = (stationVal) => {
+  if (stationVal === null || stationVal === undefined) return null;
+  const s = String(stationVal).trim();
+  if (!s) return null;
+
+  if (s.includes('+')) {
+    const isNeg = s.startsWith('-');
+    const parts = s.replace(/^-/, '').split('+');
+    const km = parseFloat(parts[0].replace(/[^\d.]/g, '')) || 0;
+    const m = parseFloat(parts[1]?.replace(/[^\d.]/g, '')) || 0;
+    const total = (km * 1000) + m;
+    return isNeg ? -total : total;
+  }
+
+  const clean = s.replace(/[^\d.-]/g, '');
+  const num = parseFloat(clean);
+  if (isNaN(num)) return null;
+
+  if (s.includes('.') && Math.abs(num) < 1000) {
+    return num * 1000;
+  }
+
+  return num;
+};
+
+/**
+ * Automatically compute length from StationFrom and StationTo:
+ * Length = Math.abs(To - From)
+ */
+export const calculateStationLength = (stationFrom, stationTo) => {
+  const fromM = parseStationToMeters(stationFrom);
+  const toM = parseStationToMeters(stationTo);
+
+  if (fromM === null || toM === null) return null;
+  const diff = Math.abs(toM - fromM);
+  return parseFloat(diff.toFixed(2));
+};
+
+/**
+ * Automatically compute Area (m2) based on item type and length
+ */
+export const calculateDefaultArea = (itemTitle, length) => {
+  const l = parseFloat(length);
+  if (isNaN(l) || l <= 0) return '';
+  const title = (itemTitle || '').toLowerCase();
+  
+  let width = 9.4;
+  if (title.includes('اسفلت') || title.includes('أسفلت')) {
+    width = 9.0;
+  } else if (title.includes('خدمي') || title.includes('خدمه')) {
+    return '';
+  }
+  return (l * width).toFixed(2);
+};
