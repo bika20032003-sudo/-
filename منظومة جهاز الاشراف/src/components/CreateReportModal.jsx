@@ -48,12 +48,8 @@ export const CreateReportModal = ({
   const [createdReportData, setCreatedReportData] = useState(null);
 
   // Default signatures
-  const [sectorDirector, setSectorDirector] = useState(
-    currentUser?.name || 'م. صلاح العربي (مشرف المرحلة الأولى)'
-  );
-  const [ownerRepresentative, setOwnerRepresentative] = useState(
-    'م. عبدالرحمن الأنصاري (مدير المشروع)'
-  );
+  const [sectorDirector, setSectorDirector] = useState('');
+  const [ownerRepresentative, setOwnerRepresentative] = useState('');
 
   // -------------------------------------------------------------
   // 1. Road Work Items State

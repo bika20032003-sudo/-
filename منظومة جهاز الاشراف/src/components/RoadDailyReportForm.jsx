@@ -7,6 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
+import { calculateStationLength, calculateDefaultArea } from '../utils/engineeringFormulas.js';
 
 // Clean text and force standard regular Latin digits (0-9)
 const toCleanLatin = (val) => {
@@ -27,7 +28,7 @@ export const initialRoadDailyData = {
   dayName: 'السبت',
   reportNumber: 'ROAD-REP-24.10.2026',
   sectorDirector: (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي',
-  ownerRepresentative: '................................',
+  ownerRepresentative: '',
   items: [
     {
       id: 1,
@@ -142,6 +143,11 @@ export const RoadDailyReportForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwardRecipient, setForwardRecipient] = useState('all');
+  const [forwardNote, setForwardNote] = useState('');
+  const [isForwarding, setIsForwarding] = useState(false);
+  const [createdReportForForward, setCreatedReportForForward] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
   // Quick preset work items
@@ -240,6 +246,30 @@ export const RoadDailyReportForm = ({
         items: base.items.map(row => {
           if (row.id === id) {
             const updated = { ...row, [field]: value };
+            // Auto calculate length from stations
+            if (field === 'stationFrom' || field === 'stationTo') {
+              const fromVal = field === 'stationFrom' ? value : row.stationFrom;
+              const toVal = field === 'stationTo' ? value : row.stationTo;
+              const autoLen = calculateStationLength(fromVal, toVal);
+              if (autoLen !== null && autoLen > 0) {
+                updated.length = autoLen.toFixed(2);
+                const autoArea = calculateDefaultArea(updated.item, autoLen);
+                if (autoArea) updated.area = autoArea;
+              }
+            } else if (field === 'length') {
+              const l = parseFloat(value);
+              if (!isNaN(l) && l > 0) {
+                const autoArea = calculateDefaultArea(row.item, l);
+                if (autoArea) updated.area = autoArea;
+              }
+            } else if (field === 'item' && updated.length) {
+              const l = parseFloat(updated.length);
+              if (!isNaN(l) && l > 0) {
+                const autoArea = calculateDefaultArea(value, l);
+                if (autoArea) updated.area = autoArea;
+              }
+            }
+
             if (field === 'notes') {
               const valStr = String(value).trim();
               updated.noteHighlight = valStr === 'معمل ومساحه' || valStr === 'جاري العمل';
@@ -394,6 +424,74 @@ export const RoadDailyReportForm = ({
     }
   };
 
+  const officialSupervisors = [
+    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
+  ];
+
+  const handleForwardReport = async () => {
+    const rep = createdReportForForward || getFullPrintableReport();
+    setIsForwarding(true);
+    const isAll = forwardRecipient === 'all';
+    const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
+
+    try {
+      const newMsgs = [];
+      for (const targetUser of targets) {
+        const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          fromUsername: currentUser?.username || 'user',
+          fromName: currentUser?.name || rep.sectorDirector || 'مهندس الموقع',
+          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'تقرير أعمال الطريق اليومي',
+          subject: 'إحالة تقرير أعمال الطريق اليومي - ' + rep.dayName + ' ' + rep.reportDate,
+          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد لأعمال الطريق المنفذة بمشروع صيانة طريق أوباري - غات. إجمالي الأطوال: ' + fmtNum(calculatedTotals.totalLength) + ' م.ط.'),
+          reportId: rep.id,
+          reportNumber: rep.reportNumber,
+          reportData: rep,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        };
+        newMsgs.push(messagePayload);
+        try {
+          await fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          });
+        } catch (e) {}
+      }
+      try {
+        const sysMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sysMsgs]));
+        const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+
+      setShowForwardModal(false);
+      const recipientText = isAll ? 'كافة أعضاء جهاز الإشراف' : targets[0].name;
+      setStatusMessage({
+        type: 'success',
+        text: 'تم إرسال التقرير بنجاح إلى (' + recipientText + ')!'
+      });
+      if (onNavigateTab) {
+        setTimeout(() => onNavigateTab('messages'), 1200);
+      }
+    } catch (err) {
+      console.error(err);
+      setShowForwardModal(false);
+    } finally {
+      setIsForwarding(false);
+    }
+  };
+
   // Save report
   const handleSave = async () => {
     setIsSaving(true);
@@ -453,6 +551,8 @@ export const RoadDailyReportForm = ({
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: printableObj }));
       } catch (e) {}
 
+      setCreatedReportForForward(printableObj);
+      setShowForwardModal(true);
       setStatusMessage({
         type: 'success',
         text: `تم حفظ واعتماد تقرير أعمال الطريق اليومي برقم (${printableObj.reportNumber}) بنجاح، وتحديث الأرشيف وقاعدة البيانات.`

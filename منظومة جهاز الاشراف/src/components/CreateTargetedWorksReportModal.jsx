@@ -560,9 +560,7 @@ export const CreateTargetedWorksReportModal = ({
         text: `تم حفظ واعتماد ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح في قاعدة البيانات!` 
       });
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-      }
+      setShowForwardModal(true);
     } catch (err) {
       console.error('Error saving targeted works report:', err);
       setStatusMessage({ type: 'danger', text: 'حدث خطأ أثناء حفظ تقرير الأعمال المستهدفة.' });

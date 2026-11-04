@@ -41,7 +41,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
 
   // Forwarding modal state
   const [showForwardModal, setShowForwardModal] = useState(false);
-  const [forwardRecipient, setForwardRecipient] = useState('admin');
+  const [forwardRecipient, setForwardRecipient] = useState('all');
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
@@ -216,9 +216,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
 
       if (onReportCreated) onReportCreated(saved);
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-      }
+      setShowForwardModal(true);
     } catch (error) {
       console.error('Error saving fuel report:', error);
       setStatusMessage({ type: 'danger', text: 'حدث خطأ أثناء حفظ التقرير.' });
@@ -232,34 +230,54 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
     if (!createdReport) return;
     setIsForwarding(true);
 
-    const targetUser = officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0];
-
-    const messagePayload = {
-      fromUsername: currentUser?.username || 'fuel_officer',
-      fromName: currentUser?.name || 'مسؤول الوقود والمحروقات',
-      fromRole: currentUser?.title || currentUser?.role || 'إدارة الوقود',
-      toUsername: targetUser.username,
-      toName: targetUser.name,
-      toRole: targetUser.role,
-      type: 'إحالة تقرير يومي',
-      subject: `إحالة تقرير كميات الوقود اليومية - ${dayName} ${formattedSlashDate}`,
-      content: forwardNote.trim() || `نحيل إليكم تقرير كميات الوقود اليومية (المصروف: ${totalDispatched.toLocaleString()} لتر - الوارد: ${totalReceived.toLocaleString()} لتر - المتبقي: ${totalRemaining.toLocaleString()} لتر) للإحاطة والمتابعة.`,
-      reportId: createdReport.id,
-      reportNumber: createdReport.reportNumber,
-      reportData: createdReport
-    };
+    const isAll = forwardRecipient === 'all';
+    const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
-      await fastFetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messagePayload)
-      });
+      const newMsgs = [];
+      for (const targetUser of targets) {
+        const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          fromUsername: currentUser?.username || 'fuel_officer',
+          fromName: currentUser?.name || 'مسؤول الوقود والمحروقات',
+          fromRole: currentUser?.title || currentUser?.role || 'إدارة الوقود',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'إحالة تقرير كميات الوقود اليومية',
+          subject: 'إحالة تقرير كميات الوقود اليومية - ' + dayName + ' ' + formattedSlashDate,
+          content: forwardNote.trim() || ('نحيل إليكم تقرير كميات الوقود اليومية (المصروف: ' + totalDispatched.toLocaleString() + ' لتر - الوارد: ' + totalReceived.toLocaleString() + ' لتر - المتبقي: ' + totalRemaining.toLocaleString() + ' لتر) للإحاطة والمتابعة.'),
+          reportId: createdReport.id,
+          reportNumber: createdReport.reportNumber,
+          reportData: createdReport,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        };
+        newMsgs.push(messagePayload);
+
+        try {
+          await fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          });
+        } catch (e) {}
+      }
+
+      try {
+        const sysMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sysMsgs]));
+        const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+      } catch (e) {}
+
+      window.dispatchEvent(new CustomEvent('messages-updated'));
 
       setShowForwardModal(false);
+      const recipientText = isAll ? 'كافة أعضاء جهاز الإشراف' : targets[0].name;
       setStatusMessage({ 
         type: 'success', 
-        text: `تم إرسال تقرير الوقود رسمياً عبر البريد والمراسلات إلى (${targetUser.name}) بنجاح!` 
+        text: 'تم إرسال تقرير الوقود رسمياً عبر البريد والمراسلات إلى (' + recipientText + ') بنجاح!' 
       });
 
       setTimeout(() => {
@@ -268,7 +286,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
       }, 1200);
     } catch (err) {
       console.error('Failed to forward message:', err);
-      alert('تم حفظ التقرير.');
+      setShowForwardModal(false);
     } finally {
       setIsForwarding(false);
     }

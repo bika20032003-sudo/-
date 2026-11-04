@@ -457,9 +457,7 @@ export const TwoPhaseDailyReportForm = ({
         text: `تم حفظ تقرير الأعمال المنجزة للمرحلتين برقم (${saved.reportNumber}) بنجاح!` 
       });
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-      }
+      setShowForwardModal(true);
     } catch (err) {
       console.error('Failed to save two-phase report:', err);
       setStatusMessage({ 

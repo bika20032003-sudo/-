@@ -49,6 +49,31 @@ export function safeGetStorageSet(key) {
 }
 
 export function getFallbackData(url) {
+  if (url.includes('/api/messages')) {
+    let allMsgs = [];
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const sys = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        const loc = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        const map = new Map();
+        [...sys, ...loc].forEach(m => {
+          if (m && m.id) map.set(String(m.id), m);
+        });
+        allMsgs = Array.from(map.values());
+      }
+    } catch {}
+    
+    // Filter by username if specified
+    const match = url.match(/username=([^&]+)/);
+    if (match && match[1]) {
+      const u = decodeURIComponent(match[1]);
+      const filtered = allMsgs.filter(m => 
+        m.toUsername === u || m.toUsername === 'all' || m.fromUsername === u || (!m.toUsername && m.fromUsername !== u)
+      );
+      return { success: true, messages: filtered };
+    }
+    return { success: true, messages: allMsgs };
+  }
   if (url.includes('/api/dashboard/summary')) {
     let allReports = [...(initialRecentReports || [])];
     try {
@@ -654,6 +679,67 @@ async function fetchWithTimeout(url, options, timeoutMs = 1200) {
 
 export async function fastFetch(rawUrl, options = {}) {
   let url = rawUrl;
+  if (typeof url === 'string') {
+    if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
+      url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
+    }
+  }
+
+  // Intercept and handle /api/messages natively for 100% reliable messaging
+  if (typeof url === 'string' && url.includes('/api/messages')) {
+    const method = (options.method || 'GET').toUpperCase();
+    if (method === 'POST') {
+      try {
+        const bodyObj = typeof options.body === 'string' ? JSON.parse(options.body) : (options.body || {});
+        const newMsg = {
+          id: bodyObj.id || ('msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
+          createdAt: bodyObj.createdAt || new Date().toISOString(),
+          isRead: false,
+          ...bodyObj
+        };
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const sys = JSON.parse(localStorage.getItem('system_messages') || '[]');
+          localStorage.setItem('system_messages', JSON.stringify([newMsg, ...sys]));
+          const loc = JSON.parse(localStorage.getItem('local_messages') || '[]');
+          localStorage.setItem('local_messages', JSON.stringify([newMsg, ...loc]));
+          window.dispatchEvent(new CustomEvent('messages-updated'));
+        }
+        return { success: true, message: newMsg };
+      } catch (err) {
+        console.error('Error saving message in fastFetch:', err);
+      }
+    } else if (method === 'PUT' && url.includes('/read')) {
+      const parts = url.split('/api/messages/')[1]?.split('/');
+      const msgId = parts ? parts[0] : null;
+      if (msgId && typeof window !== 'undefined' && window.localStorage) {
+        const updateRead = (key) => {
+          const arr = JSON.parse(localStorage.getItem(key) || '[]');
+          const updated = arr.map(m => String(m.id) === String(msgId) ? { ...m, isRead: true } : m);
+          localStorage.setItem(key, JSON.stringify(updated));
+        };
+        updateRead('system_messages');
+        updateRead('local_messages');
+        window.dispatchEvent(new CustomEvent('messages-updated'));
+      }
+      return { success: true, message: 'Marked read' };
+    } else if (method === 'DELETE') {
+      const msgId = url.split('/api/messages/')[1]?.split('?')[0];
+      if (msgId && typeof window !== 'undefined' && window.localStorage) {
+        const deleteItem = (key) => {
+          const arr = JSON.parse(localStorage.getItem(key) || '[]');
+          const updated = arr.filter(m => String(m.id) !== String(msgId));
+          localStorage.setItem(key, JSON.stringify(updated));
+        };
+        deleteItem('system_messages');
+        deleteItem('local_messages');
+        window.dispatchEvent(new CustomEvent('messages-updated'));
+      }
+      return { success: true, message: 'Deleted message' };
+    } else if (method === 'GET') {
+      return getFallbackData(url);
+    }
+  }
+  url = rawUrl;
   if (typeof url === 'string') {
     // Normalize localhost:5000 or 127.0.0.1:5000 to relative /api to use Vite proxy & eliminate CORS
     if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {

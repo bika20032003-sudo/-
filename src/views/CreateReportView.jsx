@@ -55,8 +55,8 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   // Signatures for Road Report
   const defaultDirector = (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || (isSectorB ? 'م. عيسى الطاهر' : 'م. صلاح العربي');
   const defaultOwner = (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري';
-  const [sectorDirector, setSectorDirector] = useState(defaultDirector);
-  const [ownerRepresentative, setOwnerRepresentative] = useState(defaultOwner);
+  const [sectorDirector, setSectorDirector] = useState('');
+  const [ownerRepresentative, setOwnerRepresentative] = useState('');
 
   // 1. Road Work Items Table State
   const [roadItems, setRoadItems] = useState([
@@ -122,7 +122,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   const [createdReport, setCreatedReport] = useState(null);
 
   const [showForwardModal, setShowForwardModal] = useState(false);
-  const [forwardRecipient, setForwardRecipient] = useState('admin');
+  const [forwardRecipient, setForwardRecipient] = useState('all');
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
@@ -186,7 +186,33 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   };
 
   const handleRoadRowChange = (id, field, value) => {
-    setRoadItems(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
+    setRoadItems(prev => prev.map(row => {
+      if (row.id !== id) return row;
+      const updated = { ...row, [field]: value };
+      if (field === 'stationFrom' || field === 'stationTo') {
+        const fromVal = field === 'stationFrom' ? value : row.stationFrom;
+        const toVal = field === 'stationTo' ? value : row.stationTo;
+        const autoLen = calculateStationLength(fromVal, toVal);
+        if (autoLen !== null && autoLen > 0) {
+          updated.length = autoLen.toFixed(2);
+          const autoArea = calculateDefaultArea(updated.item, autoLen);
+          if (autoArea) updated.area = autoArea;
+        }
+      } else if (field === 'length') {
+        const l = parseFloat(value);
+        if (!isNaN(l) && l > 0) {
+          const autoArea = calculateDefaultArea(row.item, l);
+          if (autoArea) updated.area = autoArea;
+        }
+      } else if (field === 'item' && updated.length) {
+        const l = parseFloat(updated.length);
+        if (!isNaN(l) && l > 0) {
+          const autoArea = calculateDefaultArea(value, l);
+          if (autoArea) updated.area = autoArea;
+        }
+      }
+      return updated;
+    }));
   };
 
   // Fuel Items Manipulation
@@ -214,7 +240,25 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
     setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, [field]: val } : s));
   };
   const handleTargetWorkItemChange = (sIdx, id, field, val) => {
-    setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, workItems: s.workItems.map(w => w.id === id ? { ...w, [field]: val } : w) } : s));
+    setTargetedSections(prev => prev.map((s, i) => {
+      if (i !== sIdx) return s;
+      return {
+        ...s,
+        workItems: s.workItems.map(w => {
+          if (w.id !== id) return w;
+          const updated = { ...w, [field]: val };
+          if (field === 'stationFrom' || field === 'stationTo') {
+            const fromVal = field === 'stationFrom' ? val : w.stationFrom;
+            const toVal = field === 'stationTo' ? val : w.stationTo;
+            const autoLen = calculateStationLength(fromVal, toVal);
+            if (autoLen !== null && autoLen > 0) {
+              updated.length = autoLen.toFixed(2);
+            }
+          }
+          return updated;
+        })
+      };
+    }));
   };
   const handleAddTargetWorkItem = (sIdx) => {
     setTargetedSections(prev => prev.map((s, i) => i === sIdx ? { ...s, workItems: [...s.workItems, { id: Date.now() + Math.random(), item: '', stationFrom: '', stationTo: '', length: '', notes: '' }] } : s));
@@ -569,6 +613,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       } catch (evtErr) {}
 
       setCreatedReport(saved);
+      setShowForwardModal(true);
       setStatusMessage({ type: 'success', text: `تم حفظ ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح وتوجيهه للقسم المختص!` });
 
       if (sendAfter) {
@@ -618,50 +663,64 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   };
 
   // Forward Report to ALL supervision users (from Project Manager to the last member, excluding Dev Account)
-  const handleForwardReport = async (broadcastToAll = true) => {
+  const handleForwardReport = async () => {
     if (!createdReport) return;
     setIsForwarding(true);
 
-    const recipients = broadcastToAll 
+    const isAll = forwardRecipient === 'all';
+    const recipients = isAll 
       ? getSupervisionTeamExcludingDev() 
       : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
+      const newMsgs = [];
       for (const targetUser of recipients) {
         const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
           fromUsername: currentUser?.username || 'user',
-          fromName: currentUser?.name || (reportCategory === 'fuel' ? 'مسؤول الوقود' : sectorDirector),
+          fromName: currentUser?.name || (reportCategory === 'fuel' ? 'مسؤول الوقود' : (sectorDirector || 'جهاز الإشراف')),
           fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
           toUsername: targetUser.username,
           toName: targetUser.name,
           toRole: targetUser.role,
           type: 'إحالة تقرير رسمي',
-          subject: `إحالة ${createdReport.title || createdReport.reportType} - رقم (${createdReport.reportNumber})`,
-          content: forwardNote.trim() || `نحيل إليكم رسمياً نسخة معتمدة من ${createdReport.title || createdReport.reportType} بموقع ${createdReport.sector} للإحاطة والمتابعة الهندسية.`,
+          subject: 'إحالة ' + (createdReport.title || createdReport.reportType) + ' - رقم (' + createdReport.reportNumber + ')',
+          content: forwardNote.trim() || ('نحيل إليكم رسمياً نسخة معتمدة من ' + (createdReport.title || createdReport.reportType) + ' بموقع ' + createdReport.sector + ' للإحاطة والمتابعة الهندسية.'),
           reportId: createdReport.id,
           reportNumber: createdReport.reportNumber,
           reportData: createdReport,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          isRead: false
         };
 
+        newMsgs.push(messagePayload);
+
         try {
-          await fastFetch('http://localhost:5000/api/messages', {
+          await fastFetch('/api/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(messagePayload)
           });
-        } catch (e) {
-          // Store in localStorage if backend offline
-          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
-          locMsgs.unshift({ id: Date.now() + Math.random(), ...messagePayload });
-          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
-        }
+        } catch (e) {}
       }
 
+      try {
+        const sysMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sysMsgs]));
+        const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+      } catch (e) {}
+
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+
       setShowForwardModal(false);
+      const recipientText = isAll 
+        ? 'كافة أعضاء جهاز الإشراف (م. عبدالرحمن الأنصاري، م. عبدالسلام ابريكاو، م. صالح حماد، م. صلاح العربي، م. عيسى الطاهر)' 
+        : recipients[0].name;
+
       setStatusMessage({ 
         type: 'success', 
-        text: `تم حفظ التقرير وإرساله رسمياً لكافة أعضاء جهاز الإشراف (م. عبدالرحمن الأنصاري، م. عبدالسلام ابريكاو، م. صالح حماد، م. صلاح العربي، م. عيسى الطاهر) بنجاح!` 
+        text: 'تم حفظ وإرسال التقرير بنجاح إلى (' + recipientText + ')!' 
       });
 
       setTimeout(() => {
@@ -669,7 +728,11 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       }, 1500);
     } catch (err) {
       console.error('Failed to forward message:', err);
-      alert('تم حفظ التقرير وتوجيهه بنجاح.');
+      setShowForwardModal(false);
+      setStatusMessage({ 
+        type: 'success', 
+        text: 'تم حفظ التقرير وتوجيهه للمراسلات بنجاح.' 
+      });
     } finally {
       setIsForwarding(false);
     }
@@ -2394,12 +2457,12 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                     background: '#fff'
                   }}
                 >
+                  <option value="all">📢 تعميم لجميع أعضاء جهاز الإشراف (الكل - 5 مهندسين)</option>
                   {officialSupervisors.map(u => (
                     <option key={u.username} value={u.username}>
                       {u.name} - ({u.role})
                     </option>
                   ))}
-                  <option value="all">-- تعميم لجميع أعضاء جهاز الإشراف --</option>
                 </select>
               </div>
 

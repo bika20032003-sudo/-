@@ -223,6 +223,10 @@ export const ExecutiveProgressForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwardRecipient, setForwardRecipient] = useState('all');
+  const [forwardNote, setForwardNote] = useState('');
+  const [isForwarding, setIsForwarding] = useState(false);
   const [activeTabSection, setActiveTabSection] = useState('all'); // 'all' | 'basic' | 'additional'
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showStationModal, setShowStationModal] = useState(false);
@@ -473,6 +477,74 @@ export const ExecutiveProgressForm = ({
     }));
   };
 
+  const officialSupervisors = [
+    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
+  ];
+
+  const handleForwardReport = async () => {
+    setIsForwarding(true);
+    const isAll = forwardRecipient === 'all';
+    const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
+
+    try {
+      const newMsgs = [];
+      for (const targetUser of targets) {
+        const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          fromUsername: currentUser?.username || 'user',
+          fromName: currentUser?.name || 'إدارة المشروع',
+          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'تقرير الموقف التنفيذي',
+          subject: 'إحالة تقرير الموقف التنفيذي المعتمد - رقم (' + data.reportNumber + ')',
+          content: forwardNote.trim() || ('نحيل إليكم التقرير المعتمد للموقف التنفيذي المالي والفني لمشروع صيانة وتطوير طريق أوباري - غات (360 كم). نسبة الإنجاز المالي العام: ' + calculations.overallFinancialPercentage + '%.'),
+          reportId: data.reportNumber,
+          reportNumber: data.reportNumber,
+          reportData: data,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        };
+        newMsgs.push(messagePayload);
+        try {
+          await fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          });
+        } catch (e) {}
+      }
+
+      try {
+        const sys = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sys]));
+        const loc = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...loc]));
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+
+      setShowForwardModal(false);
+      const recipientText = isAll ? 'كافة أعضاء جهاز الإشراف' : targets[0].name;
+      setStatusMessage({
+        type: 'success',
+        text: 'تم إرسال تقرير الموقف التنفيذي بنجاح إلى (' + recipientText + ')!'
+      });
+      if (onNavigateTab) {
+        setTimeout(() => onNavigateTab('messages'), 1200);
+      }
+    } catch (err) {
+      console.error(err);
+      setShowForwardModal(false);
+    } finally {
+      setIsForwarding(false);
+    }
+  };
+
   // Save to API & LocalStorage
   const handleSave = async () => {
     setIsSaving(true);
@@ -505,6 +577,7 @@ export const ExecutiveProgressForm = ({
 
       localStorage.setItem('executive_progress_data', JSON.stringify(payload));
       clearApiCache();
+      setShowForwardModal(true);
       setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت بيانات الموقف التنفيذي بنجاح في قاعدة البيانات!' });
       if (onSaved) onSaved(payload);
     } catch (e) {

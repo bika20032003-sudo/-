@@ -91,12 +91,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   const totalLengthKm = isSectorA ? '115.36 كم' : '110.92 كم';
 
   // Controlled Signatures (مدير القطاع وممثل الجهة المالكة)
-  const [customSectorDirector, setCustomSectorDirector] = useState(
-    report.sectorDirector || report.uploadedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي'
-  );
-  const [customOwnerRep, setCustomOwnerRep] = useState(
-    report.ownerRepresentative || report.approvedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري'
-  );
+  const [customSectorDirector, setCustomSectorDirector] = useState(report.sectorDirector || '');
+  const [customOwnerRep, setCustomOwnerRep] = useState(report.ownerRepresentative || '');
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -111,8 +107,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
 
   useEffect(() => {
     if (report) {
-      setCustomSectorDirector(report.sectorDirector || report.uploadedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
-      setCustomOwnerRep(report.ownerRepresentative || report.approvedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري');
+      setCustomSectorDirector(report.sectorDirector || '');
+      setCustomOwnerRep(report.ownerRepresentative || '');
     }
   }, [report]);
 
@@ -803,6 +799,13 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             </button>
             <button 
               type="button" 
+              onClick={() => handleSectorDirectorChange('')} 
+              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: !customSectorDirector ? '#fee2e2' : '#f8fafc', color: !customSectorDirector ? '#991b1b' : '#64748b', fontWeight: 800, cursor: 'pointer' }}
+            >
+              فارغ (يدوي)
+            </button>
+            <button 
+              type="button" 
               onClick={() => handleSectorDirectorChange('م. عيسى الطاهر')} 
               style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. عيسى الطاهر' ? '#dbeafe' : '#f8fafc', color: '#0e7490', fontWeight: 800, cursor: 'pointer' }}
             >
@@ -837,6 +840,13 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالرحمن الأنصاري' ? '#dcfce7' : '#f8fafc', color: '#166534', fontWeight: 800, cursor: 'pointer' }}
             >
               م. عبدالرحمن الأنصاري
+            </button>
+            <button 
+              type="button" 
+              onClick={() => handleOwnerRepChange('')} 
+              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: !customOwnerRep ? '#fee2e2' : '#f8fafc', color: !customOwnerRep ? '#991b1b' : '#64748b', fontWeight: 800, cursor: 'pointer' }}
+            >
+              فارغ (يدوي)
             </button>
             <button 
               type="button" 
