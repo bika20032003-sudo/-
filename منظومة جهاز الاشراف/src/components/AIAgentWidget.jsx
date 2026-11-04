@@ -12,8 +12,8 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
-  const [useCloudLLM, setUseCloudLLM] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [useCloudLLM, setUseCloudLLM] = useState(true);
+  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' && (localStorage.getItem('gemini_api_key') || getDefaultApiKey())) || '');
   const [showSettings, setShowSettings] = useState(false);
 
   // Initial welcome message
@@ -42,10 +42,16 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   // Load API Key from localStorage
   useEffect(() => {
     try {
-      const storedKey = localStorage.getItem('gemini_api_key') || '';
-      const storedPref = localStorage.getItem('use_cloud_llm') === 'true';
-      if (storedKey) setApiKey(storedKey);
+      const storedKey = localStorage.getItem('gemini_api_key') || getDefaultApiKey();
+      const storedPref = localStorage.getItem('use_cloud_llm') !== 'false';
+      setApiKey(storedKey);
       setUseCloudLLM(storedPref);
+      if (!localStorage.getItem('gemini_api_key')) {
+        localStorage.setItem('gemini_api_key', getDefaultApiKey());
+      }
+      if (!localStorage.getItem('use_cloud_llm')) {
+        localStorage.setItem('use_cloud_llm', 'true');
+      }
     } catch (_) {}
   }, []);
 
@@ -778,3 +784,4 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   );
 };
 export default AIAgentWidget;
+

@@ -82,3 +82,4 @@ fuelModal = fuelModal.replace(
 
 fs.writeFileSync('src/components/CreateFuelReportModal.jsx', fuelModal, 'utf8');
 console.log('✓ Updated CreateFuelReportModal broadcast logic');
+

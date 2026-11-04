@@ -6,16 +6,19 @@ const filesToSync = [
   'src/components/OfficialPrintModal.jsx',
   'src/components/CreateFuelReportModal.jsx',
   'src/components/Sidebar.jsx',
+  'src/components/AIAgentWidget.jsx',
   'src/views/DashboardView.jsx',
   'src/views/UsersView.jsx',
   'src/views/EquipmentView.jsx',
   'src/views/CreateReportView.jsx',
   'src/views/MainSystem.jsx',
+  'src/views/AIAgentView.jsx',
+  'src/utils/aiAgentEngine.js',
   'src/index.css',
   'src/premium-ui.css'
 ];
 
-console.log('Syncing modified files to منظومة جهاز الاشراف/ ...');
+console.log('Syncing all modified files to منظومة جهاز الاشراف/ ...');
 
 filesToSync.forEach(relPath => {
   const srcPath = path.join(__dirname, '..', relPath);
@@ -23,7 +26,6 @@ filesToSync.forEach(relPath => {
   
   if (fs.existsSync(srcPath)) {
     const content = fs.readFileSync(srcPath);
-    // Ensure destination directory exists
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
     fs.writeFileSync(destPath, content);
     console.log(`✓ Mirrored ${relPath}`);
@@ -32,4 +34,4 @@ filesToSync.forEach(relPath => {
   }
 });
 
-console.log('=== Mirroring to منظومة جهاز الاشراف Completed Successfully ===');
+console.log('=== All files synced to mirror successfully ===');
