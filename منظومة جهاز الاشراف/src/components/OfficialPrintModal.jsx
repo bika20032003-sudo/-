@@ -99,6 +99,17 @@ export const OfficialPrintModal = ({ report, onClose }) => {
   );
 
   useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('has-print-modal');
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('has-print-modal');
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (report) {
       setCustomSectorDirector(report.sectorDirector || report.uploadedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي');
       setCustomOwnerRep(report.ownerRepresentative || report.approvedBy || (typeof window !== 'undefined' && localStorage.getItem('system_default_owner_representative')) || 'م. عبدالرحمن الأنصاري');
@@ -377,7 +388,14 @@ export const OfficialPrintModal = ({ report, onClose }) => {
       (report.title && report.title.includes('بيان أعمال'))
     )
   );
-  const isStandardNewForm = isTargetedWorksDoc || isFuelDoc || isTwoPhaseDoc || isRoadDoc || isExecutiveDoc;
+  const isEquipmentDoc = !isExecutiveDoc && Boolean(
+    report.isEquipmentReport ||
+    report.reportType === 'سجل المعدات والآليات الميدانية' ||
+    report.reportType === 'تقرير وسجل المعدات والآليات الميدانية' ||
+    report.reportCategory === 'equipment' ||
+    (Array.isArray(report.equipmentList) && report.equipmentList.length > 0)
+  );
+  const isStandardNewForm = isTargetedWorksDoc || isFuelDoc || isTwoPhaseDoc || isRoadDoc || isExecutiveDoc || isEquipmentDoc;
   
   // Default orientation: Portrait for executive progress report (matching the official 2-page document), landscape for two-phase report
   // Default orientation: Landscape (أفقي) for all engineering reports to fit all tables and columns without clipping
@@ -1455,6 +1473,221 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 </div>
               </div>
             </div>
+          
+          ) : isEquipmentDoc ? (
+            /* 2.5 Official Equipment Report (سجل المعدات والآليات الميدانية مع الشعار) */
+            <div style={{ marginBottom: '0.5rem', direction: 'rtl', width: '100%' }}>
+              {/* Official Libyan Agency Header */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '2.5px solid #000000',
+                paddingBottom: '0.5rem',
+                marginBottom: '0.75rem'
+              }}>
+                <div style={{ textAlign: 'right' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#000000' }}>دولة ليبيا</h4>
+                  <h3 style={{ margin: '0.1rem 0', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>وزارة المواصلات</h3>
+                  <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#1e3a8a' }}>جهاز تنفيذ مشروعات المواصلات</h2>
+                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.85rem', fontWeight: 800, color: '#475569' }}>مكتب جهاز الإشراف والمتابعة</p>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <img
+                    src={`${import.meta.env.BASE_URL}logo-agency.jpg`}
+                    alt="شعار جهاز تنفيذ مشروعات المواصلات"
+                    style={{
+                      width: '74px',
+                      height: '74px',
+                      objectFit: 'contain',
+                      borderRadius: '50%',
+                      border: '1.5px solid #000000',
+                      padding: '2px',
+                      display: 'inline-block'
+                    }}
+                  />
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e3a8a', marginTop: '0.2rem' }}>
+                    جهاز الإشراف المعتمد
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'left', direction: 'ltr', fontSize: '0.88rem', fontWeight: 800, color: '#000000' }}>
+                  <div><strong>Report No:</strong> {report.reportNumber || 'EQP-REP-2026'}</div>
+                  <div><strong>Date:</strong> {report.dateFormatted || (report.date ? report.date.split('T')[0] : '2026-10-29')}</div>
+                  <div><strong>Project:</strong> Obari - Ghat (360 km)</div>
+                </div>
+              </div>
+
+              {/* Cyan Header Title Banner */}
+              <div style={{
+                background: '#38bdf8',
+                color: '#000000',
+                textAlign: 'center',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '4px',
+                border: '2px solid #000000',
+                marginBottom: '0.75rem'
+              }}>
+                <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900 }}>
+                  كشف وسجل حصر المعدات والآليات الميدانية العاملة بالمشروع
+                </h1>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.9rem', fontWeight: 800 }}>
+                  مشروع صيانة وتطوير طريق أوباري - غات بطول 360 كم (المرحلة الأولى: 226.08 كم • المرحلة الثانية: 133.92 كم)
+                </p>
+              </div>
+
+              {/* Statistics Strip */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: '0.5rem',
+                marginBottom: '0.75rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ border: '1.5px solid #000000', background: '#f8fafc', padding: '0.4rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>إجمالي الأسطول</div>
+                  <strong style={{ fontSize: '1.15rem', color: '#1e3a8a' }}>{report.totalCount || (report.equipmentList || []).reduce((a, b) => a + (b.count || 1), 0)} آلية</strong>
+                </div>
+                <div style={{ border: '1.5px solid #000000', background: '#f0fdf4', padding: '0.4rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>العاملة والجاهزة</div>
+                  <strong style={{ fontSize: '1.15rem', color: '#16a34a' }}>{report.operationalCount || (report.equipmentList || []).reduce((a, b) => a + (b.operationalCount || 1), 0)} آلية</strong>
+                </div>
+                <div style={{ border: '1.5px solid #000000', background: '#fef2f2', padding: '0.4rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>في الصيانة</div>
+                  <strong style={{ fontSize: '1.15rem', color: '#dc2626' }}>{report.maintenanceCount || 0}</strong>
+                </div>
+                <div style={{ border: '1.5px solid #000000', background: '#eff6ff', padding: '0.4rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>المرحلة الأولى</div>
+                  <strong style={{ fontSize: '1.15rem', color: '#2563eb' }}>{report.phase1Count || (report.equipmentList || []).reduce((a, b) => a + (b.phase1Count || 0), 0)} آلية</strong>
+                </div>
+                <div style={{ border: '1.5px solid #000000', background: '#fffbeb', padding: '0.4rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>المرحلة الثانية</div>
+                  <strong style={{ fontSize: '1.15rem', color: '#d97706' }}>{report.phase2Count || (report.equipmentList || []).reduce((a, b) => a + (b.phase2Count || 0), 0)} آلية</strong>
+                </div>
+              </div>
+
+              {/* Equipment Table */}
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                textAlign: 'center',
+                fontSize: '0.88rem',
+                border: '2px solid #000000',
+                marginBottom: '0.85rem'
+              }}>
+                <thead>
+                  <tr style={{ background: '#ffc000', color: '#000000', fontWeight: 900 }}>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '38px' }}>م</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem 0.75rem', width: '28%', textAlign: 'right' }}>بيان واسم الآلية / المعدة</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '18%' }}>التصنيف الفني</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '9%' }}>الإجمالي</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '9%' }}>العاملة</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '8%' }}>صيانة</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '9%' }}>م. الأولى</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem', width: '9%' }}>م. الثانية</th>
+                    <th style={{ border: '1.5px solid #000000', padding: '0.45rem 0.75rem' }}>الحالة التشغيلية وملاحظات العمل</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(report.equipmentList || []).map((eq, idx) => (
+                    <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 900, background: '#fffbeb' }}>
+                        {idx + 1}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem 0.65rem', textAlign: 'right', fontWeight: 800 }}>
+                        {eq.name}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 700 }}>
+                        {eq.type || 'معدات الطريق'}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 900, color: '#1e3a8a' }}>
+                        {eq.count || 1}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 900, color: '#16a34a' }}>
+                        {eq.operationalCount || 1}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 900, color: eq.maintenanceCount > 0 ? '#dc2626' : '#64748b' }}>
+                        {eq.maintenanceCount || 0}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 800 }}>
+                        {eq.phase1Count || 0}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem', fontWeight: 800 }}>
+                        {eq.phase2Count || 0}
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.35rem 0.65rem', textAlign: 'right', fontSize: '0.82rem', fontWeight: 600 }}>
+                        {eq.notes || 'جاهزية تشغيلية مستقرة بموقع العمل'}
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Totals Row */}
+                  <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '2.5px solid #000000' }}>
+                    <td colSpan={3} style={{ border: '1.5px solid #000000', padding: '0.5rem', textAlign: 'center', fontSize: '0.95rem' }}>
+                      الإجمالي العام لأسطول المعدات والآليات
+                    </td>
+                    <td style={{ border: '1.5px solid #000000', padding: '0.5rem', fontSize: '1rem', color: '#1e3a8a' }}>
+                      {(report.equipmentList || []).reduce((a, b) => a + (b.count || 1), 0)}
+                    </td>
+                    <td style={{ border: '1.5px solid #000000', padding: '0.5rem', fontSize: '1rem', color: '#16a34a' }}>
+                      {(report.equipmentList || []).reduce((a, b) => a + (b.operationalCount || 1), 0)}
+                    </td>
+                    <td style={{ border: '1.5px solid #000000', padding: '0.5rem', fontSize: '1rem', color: '#dc2626' }}>
+                      {(report.equipmentList || []).reduce((a, b) => a + (b.maintenanceCount || 0), 0)}
+                    </td>
+                    <td style={{ border: '1.5px solid #000000', padding: '0.5rem', fontSize: '1rem' }}>
+                      {(report.equipmentList || []).reduce((a, b) => a + (b.phase1Count || 0), 0)}
+                    </td>
+                    <td style={{ border: '1.5px solid #000000', padding: '0.5rem', fontSize: '1rem' }}>
+                      {(report.equipmentList || []).reduce((a, b) => a + (b.phase2Count || 0), 0)}
+                    </td>
+                    <td style={{ border: '1.5px solid #000000', padding: '0.5rem', textAlign: 'center', color: '#16a34a' }}>
+                      نسبة الجاهزية التشغيلية: 100%
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* 4 Signatures Block matching Agency official format */}
+              <div className="signatures-block" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '0.75rem',
+                marginTop: '0.65rem',
+                textAlign: 'center',
+                borderTop: '2px dashed #000000',
+                paddingTop: '0.65rem'
+              }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>مسؤول المعدات والآليات</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
+                    <span style={{ borderBottom: '1.5px dotted #000000', paddingBottom: '2px' }}>{report.uploadedBy || 'مسؤول الحركة الميداني'}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>مهندس القطاع المشرف</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
+                    <span style={{ borderBottom: '1.5px dotted #000000', paddingBottom: '2px' }}>م. صلاح العربي / م. عيسى الطاهر</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>رئيس جهاز الإشراف والمتابعة</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
+                    <span style={{ borderBottom: '1.5px dotted #000000', paddingBottom: '2px' }}>م. عبدالسلام ابريكاو</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#1e3a8a' }}>اعتماد مدير المشروع</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 900, color: '#1e3a8a' }}>
+                    <span style={{ borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>م. عبدالرحمن الأنصاري</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           ) : isTwoPhaseDoc ? (
             <div style={{ marginBottom: '1.5rem', direction: 'rtl', width: '100%', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
               {/* Document Title Header matching the Photo */}

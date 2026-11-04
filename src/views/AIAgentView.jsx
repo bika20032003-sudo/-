@@ -737,3 +737,4 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
   );
 };
 export default AIAgentView;
+

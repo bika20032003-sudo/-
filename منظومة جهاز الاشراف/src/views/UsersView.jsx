@@ -1,3 +1,45 @@
+
+// System Sections Definition for Permission Control
+export const ALL_SYSTEM_SECTIONS = [
+  { id: 'dashboard', label: 'لوحة القيادة الموحدة', desc: 'مؤشرات الإنجاز التنفيذي العام والمخططات البيانية' },
+  { id: 'sector-dashboard', label: 'لوحة متابعة القطاع الميداني', desc: 'متابعة القطاع الفعلي والإنتاج والوقود الميداني' },
+  { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', desc: 'تفاصيل طبقات الرصف ومسافات المحطات الميدانية' },
+  { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', desc: 'الموقف المالي وجداول الكميات والأسعار المعتمدة' },
+  { id: 'create-report', label: 'إنشاء تقرير جديد', desc: 'إدخال التقارير اليومية ومحاضر الميدان' },
+  { id: 'targeted-works', label: 'الأعمال المستهدفة', desc: 'بيان الأعمال اليومية المستهدفة والآليات المطلوبة' },
+  { id: 'upload-reports', label: 'رفع ومعالجة التقارير', desc: 'استيراد التقارير وملفات الإكسل والوثائق' },
+  { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', desc: 'السجل العام للتقارير والطباعة المعتمدة' },
+  { id: 'analytics', label: 'مركز التحليلات والإحصائيات', desc: 'تقارير أسبوعية وشهرية وتحليلات الإنتاج' },
+  { id: 'fuel', label: 'إدارة الوقود', desc: 'وارد ومنصرف المحروقات والخزانات الميدانية' },
+  { id: 'equipment', label: 'سجل المعدات والآليات', desc: 'سجل حصر الآليات الميدانية والتقرير الرسمي' },
+  { id: 'messages', label: 'البريد والمراسلات الرسمية', desc: 'صندوق الوارد والبريد والإحالات الرسمية' },
+  { id: 'ai-agent', label: 'وكيل الذكاء الاصطناعي', desc: 'المساعد الذكي للتحليلات الهندسية والاستفسارات' },
+  { id: 'users', label: 'إدارة المستخدمين والصلاحيات', desc: 'إدارة حسابات الفريق وكلمات المرور والصلاحيات' }
+];
+
+export const getUserSectionPermissions = (username) => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+    return all[username] || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const saveUserSectionPermissions = (username, sections) => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+    all[username] = sections;
+    localStorage.setItem('system_user_section_permissions', JSON.stringify(all));
+    window.dispatchEvent(new CustomEvent('permissions-updated', { detail: { username, sections } }));
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 import React, { useState, useEffect } from 'react';
 import { 
   Search, X, ShieldCheck, UserPlus, Edit2, Trash2, Key, UserCheck, 
@@ -18,6 +60,9 @@ export const UsersView = ({ currentUser }) => {
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [targetUserForPermissions, setTargetUserForPermissions] = useState(null);
+  const [selectedUserSections, setSelectedUserSections] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   
   // Feedback messages
@@ -32,6 +77,53 @@ export const UsersView = ({ currentUser }) => {
     password: '',
     phone: ''
   });
+
+  
+  // Check if current user has Dev Privileges
+  const currentRole = (currentUser?.role || '').toLowerCase();
+  const currentUsername = (currentUser?.username || '').toLowerCase();
+  const isDevAccount = currentRole.includes('تطوير') || currentUsername === 'admin' || currentUsername === 'dev';
+
+  const handleOpenPermissionsModal = (user) => {
+    setTargetUserForPermissions(user);
+    const existing = getUserSectionPermissions(user.username);
+    if (existing && Array.isArray(existing)) {
+      setSelectedUserSections(existing);
+    } else {
+      // Role default presets
+      const uRole = (user.role || '').toLowerCase();
+      if (uRole.includes('مدير المشروع')) {
+        setSelectedUserSections(ALL_SYSTEM_SECTIONS.map(s => s.id));
+      } else if (uRole.includes('مشرف') || uRole.includes('المرحلة')) {
+        setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+      } else if (uRole.includes('جودة')) {
+        setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'analytics', 'messages']);
+      } else {
+        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+      }
+    }
+    setIsPermissionsModalOpen(true);
+  };
+
+  const handleToggleSection = (secId) => {
+    setSelectedUserSections(prev => 
+      prev.includes(secId) ? prev.filter(id => id !== secId) : [...prev, secId]
+    );
+  };
+
+  const handleApplyPermissions = () => {
+    if (!targetUserForPermissions) return;
+    saveUserSectionPermissions(targetUserForPermissions.username, selectedUserSections);
+    setIsPermissionsModalOpen(false);
+    setFeedbackMsg({ 
+      type: 'success', 
+      text: `تم حفظ وتطبيق صلاحيات الأقسام للمستخدم (${targetUserForPermissions.name}) بنجاح!` 
+    });
+  };
+
+  const handleSelectAllSections = () => {
+    setSelectedUserSections(ALL_SYSTEM_SECTIONS.map(s => s.id));
+  };
 
   const loadUsers = () => {
     setIsLoading(true);
@@ -1244,7 +1336,245 @@ export const UsersView = ({ currentUser }) => {
         </div>
       )}
 
-    </div>
+    
+      {/* Modal: التحكم في صلاحيات الأقسام للمستخدم (حساب التطوير) */}
+      {isPermissionsModalOpen && targetUserForPermissions && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '1rem',
+          direction: 'rtl'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '680px',
+            width: '100%',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            border: '1px solid #e2e8f0',
+            overflow: 'hidden'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
+              color: '#ffffff'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Shield size={20} />
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900 }}>
+                    التحكم في صلاحيات الأقسام المسموحة
+                  </h3>
+                </div>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#a7f3d0' }}>
+                  المستخدم: <strong>{targetUserForPermissions.name}</strong> ({targetUserForPermissions.role})
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsPermissionsModalOpen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body: Quick Presets & Sections Checkboxes */}
+            <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1 }}>
+              {/* Presets Toolbar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+                background: '#f8fafc',
+                padding: '0.75rem',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155' }}>
+                  قوالب سريعة للتحديد:
+                </span>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllSections}
+                    style={{
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      border: '1px solid #bfdbfe',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    تحديد كافة الأقسام
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages'])}
+                    style={{
+                      background: '#f0fdf4',
+                      color: '#16a34a',
+                      border: '1px solid #bbf7d0',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    صلاحيات مهندس قطاع
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'analytics', 'messages'])}
+                    style={{
+                      background: '#faf5ff',
+                      color: '#9333ea',
+                      border: '1px solid #e9d5ff',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    صلاحيات إدارة الجودة
+                  </button>
+                </div>
+              </div>
+
+              {/* Sections Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '0.75rem'
+              }}>
+                {ALL_SYSTEM_SECTIONS.map((sec) => {
+                  const isChecked = selectedUserSections.includes(sec.id);
+                  return (
+                    <div
+                      key={sec.id}
+                      onClick={() => handleToggleSection(sec.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.65rem',
+                        padding: '0.75rem 0.85rem',
+                        borderRadius: '10px',
+                        border: `1.5px solid ${isChecked ? '#059669' : '#e2e8f0'}`,
+                        background: isChecked ? '#f0fdf4' : '#ffffff',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {}} // handled by parent div
+                        style={{ marginTop: '0.2rem', accentColor: '#059669', cursor: 'pointer' }}
+                      />
+                      <div>
+                        <strong style={{ fontSize: '0.84rem', color: isChecked ? '#065f46' : '#0f172a', display: 'block' }}>
+                          {sec.label}
+                        </strong>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.3, display: 'block', marginTop: '0.15rem' }}>
+                          {sec.desc}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '1rem 1.5rem',
+              borderTop: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#f8fafc'
+            }}>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                الأقسام المحددة: {selectedUserSections.length} من {ALL_SYSTEM_SECTIONS.length}
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsPermissionsModalOpen(false)}
+                  style={{
+                    padding: '0.55rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#475569',
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyPermissions}
+                  style={{
+                    padding: '0.55rem 1.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
+                  }}
+                >
+                  حفظ وتطبيق الصلاحيات فوراً
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+</div>
   );
 };
 

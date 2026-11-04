@@ -1,3 +1,4 @@
+import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import React, { useState, useEffect } from 'react';
 import { 
   Truck, Plus, Minus, Search, RefreshCw, FileSpreadsheet, Printer, 
@@ -31,6 +32,7 @@ export const EquipmentView = ({ currentUser }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+  const [officialEquipmentReportForPrint, setOfficialEquipmentReportForPrint] = useState(null);
 
   // Form State for Add / Edit
   const [formData, setFormData] = useState({
@@ -46,6 +48,38 @@ export const EquipmentView = ({ currentUser }) => {
   });
 
   // Fetch or consolidate equipment
+  
+  const handleOpenOfficialEquipmentReport = () => {
+    const totalCount = equipmentList.reduce((acc, it) => acc + (it.count || 1), 0);
+    const operationalCount = equipmentList.reduce((acc, it) => acc + (it.operationalCount || 0), 0);
+    const maintenanceCount = equipmentList.reduce((acc, it) => acc + (it.maintenanceCount || 0), 0);
+    const phase1Count = equipmentList.reduce((acc, it) => acc + (it.phase1Count || 0), 0);
+    const phase2Count = equipmentList.reduce((acc, it) => acc + (it.phase2Count || 0), 0);
+
+    const reportObj = {
+      isEquipmentReport: true,
+      reportType: 'سجل المعدات والآليات الميدانية',
+      reportCategory: 'equipment',
+      reportTitle: 'كشف وسجل حصر المعدات والآليات الميدانية العاملة بالمشروع',
+      reportNumber: `EQP-REP-${Date.now().toString().slice(-4)}`,
+      date: new Date().toISOString(),
+      dateFormatted: new Date().toISOString().split('T')[0],
+      dayName: 'السبت',
+      totalCount,
+      operationalCount,
+      maintenanceCount,
+      phase1Count,
+      phase2Count,
+      readinessRate: '100%',
+      equipmentList: equipmentList,
+      uploadedBy: 'مسؤول المعدات والآليات',
+      approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
+      sectorDirector: 'م. صلاح العربي / م. عيسى الطاهر',
+      headOfSupervision: 'م. عبدالسلام ابريكاو'
+    };
+    setOfficialEquipmentReportForPrint(reportObj);
+  };
+
   const fetchEquipment = async () => {
     setIsLoading(true);
     try {
@@ -969,7 +1003,16 @@ export const EquipmentView = ({ currentUser }) => {
         currentUser={currentUser}
       />
 
-    </div>
+    
+      {/* Official Equipment Report Printable Modal */}
+      {officialEquipmentReportForPrint && (
+        <OfficialPrintModal
+          report={officialEquipmentReportForPrint}
+          onClose={() => setOfficialEquipmentReportForPrint(null)}
+        />
+      )}
+
+</div>
   );
 };
 

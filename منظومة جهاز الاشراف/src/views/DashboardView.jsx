@@ -30,6 +30,15 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         urgentIssues: [],
         tomorrowPlan: null,
         // Road Project Progress Metrics (360 KM Project)
+        executiveProgress: {
+            overallPercentage: 81.62,
+            contractValue: 897665675.03,
+            totalExecutedValue: 732648221.31,
+            basicExecutedValue: 638329685.46,
+            additionalExecutedValue: 94318535.86,
+            remainingValue: 165017453.72,
+            basicPercentage: 71.11
+        },
         roadProgress: {
             totalRoadLengthKm: 360.00,
             overallPercentage: 65.9,
@@ -66,7 +75,38 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                 const aggP = roadRes?.kpis?.aggregateBase?.percentage !== undefined ? parseFloat(roadRes.kpis.aggregateBase.percentage) : 65.7;
                 const mcoP = roadRes?.kpis?.mco?.percentage !== undefined ? parseFloat(roadRes.kpis.mco.percentage) : 65.7;
                 
-                const overallVal = roadRes?.overallPercentage !== undefined ? parseFloat(roadRes.overallPercentage) : parseFloat(((fdrP + asphP + aggP + mcoP) / 4).toFixed(1));
+                // Certified Executive Progress calculations (الموقف التنفيذي المعتمد: 81.62%)
+                let execOverallP = 81.62;
+                let execContractVal = 897665675.03;
+                let execTotalExecuted = 732648221.31;
+                let execBasicExecuted = 638329685.46;
+                let execAdditionalExecuted = 94318535.86;
+                let execRemainingVal = 165017453.72;
+                let execBasicP = 71.11;
+
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const rawExec = localStorage.getItem('executive_progress_data');
+                        if (rawExec) {
+                            const parsedExec = JSON.parse(rawExec);
+                            const cVal = Number(parsedExec.contractValue) || 897665675.03;
+                            const bSum = (parsedExec.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
+                            const aSum = (parsedExec.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
+                            const totalExec = bSum + aSum;
+                            if (cVal > 0) {
+                                execOverallP = parseFloat(((totalExec / cVal) * 100).toFixed(2));
+                                execBasicP = parseFloat(((bSum / cVal) * 100).toFixed(2));
+                                execContractVal = cVal;
+                                execTotalExecuted = totalExec;
+                                execBasicExecuted = bSum;
+                                execAdditionalExecuted = aSum;
+                                execRemainingVal = Math.max(0, cVal - totalExec);
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                const overallVal = execOverallP;
                 const secAVal = roadRes?.sectorAPercentage !== undefined ? parseFloat(roadRes.sectorAPercentage) : 100.0;
                 const secBVal = roadRes?.sectorBPercentage !== undefined ? parseFloat(roadRes.sectorBPercentage) : 8.4;
                 const execKm = roadRes?.totalExecutedKm !== undefined ? parseFloat(roadRes.totalExecutedKm) : 237.39;
@@ -180,10 +220,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             </div>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                مشروع صيانة طريق أوباري - غات (نسبة الإنجاز التنفيذي العام)
+                مشروع صيانة وتطوير طريق أوباري - غات (نسبة الإنجاز من الموقف التنفيذي)
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0.2rem 0 0' }}>
-                المشروع العام للمرحلتين بطول إجمالي: <strong>360.00 كم</strong> (المرحلة الأولى: 226.08 كم • المرحلة الثانية: 133.92 كم) • معدل الإنجاز اليومي: <strong>+{metrics.roadProgress.totalTodayMeters.toLocaleString()} م.ط</strong>
+                نسبة الإنجاز المالي العام المعتمدة: <strong>%{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</strong> • إجمالي المنفذ: <strong>{(metrics.executiveProgress?.totalExecutedValue || 732648221.31).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</strong> من <strong>897,665,675.03 د.ل</strong> • المسار المنجز: <strong>{(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</strong> من <strong>360.00 كم</strong>
               </p>
             </div>
           </div>
@@ -208,7 +248,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             boxShadow: '0 8px 20px rgba(30, 58, 138, 0.2)'
         }}>
             <div>
-              <span style={{ fontSize: '0.85rem', color: '#93c5fd', fontWeight: 700 }}>نسبة الإنجاز الإجمالي للمشروع</span>
+              <span style={{ fontSize: '0.85rem', color: '#93c5fd', fontWeight: 700 }}>نسبة الإنجاز المالي العام (الموقف التنفيذي)</span>
               <div style={{ fontSize: '2.5rem', fontWeight: 900, lineHeight: 1.1, margin: '0.35rem 0' }}>
                 {metrics.roadProgress.overallPercentage}%
               </div>
@@ -599,7 +639,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>م.ط</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>نسبة الإنجاز العام {metrics.roadProgress.overallPercentage}%</span>
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>نسبة الإنجاز المالي العام (الموقف التنفيذي) %{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</span>
           </div>
         </div>
 

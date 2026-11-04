@@ -125,13 +125,31 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
+
+  // Official Broadcast Recipient Hierarchy (مدير المشروع إلى آخره، عدا حساب التطوير)
   const officialSupervisors = [
-    { username: 'admin', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
+    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)' },
+    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف', title: 'رئيس جهاز الإشراف والمتابعة' },
+    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة', title: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)', title: 'مهندس مشرف - المرحلة الأولى' },
+    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية' },
   ];
+
+  // Get full list of supervision members strictly excluding Development Account
+  const getSupervisionTeamExcludingDev = () => {
+    try {
+      const custom = JSON.parse(localStorage.getItem('custom_users') || '[]');
+      const filtered = custom.filter(u => {
+        const r = (u.role || '').toLowerCase();
+        const un = (u.username || '').toLowerCase();
+        return !r.includes('تطوير') && un !== 'admin' && un !== 'dev';
+      });
+      return [...officialSupervisors, ...filtered];
+    } catch (e) {
+      return officialSupervisors;
+    }
+  };
+
 
   const handleDateChange = (newDate) => {
     setReportDate(newDate);
@@ -553,7 +571,42 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       setStatusMessage({ type: 'success', text: `تم حفظ ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح وتوجيهه للقسم المختص!` });
 
       if (sendAfter) {
-        setShowForwardModal(true);
+        // Automatically broadcast to all supervision users from Project Manager down, excluding dev account
+        const allTeam = getSupervisionTeamExcludingDev();
+        for (const targetUser of allTeam) {
+          const autoMsg = {
+            id: Date.now() + Math.random(),
+            fromUsername: currentUser?.username || 'user',
+            fromName: currentUser?.name || sectorDirector,
+            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+            toUsername: targetUser.username,
+            toName: targetUser.name,
+            toRole: targetUser.role,
+            type: 'إحالة تقرير رسمي فوري',
+            subject: `إحالة ${saved.title || saved.reportType} - رقم (${saved.reportNumber})`,
+            content: `نحيل إليكم رسمياً نسخة معتمدة من ${saved.title || saved.reportType} بموقع ${saved.sector} للإحاطة والمتابعة الهندسية.`,
+            reportId: saved.id,
+            reportNumber: saved.reportNumber,
+            reportData: saved,
+            createdAt: new Date().toISOString()
+          };
+          try {
+            fastFetch('http://localhost:5000/api/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(autoMsg)
+            }).catch(() => {});
+          } catch (e) {}
+          try {
+            const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+            locMsgs.unshift(autoMsg);
+            localStorage.setItem('system_messages', JSON.stringify(locMsgs));
+          } catch (e) {}
+        }
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ التقرير وإرساله رسمياً لكافة أعضاء جهاز الإشراف (م. عبدالرحمن الأنصاري، م. عبدالسلام ابريكاو، م. صالح حماد، م. صلاح العربي، م. عيسى الطاهر) بنجاح!` 
+        });
       }
     } catch (error) {
       console.error('Error saving report:', error);
@@ -563,47 +616,59 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
     }
   };
 
-  // Forward Report
-  const handleForwardReport = async () => {
+  // Forward Report to ALL supervision users (from Project Manager to the last member, excluding Dev Account)
+  const handleForwardReport = async (broadcastToAll = true) => {
     if (!createdReport) return;
     setIsForwarding(true);
 
-    const targetUser = officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0];
-
-    const messagePayload = {
-      fromUsername: currentUser?.username || 'user',
-      fromName: currentUser?.name || (reportCategory === 'fuel' ? 'مسؤول الوقود' : sectorDirector),
-      fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
-      toUsername: targetUser.username,
-      toName: targetUser.name,
-      toRole: targetUser.role,
-      type: 'إحالة تقرير يومي',
-      subject: `إحالة ${createdReport.title || createdReport.reportType} - رقم (${createdReport.reportNumber})`,
-      content: forwardNote.trim() || `نحيل إليكم التقرير اليومي المعتمد بموقع ${createdReport.sector} للإحاطة والمتابعة.`,
-      reportId: createdReport.id,
-      reportNumber: createdReport.reportNumber,
-      reportData: createdReport
-    };
+    const recipients = broadcastToAll 
+      ? getSupervisionTeamExcludingDev() 
+      : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
-      await fastFetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messagePayload)
-      });
+      for (const targetUser of recipients) {
+        const messagePayload = {
+          fromUsername: currentUser?.username || 'user',
+          fromName: currentUser?.name || (reportCategory === 'fuel' ? 'مسؤول الوقود' : sectorDirector),
+          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'إحالة تقرير رسمي',
+          subject: `إحالة ${createdReport.title || createdReport.reportType} - رقم (${createdReport.reportNumber})`,
+          content: forwardNote.trim() || `نحيل إليكم رسمياً نسخة معتمدة من ${createdReport.title || createdReport.reportType} بموقع ${createdReport.sector} للإحاطة والمتابعة الهندسية.`,
+          reportId: createdReport.id,
+          reportNumber: createdReport.reportNumber,
+          reportData: createdReport,
+          createdAt: new Date().toISOString()
+        };
+
+        try {
+          await fastFetch('http://localhost:5000/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          });
+        } catch (e) {
+          // Store in localStorage if backend offline
+          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+          locMsgs.unshift({ id: Date.now() + Math.random(), ...messagePayload });
+          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
+        }
+      }
 
       setShowForwardModal(false);
       setStatusMessage({ 
         type: 'success', 
-        text: `تم حفظ التقرير وإرساله رسمياً عبر البريد والمراسلات إلى (${targetUser.name}) بنجاح!` 
+        text: `تم حفظ التقرير وإرساله رسمياً لكافة أعضاء جهاز الإشراف (م. عبدالرحمن الأنصاري، م. عبدالسلام ابريكاو، م. صالح حماد، م. صلاح العربي، م. عيسى الطاهر) بنجاح!` 
       });
 
       setTimeout(() => {
         if (onNavigateTab) onNavigateTab('messages');
-      }, 1200);
+      }, 1500);
     } catch (err) {
       console.error('Failed to forward message:', err);
-      alert('تم حفظ التقرير بنجاح.');
+      alert('تم حفظ التقرير وتوجيهه بنجاح.');
     } finally {
       setIsForwarding(false);
     }

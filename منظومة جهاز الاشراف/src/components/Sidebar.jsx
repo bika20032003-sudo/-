@@ -128,6 +128,32 @@ export const Sidebar = ({
         };
     };
 
+    
+    const [userAllowedSections, setUserAllowedSections] = useState(() => {
+      if (typeof window === 'undefined') return null;
+      try {
+        const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+        return all[currentUser?.username] || null;
+      } catch (e) {
+        return null;
+      }
+    });
+
+    useEffect(() => {
+      const handlePermUpdate = () => {
+        try {
+          const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+          setUserAllowedSections(all[currentUser?.username] || null);
+        } catch (e) {}
+      };
+      window.addEventListener('permissions-updated', handlePermUpdate);
+      window.addEventListener('storage', handlePermUpdate);
+      return () => {
+        window.removeEventListener('permissions-updated', handlePermUpdate);
+        window.removeEventListener('storage', handlePermUpdate);
+      };
+    }, [currentUser?.username]);
+
     const roleDisplay = getRoleDisplay();
 
     // Categorized navigation groups: comprehensive access to all sections for all engineers

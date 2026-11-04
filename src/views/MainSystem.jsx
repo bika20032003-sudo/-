@@ -62,6 +62,17 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
 
     const handleTabChange = (tabId) => {
       setIsMobileSidebarOpen(false);
+      const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
+      if (!isDev && typeof window !== 'undefined') {
+        try {
+          const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+          const userPerms = all[currentUser?.username];
+          if (Array.isArray(userPerms) && userPerms.length > 0 && !userPerms.includes(tabId)) {
+            console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
+            return;
+          }
+        } catch (e) {}
+      }
       setActiveTab(tabId);
     };
 

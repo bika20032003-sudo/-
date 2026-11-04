@@ -778,3 +778,4 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   );
 };
 export default AIAgentWidget;
+
