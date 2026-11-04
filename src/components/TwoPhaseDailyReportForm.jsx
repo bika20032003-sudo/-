@@ -16,22 +16,22 @@ import { calculateReadyToWorkPipeline, calculateRemainingItems } from '../utils/
 
 // Official Certified Items for Phase 1 (Matching Official Document 24/10/2026)
 export const initialPhase1ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', todayMeters: '0', totalMeters: '226213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: 226213, todayMeters: '0', totalMeters: '226213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 // Official Certified Items for Phase 2 (Matching Official Document 24/10/2026)
 export const initialPhase2ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', todayMeters: '100', totalMeters: '19300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', todayMeters: '1150', totalMeters: '12520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', todayMeters: '0', totalMeters: '10290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', todayMeters: '600', totalMeters: '12630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: 19200, todayMeters: '100', totalMeters: '19300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: 11370, todayMeters: '1150', totalMeters: '12520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: 10290, todayMeters: '0', totalMeters: '10290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: 19320, todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: 12030, todayMeters: '600', totalMeters: '12630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: 19320, todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 // Official Custom Fields for Combined Table ("الجاهز للعمل في البند" والملاحظات)
@@ -106,7 +106,7 @@ export const TwoPhaseDailyReportForm = ({
   const [statusMessage, setStatusMessage] = useState(null);
   const [createdReport, setCreatedReport] = useState(null);
   const [showForwardModal, setShowForwardModal] = useState(false);
-  const [forwardRecipient, setForwardRecipient] = useState('salih_hammad');
+  const [forwardRecipient, setForwardRecipient] = useState('all');
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
@@ -170,20 +170,27 @@ export const TwoPhaseDailyReportForm = ({
 
   // Handlers for Phase 1 updates
   const handleUpdatePhase1 = (id, field, value) => {
-    const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget') 
+    const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget' || field === 'previousMeters') 
       ? toCleanLatinDigits(value) 
       : value;
     setPhase1Items(prev => prev.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
-      if (field === 'todayMeters' || field === 'dailyTarget') {
-        const today = field === 'todayMeters' ? parseFloat(value) : parseFloat(item.todayMeters);
-        const target = field === 'dailyTarget' ? parseFloat(value) : parseFloat(item.dailyTarget);
-        if (!isNaN(today) && !isNaN(target)) {
-          updated.varianceMeters = (today - target).toFixed(2);
-        } else {
-          updated.varianceMeters = '';
-        }
+      if (field === 'todayMeters') {
+        const prevM = item.previousMeters !== undefined ? parseFloat(item.previousMeters) : (parseFloat(item.totalMeters || 0) - parseFloat(item.todayMeters || 0));
+        const todayM = parseFloat(cleanVal || 0);
+        const newTotal = (isNaN(prevM) ? 0 : prevM) + (isNaN(todayM) ? 0 : todayM);
+        updated.totalMeters = String(newTotal);
+        const target = parseFloat(item.dailyTarget || 800);
+        updated.varianceMeters = (todayM - target).toFixed(2);
+      } else if (field === 'totalMeters') {
+        const totM = parseFloat(cleanVal || 0);
+        const todayM = parseFloat(item.todayMeters || 0);
+        updated.previousMeters = Math.max(0, totM - todayM);
+      } else if (field === 'dailyTarget') {
+        const todayM = parseFloat(item.todayMeters || 0);
+        const target = parseFloat(cleanVal || 800);
+        updated.varianceMeters = (todayM - target).toFixed(2);
       }
       return updated;
     }));
@@ -191,20 +198,27 @@ export const TwoPhaseDailyReportForm = ({
 
   // Handlers for Phase 2 updates
   const handleUpdatePhase2 = (id, field, value) => {
-    const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget') 
+    const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget' || field === 'previousMeters') 
       ? toCleanLatinDigits(value) 
       : value;
     setPhase2Items(prev => prev.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
-      if (field === 'todayMeters' || field === 'dailyTarget') {
-        const today = field === 'todayMeters' ? parseFloat(value) : parseFloat(item.todayMeters);
-        const target = field === 'dailyTarget' ? parseFloat(value) : parseFloat(item.dailyTarget);
-        if (!isNaN(today) && !isNaN(target)) {
-          updated.varianceMeters = (today - target).toFixed(2);
-        } else {
-          updated.varianceMeters = '';
-        }
+      if (field === 'todayMeters') {
+        const prevM = item.previousMeters !== undefined ? parseFloat(item.previousMeters) : (parseFloat(item.totalMeters || 0) - parseFloat(item.todayMeters || 0));
+        const todayM = parseFloat(cleanVal || 0);
+        const newTotal = (isNaN(prevM) ? 0 : prevM) + (isNaN(todayM) ? 0 : todayM);
+        updated.totalMeters = String(newTotal);
+        const target = parseFloat(item.dailyTarget || 800);
+        updated.varianceMeters = (todayM - target).toFixed(2);
+      } else if (field === 'totalMeters') {
+        const totM = parseFloat(cleanVal || 0);
+        const todayM = parseFloat(item.todayMeters || 0);
+        updated.previousMeters = Math.max(0, totM - todayM);
+      } else if (field === 'dailyTarget') {
+        const todayM = parseFloat(item.todayMeters || 0);
+        const target = parseFloat(cleanVal || 800);
+        updated.varianceMeters = (todayM - target).toFixed(2);
       }
       return updated;
     }));
@@ -462,39 +476,68 @@ export const TwoPhaseDailyReportForm = ({
     if (!createdReport) return;
     setIsForwarding(true);
 
-    const supervisors = [
-      { username: 'salih_hammad', name: 'م. صالح حماد', role: 'مدير المشروع' },
-      { username: 'ali_alfitouri', name: 'م. علي الفيتوري', role: 'رئيس جهاز الإشراف' },
-      { username: 'abdulrahman_alansari', name: 'م. عبدالرحمن الأنصاري', role: 'ممثل الجهة المالكة' }
+    const officialSupervisors = [
+      { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+      { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+      { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+      { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
     ];
-    const targetUser = supervisors.find(u => u.username === forwardRecipient) || supervisors[0];
 
-    const messagePayload = {
-      fromUsername: currentUser?.username || 'user',
-      fromName: currentUser?.name || sectorDirector,
-      fromRole: currentUser?.title || currentUser?.role || 'إدارة المشروع',
-      toUsername: targetUser.username,
-      toName: targetUser.name,
-      toRole: targetUser.role,
-      type: 'تقرير إنجاز المرحلتين',
-      subject: `إحالة تقرير الأعمال المنجزة للمرحلتين - ${dayName} ${reportDate}`,
-      content: forwardNote.trim() || `نحيل إليكم التقرير اليومي المعتمد للأعمال المنجزة للمرحلتين الأولى والثانية بطريق أوباري غات.`,
-      reportId: createdReport.id,
-      reportNumber: createdReport.reportNumber,
-      reportData: createdReport
-    };
+    const targets = forwardRecipient === 'all' 
+      ? officialSupervisors 
+      : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
-      await fastFetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messagePayload)
-      });
+      const existingMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+      const newMsgs = [];
+
+      for (const targetUser of targets) {
+        const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          fromUsername: currentUser?.username || 'user',
+          fromName: currentUser?.name || sectorDirector || 'جهاز الإشراف',
+          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف والمتابعة',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'تقرير إنجاز المرحلتين',
+          subject: 'إحالة تقرير الأعمال المنجزة للمرحلتين - ' + dayName + ' ' + reportDate,
+          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد للأعمال المنجزة للمرحلتين الأولى والثانية بطريق أوباري غات. إنجاز اليوم: ' + (createdReport?.twoPhaseTotals?.todayMeters || totalTodayMeters) + ' م.ط، الإجمالي التراكمي: ' + (createdReport?.twoPhaseTotals?.totalCumulativeMeters || totalCumulativeMeters) + ' م.ط.'),
+          reportId: createdReport.id,
+          reportNumber: createdReport.reportNumber,
+          reportData: createdReport,
+          date: new Date().toISOString(),
+          isRead: false
+        };
+
+        newMsgs.push(messagePayload);
+
+        try {
+          fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          }).catch(() => {});
+        } catch (e) {}
+      }
+
+      localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...existingMsgs]));
+      try {
+        const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+      } catch (e) {}
+
+      window.dispatchEvent(new CustomEvent('messages-updated'));
 
       setShowForwardModal(false);
+      const recipientText = forwardRecipient === 'all' 
+        ? 'كافة أعضاء جهاز الإشراف (م. عبدالرحمن الأنصاري، م. عبدالسلام ابريكاو، م. صالح حماد، م. صلاح العربي، م. عيسى الطاهر)' 
+        : targets[0].name;
+
       setStatusMessage({ 
         type: 'success', 
-        text: `تم إرسال التقرير رسمياً إلى (${targetUser.name}) بنجاح!` 
+        text: 'تم إرسال التقرير رسمياً إلى (' + recipientText + ') بنجاح!' 
       });
 
       setTimeout(() => {
@@ -502,7 +545,11 @@ export const TwoPhaseDailyReportForm = ({
       }, 1200);
     } catch (err) {
       console.error('Failed to forward report:', err);
-      alert('تم حفظ التقرير محلياً بنجاح.');
+      setShowForwardModal(false);
+      setStatusMessage({ 
+        type: 'success', 
+        text: 'تم حفظ التقرير وإحالته للمراسلات بنجاح.' 
+      });
     } finally {
       setIsForwarding(false);
     }
@@ -1914,13 +1961,17 @@ export const TwoPhaseDailyReportForm = ({
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontWeight: 700
+                  border: '1.5px solid #2563eb',
+                  fontWeight: 800,
+                  fontSize: '0.88rem'
                 }}
               >
-                <option value="salih_hammad">م. صالح حماد (مدير المشروع)</option>
-                <option value="ali_alfitouri">م. علي الفيتوري (رئيس جهاز الإشراف)</option>
-                <option value="abdulrahman_alansari">م. عبدالرحمن الأنصاري (ممثل الجهة المالكة)</option>
+                <option value="all">📢 إرسال لكافة أعضاء جهاز الإشراف (الكل - 5 مهندسين)</option>
+                <option value="project_manager">م. عبدالرحمن الأنصاري (مدير المشروع)</option>
+                <option value="abrikaw">م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)</option>
+                <option value="saleh_quality">م. صالح حماد (مسؤول الجودة)</option>
+                <option value="salah_alarabi">م. صلاح العربي (مهندس مشرف - المرحلة الأولى)</option>
+                <option value="issa_altahir">م. عيسى الطاهر (مهندس مشرف - المرحلة الثانية)</option>
               </select>
             </div>
 

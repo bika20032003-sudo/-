@@ -445,12 +445,27 @@ export const EquipmentView = ({ currentUser }) => {
           </button>
 
           <button 
-            className="secondary-action-btn"
-            onClick={() => window.print()}
-            style={{ height: '38px', padding: '0 1rem', fontSize: '0.85rem' }}
+            type="button"
+            onClick={handleOpenOfficialEquipmentReport}
+            style={{ 
+              height: '38px', 
+              padding: '0 1.25rem', 
+              fontSize: '0.85rem',
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+            }}
+            title="فتح وعرض التقرير الرسمي المعتمد لحصر المعدات والآليات مع شعار الجهاز والترويسة الحكومية"
           >
             <Printer size={16} />
-            <span>طباعة الكشف</span>
+            <span>📄 تقرير حصر المعدات الرسمي (بالشعار)</span>
           </button>
         </div>
       </div>

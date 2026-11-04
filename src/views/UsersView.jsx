@@ -930,6 +930,30 @@ export const UsersView = ({ currentUser }) => {
                       {/* 7. الإجراءات */}
                       <td style={{ padding: '0.85rem 1.25rem', textAlign: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                          {isDevAccount && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPermissionsModal(user)}
+                              style={{
+                                background: '#f5f3ff',
+                                color: '#7c3aed',
+                                border: '1px solid #ddd6fe',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                transition: 'all 0.15s ease'
+                              }}
+                              title="التحكم في الأقسام والصلاحيات المسموحة لهذا المستخدم"
+                            >
+                              <ShieldCheck size={13} />
+                              <span>صلاحيات الأقسام</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => openEdit(user)}

@@ -41,7 +41,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         },
         roadProgress: {
             totalRoadLengthKm: 360.00,
-            overallPercentage: 65.9,
+            overallPercentage: 81.62,
             sectorAPercentage: 100.0,
             sectorBPercentage: 8.4,
             totalTodayMeters: 3820,
@@ -152,7 +152,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     tomorrowPlan: summaryRes.tomorrowPlan || null,
                     roadProgress: {
                         totalRoadLengthKm: 360.00,
-                        overallPercentage: overallVal || 65.9,
+                        overallPercentage: overallVal || 81.62,
                         sectorAPercentage: secAVal || 100.0,
                         sectorBPercentage: secBVal || 8.4,
                         totalExecutedKm: execKm,
@@ -250,7 +250,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <div>
               <span style={{ fontSize: '0.85rem', color: '#93c5fd', fontWeight: 700 }}>نسبة الإنجاز المالي العام (الموقف التنفيذي)</span>
               <div style={{ fontSize: '2.5rem', fontWeight: 900, lineHeight: 1.1, margin: '0.35rem 0' }}>
-                {metrics.roadProgress.overallPercentage}%
+                {metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage || 81.62}%
               </div>
               <span style={{ fontSize: '0.78rem', color: '#bfdbfe' }}>مكتمل من إجمالي 360.00 كم</span>
             </div>
@@ -682,26 +682,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         </div>
 
         
-        {/* Card: عداد إدارة ومتابعة المهام والمعدات الميدانية */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #059669' }} title="فتح إدارة ومتابعة المهام والمعدات الميدانية">
-          <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#065f46', fontWeight: 800 }}>عداد إدارة ومتابعة المهام</span>
-            <div className="kpi-icon-circle green" style={{ background: '#d1fae5', color: '#059669' }}>
-              <Factory size={20} color="#059669"/>
-            </div>
-          </div>
-          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#047857' }}>
-              {(metrics.totalProduction || metrics.totalSharshoor || 1450).toLocaleString('en-US')}
-            </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: 700 }}>مهمة / إنتاج طن</span>
-          </div>
-          <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#059669' }}>متابعة إنجاز المهام التشغيلية وجاهزية الكسارات والمعدات</span>
-          </div>
-        </div>
-
-        {/* Card 4: أسطول المعدات */}
+        {/* Card 3: أسطول المعدات والآليات الميدانية */}
         <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #7c3aed' }} title="فتح قسم المعدات">
           <div className="kpi-card-header">
             <span className="kpi-title" style={{ fontSize: '0.88rem' }}>أسطول المعدات والآليات</span>

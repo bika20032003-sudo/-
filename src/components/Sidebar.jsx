@@ -274,14 +274,24 @@ export const Sidebar = ({
 
         {/* Categorized Nav Groups */}
         <nav className="sidebar-app-nav">
-          {menuGroups.map((group, gIdx) => (
+          {menuGroups.map((group, gIdx) => {
+            const visibleItems = group.items.filter(item => {
+              if (isDev) return true;
+              if (Array.isArray(userAllowedSections) && userAllowedSections.length > 0) {
+                return userAllowedSections.includes(item.id);
+              }
+              return true;
+            });
+            if (visibleItems.length === 0) return null;
+
+            return (
             <div key={gIdx} className="sidebar-nav-group">
               <div className="sidebar-group-header">
                 <span>{group.title}</span>
               </div>
 
               <div className="sidebar-group-items">
-                {group.items.map((item) => {
+                {visibleItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
                   const isAction = item.isAction;
@@ -313,7 +323,8 @@ export const Sidebar = ({
                 })}
               </div>
             </div>
-          ))}
+          );
+          })}
         </nav>
 
         {/* Footer Section with Logout Button */}
