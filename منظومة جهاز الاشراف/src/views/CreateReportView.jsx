@@ -1988,71 +1988,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
             </table>
           </div>
 
-          {/* ملخص كميات البنود المنفذة (حساب كل بند على حِدَة) */}
-          {roadItemSummaries.length > 0 && (
-            <div style={{
-              marginTop: '1rem',
-              border: '2px solid #000000',
-              borderRadius: '6px',
-              padding: '0.75rem 1rem',
-              background: '#f8fafc'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '2px solid #000000',
-                paddingBottom: '0.45rem',
-                marginBottom: '0.65rem'
-              }}>
-                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: '#000000' }}>
-                  📊 ملخص كميات الأعمال المنجزة (حساب كل بند على حِدَة):
-                </span>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
-                  إجمالي {roadItemSummaries.length} بنود تشغيلية مستقلة
-                </span>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '0.45rem'
-              }}>
-                {roadItemSummaries.map((it, idx) => (
-                  <div key={idx} style={{
-                    background: '#ffffff',
-                    border: '1.5px solid #000000',
-                    borderRadius: '4px',
-                    padding: '0.45rem 0.65rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '0.82rem'
-                  }}>
-                    <div style={{ fontWeight: 800, color: '#000000' }}>
-                      <span>{it.name}</span>
-                      {it.count > 1 && (
-                        <span style={{ color: '#0284c7', fontSize: '0.72rem', marginRight: '4px' }}>
-                          ({it.count} قطاعات)
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
-                      {it.totalLength > 0 && <span><strong>{it.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
-                      {it.totalArea > 0 && (
-                        <span style={{ marginRight: '6px', color: '#047857' }}>
-                          {' | '}<strong>{it.totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م²
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-
-          {/* Add Row Button */}
+{/* Add Row Button */}
           <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'flex-start' }} className="no-print">
             <button
               type="button"
@@ -2297,6 +2233,69 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
               <span>+ إضافة بند عمل جديد إلى الجدول</span>
             </button>
           </div>
+
+          {/* ملخص كميات البنود المنفذة (حساب كل بند على حِدَة) */}
+          {Array.isArray(roadItemSummaries) && roadItemSummaries.length > 0 && (
+            <div style={{
+              marginTop: '1rem',
+              border: '2px solid #000000',
+              borderRadius: '6px',
+              padding: '0.75rem 1rem',
+              background: '#f8fafc'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '2px solid #000000',
+                paddingBottom: '0.45rem',
+                marginBottom: '0.65rem'
+              }}>
+                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: '#000000' }}>
+                  📊 ملخص كميات الأعمال المنجزة (حساب كل بند على حِدَة):
+                </span>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
+                  إجمالي {roadItemSummaries.length} بنود تشغيلية مستقلة
+                </span>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: '0.45rem'
+              }}>
+                {roadItemSummaries.map((it, idx) => (
+                  <div key={idx} style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #000000',
+                    borderRadius: '4px',
+                    padding: '0.45rem 0.65rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ fontWeight: 800, color: '#000000' }}>
+                      <span>{it.name}</span>
+                      {it.count > 1 && (
+                        <span style={{ color: '#0284c7', fontSize: '0.72rem', marginRight: '4px' }}>
+                          ({it.count} قطاعات)
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
+                      {it.totalLength > 0 && <span><strong>{it.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
+                      {it.totalArea > 0 && (
+                        <span style={{ marginRight: '6px', color: '#047857' }}>
+                          {' | '}<strong>{it.totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م²
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Signatures Footer */}
           <div style={{

@@ -1332,7 +1332,7 @@ export const RoadDailyReportForm = ({
         </div>
 
         {/* ملخص كميات البنود المنفذة (حساب وتجميع كل بند على حِدَة) */}
-        {calculatedTotals.itemSummaries.length > 0 && (
+        {Array.isArray(calculatedTotals?.itemSummaries) && calculatedTotals.itemSummaries.length > 0 && (
           <div style={{
             marginTop: '1.25rem',
             border: '2px solid #000000',
@@ -1353,7 +1353,7 @@ export const RoadDailyReportForm = ({
                 📊 ملخص كميات الأعمال المنجزة (حساب وتجميع كل بند على حِدَة):
               </span>
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>
-                إجمالي {calculatedTotals.itemSummaries.length} بنود تشغيلية مستقلة
+                إجمالي {(calculatedTotals?.itemSummaries || []).length} بنود تشغيلية مستقلة
               </span>
             </div>
 
@@ -1362,7 +1362,7 @@ export const RoadDailyReportForm = ({
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
               gap: '0.5rem'
             }}>
-              {calculatedTotals.itemSummaries.map((it, idx) => (
+              {(calculatedTotals?.itemSummaries || []).map((it, idx) => (
                 <div key={idx} style={{
                   background: '#ffffff',
                   border: '1.5px solid #000000',
