@@ -66,7 +66,10 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
       if (!isDev && typeof window !== 'undefined') {
         try {
           const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
-          const userPerms = all[currentUser?.username];
+          const u = currentUser?.username;
+          const lowU = (u || '').toLowerCase();
+          const n = currentUser?.name;
+          const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
           if (Array.isArray(userPerms) && userPerms.length > 0 && !userPerms.includes(tabId)) {
             console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
             return;
@@ -75,6 +78,28 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
       }
       setActiveTab(tabId);
     };
+
+    // Auto redirect if currently loaded tab is not allowed
+    useEffect(() => {
+      const checkAndEnforcePermissions = () => {
+        const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
+        if (!isDev && typeof window !== 'undefined') {
+          try {
+            const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+            const u = currentUser?.username;
+            const lowU = (u || '').toLowerCase();
+            const n = currentUser?.name;
+            const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
+            if (Array.isArray(userPerms) && userPerms.length > 0 && !userPerms.includes(activeTab)) {
+              setActiveTab(userPerms[0] || 'dashboard');
+            }
+          } catch (e) {}
+        }
+      };
+      checkAndEnforcePermissions();
+      window.addEventListener('permissions-updated', checkAndEnforcePermissions);
+      return () => window.removeEventListener('permissions-updated', checkAndEnforcePermissions);
+    }, [currentUser, activeTab]);
 
     const tabTitles = {
         'dashboard': 'لوحة القيادة الموحدة - جهاز الإشراف والمتابعة',
@@ -87,7 +112,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'executive-progress': 'الموقف التنفيذي (360 كم) - المالي والفني المعتمد',
         'ai-agent': 'مساعد جهاز الإشراف (AI Supervision Assistant)',
         'upload-reports': 'رفع ومعالجة ملفات التقارير الميدانية',
-        'analytics': 'مركز التقارير والتحليلات المعتمدة',
+        'analytics': 'مركز التحليلات والإحصائيات - إنتاج الكسارات الموثقة',
         'fuel': 'إدارة الوقود',
         'equipment': 'إدارة وسجل المعدات والآليات الميدانية',
         'users': 'مركز المستخدمين والصلاحيات الرسمية للجهاز'

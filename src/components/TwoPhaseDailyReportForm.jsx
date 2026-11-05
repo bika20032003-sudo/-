@@ -502,6 +502,9 @@ export const TwoPhaseDailyReportForm = ({
 
   // Forward Report via messaging
   const handleForwardReport = async () => {
+    const computedTodayMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0);
+    const computedCumulativeMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0);
+
     let rep = createdReport || getStoredTwoPhaseReport();
     if (!rep) {
       rep = {
@@ -510,9 +513,11 @@ export const TwoPhaseDailyReportForm = ({
         dateFormatted: reportDate,
         dayName,
         title: `بيان أعمال إنجاز المرحلتين يوم ${dayName} ${reportDate}`,
-        twoPhaseTotals: { todayMeters: totalTodayMeters, totalCumulativeMeters }
+        twoPhaseTotals: { todayMeters: computedTodayMeters, totalCumulativeMeters: computedCumulativeMeters }
       };
     }
+    const todayMetersVal = rep?.twoPhaseTotals?.todayMeters ?? computedTodayMeters;
+    const cumMetersVal = rep?.twoPhaseTotals?.totalCumulativeMeters ?? computedCumulativeMeters;
     setIsForwarding(true);
 
     const officialSupervisors = [
@@ -542,7 +547,7 @@ export const TwoPhaseDailyReportForm = ({
           toRole: targetUser.role,
           type: 'تقرير إنجاز المرحلتين',
           subject: 'إحالة تقرير الأعمال المنجزة للمرحلتين - ' + dayName + ' ' + reportDate,
-          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد للأعمال المنجزة للمرحلتين الأولى والثانية بطريق أوباري غات. إنجاز اليوم: ' + (rep?.twoPhaseTotals?.todayMeters || totalTodayMeters) + ' م.ط، الإجمالي التراكمي: ' + (rep?.twoPhaseTotals?.totalCumulativeMeters || totalCumulativeMeters) + ' م.ط.'),
+          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد للأعمال المنجزة للمرحلتين الأولى والثانية بطريق أوباري غات. إنجاز اليوم: ' + todayMetersVal + ' م.ط، الإجمالي التراكمي: ' + cumMetersVal + ' م.ط.'),
           reportId: rep.id,
           reportNumber: rep.reportNumber,
           reportData: rep,

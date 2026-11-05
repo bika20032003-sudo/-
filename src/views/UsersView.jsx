@@ -18,22 +18,28 @@ export const ALL_SYSTEM_SECTIONS = [
 ];
 
 export const getUserSectionPermissions = (username) => {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || !username) return null;
   try {
     const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
-    return all[username] || null;
+    const u = String(username).trim();
+    return all[u] || all[u.toLowerCase()] || null;
   } catch (e) {
     return null;
   }
 };
 
-export const saveUserSectionPermissions = (username, sections) => {
-  if (typeof window === 'undefined') return false;
+export const saveUserSectionPermissions = (username, sections, userObj = null) => {
+  if (typeof window === 'undefined' || !username) return false;
   try {
     const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
-    all[username] = sections;
+    const u = String(username).trim();
+    all[u] = sections;
+    all[u.toLowerCase()] = sections;
+    if (userObj?.name) {
+      all[userObj.name] = sections;
+    }
     localStorage.setItem('system_user_section_permissions', JSON.stringify(all));
-    window.dispatchEvent(new CustomEvent('permissions-updated', { detail: { username, sections } }));
+    window.dispatchEvent(new CustomEvent('permissions-updated', { detail: { username: u, sections } }));
     return true;
   } catch (e) {
     return false;
@@ -68,21 +74,20 @@ export const UsersView = ({ currentUser }) => {
   // Feedback messages
   const [feedbackMsg, setFeedbackMsg] = useState({ type: '', text: '' });
   
-  // Form states (No email field!)
+  // Form states (No phone/email fields)
   const [formData, setFormData] = useState({
     name: '',
     username: '',
     role: 'مهندس مشرف (المرحلة الأولى)',
     sector: 'المرحلة الأولى',
-    password: '',
-    phone: ''
+    password: ''
   });
 
-  
-  // Check if current user has Dev Privileges
+  // Check user privileges: Admins, Devs, and Project Manager can manage section permissions
   const currentRole = (currentUser?.role || '').toLowerCase();
   const currentUsername = (currentUser?.username || '').toLowerCase();
   const isDevAccount = currentRole.includes('تطوير') || currentUsername === 'admin' || currentUsername === 'dev';
+  const canManagePermissions = isDevAccount || currentRole.includes('مدير') || currentUsername === 'project_manager' || currentUsername === 'alansari';
 
   const handleOpenPermissionsModal = (user) => {
     setTargetUserForPermissions(user);
@@ -113,11 +118,11 @@ export const UsersView = ({ currentUser }) => {
 
   const handleApplyPermissions = () => {
     if (!targetUserForPermissions) return;
-    saveUserSectionPermissions(targetUserForPermissions.username, selectedUserSections);
+    saveUserSectionPermissions(targetUserForPermissions.username, selectedUserSections, targetUserForPermissions);
     setIsPermissionsModalOpen(false);
     setFeedbackMsg({ 
       type: 'success', 
-      text: `تم حفظ وتطبيق صلاحيات الأقسام للمستخدم (${targetUserForPermissions.name}) بنجاح!` 
+      text: `تم حفظ وتفعيل صلاحيات الأقسام للمستخدم (${targetUserForPermissions.name}) بنجاح!` 
     });
   };
 
@@ -212,14 +217,13 @@ export const UsersView = ({ currentUser }) => {
       name: formData.name.trim(),
       role: formData.role,
       sector: formData.sector || 'all',
-      phone: formData.phone.trim() || '',
       password: formData.password.trim(),
       createdAt: new Date().toISOString()
     };
 
     saveCustomUser(newUser);
     setIsAddModalOpen(false);
-    setFormData({ name: '', username: '', role: 'مهندس مشرف (المرحلة الأولى)', sector: 'المرحلة الأولى', password: '', phone: '' });
+    setFormData({ name: '', username: '', role: 'مهندس مشرف (المرحلة الأولى)', sector: 'المرحلة الأولى', password: '' });
     setFeedbackMsg({ type: 'success', text: `تم إضافة المهندس "${newUser.name}" بنجاح وتفعيل حسابه الميداني` });
     loadUsers();
   };
@@ -241,14 +245,12 @@ export const UsersView = ({ currentUser }) => {
         username: formData.username.trim(),
         role: formData.role,
         sector: formData.sector,
-        phone: formData.phone.trim(),
         password: formData.password ? formData.password.trim() : selectedUser.password
       });
     } else {
       saveCustomUser({
         ...selectedUser,
         name: formData.name.trim(),
-        phone: formData.phone.trim(),
         role: formData.role,
         sector: formData.sector
       });
@@ -284,7 +286,6 @@ export const UsersView = ({ currentUser }) => {
       username: user.username,
       role: user.role,
       sector: user.sector || 'all',
-      phone: user.phone || '',
       password: '' // Empty = keep current password
     });
     setIsEditModalOpen(true);
@@ -295,8 +296,7 @@ export const UsersView = ({ currentUser }) => {
     const matchesSearch = 
       u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.phone?.includes(searchTerm);
+      u.role?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     return matchesSearch && matchesRole;
@@ -535,7 +535,7 @@ export const UsersView = ({ currentUser }) => {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>إدارة النظام الشاملة</span>
-              <span style={{ color: '#059669', fontWeight: 800, direction: 'ltr' }}>091-2345678</span>
+              <span style={{ color: '#059669', fontWeight: 800 }}>✓ صلاحيات كاملة</span>
             </div>
           </div>
 
@@ -564,7 +564,7 @@ export const UsersView = ({ currentUser }) => {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>كامل المسار (360 كم)</span>
-              <span style={{ color: '#2563eb', fontWeight: 800, direction: 'ltr' }}>091-2345678</span>
+              <span style={{ color: '#2563eb', fontWeight: 800 }}>✓ إدارة واعتماد</span>
             </div>
           </div>
 
@@ -593,7 +593,7 @@ export const UsersView = ({ currentUser }) => {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>كامل مسار الطريق</span>
-              <span style={{ color: '#7c3aed', fontWeight: 800, direction: 'ltr' }}>091-3456789</span>
+              <span style={{ color: '#7c3aed', fontWeight: 800 }}>✓ رئاسة الجهاز</span>
             </div>
           </div>
 
@@ -622,7 +622,7 @@ export const UsersView = ({ currentUser }) => {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>مواقع الفحص والمختبر</span>
-              <span style={{ color: '#059669', fontWeight: 800, direction: 'ltr' }}>091-4567890</span>
+              <span style={{ color: '#059669', fontWeight: 800 }}>✓ ضبط الجودة</span>
             </div>
           </div>
 
@@ -651,7 +651,7 @@ export const UsersView = ({ currentUser }) => {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>المرحلة الأولى (115 كم)</span>
-              <span style={{ color: '#ea580c', fontWeight: 800, direction: 'ltr' }}>091-5678901</span>
+              <span style={{ color: '#ea580c', fontWeight: 800 }}>✓ إشراف المرحلة</span>
             </div>
           </div>
 
@@ -680,7 +680,7 @@ export const UsersView = ({ currentUser }) => {
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>المرحلة الثانية (110 كم)</span>
-              <span style={{ color: '#0d9488', fontWeight: 800, direction: 'ltr' }}>091-6789012</span>
+              <span style={{ color: '#0d9488', fontWeight: 800 }}>✓ إشراف المرحلة</span>
             </div>
           </div>
         </div>
@@ -767,7 +767,7 @@ export const UsersView = ({ currentUser }) => {
                 <th style={{ padding: '0.85rem 1rem', width: '130px' }}>اسم الدخول</th>
                 <th style={{ padding: '0.85rem 1rem', width: '150px' }}>كلمة المرور</th>
                 <th style={{ padding: '0.85rem 1rem', width: '150px' }}>نطاق الإشراف</th>
-                <th style={{ padding: '0.85rem 1rem', width: '150px' }}>رقم التواصل</th>
+                <th style={{ padding: '0.85rem 1rem', width: '170px' }}>الأقسام المصرحة</th>
                 <th style={{ padding: '0.85rem 1.25rem', width: '140px', textAlign: 'center' }}>الإجراءات</th>
               </tr>
             </thead>
@@ -911,26 +911,41 @@ export const UsersView = ({ currentUser }) => {
                         </span>
                       </td>
 
-                      {/* 6. رقم الهاتف والتواصل */}
+                      {/* 6. الأقسام المصرحة والصلاحيات */}
                       <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          fontSize: '0.82rem',
-                          fontWeight: 800,
-                          color: '#0f172a',
-                          direction: 'ltr'
-                        }}>
-                          <Phone size={13} color="#16a34a" />
-                          <span>{user.phone || '091-XXXXXXX'}</span>
-                        </span>
+                        {(() => {
+                          const perms = getUserSectionPermissions(user.username);
+                          const count = Array.isArray(perms) ? perms.length : ALL_SYSTEM_SECTIONS.length;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => canManagePermissions && handleOpenPermissionsModal(user)}
+                              style={{
+                                background: count === ALL_SYSTEM_SECTIONS.length ? '#f0fdf4' : '#eff6ff',
+                                color: count === ALL_SYSTEM_SECTIONS.length ? '#166534' : '#1d4ed8',
+                                border: `1px solid ${count === ALL_SYSTEM_SECTIONS.length ? '#bbf7d0' : '#bfdbfe'}`,
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '8px',
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                cursor: canManagePermissions ? 'pointer' : 'default',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem'
+                              }}
+                              title={canManagePermissions ? "انقر للتحكم في أقسام وصلاحيات المستخدم" : "الأقسام المصرحة للمستخدم"}
+                            >
+                              <ShieldCheck size={14} color={count === ALL_SYSTEM_SECTIONS.length ? '#16a34a' : '#2563eb'} />
+                              <span>{count === ALL_SYSTEM_SECTIONS.length ? 'كافة الأقسام (متاح)' : `${count} أقسام مصرحة`}</span>
+                            </button>
+                          );
+                        })()}
                       </td>
 
                       {/* 7. الإجراءات */}
                       <td style={{ padding: '0.85rem 1.25rem', textAlign: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                          {isDevAccount && (
+                          {canManagePermissions && (
                             <button
                               type="button"
                               onClick={() => handleOpenPermissionsModal(user)}
@@ -1116,32 +1131,18 @@ export const UsersView = ({ currentUser }) => {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
-                      رقم الهاتف الميداني
+                      كلمة المرور الابتدائية <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <input 
                       type="text" 
-                      placeholder="091-XXXXXXX" 
+                      placeholder="أدخل كلمة مرور قوية" 
                       dir="ltr" 
-                      value={formData.phone} 
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none' }}
+                      value={formData.password} 
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                      required
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none', fontFamily: 'monospace' }}
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
-                    كلمة المرور الابتدائية <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="أدخل كلمة مرور قوية" 
-                    dir="ltr" 
-                    value={formData.password} 
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-                    required
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none', fontFamily: 'monospace' }}
-                  />
                 </div>
 
               </div>
@@ -1289,30 +1290,17 @@ export const UsersView = ({ currentUser }) => {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
-                      رقم الهاتف الميداني
+                      تحديث كلمة المرور (اتركها فارغة للإبقاء على الحالية)
                     </label>
                     <input 
                       type="text" 
-                      value={formData.phone} 
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })} 
-                      dir="ltr"
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none' }}
+                      placeholder="أدخل كلمة مرور جديدة للتحديث..." 
+                      dir="ltr" 
+                      value={formData.password} 
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none', fontFamily: 'monospace' }}
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
-                    تحديث كلمة المرور (اتركها فارغة للإبقاء على الحالية)
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="أدخل كلمة مرور جديدة للتحديث..." 
-                    dir="ltr" 
-                    value={formData.password} 
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', outline: 'none', fontFamily: 'monospace' }}
-                  />
                 </div>
 
               </div>

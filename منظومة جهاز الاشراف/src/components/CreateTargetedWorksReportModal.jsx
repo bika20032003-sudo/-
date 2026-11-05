@@ -571,49 +571,75 @@ export const CreateTargetedWorksReportModal = ({
 
   // Forward Report via Messages
   const handleForwardReport = async () => {
-    if (!createdReport) return;
     setIsForwarding(true);
 
-    const targetUser = officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0];
-
-    const messagePayload = {
-      fromUsername: currentUser?.username || 'supervisor',
-      fromName: currentUser?.name || sectorDirector,
-      fromRole: currentUser?.title || currentUser?.role || 'مهندس إشراف',
-      toUsername: targetUser.username,
-      toName: targetUser.name,
-      toRole: targetUser.role,
-      type: 'إحالة بيان الأعمال المستهدفة',
-      subject: `إحالة ${createdReport.title || 'بيان الأعمال المستهدفة'} - (${createdReport.reportNumber})`,
-      content: forwardNote.trim() || `نحيل إليكم بيان الأعمال والمعدات المستهدفة المعتمد ليوم ${dayName} (${formattedDashDate}) للإحاطة والمتابعة الميدانية.`,
-      reportId: createdReport.id,
-      reportNumber: createdReport.reportNumber,
-      reportData: createdReport
+    const activeRep = createdReport || {
+      id: Date.now(),
+      reportNumber: reportNumber || `TARGET-SEC-A-${Date.now().toString().slice(-4)}`,
+      reportType: 'بيان الأعمال المستهدفة',
+      title: `بيان الأعمال والمعدات المستهدفة ليوم ${dayName} (${formattedDashDate})`,
+      dateFormatted: formattedDashDate,
+      dayName: dayName,
+      sectorDirector: sectorDirector
     };
 
-    try {
-      await fastFetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messagePayload)
-      });
+    const isAll = forwardRecipient === 'all';
+    const targets = isAll
+      ? officialSupervisors
+      : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
-      setShowForwardModal(false);
-      setStatusMessage({ 
-        type: 'success', 
-        text: `تم حفظ البيان وإرساله رسمياً عبر البريد والمراسلات إلى (${targetUser.name}) بنجاح!` 
-      });
+    const newMsgs = [];
+    for (const targetUser of targets) {
+      const messagePayload = {
+        id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        fromUsername: currentUser?.username || 'supervisor',
+        fromName: currentUser?.name || sectorDirector,
+        fromRole: currentUser?.title || currentUser?.role || 'مهندس إشراف',
+        toUsername: targetUser.username,
+        toName: targetUser.name,
+        toRole: targetUser.role,
+        type: 'إحالة بيان الأعمال المستهدفة',
+        subject: `إحالة ${activeRep.title || 'بيان الأعمال المستهدفة'} - (${activeRep.reportNumber})`,
+        content: forwardNote.trim() || `نحيل إليكم بيان الأعمال والمعدات المستهدفة المعتمد ليوم ${dayName} (${formattedDashDate}) للإحاطة والمتابعة الميدانية.`,
+        reportId: activeRep.id,
+        reportNumber: activeRep.reportNumber,
+        reportData: activeRep,
+        createdAt: new Date().toISOString(),
+        isRead: false
+      };
+      newMsgs.push(messagePayload);
 
-      setTimeout(() => {
-        if (onNavigateTab) onNavigateTab('messages');
-        onClose();
-      }, 1200);
-    } catch (err) {
-      console.error('Failed to forward message:', err);
-      alert('تم حفظ البيان بنجاح.');
-    } finally {
-      setIsForwarding(false);
+      try {
+        fastFetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(messagePayload)
+        }).catch(() => {});
+      } catch (e) {}
     }
+
+    try {
+      const sysMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+      localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sysMsgs]));
+      const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+      localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+    } catch (e) {}
+
+    window.dispatchEvent(new CustomEvent('messages-updated'));
+
+    setShowForwardModal(false);
+    setIsForwarding(false);
+
+    const recipientLabel = isAll ? 'كافة أعضاء جهاز الإشراف' : targets[0].name;
+    setStatusMessage({ 
+      type: 'success', 
+      text: `تم حفظ البيان وإرساله رسمياً عبر البريد والمراسلات إلى (${recipientLabel}) بنجاح!` 
+    });
+
+    setTimeout(() => {
+      if (onNavigateTab) onNavigateTab('messages');
+      if (onClose) onClose();
+    }, 1200);
   };
 
   return (
@@ -1590,7 +1616,7 @@ export const CreateTargetedWorksReportModal = ({
       </div>
 
       {/* Forward Modal */}
-      {showForwardModal && createdReport && (
+      {showForwardModal && (
         <div style={{
           position: 'fixed',
           top: 0,

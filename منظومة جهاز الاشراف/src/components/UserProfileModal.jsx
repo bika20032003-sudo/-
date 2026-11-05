@@ -21,7 +21,6 @@ export const UserProfileModal = ({ isOpen, onClose, currentUser, onUpdateUser })
 
   const [avatar, setAvatar] = useState(currentAvatar);
   const [name, setName] = useState(currentUser.name || '');
-  const [phone, setPhone] = useState(currentUser.phone || '091-XXXXXXX');
   
   // Password change state
   const [currentPass, setCurrentPass] = useState('');
@@ -119,7 +118,6 @@ export const UserProfileModal = ({ isOpen, onClose, currentUser, onUpdateUser })
       // Save user info
       const updatedData = {
         name: name.trim() || currentUser.name,
-        phone: phone.trim(),
         avatar: avatar
       };
 
@@ -413,10 +411,10 @@ export const UserProfileModal = ({ isOpen, onClose, currentUser, onUpdateUser })
             </div>
 
             {/* Editable Contact Info */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
               <div className="form-group">
                 <label className="form-label" style={{ fontSize: '0.82rem' }}>
-                  الاسم الكامل (الظاهر في التقارير):
+                  الاسم الكامل (الظاهر في التقارير والمستندات الرسمية):
                 </label>
                 <input 
                   type="text" 
@@ -424,20 +422,7 @@ export const UserProfileModal = ({ isOpen, onClose, currentUser, onUpdateUser })
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
                   required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: '0.82rem' }}>
-                  رقم هاتف التواصل الميداني:
-                </label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
-                  placeholder="091-XXXXXXX"
-                  dir="ltr"
+                  style={{ width: '100%' }}
                 />
               </div>
             </div>

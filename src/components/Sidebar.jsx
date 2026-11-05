@@ -3,7 +3,7 @@ import {
   Home, Milestone, UploadCloud, FileText, 
   CalendarRange, Truck, 
   Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin,
-  Camera, Mail, Bot, Sparkles, FilePlus, Target, Award
+  Camera, Mail, Bot, Sparkles, FilePlus, Target, Award, BarChart3
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
@@ -133,7 +133,10 @@ export const Sidebar = ({
       if (typeof window === 'undefined') return null;
       try {
         const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
-        return all[currentUser?.username] || null;
+        const u = currentUser?.username;
+        const lowU = (u || '').toLowerCase();
+        const n = currentUser?.name;
+        return all[u] || all[lowU] || (n ? all[n] : null) || null;
       } catch (e) {
         return null;
       }
@@ -143,7 +146,10 @@ export const Sidebar = ({
       const handlePermUpdate = () => {
         try {
           const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
-          setUserAllowedSections(all[currentUser?.username] || null);
+          const u = currentUser?.username;
+          const lowU = (u || '').toLowerCase();
+          const n = currentUser?.name;
+          setUserAllowedSections(all[u] || all[lowU] || (n ? all[n] : null) || null);
         } catch (e) {}
       };
       window.addEventListener('permissions-updated', handlePermUpdate);
@@ -152,7 +158,7 @@ export const Sidebar = ({
         window.removeEventListener('permissions-updated', handlePermUpdate);
         window.removeEventListener('storage', handlePermUpdate);
       };
-    }, [currentUser?.username]);
+    }, [currentUser?.username, currentUser?.name]);
 
     const roleDisplay = getRoleDisplay();
 
@@ -173,6 +179,7 @@ export const Sidebar = ({
     const reportItems = [
       { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
+      { id: 'analytics', label: 'مركز التحليلات والإحصائيات', icon: BarChart3 },
       { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
       { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
     ];
@@ -276,9 +283,7 @@ export const Sidebar = ({
         <nav className="sidebar-app-nav">
           {menuGroups.map((group, gIdx) => {
             const visibleItems = group.items.filter(item => {
-              if (isDev || isProjectManager) return true;
-              // Core supervisor sections (create-report, dashboard, road-progress) always remain accessible
-              if (item.id === 'create-report' || item.id === 'dashboard' || item.id === 'road-progress') return true;
+              if (isDev) return true;
               if (Array.isArray(userAllowedSections) && userAllowedSections.length > 0) {
                 return userAllowedSections.includes(item.id);
               }

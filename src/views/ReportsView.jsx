@@ -19,14 +19,26 @@ export const ReportsView = () => {
     const fetchReportsData = async () => {
         try {
             setIsLoading(true);
-            const res = await fetch('http://localhost:5000/api/reports');
-            const data = await res.json();
-            if (data.success) {
-                setReportsData(data.reports || []);
+            const res = await fetch('/api/reports').catch(() => null);
+            if (res && res.ok) {
+                const data = await res.json();
+                if (data.success && Array.isArray(data.reports)) {
+                    setReportsData(data.reports);
+                    return;
+                }
             }
+            // Fallback to offline local storage
+            const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+            setReportsData(local);
         }
         catch (e) {
-            console.error('Error fetching reports data', e);
+            console.warn('Fallback to local storage in ReportsView', e);
+            try {
+                const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                setReportsData(local);
+            } catch (_) {
+                setReportsData([]);
+            }
         }
         finally {
             setIsLoading(false);

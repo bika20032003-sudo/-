@@ -115,11 +115,17 @@ export function getSystemUsers() {
     const rawPasswords = localStorage.getItem('system_user_passwords');
     const savedPasswords = rawPasswords ? JSON.parse(rawPasswords) : {};
     if (savedPasswords && typeof savedPasswords === 'object') {
-      users = users.map(u => ({
-        ...u,
-        password: savedPasswords[u.username] || u.password,
-        avatar: localStorage.getItem(`user_avatar_${u.username}`) || u.avatar || ''
-      }));
+      users = users.map(u => {
+        const uPass = savedPasswords[u.username] || 
+                      savedPasswords[u.username.toLowerCase()] || 
+                      savedPasswords[u.name] || 
+                      u.password;
+        return {
+          ...u,
+          password: uPass,
+          avatar: localStorage.getItem(`user_avatar_${u.username}`) || u.avatar || ''
+        };
+      });
     }
 
     // Merge custom users safely
@@ -133,17 +139,18 @@ export function getSystemUsers() {
           return;
         }
         const existingIdx = users.findIndex(u => u.username === cu.username || u.id === cu.id);
+        const cuPass = (savedPasswords && (savedPasswords[cu.username] || savedPasswords[cu.username.toLowerCase()] || savedPasswords[cu.name])) || cu.password || 'admin1234';
         if (existingIdx === -1) {
           users.push({
             ...cu,
-            password: (savedPasswords && savedPasswords[cu.username]) || cu.password || 'admin1234',
+            password: cuPass,
             avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || ''
           });
         } else if (![1, 2, 3, 4, 5, 6].includes(users[existingIdx].id)) {
           users[existingIdx] = {
             ...users[existingIdx],
             ...cu,
-            password: (savedPasswords && savedPasswords[cu.username]) || cu.password || users[existingIdx].password,
+            password: cuPass,
             avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[existingIdx]?.avatar || ''
           };
         }
@@ -168,9 +175,42 @@ export function getSystemUsers() {
  */
 export function updateUserPassword(username, newPassword) {
   try {
+    const rawU = (username || '').trim();
+    if (!rawU || !newPassword) return false;
+    const lowU = rawU.toLowerCase();
+    const canonU = ALIASES[lowU] || lowU;
+
     const savedPasswords = JSON.parse(localStorage.getItem('system_user_passwords') || '{}');
-    savedPasswords[username] = newPassword;
+    savedPasswords[rawU] = newPassword;
+    savedPasswords[lowU] = newPassword;
+    savedPasswords[canonU] = newPassword;
+
+    // Also associate by real name if matched in default users
+    const matched = DEFAULT_USERS.find(u => u.username === canonU || u.username === lowU || u.name === rawU);
+    if (matched) {
+      savedPasswords[matched.username] = newPassword;
+      savedPasswords[matched.name] = newPassword;
+    }
+
     localStorage.setItem('system_user_passwords', JSON.stringify(savedPasswords));
+
+    // Also update system_custom_users if user is stored there
+    try {
+      const customUsers = JSON.parse(localStorage.getItem('system_custom_users') || '[]');
+      let updatedCustom = false;
+      const newCustom = customUsers.map(cu => {
+        if (cu.username === canonU || cu.username === lowU || cu.username === rawU || cu.name === rawU) {
+          updatedCustom = true;
+          return { ...cu, password: newPassword };
+        }
+        return cu;
+      });
+      if (updatedCustom) {
+        localStorage.setItem('system_custom_users', JSON.stringify(newCustom));
+      }
+    } catch (_) {}
+
+    window.dispatchEvent(new CustomEvent('passwords-updated', { detail: { username: canonU, newPassword } }));
     return true;
   } catch (e) {
     console.error('Error saving password:', e);
