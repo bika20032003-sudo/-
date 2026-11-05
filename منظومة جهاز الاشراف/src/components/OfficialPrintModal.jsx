@@ -321,7 +321,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
         });
 
         dataRows.push([]);
-        dataRows.push(['الإجمالي العام للأعمال', '', '', '', report.totalLength || report.roadMeters || 0, report.totalArea || 0, '']);
+        // تم إلغاء الإجمالي العام المركب للأعمال: كل بند يحسب على حدة
         dataRows.push([]);
         dataRows.push([`مدير القطاع: ${customSectorDirector || '................'}`, '', '', `ممثل الجهة المالكة: ${customOwnerRep || '................'}`]);
       } else {
@@ -2139,21 +2139,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     );
                   })}
 
-                  {/* Totals Row */}
-                  <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '3px solid #000000' }}>
-                    <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.65rem', textAlign: 'center', fontSize: '1rem' }}>
-                      الإجمالي العام للأعمال المنفذة
-                    </td>
-                    <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '1rem' }}>
-                      {Number(report.totalLength || report.roadMeters || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '1rem' }}>
-                      {Number(report.totalArea || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.85rem' }}>
-                      {(report.items || []).length} بنود منجزة
-                    </td>
-                  </tr>
+                  {/* تم إلغاء الإجمالي العام المركب: كل بند يحسب وتُجمع كمياته على حِدَة */}
                 </tbody>
               </table>
 

@@ -226,14 +226,65 @@ export const RoadDailyReportForm = ({
   const calculatedTotals = useMemo(() => {
     let totalLen = 0;
     let totalAr = 0;
+    let asphaltLen = 0;
+    let asphaltAr = 0;
+    let fdrLen = 0;
+    let fdrAr = 0;
+    let baseLen = 0;
+    let baseAr = 0;
+    let serviceLen = 0;
+
+    const itemsMap = new Map();
+
     (currentData.items || []).forEach(row => {
-      totalLen += parseNum(row.length);
-      totalAr += parseNum(row.area);
+      const len = parseNum(row.length);
+      const ar = parseNum(row.area);
+      totalLen += len;
+      totalAr += ar;
+
+      const rawItem = (row.item || '').trim();
+      if (rawItem) {
+        if (!itemsMap.has(rawItem)) {
+          itemsMap.set(rawItem, {
+            name: rawItem,
+            totalLength: 0,
+            totalArea: 0,
+            count: 0
+          });
+        }
+        const entry = itemsMap.get(rawItem);
+        entry.totalLength += len;
+        entry.totalArea += ar;
+        entry.count += 1;
+      }
+
+      const lower = rawItem.toLowerCase();
+      if (lower.includes('اسفلت') || lower.includes('أسفلت')) {
+        asphaltLen += len;
+        asphaltAr += ar;
+      } else if (lower.includes('fdr') || lower.includes('فرم') || lower.includes('تدوير')) {
+        fdrLen += len;
+        fdrAr += ar;
+      } else if (lower.includes('اساس') || lower.includes('أساس')) {
+        baseLen += len;
+        baseAr += ar;
+      } else if (lower.includes('خدمي')) {
+        serviceLen += len;
+      }
     });
+
     return {
       totalLength: totalLen,
       totalArea: totalAr,
-      itemsCount: (currentData.items || []).length
+      asphaltLen,
+      asphaltAr,
+      fdrLen,
+      fdrAr,
+      baseLen,
+      baseAr,
+      serviceLen,
+      itemsCount: (currentData.items || []).length,
+      itemSummaries: Array.from(itemsMap.values())
     };
   }, [currentData.items]);
 
@@ -357,15 +408,19 @@ export const RoadDailyReportForm = ({
       });
 
       dataRows.push([]);
-      dataRows.push([
-        'الإجمالي العام للأعمال المنفذة',
-        '',
-        '',
-        '',
-        calculatedTotals.totalLength,
-        calculatedTotals.totalArea,
-        `${(currentData.items || []).length} بنود منجزة`
-      ]);
+      dataRows.push([]);
+      dataRows.push(['ملخص كميات البنود المنفذة (كل بند مجمع ومحسوب على حِدَة):']);
+      dataRows.push(['م', 'البند', 'عدد القطاعات', 'إجمالي الطول (م.ط)', 'إجمالي المساحة (م٢)', '']);
+      calculatedTotals.itemSummaries.forEach((it, idx) => {
+        dataRows.push([
+          idx + 1,
+          it.name,
+          it.count,
+          it.totalLength ? it.totalLength : '—',
+          it.totalArea ? it.totalArea : '—',
+          ''
+        ]);
+      });
       dataRows.push([]);
       dataRows.push([
         `مدير القطاع / مهندس: ${reportData.sectorDirector}`,
@@ -922,7 +977,7 @@ export const RoadDailyReportForm = ({
         gap: '1rem',
         marginBottom: '1.25rem'
       }}>
-        {/* Card 1: Total Length */}
+        {/* Card 1: Asphalt Progress */}
         <div style={{
           background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
           color: '#ffffff',
@@ -930,14 +985,16 @@ export const RoadDailyReportForm = ({
           padding: '1.1rem 1.25rem',
           boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>إجمالي الأطوال المنجزة اليوم</div>
+          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>أعمال طبقة الأسفلت المنفذة</div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
-            {fmtNum(calculatedTotals.totalLength)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
+            {fmtNum(calculatedTotals.asphaltLen)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
           </div>
-          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>طريق أوباري - غات (مسار 360 كم)</div>
+          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>
+            المساحة: {fmtNum(calculatedTotals.asphaltAr)} م² (حساب مستقل)
+          </div>
         </div>
 
-        {/* Card 2: Total Area */}
+        {/* Card 2: FDR Progress */}
         <div style={{
           background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
           color: '#ffffff',
@@ -945,11 +1002,13 @@ export const RoadDailyReportForm = ({
           padding: '1.1rem 1.25rem',
           boxShadow: '0 4px 14px rgba(202, 138, 4, 0.25)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.95, fontWeight: 700 }}>إجمالي المساحة المنفذة اليوم</div>
+          <div style={{ fontSize: '0.84rem', opacity: 0.95, fontWeight: 700 }}>أعمال إعادة التدوير (FDR)</div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
-            {fmtNum(calculatedTotals.totalArea)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م²</span>
+            {fmtNum(calculatedTotals.fdrLen)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
           </div>
-          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>مسطحات الفرم، الأساس، والأسفلت</div>
+          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>
+            المساحة: {fmtNum(calculatedTotals.fdrAr)} م² (حساب مستقل)
+          </div>
         </div>
 
         {/* Card 3: Items Count */}
@@ -1267,25 +1326,75 @@ export const RoadDailyReportForm = ({
                 );
               })}
 
-              {/* Totals Row (Matching Image 1 Style) */}
-              <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, borderTop: '3px solid #000000' }}>
-                <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1rem', textAlign: 'center' }}>
-                  الإجمالي العام للأعمال المنفذة
-                </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
-                  {fmtNum(calculatedTotals.totalLength)}
-                </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
-                  {fmtNum(calculatedTotals.totalArea)}
-                </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '0.88rem' }}>
-                  {calculatedTotals.itemsCount} بنود منجزة
-                </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem' }} className="no-print"></td>
-              </tr>
+              {/* تم إلغاء الإجمالي العام المركب بناءً على التعليمات الهندسية: كل حقل وبند يحسب على حِدَة */}
             </tbody>
           </table>
         </div>
+
+        {/* ملخص كميات البنود المنفذة (حساب وتجميع كل بند على حِدَة) */}
+        {calculatedTotals.itemSummaries.length > 0 && (
+          <div style={{
+            marginTop: '1.25rem',
+            border: '2px solid #000000',
+            borderRadius: '6px',
+            padding: '0.75rem 1rem',
+            background: '#f8fafc',
+            pageBreakInside: 'avoid'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '2px solid #000000',
+              paddingBottom: '0.45rem',
+              marginBottom: '0.65rem'
+            }}>
+              <span style={{ fontWeight: 900, fontSize: '0.95rem', color: '#000000' }}>
+                📊 ملخص كميات الأعمال المنجزة (حساب وتجميع كل بند على حِدَة):
+              </span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>
+                إجمالي {calculatedTotals.itemSummaries.length} بنود تشغيلية مستقلة
+              </span>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '0.5rem'
+            }}>
+              {calculatedTotals.itemSummaries.map((it, idx) => (
+                <div key={idx} style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #000000',
+                  borderRadius: '4px',
+                  padding: '0.5rem 0.75rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '0.84rem'
+                }}>
+                  <div style={{ fontWeight: 800, color: '#000000' }}>
+                    <span>{it.name}</span>
+                    {it.count > 1 && (
+                      <span style={{ color: '#2563eb', fontSize: '0.74rem', marginRight: '4px' }}>
+                        ({it.count} قطاعات)
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
+                    {it.totalLength > 0 && <span><strong>{fmtNum(it.totalLength)}</strong> م.ط</span>}
+                    {it.totalArea > 0 && (
+                      <span style={{ marginRight: '6px', color: '#047857' }}>
+                        {' | '}<strong>{fmtNum(it.totalArea)}</strong> م²
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
 
         {/* Dual Signatures Block (Matching Image 1 Exactly) */}
         <div style={{

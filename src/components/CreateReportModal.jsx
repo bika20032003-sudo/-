@@ -730,7 +730,7 @@ export const CreateReportModal = ({
                     جدول بنود أعمال الطريق المنفذة ومحطات التنفيذ:
                   </strong>
                   <div style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 800 }}>
-                    إجمالي الطول: {totalRoadLength.toLocaleString()} م.ط • إجمالي المساحة: {totalRoadArea.toLocaleString()} م²
+                    عدد البنود: {roadItems.length} بنود (حساب كل حقل وبند على حِدَة)
                   </div>
                 </div>
 

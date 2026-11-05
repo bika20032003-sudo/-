@@ -313,6 +313,23 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   const totalRoadLength = roadItems.reduce((sum, row) => sum + (parseFloat(row.length) || 0), 0);
   const totalRoadArea = roadItems.reduce((sum, row) => sum + (parseFloat(row.area) || 0), 0);
 
+  // Group each item independently (حساب كل بند بروحه)
+  const roadItemSummaries = useMemo(() => {
+    const map = new Map();
+    roadItems.forEach(row => {
+      const name = (row.item || '').trim();
+      if (!name) return;
+      if (!map.has(name)) {
+        map.set(name, { name, totalLength: 0, totalArea: 0, count: 0 });
+      }
+      const entry = map.get(name);
+      entry.totalLength += parseFloat(row.length) || 0;
+      entry.totalArea += parseFloat(row.area) || 0;
+      entry.count += 1;
+    });
+    return Array.from(map.values());
+  }, [roadItems]);
+
   // Calculated Fuel totals
   const totalFuelDispatched = fuelItems.reduce((sum, row) => sum + (parseFloat(row.dispatchedLiters) || 0), 0);
   const totalFuelReceived = fuelItems.reduce((sum, row) => sum + (parseFloat(row.receivedLiters) || 0), 0);
@@ -454,7 +471,19 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         });
 
         dataRows.push([]);
-        dataRows.push(['الإجمالي', '', '', '', totalRoadLength, totalRoadArea, '']);
+        dataRows.push([]);
+        dataRows.push(['ملخص كميات البنود المنفذة (كل بند مجمع ومحسوب على حِدَة):']);
+        dataRows.push(['م', 'البند', 'عدد القطاعات', 'إجمالي الطول (م.ط)', 'إجمالي المساحة (م٢)', '']);
+        roadItemSummaries.forEach((it, idx) => {
+          dataRows.push([
+            idx + 1,
+            it.name,
+            it.count,
+            it.totalLength || '—',
+            it.totalArea || '—',
+            ''
+          ]);
+        });
         dataRows.push([]);
         dataRows.push([`مدير القطاع: ${sectorDirector}`, '', '', `ممثل الجهة المالكة: ${ownerRepresentative}`]);
       }
@@ -1959,6 +1988,70 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
             </table>
           </div>
 
+          {/* ملخص كميات البنود المنفذة (حساب كل بند على حِدَة) */}
+          {roadItemSummaries.length > 0 && (
+            <div style={{
+              marginTop: '1rem',
+              border: '2px solid #000000',
+              borderRadius: '6px',
+              padding: '0.75rem 1rem',
+              background: '#f8fafc'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '2px solid #000000',
+                paddingBottom: '0.45rem',
+                marginBottom: '0.65rem'
+              }}>
+                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: '#000000' }}>
+                  📊 ملخص كميات الأعمال المنجزة (حساب كل بند على حِدَة):
+                </span>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
+                  إجمالي {roadItemSummaries.length} بنود تشغيلية مستقلة
+                </span>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: '0.45rem'
+              }}>
+                {roadItemSummaries.map((it, idx) => (
+                  <div key={idx} style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #000000',
+                    borderRadius: '4px',
+                    padding: '0.45rem 0.65rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ fontWeight: 800, color: '#000000' }}>
+                      <span>{it.name}</span>
+                      {it.count > 1 && (
+                        <span style={{ color: '#0284c7', fontSize: '0.72rem', marginRight: '4px' }}>
+                          ({it.count} قطاعات)
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
+                      {it.totalLength > 0 && <span><strong>{it.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
+                      {it.totalArea > 0 && (
+                        <span style={{ marginRight: '6px', color: '#047857' }}>
+                          {' | '}<strong>{it.totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م²
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+
           {/* Add Row Button */}
           <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'flex-start' }} className="no-print">
             <button
@@ -2176,21 +2269,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                   </tr>
                 ))}
 
-                {/* Total Row */}
-                <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '3px solid #000000' }}>
-                  <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '1.05rem' }}>
-                    الإجمالي العام للأعمال المنفذة
-                  </td>
-                  <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem' }}>
-                    {totalRoadLength ? totalRoadLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
-                  </td>
-                  <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem' }}>
-                    {totalRoadArea ? totalRoadArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
-                  </td>
-                  <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '0.85rem', color: '#64748b' }}>
-                    {roadItems.filter(i => i.item).length} بنود مسجلة
-                  </td>
-                </tr>
+                {/* تم إلغاء الإجمالي العام المركب: كل حقل وبند يحسب على حِدَة */}
               </tbody>
             </table>
           </div>
