@@ -693,7 +693,19 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
   // Forward Report to ALL supervision users (from Project Manager to the last member, excluding Dev Account)
   const handleForwardReport = async () => {
-    if (!createdReport) return;
+    let rep = createdReport;
+    if (!rep) {
+      rep = {
+        id: Date.now(),
+        reportNumber: reportNumber || `REP-LIVE-${Date.now().toString().slice(-4)}`,
+        title: reportTitle || 'تقرير ميداني معتمد',
+        reportType: reportCategory === 'fuel' ? 'تقرير وقود يومي' : (reportCategory === 'targeted' ? 'تقرير الأعمال المستهدفة' : 'تقرير أعمال الطريق اليومي'),
+        date: new Date().toISOString(),
+        sector: reportCategory === 'fuel' ? 'محطات وصهاريج الوقود' : (sectorOption === 'A' ? 'القطاع 01: أوباري - تين أوباو (المرحلة الأولى)' : 'طريق أوباري - غات'),
+        sectorDirector: sectorDirector || 'م. مروان الهوني',
+        ownerRepresentative: ownerRepresentative || 'م. عبدالرحمن الأنصاري'
+      };
+    }
     setIsForwarding(true);
 
     const isAll = forwardRecipient === 'all';
@@ -713,11 +725,11 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           toName: targetUser.name,
           toRole: targetUser.role,
           type: 'إحالة تقرير رسمي',
-          subject: 'إحالة ' + (createdReport.title || createdReport.reportType) + ' - رقم (' + createdReport.reportNumber + ')',
-          content: forwardNote.trim() || ('نحيل إليكم رسمياً نسخة معتمدة من ' + (createdReport.title || createdReport.reportType) + ' بموقع ' + createdReport.sector + ' للإحاطة والمتابعة الهندسية.'),
-          reportId: createdReport.id,
-          reportNumber: createdReport.reportNumber,
-          reportData: createdReport,
+          subject: 'إحالة ' + (rep.title || rep.reportType) + ' - رقم (' + rep.reportNumber + ')',
+          content: forwardNote.trim() || ('نحيل إليكم رسمياً نسخة معتمدة من ' + (rep.title || rep.reportType) + ' بموقع ' + rep.sector + ' للإحاطة والمتابعة الهندسية.'),
+          reportId: rep.id,
+          reportNumber: rep.reportNumber,
+          reportData: rep,
           createdAt: new Date().toISOString(),
           isRead: false
         };
@@ -1774,64 +1786,6 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
             </div>
           </div>
 
-                    {/* ملخص كميات الأعمال المستهدفة (حساب كل بند على حِدَة) */}
-          {Array.isArray(targetedItemSummaries) && targetedItemSummaries.length > 0 && (
-            <div style={{
-              marginTop: '1rem',
-              border: '2px solid #000000',
-              borderRadius: '6px',
-              padding: '0.75rem 1rem',
-              background: '#f8fafc'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '2px solid #000000',
-                paddingBottom: '0.45rem',
-                marginBottom: '0.65rem'
-              }}>
-                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: '#000000' }}>
-                  📊 ملخص كميات الأعمال المستهدفة (حساب كل بند على حِدَة):
-                </span>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
-                  إجمالي {targetedItemSummaries.length} بنود مستهدفة مستقلة
-                </span>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '0.45rem'
-              }}>
-                {targetedItemSummaries.map((it, idx) => (
-                  <div key={idx} style={{
-                    background: '#ffffff',
-                    border: '1.5px solid #000000',
-                    borderRadius: '4px',
-                    padding: '0.45rem 0.65rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '0.82rem'
-                  }}>
-                    <div style={{ fontWeight: 800, color: '#000000' }}>
-                      <span>{it.name}</span>
-                      {it.count > 1 && (
-                        <span style={{ color: '#0284c7', fontSize: '0.72rem', marginRight: '4px' }}>
-                          ({it.count} مواقع)
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
-                      {it.totalLength > 0 && <span><strong>{it.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Dual Signatures */}
           <div style={{
             display: 'flex',
@@ -2263,7 +2217,21 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                   </tr>
                 ))}
 
-                {/* تم إلغاء الإجمالي العام المركب: كل حقل وبند يحسب على حِدَة */}
+                {/* Total Row */}
+                <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '3px solid #000000' }}>
+                  <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '1.05rem' }}>
+                    الإجمالي العام للأعمال المنفذة
+                  </td>
+                  <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem' }}>
+                    {totalRoadLength ? totalRoadLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                  </td>
+                  <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem' }}>
+                    {totalRoadArea ? totalRoadArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                  </td>
+                  <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '0.85rem', color: '#64748b' }}>
+                    {roadItems.filter(i => i.item).length} بنود مسجلة
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -2291,69 +2259,6 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
               <span>+ إضافة بند عمل جديد إلى الجدول</span>
             </button>
           </div>
-
-          {/* ملخص كميات البنود المنفذة (حساب كل بند على حِدَة) */}
-          {Array.isArray(roadItemSummaries) && roadItemSummaries.length > 0 && (
-            <div style={{
-              marginTop: '1rem',
-              border: '2px solid #000000',
-              borderRadius: '6px',
-              padding: '0.75rem 1rem',
-              background: '#f8fafc'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '2px solid #000000',
-                paddingBottom: '0.45rem',
-                marginBottom: '0.65rem'
-              }}>
-                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: '#000000' }}>
-                  📊 ملخص كميات الأعمال المنجزة (حساب كل بند على حِدَة):
-                </span>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
-                  إجمالي {roadItemSummaries.length} بنود تشغيلية مستقلة
-                </span>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '0.45rem'
-              }}>
-                {roadItemSummaries.map((it, idx) => (
-                  <div key={idx} style={{
-                    background: '#ffffff',
-                    border: '1.5px solid #000000',
-                    borderRadius: '4px',
-                    padding: '0.45rem 0.65rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '0.82rem'
-                  }}>
-                    <div style={{ fontWeight: 800, color: '#000000' }}>
-                      <span>{it.name}</span>
-                      {it.count > 1 && (
-                        <span style={{ color: '#0284c7', fontSize: '0.72rem', marginRight: '4px' }}>
-                          ({it.count} قطاعات)
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
-                      {it.totalLength > 0 && <span><strong>{it.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
-                      {it.totalArea > 0 && (
-                        <span style={{ marginRight: '6px', color: '#047857' }}>
-                          {' | '}<strong>{it.totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م²
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Signatures Footer */}
           <div style={{

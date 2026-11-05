@@ -977,7 +977,7 @@ export const RoadDailyReportForm = ({
         gap: '1rem',
         marginBottom: '1.25rem'
       }}>
-        {/* Card 1: Asphalt Progress */}
+        {/* Card 1: Total Length */}
         <div style={{
           background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
           color: '#ffffff',
@@ -985,29 +985,29 @@ export const RoadDailyReportForm = ({
           padding: '1.1rem 1.25rem',
           boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>أعمال طبقة الأسفلت المنفذة</div>
+          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>إجمالي الأطوال المنجزة</div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
-            {fmtNum(calculatedTotals.asphaltLen)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
+            {fmtNum(calculatedTotals.totalLength)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
           </div>
           <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>
-            المساحة: {fmtNum(calculatedTotals.asphaltAr)} م² (حساب مستقل)
+            المساحة الكلية: {fmtNum(calculatedTotals.totalArea)} م²
           </div>
         </div>
 
-        {/* Card 2: FDR Progress */}
+        {/* Card 2: Total Area */}
         <div style={{
-          background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+          background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
           color: '#ffffff',
           borderRadius: '12px',
           padding: '1.1rem 1.25rem',
-          boxShadow: '0 4px 14px rgba(202, 138, 4, 0.25)'
+          boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.95, fontWeight: 700 }}>أعمال إعادة التدوير (FDR)</div>
+          <div style={{ fontSize: '0.84rem', opacity: 0.95, fontWeight: 700 }}>إجمالي المساحة المنجزة</div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
-            {fmtNum(calculatedTotals.fdrLen)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
+            {fmtNum(calculatedTotals.totalArea)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م²</span>
           </div>
           <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>
-            المساحة: {fmtNum(calculatedTotals.fdrAr)} م² (حساب مستقل)
+            إجمالي مسطحات الرصف والفرم والأساس
           </div>
         </div>
 
@@ -1019,11 +1019,11 @@ export const RoadDailyReportForm = ({
           padding: '1.1rem 1.25rem',
           boxShadow: '0 4px 14px rgba(15, 23, 42, 0.2)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>عدد البنود التشغيلية الميدانية</div>
+          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>عدد البنود المسجلة بالتقرير</div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem' }} dir="ltr">
             {calculatedTotals.itemsCount} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>بنود</span>
           </div>
-          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>تتضمن FDR، الأساس، والأسفلت والخدمي</div>
+          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>بنود تشغيلية ميدانية معتمدة</div>
         </div>
 
         {/* Card 4: Signatures Summary */}
@@ -1326,74 +1326,25 @@ export const RoadDailyReportForm = ({
                 );
               })}
 
-              {/* تم إلغاء الإجمالي العام المركب بناءً على التعليمات الهندسية: كل حقل وبند يحسب على حِدَة */}
+              {/* Totals Row (Matching Classic Form Style) */}
+              <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, borderTop: '3px solid #000000' }}>
+                <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1rem', textAlign: 'center' }}>
+                  الإجمالي العام للأعمال المنفذة
+                </td>
+                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
+                  {fmtNum(calculatedTotals.totalLength)}
+                </td>
+                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
+                  {fmtNum(calculatedTotals.totalArea)}
+                </td>
+                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '0.88rem' }}>
+                  {calculatedTotals.itemsCount} بنود منجزة
+                </td>
+                <td style={{ border: '2px solid #000000', padding: '0.75rem' }} className="no-print"></td>
+              </tr>
             </tbody>
           </table>
         </div>
-
-        {/* ملخص كميات البنود المنفذة (حساب وتجميع كل بند على حِدَة) */}
-        {Array.isArray(calculatedTotals?.itemSummaries) && calculatedTotals.itemSummaries.length > 0 && (
-          <div style={{
-            marginTop: '1.25rem',
-            border: '2px solid #000000',
-            borderRadius: '6px',
-            padding: '0.75rem 1rem',
-            background: '#f8fafc',
-            pageBreakInside: 'avoid'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottom: '2px solid #000000',
-              paddingBottom: '0.45rem',
-              marginBottom: '0.65rem'
-            }}>
-              <span style={{ fontWeight: 900, fontSize: '0.95rem', color: '#000000' }}>
-                📊 ملخص كميات الأعمال المنجزة (حساب وتجميع كل بند على حِدَة):
-              </span>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>
-                إجمالي {(calculatedTotals?.itemSummaries || []).length} بنود تشغيلية مستقلة
-              </span>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '0.5rem'
-            }}>
-              {(calculatedTotals?.itemSummaries || []).map((it, idx) => (
-                <div key={idx} style={{
-                  background: '#ffffff',
-                  border: '1.5px solid #000000',
-                  borderRadius: '4px',
-                  padding: '0.5rem 0.75rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '0.84rem'
-                }}>
-                  <div style={{ fontWeight: 800, color: '#000000' }}>
-                    <span>{it.name}</span>
-                    {it.count > 1 && (
-                      <span style={{ color: '#2563eb', fontSize: '0.74rem', marginRight: '4px' }}>
-                        ({it.count} قطاعات)
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
-                    {it.totalLength > 0 && <span><strong>{fmtNum(it.totalLength)}</strong> م.ط</span>}
-                    {it.totalArea > 0 && (
-                      <span style={{ marginRight: '6px', color: '#047857' }}>
-                        {' | '}<strong>{fmtNum(it.totalArea)}</strong> م²
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
 
         {/* Dual Signatures Block (Matching Image 1 Exactly) */}
@@ -1458,6 +1409,147 @@ export const RoadDailyReportForm = ({
         </div>
 
       </div>
+
+      {/* Forward Modal Portal */}
+      {showForwardModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          direction: 'rtl',
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '560px',
+            width: '100%',
+            padding: '1.75rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
+                  <Send size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>إحالة التقرير اليومي عبر البريد والمراسلات</h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>إرسال التقرير رقم ({createdReportForForward?.reportNumber || reportData.reportNumber}) مباشرة لحساب المسؤول</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowForwardModal(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.45rem' }}>
+                  إرسال التقرير إلى المسؤول:
+                </label>
+                <select
+                  value={forwardRecipient}
+                  onChange={(e) => setForwardRecipient(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    background: '#fff'
+                  }}
+                >
+                  <option value="all">📢 تعميم لجميع أعضاء جهاز الإشراف (الكل - 5 مهندسين)</option>
+                  {officialSupervisors.map(u => (
+                    <option key={u.username} value={u.username}>
+                      {u.name} - ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.45rem' }}>
+                  نص المراسلة المرافقة للتقرير:
+                </label>
+                <textarea
+                  rows={3}
+                  value={forwardNote}
+                  onChange={(e) => setForwardNote(e.target.value)}
+                  placeholder="نحيل إليكم التقرير اليومي المعتمد للإحاطة والمتابعة..."
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    color: '#0f172a'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  disabled={isForwarding}
+                  onClick={handleForwardReport}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: '#0284c7',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.92rem',
+                    fontWeight: 800,
+                    cursor: isForwarding ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <Send size={16} />
+                  <span>{isForwarding ? 'جاري الإرسال...' : 'تأكيد الإرسال بالبريد'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForwardModal(false)}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '8px',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: '#475569',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Official Print Modal Portal */}
       {showPrintModal && (

@@ -276,7 +276,9 @@ export const Sidebar = ({
         <nav className="sidebar-app-nav">
           {menuGroups.map((group, gIdx) => {
             const visibleItems = group.items.filter(item => {
-              if (isDev) return true;
+              if (isDev || isProjectManager) return true;
+              // Core supervisor sections (create-report, dashboard, road-progress) always remain accessible
+              if (item.id === 'create-report' || item.id === 'dashboard' || item.id === 'road-progress') return true;
               if (Array.isArray(userAllowedSections) && userAllowedSections.length > 0) {
                 return userAllowedSections.includes(item.id);
               }

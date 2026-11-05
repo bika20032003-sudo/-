@@ -3,6 +3,8 @@ const path = require('path');
 
 const filesToSync = [
   'src/components/ExecutiveProgressForm.jsx',
+  'src/components/RoadDailyReportForm.jsx',
+  'src/components/FuelDailyReportForm.jsx',
   'src/components/OfficialPrintModal.jsx',
   'src/components/CreateFuelReportModal.jsx',
   'src/components/TwoPhaseDailyReportForm.jsx',

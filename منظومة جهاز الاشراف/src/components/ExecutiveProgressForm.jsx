@@ -1518,6 +1518,147 @@ export const ExecutiveProgressForm = ({
         </div>
       </div>
 
+      {/* Forward Modal Portal */}
+      {showForwardModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          direction: 'rtl',
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '560px',
+            width: '100%',
+            padding: '1.75rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
+                  <Send size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>إحالة تقرير الموقف التنفيذي للمراسلات</h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>إرسال التقرير رقم ({data.reportNumber}) مباشرة لحساب المسؤول</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowForwardModal(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.45rem' }}>
+                  إرسال التقرير إلى المسؤول:
+                </label>
+                <select
+                  value={forwardRecipient}
+                  onChange={(e) => setForwardRecipient(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    background: '#fff'
+                  }}
+                >
+                  <option value="all">📢 تعميم لجميع أعضاء جهاز الإشراف (الكل - 5 مهندسين)</option>
+                  {officialSupervisors.map(u => (
+                    <option key={u.username} value={u.username}>
+                      {u.name} - ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.45rem' }}>
+                  نص المراسلة المرافقة للتقرير:
+                </label>
+                <textarea
+                  rows={3}
+                  value={forwardNote}
+                  onChange={(e) => setForwardNote(e.target.value)}
+                  placeholder="نحيل إليكم التقرير المعتمد للموقف التنفيذي للإحاطة والمتابعة..."
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    color: '#0f172a'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  disabled={isForwarding}
+                  onClick={handleForwardReport}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: '#0284c7',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.92rem',
+                    fontWeight: 800,
+                    cursor: isForwarding ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <Send size={16} />
+                  <span>{isForwarding ? 'جاري الإرسال...' : 'تأكيد الإرسال بالبريد'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForwardModal(false)}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '8px',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: '#475569',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Official Print Modal (Direct trigger from Form) */}
       <StationQuantitiesModal
         isOpen={showStationModal}

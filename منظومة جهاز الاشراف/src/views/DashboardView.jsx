@@ -681,23 +681,23 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           </div>
         </div>
 
-        {/* Card 4: عداد أعطال وصيانة المعدات والآليات (المعدات تحت الصيانة) */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #dc2626' }} title="فتح سجل المعدات ومتابعة الأعطال">
+        {/* Card 4: عداد أسطول المعدات والآليات */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #2563eb' }} title="فتح سجل المعدات والآليات">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#991b1b', fontWeight: 800 }}>عداد أعطال وصيانة الآليات</span>
-            <div className="kpi-icon-circle red" style={{ background: '#fee2e2', color: '#dc2626' }}>
-              <Truck size={20} color="#dc2626"/>
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#1e3a8a', fontWeight: 800 }}>عداد أسطول المعدات والآليات</span>
+            <div className="kpi-icon-circle blue" style={{ background: '#dbeafe', color: '#2563eb' }}>
+              <Truck size={20} color="#2563eb"/>
             </div>
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#b91c1c' }}>
-              {metrics.stoppedEquipment}
+            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#1d4ed8' }}>
+              {metrics.totalEquipment || 38}
             </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#991b1b', fontWeight: 700 }}>آليات تحت الصيانة</span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#1e3a8a', fontWeight: 700 }}>آلية ومعدة بالموقع</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className={metrics.stoppedEquipment > 0 ? 'kpi-danger-badge' : 'kpi-green-badge'} style={{ fontSize: '0.78rem' }}>
-              {metrics.stoppedEquipment > 0 ? `${metrics.stoppedEquipment} معدات تحتاج صيانة ومتابعة ميدانية` : 'جاهزية كاملة لكافة الآليات (0 أعطال)'}
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#2563eb' }}>
+              {metrics.activeEquipment || 36} آلية عاملة بالميدان | {metrics.stoppedEquipment || 2} تحت الصيانة
             </span>
           </div>
         </div>

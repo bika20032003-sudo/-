@@ -115,7 +115,18 @@ export const TwoPhaseDailyReportForm = ({
     let isMounted = true;
     const loadReportData = async () => {
       try {
-        const res = await fastFetch('http://localhost:5000/api/two-phase-report');
+        const localSaved = getStoredTwoPhaseReport();
+        if (localSaved && Array.isArray(localSaved.phase1Items) && localSaved.phase1Items.length > 0) {
+          if (localSaved.dateFormatted) setReportDate(localSaved.dateFormatted);
+          if (localSaved.dayName) setDayName(localSaved.dayName);
+          if (localSaved.reportNumber) setReportNumber(localSaved.reportNumber);
+          if (localSaved.sectorDirector) setSectorDirector(localSaved.sectorDirector);
+          if (localSaved.ownerRepresentative) setOwnerRepresentative(localSaved.ownerRepresentative);
+          setPhase1Items(localSaved.phase1Items);
+          if (Array.isArray(localSaved.phase2Items)) setPhase2Items(localSaved.phase2Items);
+          if (Array.isArray(localSaved.remainingItems)) setRemainingItems(localSaved.remainingItems);
+        }
+        const res = await fastFetch('/api/two-phase-report');
         if (isMounted && res?.data && Array.isArray(res.data.phase1Items) && res.data.phase1Items.length > 0) {
           const rep = res.data;
           if (rep.dateFormatted) setReportDate(rep.dateFormatted);
@@ -491,7 +502,17 @@ export const TwoPhaseDailyReportForm = ({
 
   // Forward Report via messaging
   const handleForwardReport = async () => {
-    if (!createdReport) return;
+    let rep = createdReport || getStoredTwoPhaseReport();
+    if (!rep) {
+      rep = {
+        id: Date.now(),
+        reportNumber,
+        dateFormatted: reportDate,
+        dayName,
+        title: `بيان أعمال إنجاز المرحلتين يوم ${dayName} ${reportDate}`,
+        twoPhaseTotals: { todayMeters: totalTodayMeters, totalCumulativeMeters }
+      };
+    }
     setIsForwarding(true);
 
     const officialSupervisors = [
@@ -521,10 +542,10 @@ export const TwoPhaseDailyReportForm = ({
           toRole: targetUser.role,
           type: 'تقرير إنجاز المرحلتين',
           subject: 'إحالة تقرير الأعمال المنجزة للمرحلتين - ' + dayName + ' ' + reportDate,
-          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد للأعمال المنجزة للمرحلتين الأولى والثانية بطريق أوباري غات. إنجاز اليوم: ' + (createdReport?.twoPhaseTotals?.todayMeters || totalTodayMeters) + ' م.ط، الإجمالي التراكمي: ' + (createdReport?.twoPhaseTotals?.totalCumulativeMeters || totalCumulativeMeters) + ' م.ط.'),
-          reportId: createdReport.id,
-          reportNumber: createdReport.reportNumber,
-          reportData: createdReport,
+          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد للأعمال المنجزة للمرحلتين الأولى والثانية بطريق أوباري غات. إنجاز اليوم: ' + (rep?.twoPhaseTotals?.todayMeters || totalTodayMeters) + ' م.ط، الإجمالي التراكمي: ' + (rep?.twoPhaseTotals?.totalCumulativeMeters || totalCumulativeMeters) + ' م.ط.'),
+          reportId: rep.id,
+          reportNumber: rep.reportNumber,
+          reportData: rep,
           date: new Date().toISOString(),
           isRead: false
         };
@@ -578,6 +599,11 @@ export const TwoPhaseDailyReportForm = ({
     const basicItems = items.filter(i => i.category === 'basic');
     const additionalItems = items.filter(i => i.category === 'additional');
 
+    const sumPrev = items.reduce((acc, c) => acc + (parseFloat(c.previousMeters) || 0), 0);
+    const sumToday = items.reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0);
+    const sumTotal = items.reduce((acc, c) => acc + (parseFloat(c.totalMeters) || 0), 0);
+    const sumTarget = items.reduce((acc, c) => acc + (parseFloat(c.dailyTarget) || 0), 0);
+
     return (
       <div style={{
         background: '#ffffff',
@@ -600,13 +626,14 @@ export const TwoPhaseDailyReportForm = ({
           {title}
         </div>
 
-        <div className="responsive-table-wrap"><table style={{ minWidth: '680px', width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
+        <div className="responsive-table-wrap"><table style={{ minWidth: '760px', width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ background: '#f1f5f9', color: '#1e293b', borderBottom: '2px solid #cbd5e1' }}>
               <th style={{ padding: '8px 4px', width: '38px', borderRight: '1px solid #e2e8f0' }}>م</th>
               <th style={{ padding: '8px 8px', textAlign: 'right', borderRight: '1px solid #e2e8f0' }}>الوصف</th>
+              <th style={{ padding: '8px 6px', width: '110px', borderRight: '1px solid #e2e8f0' }}>السابق (م.ط)</th>
               <th style={{ padding: '8px 6px', width: '120px', borderRight: '1px solid #e2e8f0' }}>إنجاز اليوم (م.ط)</th>
-              <th style={{ padding: '8px 6px', width: '120px', borderRight: '1px solid #e2e8f0' }}>الإجمالي (م.ط)</th>
+              <th style={{ padding: '8px 6px', width: '120px', borderRight: '1px solid #e2e8f0' }}>الإجمالي التراكمي (م.ط)</th>
               <th style={{ padding: '8px 6px', width: '110px', borderRight: '1px solid #e2e8f0' }}>المستهدف اليومي</th>
               <th style={{ padding: '8px 6px', width: '110px', borderRight: '1px solid #e2e8f0' }}>الزيادة / النقصان</th>
               <th style={{ padding: '8px 6px', minWidth: '130px' }}>ملاحظات</th>
@@ -629,6 +656,26 @@ export const TwoPhaseDailyReportForm = ({
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, display: 'inline-block' }} />
                     <span>{item.name}</span>
                   </div>
+                </td>
+                <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
+                  <input
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
+                    step="any"
+                    value={toCleanLatinDigits(item.previousMeters)}
+                    onChange={(e) => onUpdate(item.id, 'previousMeters', e.target.value)}
+                    placeholder="0.00"
+                    style={{
+                      width: '100%',
+                      padding: '5px 6px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      background: '#f8fafc',
+                      color: '#475569'
+                    }}
+                    title="الإجمالي القديم المعتمد (السابق)"
+                  />
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
                   <input
@@ -740,6 +787,26 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
+                    value={toCleanLatinDigits(item.previousMeters)}
+                    onChange={(e) => onUpdate(item.id, 'previousMeters', e.target.value)}
+                    placeholder="0.00"
+                    style={{
+                      width: '100%',
+                      padding: '5px 6px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      background: '#f8fafc',
+                      color: '#475569'
+                    }}
+                    title="الإجمالي القديم المعتمد (السابق)"
+                  />
+                </td>
+                <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0' }}>
+                  <input
+                    type="text" inputMode="decimal" dir="ltr" lang="en"
+                    step="any"
                     value={toCleanLatinDigits(item.todayMeters)}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
                     placeholder="0.00"
@@ -824,6 +891,28 @@ export const TwoPhaseDailyReportForm = ({
                 </td>
               </tr>
             ))}
+
+            {/* Total Row */}
+            <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '2px solid #000000', color: '#000000' }}>
+              <td colSpan={2} style={{ padding: '8px', textAlign: 'center', fontSize: '0.92rem' }}>
+                الإجمالي العام للمرحلة
+              </td>
+              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1' }} dir="ltr">
+                {sumPrev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1', color: '#1d4ed8' }} dir="ltr">
+                {sumToday.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1', color: '#15803d' }} dir="ltr">
+                {sumTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1' }} dir="ltr">
+                {sumTarget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+              <td colSpan={2} style={{ padding: '8px', fontSize: '0.8rem', color: '#64748b' }}>
+                {items.length} بنود تشغيلية
+              </td>
+            </tr>
           </tbody>
         </table>
         </div>

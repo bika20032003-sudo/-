@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Fuel, Printer, Save, RefreshCw, Plus, Trash2, 
   CheckCircle2, AlertCircle, Edit3, Eye, FileSpreadsheet, 
-  Calendar, Droplets, MapPin, ShieldCheck, UserCheck
+  Calendar, Droplets, MapPin, ShieldCheck, UserCheck, Send
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
@@ -71,6 +71,79 @@ export const FuelDailyReportForm = ({
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [createdReportForForward, setCreatedReportForForward] = useState(null);
+  const [forwardRecipient, setForwardRecipient] = useState('all');
+  const [forwardNote, setForwardNote] = useState('');
+  const [isForwarding, setIsForwarding] = useState(false);
+
+  const officialSupervisors = [
+    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
+  ];
+
+  const handleForwardReport = async () => {
+    const rep = createdReportForForward || getFullPrintableReport();
+    setIsForwarding(true);
+    const isAll = forwardRecipient === 'all';
+    const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
+
+    try {
+      const newMsgs = [];
+      for (const targetUser of targets) {
+        const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          fromUsername: currentUser?.username || 'user',
+          fromName: currentUser?.name || rep.fuelOfficer || 'مسؤول إدارة الوقود',
+          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'تقرير الوقود اليومي',
+          subject: 'إحالة تقرير كميات الوقود اليومية - ' + rep.dayName + ' ' + rep.reportDate,
+          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد لكميات الوقود وصهاريج التخزين لطريق أوباري - غات. الرصيد المتبقي: ' + fmtNum(calculatedTotals.totalRemaining) + ' لتر.'),
+          reportId: rep.id,
+          reportNumber: rep.reportNumber,
+          reportData: rep,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        };
+        newMsgs.push(messagePayload);
+        try {
+          await fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          });
+        } catch (e) {}
+      }
+      try {
+        const sysMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sysMsgs]));
+        const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+
+      setShowForwardModal(false);
+      const recipientText = isAll ? 'كافة أعضاء جهاز الإشراف' : targets[0].name;
+      setStatusMessage({
+        type: 'success',
+        text: 'تم إرسال تقرير الوقود بنجاح إلى (' + recipientText + ')!'
+      });
+      if (onNavigateTab) {
+        setTimeout(() => onNavigateTab('messages'), 1200);
+      }
+    } catch (err) {
+      console.error(err);
+      setShowForwardModal(false);
+    } finally {
+      setIsForwarding(false);
+    }
+  };
 
   const locationPresets = ['107', '240', 'الكسارات', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
 
@@ -354,6 +427,8 @@ export const FuelDailyReportForm = ({
         window.dispatchEvent(new CustomEvent('fuel-updated', { detail: printableObj }));
       } catch (e) {}
 
+      setCreatedReportForForward(printableObj);
+      setShowForwardModal(true);
       setStatusMessage({
         type: 'success',
         text: `تم حفظ واعتماد تقرير كميات الوقود اليومية برقم (${printableObj.reportNumber}) بنجاح، وتحديث الأرشيف وقاعدة البيانات.`
@@ -1131,6 +1206,147 @@ export const FuelDailyReportForm = ({
         </div>
 
       </div>
+
+      {/* Forward Modal Portal */}
+      {showForwardModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          direction: 'rtl',
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '560px',
+            width: '100%',
+            padding: '1.75rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c' }}>
+                  <Send size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>إحالة تقرير كميات الوقود للمراسلات</h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>إرسال التقرير رقم ({createdReportForForward?.reportNumber || reportData.reportNumber}) مباشرة لحساب المسؤول</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowForwardModal(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.45rem' }}>
+                  إرسال التقرير إلى المسؤول:
+                </label>
+                <select
+                  value={forwardRecipient}
+                  onChange={(e) => setForwardRecipient(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    background: '#fff'
+                  }}
+                >
+                  <option value="all">📢 تعميم لجميع أعضاء جهاز الإشراف (الكل - 5 مهندسين)</option>
+                  {officialSupervisors.map(u => (
+                    <option key={u.username} value={u.username}>
+                      {u.name} - ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.45rem' }}>
+                  نص المراسلة المرافقة للتقرير:
+                </label>
+                <textarea
+                  rows={3}
+                  value={forwardNote}
+                  onChange={(e) => setForwardNote(e.target.value)}
+                  placeholder="نحيل إليكم التقرير اليومي المعتمد للوقود والمخزون..."
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    color: '#0f172a'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  disabled={isForwarding}
+                  onClick={handleForwardReport}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: '#ea580c',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.92rem',
+                    fontWeight: 800,
+                    cursor: isForwarding ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <Send size={16} />
+                  <span>{isForwarding ? 'جاري الإرسال...' : 'تأكيد الإرسال بالبريد'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForwardModal(false)}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: '8px',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: '#475569',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Official Print Modal Portal */}
       {showPrintModal && (
