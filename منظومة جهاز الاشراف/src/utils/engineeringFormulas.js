@@ -244,33 +244,29 @@ export const CERTIFIED_PROJECT_META = {
  */
 export const parseStationToMeters = (stationVal) => {
   if (stationVal === null || stationVal === undefined) return null;
-  const s = String(stationVal).trim();
-  if (!s) return null;
+  const rawStr = toCleanLatinDigits(String(stationVal)).trim();
+  if (!rawStr) return null;
 
-  if (s.includes('+')) {
-    const isNeg = s.startsWith('-');
-    const parts = s.replace(/^-/, '').split('+');
+  if (rawStr.includes('+')) {
+    const isNeg = rawStr.startsWith('-');
+    const parts = rawStr.replace(/^-/, '').split('+');
     const km = parseFloat(parts[0].replace(/[^\d.]/g, '')) || 0;
     const m = parseFloat(parts[1]?.replace(/[^\d.]/g, '')) || 0;
     const total = (km * 1000) + m;
     return isNeg ? -total : total;
   }
 
-  const clean = s.replace(/[^\d.-]/g, '');
+  const clean = rawStr.replace(/[^\d.-]/g, '');
   const num = parseFloat(clean);
   if (isNaN(num)) return null;
 
-  if (s.includes('.') && Math.abs(num) < 1000) {
+  if (rawStr.includes('.') && Math.abs(num) < 1000) {
     return num * 1000;
   }
 
   return num;
 };
 
-/**
- * Automatically compute length from StationFrom and StationTo:
- * Length = Math.abs(To - From)
- */
 export const calculateStationLength = (stationFrom, stationTo) => {
   const fromM = parseStationToMeters(stationFrom);
   const toM = parseStationToMeters(stationTo);
@@ -280,19 +276,45 @@ export const calculateStationLength = (stationFrom, stationTo) => {
   return parseFloat(diff.toFixed(2));
 };
 
-/**
- * Automatically compute Area (m2) based on item type and length
- */
-export const calculateDefaultArea = (itemTitle, length) => {
+export const calculateDefaultArea = (itemTitle, length, customWidth = null) => {
   const l = parseFloat(length);
   if (isNaN(l) || l <= 0) return '';
   const title = (itemTitle || '').toLowerCase();
-  
-  let width = 9.4;
-  if (title.includes('اسفلت') || title.includes('أسفلت')) {
-    width = 9.0;
+
+  let w = 9.4;
+  if (customWidth !== null && customWidth !== undefined && customWidth !== '') {
+    const cw = parseFloat(customWidth);
+    if (!isNaN(cw) && cw > 0) w = cw;
+  } else if (title.includes('اسفلت') || title.includes('أسفلت')) {
+    w = 9.0;
   } else if (title.includes('خدمي') || title.includes('خدمه')) {
     return '';
   }
-  return (l * width).toFixed(2);
+  return (l * w).toFixed(2);
+};
+
+export const calculateRowDimensions = (stationFrom, stationTo, widthVal = null, itemTitle = '') => {
+  const length = calculateStationLength(stationFrom, stationTo);
+  const title = (itemTitle || '').toLowerCase();
+  
+  let width = widthVal !== null && widthVal !== undefined && widthVal !== '' 
+    ? parseFloat(widthVal) 
+    : (title.includes('اسفلت') || title.includes('أسفلت') ? 9.0 : 9.4);
+  
+  if (isNaN(width) || width <= 0) {
+    width = title.includes('اسفلت') || title.includes('أسفلت') ? 9.0 : 9.4;
+  }
+
+  let area = '';
+  if (length !== null && length > 0) {
+    if (!title.includes('خدمي') && !title.includes('خدمه')) {
+      area = (length * width).toFixed(2);
+    }
+  }
+
+  return {
+    length: length !== null ? length.toFixed(2) : '',
+    width: width ? width.toFixed(2) : '',
+    area: area
+  };
 };

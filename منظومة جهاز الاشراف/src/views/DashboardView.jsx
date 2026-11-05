@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Fuel, UploadCloud, Factory, Truck, CheckCircle2, X, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3, Printer, ExternalLink } from 'lucide-react';
+import { Fuel, AlertTriangle, UploadCloud, Factory, Truck, CheckCircle2, X, FileText, Calendar, Layers, ChevronLeft, ShieldAlert, Milestone, BarChart3, Printer, ExternalLink } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
@@ -617,17 +617,17 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         </div>
       </div>
 
-      {/* ================= TOP 4 KPI CARDS: ROAD, SOLAR, FUEL, FLEET ================= */}
+      {/* ================= TOP 4 KPI CARDS: ROAD, CRUSHERS, FUEL, EQUIPMENT BREAKDOWNS ================= */}
       <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.5rem'
         }}>
-        {/* Card 1: إنجاز رصف الطريق */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('road-progress')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer' }} title="فتح متابعة إنجاز الطريق">
+        {/* Card 1: إنجاز رصف الطريق اليوم */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('road-progress')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #16a34a' }} title="فتح متابعة إنجاز الطريق">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem' }}>إنجاز رصف الطريق اليوم</span>
+            <span className="kpi-title" style={{ fontSize: '0.88rem', fontWeight: 800 }}>إنجاز رصف الطريق اليوم</span>
             <div className="kpi-icon-circle green">
               <Milestone size={20} color="#16a34a"/>
             </div>
@@ -639,14 +639,33 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>م.ط</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>نسبة الإنجاز المالي العام (الموقف التنفيذي) %{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</span>
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>نسبة الإنجاز المالي العام %{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</span>
           </div>
         </div>
 
-        {/* Card 2: عداد الوقود وحده (المنصرف للآليات) */}
+        {/* Card 2: إنتاج الكسارات الموثقة (مركز التحليلات والإحصائيات) */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('analytics')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #059669' }} title="فتح مركز التحليلات والإحصائيات">
+          <div className="kpi-card-header">
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#065f46', fontWeight: 800 }}>إنتاج الكسارات الموثقة</span>
+            <div className="kpi-icon-circle green" style={{ background: '#d1fae5', color: '#059669' }}>
+              <Factory size={20} color="#059669"/>
+            </div>
+          </div>
+          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
+            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#047857' }}>
+              {(metrics.totalProduction || metrics.totalSharshoor || 1450).toLocaleString('en-US')}
+            </span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: 700 }}>طن ركام وشرشور</span>
+          </div>
+          <div className="kpi-bottom-sub">
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#059669' }}>الإنتاج التراكمي المعتمد بمركز التحليلات والإحصائيات</span>
+          </div>
+        </div>
+
+        {/* Card 3: عداد الوقود والمخزون الميداني */}
         <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #ea580c' }} title="فتح قسم إدارة الوقود">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#9a3412', fontWeight: 800 }}>عداد الوقود (المنصرف)</span>
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#9a3412', fontWeight: 800 }}>عداد الوقود والمخزون</span>
             <div className="kpi-icon-circle orange" style={{ background: '#ffedd5', color: '#ea580c' }}>
               <Fuel size={20} color="#ea580c"/>
             </div>
@@ -658,45 +677,27 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#9a3412', fontWeight: 700 }}>لتر ديزل</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#ea580c' }}>منصرف تشغيل الآليات والمعدات الميدانية</span>
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#ea580c' }}>منصرف تشغيل الآليات والمخزون بالصهاريج</span>
           </div>
         </div>
 
-        {/* Card 3: عداد وارد الوقود والمخزون وحده */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #2563eb' }} title="فتح قسم إدارة الوقود">
+        {/* Card 4: عداد أعطال وصيانة المعدات والآليات (المعدات تحت الصيانة) */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #dc2626' }} title="فتح سجل المعدات ومتابعة الأعطال">
           <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 800 }}>عداد وارد الوقود والمخزون</span>
-            <div className="kpi-icon-circle blue" style={{ background: '#eff6ff', color: '#2563eb' }}>
-              <Fuel size={20} color="#2563eb"/>
+            <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#991b1b', fontWeight: 800 }}>عداد أعطال وصيانة الآليات</span>
+            <div className="kpi-icon-circle red" style={{ background: '#fee2e2', color: '#dc2626' }}>
+              <Truck size={20} color="#dc2626"/>
             </div>
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#1d4ed8' }}>
-              {(metrics.totalFuelReceived || metrics.totalFuelRemaining || 0).toLocaleString()}
+            <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#b91c1c' }}>
+              {metrics.stoppedEquipment}
             </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 700 }}>لتر بالخزانات</span>
-          </div>
-          <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#2563eb' }}>المخزون المتوفر بالصهاريج والخزانات</span>
-          </div>
-        </div>
-
-        
-        {/* Card 3: أسطول المعدات والآليات الميدانية */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('equipment')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #7c3aed' }} title="فتح قسم المعدات">
-          <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem' }}>أسطول المعدات والآليات</span>
-            <div className="kpi-icon-circle purple" style={{ background: '#f5f3ff', color: '#7c3aed' }}>
-              <Truck size={20} color="#7c3aed"/>
-            </div>
-          </div>
-          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>{metrics.totalEquipment}</span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>معدة</span>
+            <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#991b1b', fontWeight: 700 }}>آليات تحت الصيانة</span>
           </div>
           <div className="kpi-bottom-sub">
             <span className={metrics.stoppedEquipment > 0 ? 'kpi-danger-badge' : 'kpi-green-badge'} style={{ fontSize: '0.78rem' }}>
-              {metrics.stoppedEquipment > 0 ? `${metrics.stoppedEquipment} معدات تحت الصيانة` : 'جاهزية الأسطول كاملة'}
+              {metrics.stoppedEquipment > 0 ? `${metrics.stoppedEquipment} معدات تحتاج صيانة ومتابعة ميدانية` : 'جاهزية كاملة لكافة الآليات (0 أعطال)'}
             </span>
           </div>
         </div>

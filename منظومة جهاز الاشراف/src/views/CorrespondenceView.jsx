@@ -30,7 +30,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const username = currentUser?.username || 'admin';
 
   const officialSupervisors = [
-    { username: 'admin', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', badge: 'إشراف عام' },
+    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', badge: 'إشراف عام' },
     { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف', badge: 'رئاسة الجهاز' },
     { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة', badge: 'ضبط الجودة' },
     { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)', badge: 'المرحلة الأولى' },
@@ -88,7 +88,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
   // Filter messages for Inbox vs Sent
   const inboxMessages = messages.filter(m => 
-    m.toUsername === username || m.toUsername === 'all' || (!m.toUsername && m.fromUsername !== username)
+    (m.toUsername === username || m.toUsername === 'all' || ((username === 'admin' || username === 'project_manager') && (m.toUsername === 'admin' || m.toUsername === 'project_manager')) || (!m.toUsername && m.fromUsername !== username))
   );
 
   const sentMessages = messages.filter(m => 

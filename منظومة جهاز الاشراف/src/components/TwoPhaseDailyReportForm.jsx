@@ -168,7 +168,7 @@ export const TwoPhaseDailyReportForm = ({
     });
   }, [phase1Items, phase2Items, combinedCustom]);
 
-  // Handlers for Phase 1 updates
+    // Handlers for Phase 1 updates
   const handleUpdatePhase1 = (id, field, value) => {
     const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget' || field === 'previousMeters') 
       ? toCleanLatinDigits(value) 
@@ -177,16 +177,26 @@ export const TwoPhaseDailyReportForm = ({
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
       if (field === 'todayMeters') {
-        const prevM = item.previousMeters !== undefined ? parseFloat(item.previousMeters) : (parseFloat(item.totalMeters || 0) - parseFloat(item.todayMeters || 0));
-        const todayM = parseFloat(cleanVal || 0);
-        const newTotal = (isNaN(prevM) ? 0 : prevM) + (isNaN(todayM) ? 0 : todayM);
+        const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseFloat(item.previousMeters)))
+          ? parseFloat(item.previousMeters)
+          : Math.max(0, (parseFloat(item.totalMeters) || 0) - (parseFloat(item.todayMeters) || 0));
+        const todayM = parseFloat(cleanVal) || 0;
+        const newTotal = prevM + todayM;
+        updated.previousMeters = String(prevM);
+        updated.todayMeters = cleanVal;
         updated.totalMeters = String(newTotal);
         const target = parseFloat(item.dailyTarget || 800);
         updated.varianceMeters = (todayM - target).toFixed(2);
+      } else if (field === 'previousMeters') {
+        const prevM = parseFloat(cleanVal) || 0;
+        const todayM = parseFloat(item.todayMeters) || 0;
+        updated.previousMeters = cleanVal;
+        updated.totalMeters = String(prevM + todayM);
       } else if (field === 'totalMeters') {
-        const totM = parseFloat(cleanVal || 0);
-        const todayM = parseFloat(item.todayMeters || 0);
-        updated.previousMeters = Math.max(0, totM - todayM);
+        const totM = parseFloat(cleanVal) || 0;
+        const todayM = parseFloat(item.todayMeters) || 0;
+        updated.totalMeters = cleanVal;
+        updated.previousMeters = String(Math.max(0, totM - todayM));
       } else if (field === 'dailyTarget') {
         const todayM = parseFloat(item.todayMeters || 0);
         const target = parseFloat(cleanVal || 800);
@@ -205,16 +215,26 @@ export const TwoPhaseDailyReportForm = ({
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
       if (field === 'todayMeters') {
-        const prevM = item.previousMeters !== undefined ? parseFloat(item.previousMeters) : (parseFloat(item.totalMeters || 0) - parseFloat(item.todayMeters || 0));
-        const todayM = parseFloat(cleanVal || 0);
-        const newTotal = (isNaN(prevM) ? 0 : prevM) + (isNaN(todayM) ? 0 : todayM);
+        const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseFloat(item.previousMeters)))
+          ? parseFloat(item.previousMeters)
+          : Math.max(0, (parseFloat(item.totalMeters) || 0) - (parseFloat(item.todayMeters) || 0));
+        const todayM = parseFloat(cleanVal) || 0;
+        const newTotal = prevM + todayM;
+        updated.previousMeters = String(prevM);
+        updated.todayMeters = cleanVal;
         updated.totalMeters = String(newTotal);
         const target = parseFloat(item.dailyTarget || 800);
         updated.varianceMeters = (todayM - target).toFixed(2);
+      } else if (field === 'previousMeters') {
+        const prevM = parseFloat(cleanVal) || 0;
+        const todayM = parseFloat(item.todayMeters) || 0;
+        updated.previousMeters = cleanVal;
+        updated.totalMeters = String(prevM + todayM);
       } else if (field === 'totalMeters') {
-        const totM = parseFloat(cleanVal || 0);
-        const todayM = parseFloat(item.todayMeters || 0);
-        updated.previousMeters = Math.max(0, totM - todayM);
+        const totM = parseFloat(cleanVal) || 0;
+        const todayM = parseFloat(item.todayMeters) || 0;
+        updated.totalMeters = cleanVal;
+        updated.previousMeters = String(Math.max(0, totM - todayM));
       } else if (field === 'dailyTarget') {
         const todayM = parseFloat(item.todayMeters || 0);
         const target = parseFloat(cleanVal || 800);
@@ -595,7 +615,7 @@ export const TwoPhaseDailyReportForm = ({
           <tbody>
             {/* Sub-header: بنود أساسية */}
             <tr style={{ background: '#e2e8f0', color: '#0f172a', fontWeight: 800 }}>
-              <td colSpan={7} style={{ padding: '5px 12px', textAlign: 'right', fontSize: '0.82rem' }}>
+              <td colSpan={8} style={{ padding: '5px 12px', textAlign: 'right', fontSize: '0.82rem' }}>
                 📌 بنود أساسية
               </td>
             </tr>
@@ -701,7 +721,7 @@ export const TwoPhaseDailyReportForm = ({
 
             {/* Sub-header: بنود إضافية */}
             <tr style={{ background: '#e2e8f0', color: '#0f172a', fontWeight: 800 }}>
-              <td colSpan={7} style={{ padding: '5px 12px', textAlign: 'right', fontSize: '0.82rem' }}>
+              <td colSpan={8} style={{ padding: '5px 12px', textAlign: 'right', fontSize: '0.82rem' }}>
                 📌 بنود إضافية
               </td>
             </tr>

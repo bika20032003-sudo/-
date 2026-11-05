@@ -5,6 +5,8 @@ const filesToSync = [
   'src/components/ExecutiveProgressForm.jsx',
   'src/components/OfficialPrintModal.jsx',
   'src/components/CreateFuelReportModal.jsx',
+  'src/components/TwoPhaseDailyReportForm.jsx',
+  'src/components/ErrorBoundary.jsx',
   'src/components/Sidebar.jsx',
   'src/components/AIAgentWidget.jsx',
   'src/views/DashboardView.jsx',
@@ -16,7 +18,11 @@ const filesToSync = [
   'src/views/ReportsArchiveView.jsx',
   'src/views/FuelView.jsx',
   'src/views/TargetedWorksView.jsx',
+  'src/views/CorrespondenceView.jsx',
   'src/utils/aiAgentEngine.js',
+  'src/utils/engineeringFormulas.js',
+  'src/utils/twoPhaseSync.js',
+  'src/utils/apiCache.js',
   'src/index.css',
   'src/premium-ui.css'
 ];

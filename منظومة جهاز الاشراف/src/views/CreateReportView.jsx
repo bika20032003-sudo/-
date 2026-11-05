@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   FilePlus, Send, Printer, CheckCircle2, AlertCircle, RefreshCw, 
   MapPin, Calendar, Clock, Layers, Fuel, Truck, Milestone, 
@@ -7,7 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
-import { calculateStationLength, calculateDefaultArea } from '../utils/engineeringFormulas.js';
+import { calculateStationLength, calculateDefaultArea, calculateRowDimensions } from '../utils/engineeringFormulas.js';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
 import { ExecutiveProgressForm } from '../components/ExecutiveProgressForm';
@@ -1774,6 +1774,64 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
             </div>
           </div>
 
+                    {/* ملخص كميات الأعمال المستهدفة (حساب كل بند على حِدَة) */}
+          {Array.isArray(targetedItemSummaries) && targetedItemSummaries.length > 0 && (
+            <div style={{
+              marginTop: '1rem',
+              border: '2px solid #000000',
+              borderRadius: '6px',
+              padding: '0.75rem 1rem',
+              background: '#f8fafc'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '2px solid #000000',
+                paddingBottom: '0.45rem',
+                marginBottom: '0.65rem'
+              }}>
+                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: '#000000' }}>
+                  📊 ملخص كميات الأعمال المستهدفة (حساب كل بند على حِدَة):
+                </span>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>
+                  إجمالي {targetedItemSummaries.length} بنود مستهدفة مستقلة
+                </span>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: '0.45rem'
+              }}>
+                {targetedItemSummaries.map((it, idx) => (
+                  <div key={idx} style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #000000',
+                    borderRadius: '4px',
+                    padding: '0.45rem 0.65rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ fontWeight: 800, color: '#000000' }}>
+                      <span>{it.name}</span>
+                      {it.count > 1 && (
+                        <span style={{ color: '#0284c7', fontSize: '0.72rem', marginRight: '4px' }}>
+                          ({it.count} مواقع)
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontWeight: 900, color: '#0f172a', direction: 'ltr' }}>
+                      {it.totalLength > 0 && <span><strong>{it.totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> م.ط</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Dual Signatures */}
           <div style={{
             display: 'flex',
@@ -2503,7 +2561,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>إحالة التقرير اليومي عبر البريد والمراسلات</h3>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>إرسال التقرير رقم ({createdReport?.reportNumber}) مباشرة لحساب المسؤول</p>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>إرسال التقرير رقم ({createdReport?.reportNumber || reportNumber}) مباشرة لحساب المسؤول</p>
                 </div>
               </div>
 
