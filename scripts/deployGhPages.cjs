@@ -25,7 +25,12 @@ try {
   run('git pull origin gh-pages');
 
   // Copy temp contents into root
-  fs.cpSync(tempDir, root, { recursive: true });
+  const items = fs.readdirSync(tempDir);
+  items.forEach(item => {
+    const src = path.join(tempDir, item);
+    const dest = path.join(root, item);
+    fs.cpSync(src, dest, { recursive: true, force: true });
+  });
   console.log('Overwrote root with new build files.');
 
   // Clean temp
