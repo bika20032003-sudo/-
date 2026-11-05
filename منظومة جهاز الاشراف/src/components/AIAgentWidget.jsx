@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Sparkles, X, Send, Copy, Check, RefreshCw, Key, 
-  ChevronDown, Maximize2, Minimize2, MessageSquare, ShieldCheck, 
-  Layers, Milestone, Fuel, AlertTriangle, FileText, Zap
+  ChevronDown, Maximize2, Minimize2, Paperclip, FileSpreadsheet,
+  FileText, Image as ImageIcon, Layers, Milestone, Fuel, AlertTriangle, Newspaper
 } from 'lucide-react';
-import { processLocalQuery, callGeminiCloudAgent, getLiveSystemContext, getDefaultApiKey } from '../utils/aiAgentEngine.js';
+import { 
+  processLocalQuery, 
+  callGeminiCloudAgent, 
+  getLiveSystemContext, 
+  getDefaultApiKey,
+  parseUploadedFile,
+  fmt
+} from '../utils/aiAgentEngine.js';
 
 export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,6 +29,11 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
     }
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [isParsingFile, setIsParsingFile] = useState(false);
+
+  const fileInputRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   // Initial welcome message
   const [messages, setMessages] = useState([
@@ -29,22 +41,21 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
       id: 1,
       sender: 'agent',
       time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-      title: 'مرحباً بك! أنا الوكيل الذكي لجهاز الإشراف والمتابعة',
+      title: 'مرحباً بك! أنا مساعد جهاز الإشراف والمتابعة',
       text: `أهلاً بك يا باشمهندس **${currentUser?.name || ''}**.
 أنا مساعدك الهندسي الذكي المعتمد لمشروع **طريق أوباري - غات (360 كم)**.
 
-أنا مربوط مباشرة بكافة أقسام المنظومة وممنوح **كافة الصلاحيات التشغيلية والتحليلية والهندسية الشاملة (عدا صلاحية الحذف لحماية بيانات وسجلات المشروع)**.`,
+أنا مربوط مباشرة بكافة أقسام المنظومة وممنوح **كافة الصلاحيات التشغيلية والتحليلية الشاملة (عدا صلاحية الحذف لحماية بيانات وسجلات المشروع)**.
+يمكنك الآن طلب **المقالة التقريرية لمدير المشروع** أو **رفع مستندات وجداول إكسل** لتحليلها فورياً!`,
       suggestions: [
+        '📰 مقالة المستجدات لمدير المشروع',
         'ما هو الموقف التنفيذي والمالي اليوم؟',
         'كم المتر الطولي الجاهز لطبقة الأسفلت؟',
         'ما هي الفئات التعاقدية للبنود؟',
-        'ما هو رصيد الوقود في المواقع؟',
-        'صياغة تقرير رسمي لمدير المشروع'
+        'ما هو رصيد الوقود في المواقع؟'
       ]
     }
   ]);
-
-  const messagesEndRef = useRef(null);
 
   // Load API Key from localStorage
   useEffect(() => {
@@ -68,7 +79,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading]);
 
   const handleSaveSettings = () => {
     try {
@@ -78,24 +89,46 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
     } catch (_) {}
   };
 
-  const handleSendMessage = async (textToSend) => {
-    const query = (textToSend || inputMessage).trim();
-    if (!query || isLoading) return;
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsParsingFile(true);
+    try {
+      const parsed = await parseUploadedFile(file);
+      setAttachedFile(parsed);
+    } catch (err) {
+      console.error('File parsing error:', err);
+    } finally {
+      setIsParsingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSendMessage = async (textToSend, overrideFile = null) => {
+    const query = (textToSend !== undefined ? textToSend : inputMessage).trim();
+    const fileToProcess = overrideFile || attachedFile;
+
+    if (!query && !fileToProcess) return;
+    if (isLoading) return;
 
     setInputMessage('');
+    setAttachedFile(null);
     const userMsgId = Date.now();
     const currentTime = new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' });
 
-    // Append user message
-    const newMessages = [
-      ...messages,
-      {
-        id: userMsgId,
-        sender: 'user',
-        time: currentTime,
-        text: query
-      }
-    ];
+    const userMessageObj = {
+      id: userMsgId,
+      sender: 'user',
+      time: currentTime,
+      text: query || (fileToProcess ? `يرجى فحص وتحليل هذا المستند المرفق (${fileToProcess.name}) بالتفصيل وتقديم تقرير هندسي لمحتوياته.` : ''),
+      attachedFile: fileToProcess ? {
+        name: fileToProcess.name,
+        size: fileToProcess.size,
+        type: fileToProcess.type
+      } : null
+    };
+
+    const newMessages = [...messages, userMessageObj];
     setMessages(newMessages);
     setIsLoading(true);
 
@@ -105,13 +138,11 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
       let suggestions = [];
 
       if (useCloudLLM && apiKey.trim()) {
-        // Cloud LLM via Gemini API
-        agentReplyText = await callGeminiCloudAgent(apiKey.trim(), query, newMessages);
-        replyTitle = 'تحليل الذكاء الاصطناعي (Gemini Cloud)';
-        suggestions = ['الموقف التنفيذي', 'الجاهز للأسفلت', 'أرصدة الوقود'];
+        agentReplyText = await callGeminiCloudAgent(apiKey.trim(), userMessageObj.text, newMessages, fileToProcess);
+        replyTitle = fileToProcess ? `تحليل المستند: ${fileToProcess.name}` : (query.includes('مقالة') || query.includes('المستجدات') ? 'المقالة التقريرية لمدير المشروع' : 'تحليل مساعد جهاز الإشراف');
+        suggestions = ['📰 مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'الجاهز للأسفلت'];
       } else {
-        // Fast Local NLP Engine with zero latency & 100% offline accuracy
-        const localResult = processLocalQuery(query);
+        const localResult = processLocalQuery(userMessageObj.text, fileToProcess);
         agentReplyText = localResult.content;
         replyTitle = localResult.title;
         suggestions = localResult.quickSuggestions || [];
@@ -136,9 +167,9 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
           sender: 'agent',
           time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
           title: 'تنبيه النظام',
-          text: `⚠️ **حدث تعذر في معالجة الطلب:**\n${err.message || 'يرجى التحقق من الاتصال أو العودة للوضع المحلي المدمج.'}`,
+          text: `⚠️ **تعذر استكمال الاتصال:**\n${err.message || 'تم تحويل الطلب تلقائياً للمحرك المدمج.'}`,
           isError: true,
-          suggestions: ['الموقف التنفيذي والمالي', 'الجاهز للأسفلت', 'رصيد الوقود']
+          suggestions: ['📰 مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'رصيد الوقود']
         }
       ]);
     } finally {
@@ -152,44 +183,55 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
     setTimeout(() => setCopiedIdx(null), 2000);
   };
 
-  const handleClearChat = () => {
-    setMessages([
-      {
-        id: Date.now(),
-        sender: 'agent',
-        time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-        title: 'محادثة جديدة',
-        text: 'تم بدء جلسة محادثة جديدة. تفضل بطرح أي سؤال عن المشروع أو اختيار أحد الإجراءات السريعة أدناه.',
-        suggestions: [
-          'ما هو الموقف التنفيذي والمالي اليوم؟',
-          'كم المتر الطولي الجاهز لطبقة الأسفلت؟',
-          'ما هي الفئات التعاقدية للبنود؟',
-          'ما هو رصيد الوقود في المواقع؟'
-        ]
-      }
-    ]);
-  };
-
-  // Format message text with markdown bold and code
   const renderFormattedText = (rawText) => {
     if (!rawText) return null;
     const lines = rawText.split('\n');
 
     return lines.map((line, lIdx) => {
-      // Bullets
-      const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
-      const isHeader = line.trim().startsWith('#') || line.trim().startsWith('📌') || line.trim().startsWith('📋') || line.trim().startsWith('🚧') || line.trim().startsWith('🛣️') || line.trim().startsWith('⚠️') || line.trim().startsWith('⛽') || line.trim().startsWith('📐') || line.trim().startsWith('📄');
+      const trimmed = line.trim();
+      const isBullet = trimmed.startsWith('•') || trimmed.startsWith('-');
+      const isDivider = trimmed === '---' || trimmed === '***';
+      const isHeader = trimmed.startsWith('#') || trimmed.startsWith('📌') || trimmed.startsWith('📋') || trimmed.startsWith('🚧') || trimmed.startsWith('🛣️') || trimmed.startsWith('⚠️') || trimmed.startsWith('⛽') || trimmed.startsWith('📐') || trimmed.startsWith('📄') || trimmed.startsWith('📰');
 
-      // Simple markdown parser for **bold** and `code`
+      if (isDivider) {
+        return <hr key={lIdx} style={{ margin: '0.65rem 0', borderColor: '#e2e8f0', borderWidth: '1px 0 0' }} />;
+      }
+
+      // Check if table row
+      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        const cells = trimmed.split('|').slice(1, -1);
+        const isSeparatorRow = cells.every(c => c.trim().replace(/-/g, '') === '');
+        if (isSeparatorRow) return null;
+
+        return (
+          <div key={lIdx} style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${cells.length}, 1fr)`,
+            background: lIdx % 2 === 0 ? '#f8fafc' : '#ffffff',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '4px 6px',
+            fontSize: '0.76rem',
+            fontWeight: 600,
+            direction: 'rtl'
+          }}>
+            {cells.map((cell, cIdx) => (
+              <div key={cIdx} style={{ padding: '0 2px', textAlign: 'right' }}>
+                {cell.trim()}
+              </div>
+            ))}
+          </div>
+        );
+      }
+
       const parts = line.split(/(\*\*.*?\*\*|`.*?`)/g);
 
       return (
         <div key={lIdx} style={{
-          marginBottom: line.trim() === '' ? '0.45rem' : '0.25rem',
-          paddingRight: isBullet ? '0.5rem' : '0',
+          marginBottom: trimmed === '' ? '0.35rem' : '0.2rem',
+          paddingRight: isBullet ? '0.45rem' : '0',
           fontWeight: isHeader ? 800 : 500,
-          color: isHeader ? '#0f172a' : 'inherit',
-          fontSize: isHeader ? '0.94rem' : '0.88rem',
+          color: isHeader ? '#0f172a' : '#1e293b',
+          fontSize: isHeader ? '0.9rem' : '0.84rem',
           lineHeight: 1.55
         }}>
           {parts.map((p, pIdx) => {
@@ -200,10 +242,10 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
               return (
                 <code key={pIdx} style={{
                   background: '#f1f5f9',
-                  color: '#1e40af',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  fontSize: '0.84rem',
+                  color: '#1d4ed8',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  fontSize: '0.8rem',
                   fontFamily: "'Segoe UI', Tahoma, Arial, sans-serif",
                   fontWeight: 800,
                   direction: 'ltr',
@@ -222,19 +264,9 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
 
   return (
     <>
-      {/* 1. Floating Launch Button (Fixed Bottom-Left) */}
+      {/* 1. Floating Trigger Button */}
       {!isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '24px',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
+        <div style={{ position: 'fixed', bottom: '24px', left: '24px', zIndex: 99999 }}>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
@@ -260,7 +292,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
               e.currentTarget.style.transform = 'none';
               e.currentTarget.style.boxShadow = '0 8px 24px rgba(37, 99, 235, 0.4), 0 2px 6px rgba(0,0,0,0.1)';
             }}
-            title="فتح الوكيل الذكي لجهاز الإشراف والمتابعة"
+            title="فتح مساعد جهاز الإشراف والمتابعة"
           >
             <div style={{ position: 'relative' }}>
               <Bot size={22} color="#ffffff" />
@@ -278,10 +310,10 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
 
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.9rem', fontWeight: 900, letterSpacing: '-0.2px' }}>
-                الوكيل الذكي (AI)
+                مساعد جهاز الإشراف
               </span>
               <span style={{ fontSize: '0.68rem', color: '#bfdbfe', fontWeight: 700 }}>
-                مساعد الإشراف الهندسي
+                الذكاء الهندسي (AI)
               </span>
             </div>
 
@@ -338,7 +370,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900 }}>
-                    الوكيل الذكي للإشراف
+                    مساعد جهاز الإشراف
                   </h3>
                   <span style={{
                     fontSize: '0.65rem',
@@ -348,47 +380,30 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                     padding: '1px 6px',
                     borderRadius: '10px'
                   }}>
-                    {useCloudLLM ? 'سحابي (Gemini)' : 'محلي (ميداني)'}
+                    {useCloudLLM ? 'Gemini AI' : 'مدمج'}
                   </span>
                 </div>
                 <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                  مشروع صيانة طريق أوباري - غات (360 كم)
+                  طريق أوباري - غات (360 كم)
                 </span>
               </div>
             </div>
 
-            {/* Header Actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
                 style={{
-                  background: showSettings ? '#334155' : 'transparent',
+                  background: showSettings ? 'rgba(255,255,255,0.2)' : 'transparent',
                   border: 'none',
-                  color: '#cbd5e1',
-                  borderRadius: '6px',
+                  color: '#ffffff',
                   padding: '5px',
+                  borderRadius: '6px',
                   cursor: 'pointer'
                 }}
-                title="إعدادات المفتاح السحابي"
+                title="إعدادات المفتاح"
               >
                 <Key size={16} />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClearChat}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#cbd5e1',
-                  borderRadius: '6px',
-                  padding: '5px',
-                  cursor: 'pointer'
-                }}
-                title="مسح المحادثة وبدء جلسة جديدة"
-              >
-                <RefreshCw size={15} />
               </button>
 
               <button
@@ -397,14 +412,14 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#cbd5e1',
-                  borderRadius: '6px',
+                  color: '#ffffff',
                   padding: '5px',
+                  borderRadius: '6px',
                   cursor: 'pointer'
                 }}
-                title={isExpanded ? 'تصغير' : 'تكبير'}
+                title={isExpanded ? 'تصغير النافذة' : 'تكبير النافذة'}
               >
-                {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
               </button>
 
               <button
@@ -413,73 +428,60 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#cbd5e1',
-                  borderRadius: '6px',
+                  color: '#ffffff',
                   padding: '5px',
+                  borderRadius: '6px',
                   cursor: 'pointer'
                 }}
-                title="إغلاق النافذة"
+                title="إغلاق"
               >
                 <X size={18} />
               </button>
             </div>
           </div>
 
-          {/* Settings Panel (Collapsible) */}
+          {/* Quick Settings Panel (Collapsible) */}
           {showSettings && (
             <div style={{
               background: '#f8fafc',
               borderBottom: '1px solid #e2e8f0',
-              padding: '0.85rem 1.15rem',
+              padding: '0.75rem 1rem',
               fontSize: '0.82rem'
             }}>
-              <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Key size={15} color="#2563eb" />
-                <span>إعدادات الاتصال بمحرك الذكاء السحابي (Gemini API):</span>
+              <div style={{ fontWeight: 800, marginBottom: '6px', color: '#0f172a' }}>
+                مفتاح Google Gemini API:
               </div>
-              <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '0.55rem' }}>
-                يعمل الوكيل تلقائياً في الوضع المحلي الفوري بدقة 100% بدون إنترنت. إذا رغبت بإجابات مفتوحة موسعة، أدخل مفتاحك السحابي:
-              </div>
-              <input
-                type="password"
-                placeholder="أدخل مفتاح Gemini API هنا..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.45rem 0.65rem',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '0.82rem',
-                  marginBottom: '0.5rem',
-                  direction: 'ltr',
-                  fontFamily: 'monospace'
-                }}
-              />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 700, color: '#334155' }}>
-                  <input
-                    type="checkbox"
-                    checked={useCloudLLM}
-                    onChange={(e) => setUseCloudLLM(e.target.checked)}
-                  />
-                  <span>تفعيل الوضع السحابي (Cloud LLM)</span>
-                </label>
-
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.78rem',
+                    direction: 'ltr',
+                    fontFamily: 'monospace'
+                  }}
+                />
                 <button
                   type="button"
                   onClick={handleSaveSettings}
                   style={{
                     background: '#2563eb',
-                    color: '#fff',
+                    color: '#ffffff',
                     border: 'none',
-                    padding: '0.35rem 0.85rem',
+                    padding: '4px 10px',
                     borderRadius: '6px',
                     fontWeight: 800,
+                    fontSize: '0.78rem',
                     cursor: 'pointer'
                   }}
                 >
-                  حفظ الإعدادات
+                  حفظ
                 </button>
               </div>
             </div>
@@ -493,7 +495,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
             background: '#f8fafc',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem'
+            gap: '0.85rem'
           }}>
             {messages.map((msg, idx) => {
               const isUser = msg.sender === 'user';
@@ -515,16 +517,16 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                     fontSize: '0.72rem',
                     color: '#64748b'
                   }}>
-                    <span>{isUser ? 'أنت' : 'الوكيل الذكي'}</span>
+                    <span>{isUser ? 'أنت' : 'مساعد جهاز الإشراف'}</span>
                     <span>•</span>
                     <span>{msg.time}</span>
                   </div>
 
                   <div
                     style={{
-                      background: isUser ? '#2563eb' : '#ffffff',
+                      background: isUser ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : '#ffffff',
                       color: isUser ? '#ffffff' : '#1e293b',
-                      padding: '0.75rem 1rem',
+                      padding: '0.85rem 1.05rem',
                       borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       boxShadow: isUser ? '0 2px 6px rgba(37, 99, 235, 0.25)' : '0 2px 8px rgba(0,0,0,0.04)',
                       border: isUser ? 'none' : '1px solid #e2e8f0',
@@ -532,6 +534,23 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                       position: 'relative'
                     }}
                   >
+                    {isUser && msg.attachedFile && (
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '6px',
+                        padding: '4px 8px',
+                        marginBottom: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.74rem'
+                      }}>
+                        <Paperclip size={13} />
+                        <span>مرفق: {msg.attachedFile.name} ({msg.attachedFile.size})</span>
+                      </div>
+                    )}
+
                     {!isUser && msg.title && (
                       <div style={{
                         fontWeight: 900,
@@ -599,11 +618,8 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                             padding: '3px 10px',
                             fontSize: '0.74rem',
                             fontWeight: 800,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
+                            cursor: 'pointer'
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = '#dbeafe'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = '#eff6ff'}
                         >
                           ⚡ {sug}
                         </button>
@@ -624,7 +640,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                   animation: 'bounce 1s infinite'
                 }} />
                 <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>
-                  جاري تحليل البيانات وإعداد الرد الهندسي...
+                  مساعد جهاز الإشراف يحلل البيانات ويعد الرد...
                 </span>
               </div>
             )}
@@ -642,6 +658,23 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
             overflowX: 'auto',
             whiteSpace: 'nowrap'
           }}>
+            <button
+              type="button"
+              onClick={() => handleSendMessage('📰 المقالة التقريرية الشاملة لمدير المشروع')}
+              style={{
+                fontSize: '0.73rem',
+                fontWeight: 900,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: '1px solid #93c5fd',
+                background: '#eff6ff',
+                color: '#1d4ed8',
+                cursor: 'pointer'
+              }}
+            >
+              📰 مقالة المستجدات لمدير المشروع
+            </button>
+
             <button
               type="button"
               onClick={() => handleSendMessage('الموقف التنفيذي والمالي')}
@@ -692,43 +725,35 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
             >
               ⛽ رصيد الوقود
             </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('عائق المرحلة الأولى')}
-              style={{
-                fontSize: '0.73rem',
-                fontWeight: 800,
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                color: '#334155',
-                cursor: 'pointer'
-              }}
-            >
-              ⚠️ العبارة المنهارة
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('صياغة تقرير رسمي للإدارة')}
-              style={{
-                fontSize: '0.73rem',
-                fontWeight: 800,
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                color: '#334155',
-                cursor: 'pointer'
-              }}
-            >
-              📝 كتاب رسمي
-            </button>
           </div>
 
-          {/* Input Box */}
+          {/* Attached File Preview inside Widget */}
+          {attachedFile && (
+            <div style={{
+              background: '#f0fdf4',
+              borderTop: '1px solid #bbf7d0',
+              padding: '4px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.74rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Paperclip size={14} color="#16a34a" />
+                <span style={{ fontWeight: 800, color: '#166534' }}>{attachedFile.name}</span>
+                <span style={{ color: '#15803d' }}>({attachedFile.size})</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAttachedFile(null)}
+                style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Input Box with Attachment Trigger */}
           <div style={{
             background: '#ffffff',
             borderTop: '1px solid #e2e8f0',
@@ -737,6 +762,33 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
             alignItems: 'center',
             gap: '0.5rem'
           }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv,.txt,.json,.pdf,image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileSelect}
+            />
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isParsingFile}
+              style={{
+                background: attachedFile ? '#dcfce7' : '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '6px 8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                color: attachedFile ? '#16a34a' : '#64748b'
+              }}
+              title="إرفاق ملف إكسل أو صورة"
+            >
+              <Paperclip size={16} />
+            </button>
+
             <textarea
               rows={1}
               value={inputMessage}
@@ -747,7 +799,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                   handleSendMessage();
                 }
               }}
-              placeholder="اكتب استفسارك هنا (مثلاً: كم متبقي العقد؟ كم الجاهز للأسفلت؟)..."
+              placeholder={attachedFile ? "اضغط إرسال لتحليل الملف أو اكتب سؤالك..." : "اكتب استفسارك، أو اطلب مقالة لمدير المشروع..."}
               style={{
                 flex: 1,
                 border: '1.5px solid #cbd5e1',
@@ -767,9 +819,9 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
             <button
               type="button"
               onClick={() => handleSendMessage()}
-              disabled={isLoading || !inputMessage.trim()}
+              disabled={isLoading || (!inputMessage.trim() && !attachedFile)}
               style={{
-                background: !inputMessage.trim() || isLoading ? '#94a3b8' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                background: (!inputMessage.trim() && !attachedFile) || isLoading ? '#94a3b8' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -777,7 +829,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: !inputMessage.trim() || isLoading ? 'not-allowed' : 'pointer',
+                cursor: (!inputMessage.trim() && !attachedFile) || isLoading ? 'not-allowed' : 'pointer',
                 boxShadow: '0 2px 6px rgba(37,99,235,0.25)',
                 transition: 'all 0.15s ease'
               }}
@@ -791,5 +843,5 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
     </>
   );
 };
-export default AIAgentWidget;
 
+export default AIAgentWidget;
