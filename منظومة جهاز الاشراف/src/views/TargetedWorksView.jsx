@@ -194,7 +194,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
   });
 
   // Totals across all filtered targeted reports
-  const totalLengthMeters = filteredReports.reduce((sum, r) => sum + (Number(r.totalTargetLength) || Number(r.roadMeters) || 0), 0);
+  // تم إلغاء حساب إجمالي الأطوال لتعارض الجمع الهندسي بين الطبقات المستهدفة
   const totalEquipmentCount = filteredReports.reduce((sum, r) => sum + (Number(r.totalTargetEquipment) || 0), 0);
 
   // Export all targeted works summary to Excel

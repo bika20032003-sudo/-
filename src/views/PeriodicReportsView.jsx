@@ -603,7 +603,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
           toRole: targetUser.role,
           type: periodType === 'weekly' ? 'تقرير أسبوعي مجمع' : 'تقرير شهري مجمع',
           subject: `إحالة ${aggregatedReport.title} - ${aggregatedReport.reportCode}`,
-          content: forwardNote.trim() || (`نحيل إليكم التقرير الدوري المعتمد لأعمال مسار الطريق للفترة من ${startDate} إلى ${endDate}. إجمالي الطول المنجز: ${fmtInt(aggregatedReport.totalPeriodMeters)} م.ط، والقيمة التعاقدية المنفذة: ${fmtNum(aggregatedReport.totalFinancialValue)} د.ل.`),
+          content: forwardNote.trim() || (`نحيل إليكم التقرير الدوري المعتمد لأعمال مسار الطريق للفترة من ${startDate} إلى ${endDate}. القيمة التعاقدية المنفذة: ${fmtNum(aggregatedReport.totalFinancialValue)} د.ل.`),
           reportNumber: aggregatedReport.reportCode,
           reportData: aggregatedReport,
           createdAt: new Date().toISOString(),

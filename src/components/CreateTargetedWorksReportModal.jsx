@@ -127,10 +127,8 @@ export const defaultApprovedTargetedWorksReport = {
   approvedBy: 'م. عبدالرحمن الأنصاري',
   status: 'approved',
   targetedSections: initialTargetedWorksSections,
-  totalTargetLength: 23250,
-  totalTargetEquipment: 121,
-  roadMeters: 23250,
-  notes: 'بيان استهداف الأعمال اليومية والمعدات المطلوبة بموقع طريق أوباري - غات'
+    totalTargetEquipment: 121,
+    notes: 'بيان استهداف الأعمال اليومية والمعدات المطلوبة بموقع طريق أوباري - غات'
 };
 
 export const CreateTargetedWorksReportModal = ({ 
@@ -536,10 +534,8 @@ export const CreateTargetedWorksReportModal = ({
       reportType: 'تقرير الأعمال المستهدفة',
       isTargetedWorksReport: true,
       targetedSections: sections,
-      totalTargetLength,
-      totalTargetEquipment,
-      roadMeters: totalTargetLength,
-      sectorDirector,
+            totalTargetEquipment,
+            sectorDirector,
       ownerRepresentative,
       uploadedBy: currentUser?.name || sectorDirector,
       status: 'approved',
@@ -1451,50 +1447,6 @@ export const CreateTargetedWorksReportModal = ({
               </button>
             </div>
 
-            {/* Dynamic Grouped Summary Per Item (حساب وتجميع كل بند على حدة) */}
-            {targetedItemSummaries.length > 0 && (
-              <div style={{
-                marginTop: '1.25rem',
-                padding: '0.85rem 1rem',
-                borderRadius: '8px',
-                background: '#f8fafc',
-                border: '1.5px solid #cbd5e1'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
-                    📊 ملخص كميات الأعمال المستهدفة (حساب وتجميع كل بند على حدة):
-                  </span>
-                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
-                    إجمالي {targetedItemSummaries.length} بنود مستهدفة
-                  </span>
-                </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '0.65rem'
-                }}>
-                  {targetedItemSummaries.map((it, idx) => (
-                    <div key={idx} style={{
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      padding: '0.6rem 0.85rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.25rem'
-                    }}>
-                      <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#1e293b' }}>
-                        {it.name} {it.count > 1 ? `(${it.count} قطاعات)` : ''}
-                      </div>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0284c7', direction: 'ltr', textAlign: 'right' }}>
-                        {it.totalLength.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style={{ fontSize: '0.76rem', color: '#64748b' }}>م.ط</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Grand Summary Strip */}
             <div style={{
               marginTop: '1.25rem',
@@ -1662,10 +1614,8 @@ export const CreateTargetedWorksReportModal = ({
                   reportType: 'تقرير الأعمال المستهدفة',
                   isTargetedWorksReport: true,
                   targetedSections: sections,
-                  totalTargetLength,
-                  totalTargetEquipment,
-                  roadMeters: totalTargetLength,
-                  sectorDirector,
+                                    totalTargetEquipment,
+                                    sectorDirector,
                   ownerRepresentative,
                   uploadedBy: currentUser?.name || sectorDirector,
                   status: 'approved'

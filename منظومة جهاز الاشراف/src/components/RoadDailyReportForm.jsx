@@ -506,7 +506,7 @@ export const RoadDailyReportForm = ({
           toRole: targetUser.role,
           type: 'تقرير أعمال الطريق اليومي',
           subject: 'إحالة تقرير أعمال الطريق اليومي - ' + rep.dayName + ' ' + rep.reportDate,
-          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد لأعمال الطريق المنفذة بمشروع صيانة طريق أوباري - غات. إجمالي الأطوال: ' + fmtNum(calculatedTotals.totalLength) + ' م.ط.'),
+          content: forwardNote.trim() || ('نحيل إليكم التقرير اليومي المعتمد لأعمال الطريق المنفذة بمشروع صيانة طريق أوباري - غات. عدد البنود: ' + (reportData.items?.length || 0) + ' بنود منفذة.'),
           reportId: rep.id,
           reportNumber: rep.reportNumber,
           reportData: rep,
@@ -567,7 +567,7 @@ export const RoadDailyReportForm = ({
         salesAmount: calculatedTotals.totalLength,
         totalLength: calculatedTotals.totalLength,
         totalArea: calculatedTotals.totalArea,
-        notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - إجمالي الأطوال: ${fmtNum(calculatedTotals.totalLength)} م.ط `,
+        notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - عدد البنود: ${reportData.items?.length || 0} بنود منفذة`,
         createdAt: new Date().toISOString()
       };
 

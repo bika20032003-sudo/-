@@ -519,10 +519,8 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         reportType: 'تقرير الأعمال المستهدفة',
         isTargetedWorksReport: true,
         targetedSections: targetedSections,
-        totalTargetLength: totalTargetLength,
-        totalTargetEquipment: totalTargetEquipment,
-        roadMeters: totalTargetLength,
-        uploadedBy: currentUser?.name || sectorDirector,
+                totalTargetEquipment: totalTargetEquipment,
+                uploadedBy: currentUser?.name || sectorDirector,
         status: 'approved',
         approvedBy: ownerRepresentative,
         sectorDirector: sectorDirector,
@@ -592,7 +590,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           area: parseFloat(r.area) || 0,
           notes: r.notes.trim()
         })),
-        notes: `تقرير أعمال يومي معتمد - إجمالي الأطوال: ${totalRoadLength} م.ط - إجمالي المساحة: ${totalRoadArea} م²`,
+        notes: `تقرير أعمال يومي معتمد - عدد البنود: ${roadItems.length} بنود منفذة`,
         imageUrl: attachedFile,
         fileName: fileName
       };
@@ -849,7 +847,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                 : reportCategory === 'fuel'
                 ? 'توثيق الكميات المصروفة، الوارد والمخزون المتبقي بالخزانات والصهاريج اليومية'
                 : reportCategory === 'targeted'
-                ? 'توثيق بنود وأطوال الأعمال والمعدات المستهدفة للأقسام التشغيلية'
+                ? 'توثيق بنود الأعمال والمعدات المستهدفة للأقسام التشغيلية'
                 : reportCategory === 'two_phase'
                 ? 'متابعة الأعمال المنجزة للمرحلتين الأولى والثانية مع حسابات التجميع والفروقات والمتبقي'
                 : 'توثيق محطات الرصف، أطوال التنفيذ، المساحات بالمتر المربع والتوقيعات الرسمية'}
@@ -1482,9 +1480,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
               <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
                 بيان الأعمال والمعدات المستهدفة المعتمد (الأحد 25-10-2026):
               </span>
-              <span style={{ fontSize: '0.78rem', background: '#e0f2fe', color: '#0284c7', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
-                {totalTargetLength.toLocaleString('en-US')} م.ط مستهدف
-              </span>
+              
               <span style={{ fontSize: '0.78rem', background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 800 }}>
                 {totalTargetEquipment.toLocaleString('en-US')} معدة وطاقم
               </span>
@@ -1589,7 +1585,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                         />
                       </td>
                       <td colSpan={3} style={{ border: '2px solid #000000', padding: '0.4rem', fontSize: '0.85rem' }}>
-                        {secLengthSum > 0 ? `إجمالي الطول: ${secLengthSum.toLocaleString()} م.ط` : ''}
+                        
                       </td>
                       <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.35rem 0.6rem', textAlign: 'right' }}>
                         <input
@@ -1786,7 +1782,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
             fontSize: '1rem',
             color: '#000000'
           }}>
-            <span>الإجمالي العام للأعمال المستهدفة المعتمدة:</span>
+            <span>ملخص جاهزية ومعدات الأعمال المستهدفة المعتمدة:</span>
             <div style={{ display: 'flex', gap: '2rem' }}>
               
               <span>إجمالي المعدات والأطقم: <strong style={{ color: '#b45309' }}>{totalTargetEquipment.toLocaleString()}</strong> آلية/طاقم</span>
@@ -2364,10 +2360,8 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                 reportNumber,
                 sectorDirector,
                 ownerRepresentative,
-                totalTargetLength,
-                totalTargetEquipment,
-                roadMeters: totalTargetLength,
-                targetedSections: targetedSections
+                                totalTargetEquipment,
+                                targetedSections: targetedSections
               };
             } else if (reportCategory === 'fuel') {
               tempRep = {

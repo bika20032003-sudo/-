@@ -1161,10 +1161,10 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                 fontSize: '0.82rem'
               }}>
                 <span style={{ color: '#166534', fontWeight: 800 }}>
-                  ✨ إجمالي الأطوال المنجزة اليوم بالتقرير: {((parseFloat(twoPhaseFdr)||0) + (parseFloat(twoPhaseMco)||0) + (parseFloat(twoPhaseAsphalt)||0) + (parseFloat(twoPhaseFdrNoCement)||0) + (parseFloat(twoPhaseAggBase)||0)).toLocaleString()} م.ط
+                  ✨ قياس منفصل لكل بند (FDR، MCO، أسفلت) طبقاً للمواصفات الهندسية المعتمدة
                 </span>
                 <span style={{ color: '#15803d', fontSize: '0.76rem' }}>
-                  تضاف تراكمياً لإنجاز الطريق العام وتحدث لوحة التحكم فورياً دون إنقاص النسبة
+                  تُسجل كميات كل طبقة على حدة وتحدث لوحة التحكم فورياً
                 </span>
               </div>
 

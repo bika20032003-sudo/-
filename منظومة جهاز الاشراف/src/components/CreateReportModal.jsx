@@ -222,7 +222,7 @@ export const CreateReportModal = ({
         ownerRepresentative,
         status: 'approved',
         approvedBy: ownerRepresentative,
-        notes: notes || `تقرير أعمال الطريق اليومي المعتمد - إجمالي الأطوال: ${totalRoadLength.toLocaleString()} م.ط - المساحة: ${totalRoadArea.toLocaleString()} م²`,
+        notes: notes || `تقرير أعمال الطريق اليومي المعتمد - عدد البنود: ${roadItems.length} بنود منفذة`,
         imageUrl: attachedFile,
         fileName
       };
@@ -650,7 +650,7 @@ export const CreateReportModal = ({
                     <strong style={{ fontSize: '0.88rem' }}>الأعمال المستهدفة</strong>
                   </div>
                   <p style={{ margin: '0.35rem 0 0', fontSize: '0.74rem', color: '#64748b' }}>
-                    أطوال العمل، المعدات والكوادر المطلوبة
+                    بنود العمل، المعدات والكوادر المطلوبة
                   </p>
                 </div>
 
@@ -983,7 +983,7 @@ export const CreateReportModal = ({
                     الأعمال المنجزة للمرحلتين (اليومي والتراكمي):
                   </strong>
                   <div style={{ fontSize: '0.82rem', color: '#1e3a8a', fontWeight: 800 }}>
-                    إنجاز اليوم: {twoPhaseTodayTotal.toLocaleString()} م.ط • التراكمي الكلي: {twoPhaseCumulativeTotal.toLocaleString()} م.ط
+                    كل طبقة تُقاس وتُتابع بصورة مستقلة طبقاً للمواصفات
                   </div>
                 </div>
 
