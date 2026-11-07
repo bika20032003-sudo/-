@@ -921,7 +921,7 @@ export const CreateReportModal = ({
               <div style={{ border: '1.5px solid #0284c7', borderRadius: '12px', padding: '1rem', background: '#f0f9ff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <strong style={{ color: '#0369a1', fontSize: '0.92rem' }}>
-                    بيان الأطوال والمعدات المستهدفة للأقسام التشغيلية:
+                    بيان الأعمال والمعدات المستهدفة للأقسام التشغيلية:
                   </strong>
                   <div style={{ fontSize: '0.82rem', color: '#0369a1', fontWeight: 800 }}>
                     إجمالي المعدات والأطقم المستهدفة: {totalTargetEquipment} آلية وطاقم

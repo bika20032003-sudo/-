@@ -1021,7 +1021,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.85rem' }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.82rem', color: '#0369a1' }}>
-                  إجمالي الأطوال المستهدفة (م.ط) *
+                  عدد البنود المستهدفة *
                 </label>
                 <input
                   type="text" inputMode="decimal" dir="ltr" lang="en"

@@ -205,7 +205,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
       'العنوان / اليوم': r.title || `بيان أعمال يوم ${r.dayName || ''}`,
       'التاريخ': r.dateFormatted || (r.date ? r.date.split('T')[0] : ''),
       'القطاع الميداني': r.sector || '',
-      'إجمالي الأطوال المستهدفة (م.ط)': Number(r.totalTargetLength || r.roadMeters || 0),
+      'حالة القياس': 'كل بند يُقاس على حدة طبقاً للمواصفات',
       'إجمالي المعدات والأطقم': Number(r.totalTargetEquipment || 0),
       'مدير القطاع': r.sectorDirector || r.uploadedBy || '',
       'ممثل الجهة المالكة': r.ownerRepresentative || '',
@@ -453,7 +453,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                 <th>العنوان / اليوم</th>
                 <th>التاريخ</th>
                 <th>القطاع</th>
-                <th>الأطوال المستهدفة (م.ط)</th>
+                <th>حالة البنود</th>
                 <th>المعدات المطلوبة</th>
                 <th>مدير القطاع</th>
                 <th>الحالة</th>
@@ -498,9 +498,17 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                   </td>
 
                   <td>
-                    <strong style={{ color: '#0284c7', fontSize: '0.95rem' }}>
-                      {Number(report.totalTargetLength || report.roadMeters || 0).toLocaleString('en-US')} م.ط
-                    </strong>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      fontSize: '0.8rem',
+                      fontWeight: 700
+                    }}>
+                      كل بند يُقاس مستقلاً
+                    </span>
                   </td>
 
                   <td>

@@ -1289,7 +1289,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                             {sec.title}
                           </td>
                           <td colSpan={3} style={{ border: '2px solid #000000', padding: '0.5rem', fontSize: '0.86rem' }}>
-                            {secLength > 0 ? `إجمالي الطول: ${secLength.toLocaleString('en-US')} م.ط` : ''}
+                            
                           </td>
                           <td style={{ border: '2px solid #000000', padding: '0.5rem 0.75rem', textAlign: 'right', fontSize: '0.9rem' }}>
                             {sec.startTimeNote}
