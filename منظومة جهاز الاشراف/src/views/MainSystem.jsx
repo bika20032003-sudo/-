@@ -19,6 +19,7 @@ import { CreateReportView } from './CreateReportView';
 import { CorrespondenceView } from './CorrespondenceView';
 import { TargetedWorksView } from './TargetedWorksView';
 import { ExecutiveProgressView } from './ExecutiveProgressView';
+import { PeriodicReportsView } from './PeriodicReportsView';
 import { AIAgentView } from './AIAgentView';
 import { AIAgentWidget } from '../components/AIAgentWidget';
 
@@ -104,6 +105,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'dashboard': 'لوحة القيادة الموحدة - جهاز الإشراف والمتابعة',
         'sector-dashboard': `لوحة العمليات الميدانية - ${currentUser?.title || currentUser?.role || 'القطاع'}`,
         'reports-archive': 'أرشيف تقارير المشروع ونظام الاعتماد والطباعة',
+        'periodic-reports': 'التقارير الأسبوعية والشهرية التجميعية لأعمال الطريق',
         'create-report': 'إنشاء وإدخال تقرير ميداني جديد',
         'targeted-works': 'إدارة ومتابعة الأعمال المستهدفة',
         'messages': 'البريد والمراسلات الرسمية وإحالة التقارير',
@@ -180,6 +182,15 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
               <TargetedWorksView 
                 currentUser={currentUser} 
                 onNavigateTab={handleTabChange}
+              />
+            )}
+
+            {/* 6. Periodic Reports (التقارير الأسبوعية والشهرية التجميعية) */}
+            {activeTab === 'periodic-reports' && (
+              <PeriodicReportsView 
+                currentUser={currentUser} 
+                onNavigateTab={handleTabChange}
+                onPrintReport={(rep) => setSelectedReportForPrint(rep)}
               />
             )}
 

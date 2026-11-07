@@ -6,6 +6,7 @@ export const ALL_SYSTEM_SECTIONS = [
   { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', desc: 'تفاصيل طبقات الرصف ومسافات المحطات الميدانية' },
   { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', desc: 'الموقف المالي وجداول الكميات والأسعار المعتمدة' },
   { id: 'create-report', label: 'إنشاء تقرير جديد', desc: 'إدخال التقارير اليومية ومحاضر الميدان' },
+  { id: 'periodic-reports', label: 'التقارير الأسبوعية والشهرية', desc: 'تجميع آلي وتقارير دورية لأعمال الطريق والأطوال والماليات' },
   { id: 'targeted-works', label: 'الأعمال المستهدفة', desc: 'بيان الأعمال اليومية المستهدفة والآليات المطلوبة' },
   { id: 'upload-reports', label: 'رفع ومعالجة التقارير', desc: 'استيراد التقارير وملفات الإكسل والوثائق' },
   { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', desc: 'السجل العام للتقارير والطباعة المعتمدة' },
@@ -99,11 +100,11 @@ export const UsersView = ({ currentUser }) => {
       if (uRole.includes('مدير المشروع')) {
         setSelectedUserSections(ALL_SYSTEM_SECTIONS.map(s => s.id));
       } else if (uRole.includes('مشرف') || uRole.includes('المرحلة')) {
-        setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+        setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
       } else if (uRole.includes('جودة')) {
-        setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'periodic-reports', 'targeted-works', 'upload-reports', 'reports-archive', 'messages']);
       } else {
-        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
       }
     }
     setIsPermissionsModalOpen(true);

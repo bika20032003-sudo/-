@@ -269,6 +269,27 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           Number(report.totalReceivedLiters || 0),
           Number(report.totalRemainingLiters || 0)
         ]);
+      } else if (Boolean(report.isPeriodicReport || report.reportType === 'تقرير دوري لأعمال الطريق' || report.reportCategory === 'periodic' || report.periodicType)) {
+        dataRows = [
+          ['مشروع صيانة طريق أوباري غات - ' + (report.reportTitle || report.title || 'التقرير الدوري لأعمال الطريق')],
+          [`الفترة: من ${report.startDate || ''} إلى ${report.endDate || ''}`, `رقم التقرير: ${reportNumber}`],
+          [],
+          ['م', 'البند / الطبقة', 'منجز الفترة (م.ط)', 'المساحة (م²)', 'الحجم (م³)', 'الفئة التعاقدية (د.ل)', 'القيمة المنفذة (د.ل)', 'التراكمي الكلي (م.ط)']
+        ];
+        (report.layers || []).forEach((l, idx) => {
+          dataRows.push([
+            idx + 1,
+            l.name,
+            l.periodMeters || 0,
+            l.periodArea || 0,
+            l.periodVolume || '—',
+            l.volumeRate ? `${l.volumeRate} /م³` : l.kmRate ? `${l.kmRate} /كم` : `${l.areaRate} /م²`,
+            l.periodValue || 0,
+            l.totalCumulativeMeters || 0
+          ]);
+        });
+        dataRows.push([]);
+        dataRows.push(['الإجمالي:', '', report.totalMeters || 0, report.totalArea || 0, report.totalVolume || 0, '', report.totalValue || 0, '']);
       } else if (Boolean(report.isTwoPhaseProgressReport || report.reportType === 'تقرير إنجاز المرحلتين' || report.reportCategory === 'two_phase' || (Array.isArray(report.phase1Items) && report.phase1Items.length > 0))) {
         dataRows = [
           ['مشروع صيانة طريق أوباري غات - تقرير الأعمال المنجزة للمرحلتين'],
@@ -372,11 +393,18 @@ export const OfficialPrintModal = ({ report, onClose }) => {
     report.reportCategory === 'two_phase' ||
     (Array.isArray(report.phase1Items) && report.phase1Items.length > 0)
   );
+  const isPeriodicDoc = !isExecutiveDoc && Boolean(
+    report.isPeriodicReport || 
+    report.reportType === 'تقرير دوري لأعمال الطريق' || 
+    report.reportCategory === 'periodic' || 
+    report.periodicType
+  );
   const isRoadDoc = Boolean(
     !isExecutiveDoc &&
     !isTargetedWorksDoc && 
     !isFuelDoc && 
     !isTwoPhaseDoc && 
+    !isPeriodicDoc &&
     (
       (Array.isArray(report.items) && report.items.length > 0) ||
       report.reportType === 'تقرير أعمال يومي' ||
@@ -391,7 +419,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
     report.reportCategory === 'equipment' ||
     (Array.isArray(report.equipmentList) && report.equipmentList.length > 0)
   );
-  const isStandardNewForm = isTargetedWorksDoc || isFuelDoc || isTwoPhaseDoc || isRoadDoc || isExecutiveDoc || isEquipmentDoc;
+  const isStandardNewForm = isTargetedWorksDoc || isFuelDoc || isTwoPhaseDoc || isRoadDoc || isExecutiveDoc || isEquipmentDoc || isPeriodicDoc;
   
   // Default orientation: Portrait for executive progress report (matching the official 2-page document), landscape for two-phase report
   // Default orientation: Landscape (أفقي) for all engineering reports to fit all tables and columns without clipping
@@ -2055,6 +2083,143 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   <div style={{ marginTop: '0.8rem', fontSize: '0.95rem', fontWeight: 800 }}>
                     <span>مهندس: </span>
                     <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customOwnerRep || '................................'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : isPeriodicDoc ? (
+            <div style={{ marginBottom: '1.5rem', direction: 'rtl', width: '100%', background: '#ffffff', color: '#000000' }}>
+              {/* Header */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '2.5px solid #000000',
+                paddingBottom: '0.6rem',
+                marginBottom: '1rem'
+              }}>
+                <div style={{ textAlign: 'right' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#000000' }}>
+                    دولة ليبيا - وزارة المواصلات - جهاز تنفيذ مشروعات المواصلات
+                  </h2>
+                  <h3 style={{ margin: '0.2rem 0 0', fontSize: '1.05rem', fontWeight: 800, color: '#1e3a8a' }}>
+                    مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
+                  </h3>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#16a34a', marginTop: '0.2rem' }}>
+                    {report.reportTitle || report.title || (report.periodicType === 'weekly' ? 'التقرير الأسبوعي التجميعي لأعمال الطريق' : 'التقرير الشهري التجميعي لأعمال الطريق')}
+                  </div>
+                </div>
+
+                <div style={{
+                  border: '1.5px solid #000000',
+                  padding: '6px 16px',
+                  background: '#f8fafc',
+                  fontWeight: 900,
+                  fontSize: '0.88rem',
+                  textAlign: 'center'
+                }}>
+                  <div>
+                    <span style={{ color: '#64748b', marginLeft: '6px' }}>رقم التقرير:</span>
+                    <span style={{ direction: 'ltr', fontWeight: 900 }}>{report.reportNumber}</span>
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <span style={{ color: '#64748b', marginLeft: '6px' }}>الفترة:</span>
+                    <span>من {report.startDate || '—'} إلى {report.endDate || report.dateFormatted || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* KPI Summary Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#f0fdf4' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>إجمالي الأطوال المنفذة</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#16a34a' }}>+{(report.totalMeters || 0).toLocaleString()} م.ط</div>
+                </div>
+                <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#eff6ff' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e40af' }}>القيمة التعاقدية المنفذة</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1d4ed8' }}>{(report.totalValue || 0).toLocaleString()} د.ل</div>
+                </div>
+                <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#f8fafc' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#075985' }}>المساحات والحجوم</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0284c7' }}>{(report.totalArea || 0).toLocaleString()} م² | {(report.totalVolume || 0).toLocaleString()} م³</div>
+                </div>
+                <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#fefce8' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#854d0e' }}>أيام العمل الفعلية</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#ca8a04' }}>{report.daysWorked || 1} أيام (معدل {report.avgDailyMeters || 0} م/يوم)</div>
+                </div>
+              </div>
+
+              {/* Table of Layers */}
+              <div style={{ border: '1.5px solid #000000', marginBottom: '0.85rem' }}>
+                <div style={{ background: '#1e3a8a', color: '#ffffff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.85rem' }}>
+                  كشف تجميع كميات الطبقات والأعمال المنجزة بالفترة
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000000' }}>
+                      <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
+                      <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>البند / الطبقة</th>
+                      <th style={{ border: '1px solid #000', padding: '4px' }}>المنجز بالفترة (م.ط)</th>
+                      <th style={{ border: '1px solid #000', padding: '4px' }}>المساحة (م²)</th>
+                      <th style={{ border: '1px solid #000', padding: '4px' }}>الحجم (م³)</th>
+                      <th style={{ border: '1px solid #000', padding: '4px' }}>الفئة التعاقدية</th>
+                      <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'left' }}>القيمة المنفذة (د.ل)</th>
+                      <th style={{ border: '1px solid #000', padding: '4px' }}>التراكمي الكلي (م.ط)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(report.layers || []).map((l, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px 2px', fontWeight: 800 }}>{idx + 1}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px', textAlign: 'right', fontWeight: 800 }}>{l.name}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px', fontWeight: 900, color: '#16a34a' }}>+{(l.periodMeters || 0).toLocaleString()}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px' }}>{(l.periodArea || 0).toLocaleString()}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px' }}>{l.periodVolume ? (l.periodVolume).toLocaleString() : '—'}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px', fontSize: '0.74rem' }}>{l.volumeRate ? `${l.volumeRate} /م³` : l.kmRate ? `${l.kmRate} /كم` : `${l.areaRate} /م²`}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px', textAlign: 'left', fontWeight: 800, color: '#1d4ed8' }}>{(l.periodValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '4px', fontWeight: 800 }}>{(l.totalCumulativeMeters || 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: '#f1f5f9', fontWeight: 900, borderTop: '2px solid #000000' }}>
+                      <td colSpan={2} style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>الإجمالي المعتمد للفترة:</td>
+                      <td style={{ border: '1px solid #000', padding: '5px', color: '#16a34a' }}>+{(report.totalMeters || 0).toLocaleString()} م.ط</td>
+                      <td style={{ border: '1px solid #000', padding: '5px' }}>{(report.totalArea || 0).toLocaleString()} م²</td>
+                      <td style={{ border: '1px solid #000', padding: '5px' }}>{(report.totalVolume || 0).toLocaleString()} م³</td>
+                      <td style={{ border: '1px solid #000', padding: '5px' }}>—</td>
+                      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'left', color: '#1d4ed8' }}>{(report.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</td>
+                      <td style={{ border: '1px solid #000', padding: '5px' }}>—</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Signatures */}
+              <div style={{
+                marginTop: '1.25rem',
+                borderTop: '2px solid #000000',
+                paddingTop: '0.75rem',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                textAlign: 'center'
+              }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900 }}>مهندس القطاع المشرف</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
+                    <span style={{ borderBottom: '1.5px dotted #000', paddingBottom: '2px' }}>م. صلاح العربي / م. عيسى الطاهر</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900 }}>رئيس جهاز الإشراف</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
+                    <span style={{ borderBottom: '1.5px dotted #000', paddingBottom: '2px' }}>م. عبدالسلام ابريكاو</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#1e3a8a' }}>اعتماد مدير المشروع</h4>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 900, color: '#1e3a8a' }}>
+                    <span style={{ borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>م. عبدالرحمن الأنصاري</span>
                   </div>
                 </div>
               </div>

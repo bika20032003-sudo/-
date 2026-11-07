@@ -178,6 +178,7 @@ export const Sidebar = ({
 
     const reportItems = [
       { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
+      { id: 'periodic-reports', label: 'التقارير الأسبوعية والشهرية', icon: CalendarRange, badge: 'تجميع آلي' },
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
       { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
       { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
