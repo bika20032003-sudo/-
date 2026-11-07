@@ -6,7 +6,6 @@ import { DashboardView } from './DashboardView';
 import { SectorDashboardView } from './SectorDashboardView';
 import { UploadReportsView } from './UploadReportsView';
 import { RoadProgressView } from './RoadProgressView';
-import { ReportsView } from './ReportsView';
 import { EquipmentView } from './EquipmentView';
 import { FuelView } from './FuelView';
 import { UsersView } from './UsersView';
@@ -112,7 +111,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'executive-progress': 'الموقف التنفيذي (360 كم) - المالي والفني المعتمد',
         'ai-agent': 'مساعد جهاز الإشراف (AI Supervision Assistant)',
         'upload-reports': 'رفع ومعالجة ملفات التقارير الميدانية',
-        'analytics': 'مركز التحليلات والإحصائيات - إنتاج الكسارات الموثقة',
         'fuel': 'إدارة الوقود',
         'equipment': 'إدارة وسجل المعدات والآليات الميدانية',
         'users': 'مركز المستخدمين والصلاحيات الرسمية للجهاز'
@@ -195,7 +193,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
               />
             )}
             {activeTab === 'upload-reports' && <UploadReportsView onNavigateTab={handleTabChange} currentUser={currentUser}/>}
-            {activeTab === 'analytics' && <ReportsView />}
             {activeTab === 'fuel' && <FuelView currentUser={currentUser} onNavigateTab={handleTabChange} />}
             {activeTab === 'equipment' && <EquipmentView />}
             {activeTab === 'users' && <UsersView currentUser={currentUser} />}

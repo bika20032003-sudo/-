@@ -3,7 +3,7 @@ import {
   Home, Milestone, UploadCloud, FileText, 
   CalendarRange, Truck, 
   Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin,
-  Camera, Mail, Bot, Sparkles, FilePlus, Target, Award, BarChart3
+  Camera, Mail, Bot, Sparkles, FilePlus, Target, Award
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
@@ -179,7 +179,6 @@ export const Sidebar = ({
     const reportItems = [
       { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-      { id: 'analytics', label: 'مركز التحليلات والإحصائيات', icon: BarChart3 },
       { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
       { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
     ];

@@ -665,8 +665,8 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           </div>
         </div>
 
-        {/* Card 2: إنتاج الكسارات الموثقة (مركز التحليلات والإحصائيات) */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('analytics')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #059669' }} title="فتح مركز التحليلات والإحصائيات">
+        {/* Card 2: إنتاج الكسارات الموثقة */}
+        <div className="kpi-metric-card" onClick={() => onNavigateTab('reports-archive')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #059669' }} title="فتح أرشيف التقارير والإنتاج">
           <div className="kpi-card-header">
             <span className="kpi-title" style={{ fontSize: '0.88rem', color: '#065f46', fontWeight: 800 }}>إنتاج الكسارات الموثقة</span>
             <div className="kpi-icon-circle green" style={{ background: '#d1fae5', color: '#059669' }}>
@@ -680,7 +680,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: 700 }}>طن ركام وشرشور</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#059669' }}>الإنتاج التراكمي المعتمد بمركز التحليلات والإحصائيات</span>
+            <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#059669' }}>الإنتاج التراكمي المعتمد لسجل الكسارات والمحاجر</span>
           </div>
         </div>
 

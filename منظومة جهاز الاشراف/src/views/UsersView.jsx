@@ -9,7 +9,6 @@ export const ALL_SYSTEM_SECTIONS = [
   { id: 'targeted-works', label: 'الأعمال المستهدفة', desc: 'بيان الأعمال اليومية المستهدفة والآليات المطلوبة' },
   { id: 'upload-reports', label: 'رفع ومعالجة التقارير', desc: 'استيراد التقارير وملفات الإكسل والوثائق' },
   { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', desc: 'السجل العام للتقارير والطباعة المعتمدة' },
-  { id: 'analytics', label: 'مركز التحليلات والإحصائيات', desc: 'تقارير أسبوعية وشهرية وتحليلات الإنتاج' },
   { id: 'fuel', label: 'إدارة الوقود', desc: 'وارد ومنصرف المحروقات والخزانات الميدانية' },
   { id: 'equipment', label: 'سجل المعدات والآليات', desc: 'سجل حصر الآليات الميدانية والتقرير الرسمي' },
   { id: 'messages', label: 'البريد والمراسلات الرسمية', desc: 'صندوق الوارد والبريد والإحالات الرسمية' },
@@ -102,7 +101,7 @@ export const UsersView = ({ currentUser }) => {
       } else if (uRole.includes('مشرف') || uRole.includes('المرحلة')) {
         setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
       } else if (uRole.includes('جودة')) {
-        setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'analytics', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'messages']);
       } else {
         setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
       }
@@ -1485,7 +1484,7 @@ export const UsersView = ({ currentUser }) => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'analytics', 'messages'])}
+                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'messages'])}
                     style={{
                       background: '#faf5ff',
                       color: '#9333ea',
