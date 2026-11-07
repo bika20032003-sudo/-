@@ -186,6 +186,94 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     }
   };
 
+  // Handle Delete All Messages in Mailbox
+  const handleDeleteAllMessages = async () => {
+    if (messages.length === 0) {
+      alert('صندوق البريد فارغ بالفعل.');
+      return;
+    }
+    const confirmed = window.confirm(
+      'تحذير: هل أنت متأكد من حذف وتفريغ كافة المراسلات (الوارد والصادر) نهائياً من المنظومة؟\n\nلن يمكن استعادة هذه الرسائل بعد الحذف.'
+    );
+    if (!confirmed) return;
+
+    try {
+      await fastFetch('/api/messages/clear-all', { method: 'DELETE' });
+    } catch (e) {
+      console.warn('Backend clear failed:', e);
+    }
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('system_messages', JSON.stringify([]));
+      localStorage.setItem('local_messages', JSON.stringify([]));
+      localStorage.setItem('system_messages_initialized', 'true');
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+    }
+
+    setMessages([]);
+    setSelectedMessage(null);
+    setStatusNotification({ type: 'success', text: 'تم تفريغ وحذف كافة المراسلات نهائياً بنجاح.' });
+  };
+
+  // Handle Clear All Inbox Messages
+  const handleClearAllInbox = async () => {
+    if (inboxMessages.length === 0) return;
+    const confirmed = window.confirm(
+      `هل أنت متأكد من حذف كافة الرسائل الواردة (${inboxMessages.length} رسالة) نهائياً؟`
+    );
+    if (!confirmed) return;
+
+    const inboxIds = new Set(inboxMessages.map(m => String(m.id)));
+    const remaining = messages.filter(m => !inboxIds.has(String(m.id)));
+
+    try {
+      for (const m of inboxMessages) {
+        fastFetch(`/api/messages/${m.id}`, { method: 'DELETE' }).catch(() => {});
+      }
+    } catch {}
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('system_messages', JSON.stringify(remaining));
+      localStorage.setItem('local_messages', JSON.stringify(remaining));
+      localStorage.setItem('system_messages_initialized', 'true');
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+    }
+
+    setMessages(remaining);
+    setSelectedMessage(null);
+    setStatusNotification({ type: 'success', text: 'تم حذف كافة رسائل صندوق الوارد بنجاح.' });
+  };
+
+  // Handle Clear All Sent Messages
+  const handleClearAllSent = async () => {
+    if (sentMessages.length === 0) return;
+    const confirmed = window.confirm(
+      `هل أنت متأكد من حذف كافة الرسائل الصادرة (${sentMessages.length} رسالة) نهائياً؟`
+    );
+    if (!confirmed) return;
+
+    const sentIds = new Set(sentMessages.map(m => String(m.id)));
+    const remaining = messages.filter(m => !sentIds.has(String(m.id)));
+
+    try {
+      for (const m of sentMessages) {
+        fastFetch(`/api/messages/${m.id}`, { method: 'DELETE' }).catch(() => {});
+      }
+    } catch {}
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('system_messages', JSON.stringify(remaining));
+      localStorage.setItem('local_messages', JSON.stringify(remaining));
+      localStorage.setItem('system_messages_initialized', 'true');
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+    }
+
+    setMessages(remaining);
+    setSelectedMessage(null);
+    setStatusNotification({ type: 'success', text: 'تم حذف كافة الرسائل الصادرة بنجاح.' });
+  };
+
+
   // Handle Send Compose
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -361,6 +449,30 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
           >
             <PlusCircle size={18} />
             <span>إرسال مراسلة جديدة</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDeleteAllMessages}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.65rem 1.15rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)',
+              transition: 'all 0.15s ease'
+            }}
+            title="حذف وتفريغ كافة المراسلات من الصندوقين (الوارد والصادر)"
+          >
+            <Trash2 size={16} />
+            <span>حذف الكل</span>
           </button>
 
           <button
@@ -611,7 +723,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
         {activeSubTab === 'inbox' && (
           <div>
             {/* Filter Sub-bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid #f1f5f9', background: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '1px solid #f1f5f9', background: '#fff', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>تصفية:</span>
               <button
                 type="button"
@@ -667,6 +780,31 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                 مرفق تقرير ({inboxMessages.filter(m => m.reportNumber).length})
               </button>
             </div>
+
+            {inboxMessages.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllInbox}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '6px',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#dc2626',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+                title="حذف كافة الرسائل الواردة نهائياً"
+              >
+                <Trash2 size={14} />
+                <span>حذف رسائل الوارد ({inboxMessages.length})</span>
+              </button>
+            )}
+          </div>
 
             {/* List or Expanded View */}
             {isLoading ? (
@@ -916,6 +1054,36 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
         {/* Tab 2: SENT */}
         {activeSubTab === 'sent' && (
           <div>
+            {/* Sent Sub-bar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '1px solid #f1f5f9', background: '#fff', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>
+                إجمالي الرسائل الصادرة: ({sentMessages.length})
+              </span>
+
+              {sentMessages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllSent}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '6px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                  title="حذف كافة الرسائل الصادرة نهائياً"
+                >
+                  <Trash2 size={14} />
+                  <span>حذف الرسائل الصادرة ({sentMessages.length})</span>
+                </button>
+              )}
+            </div>
             {isLoading ? (
               <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
                 <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginBottom: '0.5rem' }} />

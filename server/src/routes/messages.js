@@ -40,6 +40,16 @@ router.put('/:id/read', (req, res) => {
   }
 });
 
+// DELETE /api/messages/clear-all or DELETE /api/messages
+router.delete('/clear-all', (req, res) => {
+  try {
+    store.clearAllMessages(req.query.username);
+    res.json({ success: true, message: 'تم تفريغ كافة المراسلات بنجاح' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'خطأ في تفريغ المراسلات' });
+  }
+});
+
 // DELETE /api/messages/:id
 router.delete('/:id', (req, res) => {
   try {

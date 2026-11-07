@@ -126,15 +126,14 @@ export function getFallbackData(url) {
         allMsgs = Array.from(map.values());
         
         // Seed initial communications if empty
-        if (allMsgs.length === 0) {
+        const isInit = localStorage.getItem('system_messages_initialized');
+        if (allMsgs.length === 0 && !isInit) {
           allMsgs = [...INITIAL_CORRESPONDENCE_MESSAGES];
           localStorage.setItem('system_messages', JSON.stringify(allMsgs));
+          localStorage.setItem('system_messages_initialized', 'true');
         }
       }
     } catch {}
-    if (allMsgs.length === 0) {
-      allMsgs = [...INITIAL_CORRESPONDENCE_MESSAGES];
-    }
     
     // Filter by username if specified
     const match = url.match(/username=([^&]+)/);
@@ -801,6 +800,14 @@ export async function fastFetch(rawUrl, options = {}) {
       }
       return { success: true, message: 'Marked read' };
     } else if (method === 'DELETE') {
+      const isClearAll = url.includes('/clear-all') || url.includes('/all') || url.endsWith('/api/messages') || url.includes('clear=all');
+      if (isClearAll && typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('system_messages', JSON.stringify([]));
+        localStorage.setItem('local_messages', JSON.stringify([]));
+        localStorage.setItem('system_messages_initialized', 'true');
+        window.dispatchEvent(new CustomEvent('messages-updated'));
+        return { success: true, message: 'All messages cleared' };
+      }
       const msgId = url.split('/api/messages/')[1]?.split('?')[0];
       if (msgId && typeof window !== 'undefined' && window.localStorage) {
         const deleteItem = (key) => {

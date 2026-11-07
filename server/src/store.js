@@ -1177,7 +1177,17 @@ class Store {
   }
 
   deleteMessage(id) {
-    this.data.messages = (this.data.messages || []).filter(m => m.id !== Number(id));
+    this.data.messages = (this.data.messages || []).filter(m => m.id !== Number(id) && String(m.id) !== String(id));
+    this.scheduleSave();
+    return true;
+  }
+
+  clearAllMessages(username) {
+    if (username) {
+      this.data.messages = (this.data.messages || []).filter(m => m.toUsername !== username && m.fromUsername !== username);
+    } else {
+      this.data.messages = [];
+    }
     this.scheduleSave();
     return true;
   }
