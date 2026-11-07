@@ -24,9 +24,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <script>
-    // Normalize trailing slash for GitHub Pages
+    // Normalize trailing slash for GitHub Pages & bust stale version query
     if (window.location.pathname === '/-') {
       window.location.replace('/-/');
+    }
+    // Clean old caches if any
+    if ('caches' in window) {
+      try {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+      } catch (e) {}
     }
   </script>
   <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
@@ -36,16 +42,16 @@
       margin: 4mm 5mm;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-BvTzR-9G-1794055299599.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/vendor-core-C4DjcmrH-1794055299599.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-CiMCIkX2-1794055299599.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-DREyypUJ-1794055299599.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-Ct7IUVGm-1794055299599.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-BLBHyLVO-1794055299599.css">
+  <script type="module" crossorigin src="./assets/index-Cf2sXkJO-1794056875507.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-core-C4DjcmrH-1794056875507.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-B7Hxcovi-1794056875507.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-DREyypUJ-1794056875507.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-B47VEgx3-1794056875507.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-BLBHyLVO-1794056875507.css">
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root"></div>
 </body>
 
 </html>
