@@ -1,14 +1,15 @@
 import { isDevUser } from '../utils/permissionUtils';
 import React, { useState, useEffect } from 'react';
 import { 
-  Target, Plus, Search, FileSpreadsheet, RefreshCw, 
+  Target, Plus, Search, FileSpreadsheet, 
   Printer, Eye, Trash2, Calendar, Milestone, Truck, 
   Layers, CheckCircle2, AlertCircle, FileText, Send, Clock, Edit3
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { fastFetch } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { CreateTargetedWorksReportModal, defaultApprovedTargetedWorksReport } from '../components/CreateTargetedWorksReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
+import { deleteReportFromIndexedDB } from '../utils/secureDatabase.js';
 
 export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
   const [reports, setReports] = useState([]);
@@ -24,6 +25,13 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
   const fetchTargetedReports = async () => {
     try {
       setIsLoading(true);
+
+      // Read deleted IDs to completely exclude purged reports from appearing or re-seeding
+      let deletedIds = [];
+      try {
+        deletedIds = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String);
+      } catch (e) {}
+
       let remoteReports = [];
       try {
         const data = await fastFetch('http://localhost:5000/api/reports');
@@ -38,19 +46,33 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
       const all = [...remoteReports, ...localReports];
       const uniqueMap = new Map();
       all.forEach(r => {
-        if (r && r.id && !uniqueMap.has(String(r.id))) {
-          uniqueMap.set(String(r.id), r);
+        if (r && r.id) {
+          const rId = String(r.id);
+          const rNum = String(r.reportNumber || '');
+          if (deletedIds.includes(rId) || (rNum && deletedIds.includes(rNum))) {
+            return; // Skip explicitly deleted
+          }
+          if (!uniqueMap.has(rId)) {
+            uniqueMap.set(rId, r);
+          }
         }
       });
       const uniqueList = Array.from(uniqueMap.values());
 
-      // If no targeted reports exist, include the official approved report for Sunday 25/10/2026
-      const hasApproved = uniqueList.some(r => r.reportNumber === defaultApprovedTargetedWorksReport.reportNumber || r.id === defaultApprovedTargetedWorksReport.id);
-      if (!hasApproved) {
+      // Only seed defaultApprovedTargetedWorksReport if not deleted and no targeted reports exist
+      const defaultId = String(defaultApprovedTargetedWorksReport.id);
+      const defaultNum = String(defaultApprovedTargetedWorksReport.reportNumber);
+      const isDefaultDeleted = deletedIds.includes(defaultId) || deletedIds.includes(defaultNum);
+
+      const hasApproved = uniqueList.some(r => 
+        String(r.reportNumber) === defaultNum || String(r.id) === defaultId
+      );
+
+      if (!hasApproved && !isDefaultDeleted && uniqueList.length === 0) {
         uniqueList.unshift(defaultApprovedTargetedWorksReport);
         try {
           const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-          const exists = local.some(r => r.reportNumber === defaultApprovedTargetedWorksReport.reportNumber);
+          const exists = local.some(r => String(r.reportNumber) === defaultNum || String(r.id) === defaultId);
           if (!exists) {
             local.unshift(defaultApprovedTargetedWorksReport);
             localStorage.setItem('local_reports', JSON.stringify(local));
@@ -61,6 +83,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
       const targeted = uniqueList.filter(r => 
         r.isTargetedWorksReport || 
         r.reportType === 'تقرير الأعمال المستهدفة' ||
+        r.reportType === 'بيان الأعمال المستهدفة' ||
         (Array.isArray(r.targetedSections) && r.targetedSections.length > 0)
       );
       targeted.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
@@ -92,16 +115,71 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
 
   const handleDeleteReport = async () => {
     if (!reportToDelete) return;
-    const targetId = reportToDelete.id;
-    setReports(prev => prev.filter(r => r.id !== targetId && String(r.id) !== String(targetId)));
+    const targetId = String(reportToDelete.id || '');
+    const targetNum = String(reportToDelete.reportNumber || '');
+
+    // 1. Immediately update local UI state
+    setReports(prev => prev.filter(r => {
+      const rId = String(r.id || '');
+      const rNum = String(r.reportNumber || '');
+      if (targetId && rId === targetId) return false;
+      if (targetNum && rNum === targetNum) return false;
+      if (targetNum && rId === targetNum) return false;
+      if (targetId && rNum === targetId) return false;
+      return true;
+    }));
     setReportToDelete(null);
 
+    // 2. Add to deleted_report_ids in localStorage to permanently prevent re-seeding or re-fetching
     try {
-      await fetch(`http://localhost:5000/api/reports/${targetId}`, { method: 'DELETE' });
-    } catch (err) {
-      console.error('Failed to delete targeted report:', err);
+      const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+      if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
+      if (targetNum && !deleted.includes(targetNum)) deleted.push(targetNum);
+      localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+    } catch (delErr) {
+      console.error('Error recording deleted_report_ids:', delErr);
     }
-    fetchTargetedReports();
+
+    // 3. Remove completely from local_reports in localStorage
+    try {
+      const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+      const updatedLocal = local.filter(r => {
+        const rId = String(r.id || '');
+        const rNum = String(r.reportNumber || '');
+        if (targetId && rId === targetId) return false;
+        if (targetNum && rNum === targetNum) return false;
+        if (targetNum && rId === targetNum) return false;
+        if (targetId && rNum === targetId) return false;
+        return true;
+      });
+      localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+    } catch (storageErr) {
+      console.error('Error removing from local_reports:', storageErr);
+    }
+
+    // 4. Physically purge from IndexedDB
+    try {
+      if (targetId) await deleteReportFromIndexedDB(targetId);
+      if (targetNum) await deleteReportFromIndexedDB(targetNum);
+    } catch (idbErr) {
+      console.error('IndexedDB delete error:', idbErr);
+    }
+
+    // 5. Invalidate API cache
+    try {
+      clearApiCache();
+    } catch (e) {}
+
+    // 6. Purge from backend if reachable
+    try {
+      if (targetId) {
+        await fetch(`/api/reports/${targetId}`, { method: 'DELETE' }).catch(() => {});
+        await fetch(`http://localhost:5000/api/reports/${targetId}`, { method: 'DELETE' }).catch(() => {});
+      }
+    } catch (fetchErr) {}
+
+    // 7. Broadcast global event so other tabs and archives react immediately
+    window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
   };
 
   const filteredReports = reports.filter(r => {
@@ -518,7 +596,6 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                         <Eye size={15} />
                       </button>
 
-                      {isDevUser(currentUser) && (
                       <button
                         type="button"
                         onClick={() => setReportToDelete(report)}
@@ -528,13 +605,18 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
                           color: '#dc2626',
                           borderRadius: '6px',
                           padding: '0.4rem 0.65rem',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          fontSize: '0.82rem',
+                          fontWeight: 800
                         }}
-                        title="حذف البيان"
+                        title="حذف هذا البيان نهائياً"
                       >
                         <Trash2 size={15} />
+                        <span>حذف</span>
                       </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -635,30 +717,56 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
               </div>
             </div>
 
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  const rep = viewDetailsReport;
-                  setViewDetailsReport(null);
-                  setSelectedReportForPrint(rep);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '8px',
-                  background: '#0284c7',
-                  color: '#fff',
-                  border: 'none',
-                  fontWeight: 800,
-                  cursor: 'pointer'
-                }}
-              >
-                <Printer size={16} />
-                <span>طباعة التقرير الرسمي</span>
-              </button>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.65rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rep = viewDetailsReport;
+                    setViewDetailsReport(null);
+                    setSelectedReportForPrint(rep);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '8px',
+                    background: '#0284c7',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Printer size={16} />
+                  <span>طباعة التقرير</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rep = viewDetailsReport;
+                    setViewDetailsReport(null);
+                    setReportToDelete(rep);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.65rem 1.1rem',
+                    borderRadius: '8px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Trash2 size={16} />
+                  <span>حذف البيان</span>
+                </button>
+              </div>
 
               <button
                 type="button"

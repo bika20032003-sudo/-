@@ -7,6 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
+import { saveReportToIndexedDB } from '../utils/secureDatabase.js';
 
 // Approved Targeted Works Data from official document (Sunday 25/10/2026)
 export const initialTargetedWorksSections = [
@@ -550,9 +551,19 @@ export const CreateTargetedWorksReportModal = ({
         const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
         filtered.unshift(saved);
         localStorage.setItem('local_reports', JSON.stringify(filtered));
+
+        // Ensure newly saved report is unblocked if previously marked deleted
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
+        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
       } catch (storageErr) {
         console.error('Error saving targeted report to local_reports:', storageErr);
       }
+
+      // 1.1 Persist into IndexedDB
+      try {
+        await saveReportToIndexedDB(saved);
+      } catch (idbErr) {}
 
       // 2. Clear API cache and dispatch reactive events
       clearApiCache();
