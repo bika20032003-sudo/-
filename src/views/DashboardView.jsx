@@ -179,21 +179,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                                            items.reduce((s, c) => s + (parseFloat(String(c?.remainingLiters || '').replace(/,/g, '')) || 0), 0);
                 }
 
-                if (computedFuelDispatched === 0) {
-                    try {
-                        const rawDaily = localStorage.getItem('fuel_daily_report_data');
-                        if (rawDaily) {
-                            const daily = JSON.parse(rawDaily);
-                            if (Array.isArray(daily?.fuelItems) && daily.fuelItems.length > 0) {
-                                daily.fuelItems.forEach(it => {
-                                    computedFuelDispatched += parseFloat(String(it.dispatchedLiters || '').replace(/,/g, '')) || 0;
-                                    computedFuelReceived += parseFloat(String(it.receivedLiters || '').replace(/,/g, '')) || 0;
-                                    computedFuelRemaining += parseFloat(String(it.remainingLiters || '').replace(/,/g, '')) || 0;
-                                });
-                            }
-                        }
-                    } catch (e) {}
-                }
+
 
                 // Strict & real: exactly matches fuel section (0 if no fuel reports exist)
                 const finalFuelDispatched = computedFuelDispatched || 0;
