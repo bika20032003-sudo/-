@@ -416,7 +416,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           dataRows.push([]);
         });
 
-        dataRows.push(['الإجمالي العام للأطوال المستهدفة (م.ط):', totalTargetLength]);
+        // تم إلغاء الإجمالي العام للأطوال
         dataRows.push(['إجمالي المعدات والأطقم المستهدفة:', totalTargetEquipment]);
         dataRows.push([]);
         dataRows.push([`مدير القطاع: ${sectorDirector}`, '', '', `ممثل الجهة المالكة: ${ownerRepresentative}`]);
@@ -1788,7 +1788,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           }}>
             <span>الإجمالي العام للأعمال المستهدفة المعتمدة:</span>
             <div style={{ display: 'flex', gap: '2rem' }}>
-              <span>إجمالي الأطوال: <strong style={{ color: '#0284c7' }}>{totalTargetLength.toLocaleString()}</strong> م.ط</span>
+              
               <span>إجمالي المعدات والأطقم: <strong style={{ color: '#b45309' }}>{totalTargetEquipment.toLocaleString()}</strong> آلية/طاقم</span>
             </div>
           </div>
@@ -2224,18 +2224,18 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                   </tr>
                 ))}
 
-                {/* Total Row */}
-                <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '3px solid #000000' }}>
-                  <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '1.05rem' }}>
-                    الإجمالي العام للأعمال المنفذة
+                {/* تم إلغاء الإجمالي العام للأعمال المنفذة وإجمالي الأطوال: كل بند يُحسب وتُقاس كمياته على حِدَة */}
+                <tr style={{ background: '#f8fafc', color: '#475569', fontWeight: 800, borderTop: '2px solid #000000' }}>
+                  <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', textAlign: 'center' }}>
+                    بيان بنود أعمال الطريق (كل بند يُحسب مستقلاً)
                   </td>
-                  <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem' }}>
-                    {totalRoadLength ? totalRoadLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                  <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', color: '#64748b' }}>
+                    —
                   </td>
-                  <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem' }}>
-                    {totalRoadArea ? totalRoadArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                  <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.95rem', fontWeight: 900, color: '#166534' }}>
+                    {totalRoadArea ? totalRoadArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'} م²
                   </td>
-                  <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '0.85rem', color: '#64748b' }}>
+                  <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.85rem', color: '#64748b' }}>
                     {roadItems.filter(i => i.item).length} بنود مسجلة
                   </td>
                 </tr>

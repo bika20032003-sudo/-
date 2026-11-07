@@ -503,7 +503,7 @@ export const CreateTargetedWorksReportModal = ({
         dataRows.push([]);
       });
 
-      dataRows.push(['الإجمالي العام للأطوال المستهدفة (م.ط):', totalTargetLength]);
+      // تم إلغاء الإجمالي العام للأطوال
       dataRows.push(['إجمالي المعدات والأطقم المستهدفة:', totalTargetEquipment]);
       dataRows.push([]);
       dataRows.push(['مدير القطاع:', sectorDirector, '', 'ممثل الجهة المالكة:', ownerRepresentative]);
@@ -1513,7 +1513,7 @@ export const CreateTargetedWorksReportModal = ({
             }}>
               <span>الإجمالي العام للأعمال المستهدفة المعتمدة:</span>
               <div style={{ display: 'flex', gap: '2rem' }}>
-                <span>إجمالي الأطوال: <strong style={{ color: '#0284c7' }}>{totalTargetLength.toLocaleString('en-US')}</strong> م.ط</span>
+                
                 <span>إجمالي المعدات والأطقم: <strong style={{ color: '#b45309' }}>{totalTargetEquipment.toLocaleString('en-US')}</strong> آلية/طاقم</span>
               </div>
             </div>

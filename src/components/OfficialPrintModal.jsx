@@ -239,7 +239,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           dataRows.push([]);
         });
 
-        dataRows.push(['الإجمالي العام للأطوال المستهدفة (م.ط):', Number(report.totalTargetLength || 0)]);
+        // تم إلغاء الإجمالي العام للأطوال: كل قسم يحسب على حدة
         dataRows.push(['إجمالي المعدات والأطقم المستهدفة:', Number(report.totalTargetEquipment || 0)]);
         dataRows.push([]);
         dataRows.push(['مدير القطاع:', customSectorDirector || '', '', 'ممثل الجهة المالكة:', customOwnerRep || '']);
@@ -289,7 +289,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           ]);
         });
         dataRows.push([]);
-        dataRows.push(['الإجمالي:', '', report.totalMeters || 0, report.totalArea || 0, report.totalVolume || 0, '', report.totalValue || 0, '']);
+        dataRows.push(['الإجمالي المعتمد:', '', '—', report.totalArea || 0, report.totalVolume || 0, '', report.totalValue || 0, '']);
       } else if (Boolean(report.isTwoPhaseProgressReport || report.reportType === 'تقرير إنجاز المرحلتين' || report.reportCategory === 'two_phase' || (Array.isArray(report.phase1Items) && report.phase1Items.length > 0))) {
         dataRows = [
           ['مشروع صيانة طريق أوباري غات - تقرير الأعمال المنجزة للمرحلتين'],
@@ -1343,23 +1343,22 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 );
               })}
 
-              {/* Grand Total Bar */}
+              {/* Operational Summary Bar */}
               <div style={{
                 marginTop: '1rem',
                 padding: '0.75rem 1.25rem',
-                background: '#fef9c3',
+                background: '#f8fafc',
                 border: '2px solid #000000',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 fontWeight: 900,
-                fontSize: '1rem',
+                fontSize: '0.95rem',
                 color: '#000000'
               }}>
-                <span>الإجمالي العام للأعمال المستهدفة:</span>
+                <span>ملخص جاهزية ومعدات الأقسام التشغيلية المستهدفة:</span>
                 <div style={{ display: 'flex', gap: '2rem' }}>
-                  <span>إجمالي الأطوال: {Number(report.totalTargetLength || report.roadMeters || 0).toLocaleString('en-US')} م.ط</span>
-                  <span>إجمالي المعدات والأطقم: {Number(report.totalTargetEquipment || 0).toLocaleString('en-US')} آلية/طاقم</span>
+                  <span>إجمالي المعدات والأطقم بالميدان: {Number(report.totalTargetEquipment || 0).toLocaleString('en-US')} آلية/طاقم</span>
                 </div>
               </div>
 
@@ -2132,8 +2131,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
               {/* KPI Summary Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '0.85rem' }}>
                 <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#f0fdf4' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>إجمالي الأطوال المنفذة</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#16a34a' }}>+{(report.totalMeters || 0).toLocaleString()} م.ط</div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>حالة بنود المسار</div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#16a34a' }}>{report.layersCount || 4} طبقات منفذة</div>
                 </div>
                 <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#eff6ff' }}>
                   <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e40af' }}>القيمة التعاقدية المنفذة</div>
@@ -2184,7 +2183,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   <tfoot>
                     <tr style={{ background: '#f1f5f9', fontWeight: 900, borderTop: '2px solid #000000' }}>
                       <td colSpan={2} style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>الإجمالي المعتمد للفترة:</td>
-                      <td style={{ border: '1px solid #000', padding: '5px', color: '#16a34a' }}>+{(report.totalMeters || 0).toLocaleString()} م.ط</td>
+                      <td style={{ border: '1px solid #000', padding: '5px', color: '#64748b' }}>—</td>
                       <td style={{ border: '1px solid #000', padding: '5px' }}>{(report.totalArea || 0).toLocaleString()} م²</td>
                       <td style={{ border: '1px solid #000', padding: '5px' }}>{(report.totalVolume || 0).toLocaleString()} م³</td>
                       <td style={{ border: '1px solid #000', padding: '5px' }}>—</td>

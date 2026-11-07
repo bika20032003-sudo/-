@@ -985,12 +985,12 @@ export const RoadDailyReportForm = ({
           padding: '1.1rem 1.25rem',
           boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>إجمالي الأطوال المنجزة</div>
+          <div style={{ fontSize: '0.84rem', opacity: 0.9, fontWeight: 700 }}>البنود المنفذة بالتقرير</div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
-            {fmtNum(calculatedTotals.totalLength)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م.ط</span>
+            {calculatedTotals.itemsCount} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>بنود مسار</span>
           </div>
           <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>
-            المساحة الكلية: {fmtNum(calculatedTotals.totalArea)} م²
+            كل بند يُقاس مستقلاً طبقاً لتعليمات جهاز الإشراف
           </div>
         </div>
 
@@ -1326,21 +1326,21 @@ export const RoadDailyReportForm = ({
                 );
               })}
 
-              {/* Totals Row (Matching Classic Form Style) */}
-              <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, borderTop: '3px solid #000000' }}>
-                <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1rem', textAlign: 'center' }}>
-                  الإجمالي العام للأعمال المنفذة
+              {/* تم إلغاء الإجمالي العام للأعمال المنفذة وإجمالي الأطوال: كل بند يُحسب وتُقاس كمياته على حِدَة */}
+              <tr style={{ background: '#f8fafc', color: '#475569', fontWeight: 800, borderTop: '2px solid #000000' }}>
+                <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', textAlign: 'center' }}>
+                  بيان بنود أعمال الطريق المنفذة (كل بند يُحسب مستقلاً)
                 </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
-                  {fmtNum(calculatedTotals.totalLength)}
+                <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', color: '#64748b' }}>
+                  —
                 </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
-                  {fmtNum(calculatedTotals.totalArea)}
+                <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.95rem', fontWeight: 900, color: '#166534' }} dir="ltr">
+                  {fmtNum(calculatedTotals.totalArea)} م²
                 </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '0.88rem' }}>
+                <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.85rem' }}>
                   {calculatedTotals.itemsCount} بنود منجزة
                 </td>
-                <td style={{ border: '2px solid #000000', padding: '0.75rem' }} className="no-print"></td>
+                <td style={{ border: '2px solid #000000', padding: '0.65rem' }} className="no-print"></td>
               </tr>
             </tbody>
           </table>

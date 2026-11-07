@@ -897,27 +897,7 @@ export const TwoPhaseDailyReportForm = ({
               </tr>
             ))}
 
-            {/* Total Row */}
-            <tr style={{ background: '#fef3c7', fontWeight: 900, borderTop: '2px solid #000000', color: '#000000' }}>
-              <td colSpan={2} style={{ padding: '8px', textAlign: 'center', fontSize: '0.92rem' }}>
-                الإجمالي العام للمرحلة
-              </td>
-              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1' }} dir="ltr">
-                {sumPrev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </td>
-              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1', color: '#1d4ed8' }} dir="ltr">
-                {sumToday.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </td>
-              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1', color: '#15803d' }} dir="ltr">
-                {sumTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </td>
-              <td style={{ padding: '8px 6px', borderRight: '1px solid #cbd5e1' }} dir="ltr">
-                {sumTarget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </td>
-              <td colSpan={2} style={{ padding: '8px', fontSize: '0.8rem', color: '#64748b' }}>
-                {items.length} بنود تشغيلية
-              </td>
-            </tr>
+            {/* تم إلغاء الإجمالي العام للمرحلة وإجمالي الأطوال: كل بند يُحسب بمتره الطولي مستقلاً طبقاً لتوجيهات جهاز الإشراف */}
           </tbody>
         </table>
         </div>
@@ -1351,12 +1331,12 @@ export const TwoPhaseDailyReportForm = ({
           padding: '0.75rem 1rem',
           boxShadow: '0 2px 6px rgba(22,163,74,0.06)'
         }}>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>🛣️ إجمالي المنفذ التراكمي</div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>🛣️ منجز طبقة الأساس (FDR)</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#15803d', margin: '4px 0 2px' }}>
-            {Math.max(...combinedItems.map(c => parseFloat(c.totalMeters) || 0), 242323).toLocaleString('en-US')} م.ط
+            {((combinedItems[0] && parseFloat(combinedItems[0].totalMeters)) || 242323).toLocaleString('en-US')} م.ط
           </div>
           <div style={{ fontSize: '0.72rem', color: '#16a34a' }}>
-            طبقة إعادة التدوير (242,323 م.ط)
+            مكتمل بالمرحلة الأولى + جارٍ بالمرحلة الثانية
           </div>
         </div>
 

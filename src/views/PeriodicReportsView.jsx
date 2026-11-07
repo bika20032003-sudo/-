@@ -496,7 +496,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
         [`كود التقرير: ${aggregatedReport.reportCode}`, `الفترة: من ${startDate} إلى ${endDate}`],
         [],
         ['المؤشر التنفيذي', 'القيمة المحسوبة', 'الوحدة', 'ملاحظات'],
-        ['إجمالي الطول المنفذ بالفترة', aggregatedReport.totalPeriodMeters, 'متر طولي (م.ط)', 'مجموع أعمال الطبقات المنفذة'],
+        ['إجمالي المساحات المنفذة بالفترة', aggregatedReport.totalPeriodArea, 'متر مربع (م²)', 'مساحة المسطحات المنفذة'],
         ['إجمالي مساحات الرصف', aggregatedReport.totalPeriodArea, 'متر مربع (م²)', 'مساحة المسطحات المنفذة'],
         ['إجمالي حجم الأساس الحبيبي', aggregatedReport.totalPeriodVolume, 'متر مكعب (م³)', 'سمك 12.5 سم وعرض 9 م'],
         ['القيمة المالية التقديرية المنفذة', aggregatedReport.totalFinancialValue, 'دينار ليبي (د.ل)', 'وفق الفئات التعاقدية الرسمية'],
@@ -970,19 +970,19 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
           boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534' }}>إجمالي أطوال الرصف المنجزة</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534' }}>القيمة المالية التعاقدية للفترة</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Milestone size={18} color="#16a34a" />
             </div>
           </div>
           <div style={{ margin: '0.75rem 0 0.4rem' }}>
-            <span style={{ fontSize: '2.1rem', fontWeight: 900, color: '#16a34a' }}>
-              +{fmtInt(aggregatedReport.totalPeriodMeters)}
+            <span style={{ fontSize: '1.9rem', fontWeight: 900, color: '#16a34a' }}>
+              {fmtNum(aggregatedReport.totalFinancialValue)}
             </span>
-            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#166534', marginRight: '6px' }}>م.ط</span>
+            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#166534', marginRight: '6px' }}>د.ل</span>
           </div>
           <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-            موزعة على كافة الطبقات خلال {aggregatedReport.periodType === 'weekly' ? 'الأسبوع' : 'الشهر'}
+            الموقف المالي المعتمد لطبقات المسار خلال {aggregatedReport.periodType === 'weekly' ? 'الأسبوع' : 'الشهر'}
           </span>
         </div>
 
@@ -1154,10 +1154,10 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
             <tfoot>
               <tr style={{ background: '#f1f5f9', borderTop: '2.5px solid #1e3a8a', fontWeight: 900 }}>
                 <td colSpan={2} style={{ padding: '12px', border: '1px solid #cbd5e1', textAlign: 'right', fontSize: '0.95rem' }}>
-                  إجمالي منجز أعمال الطريق بالفترة:
+                  إجمالي المساحات والقيمة المالية للفترة:
                 </td>
-                <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#16a34a', fontSize: '1.05rem' }}>
-                  +{fmtInt(aggregatedReport.totalPeriodMeters)} م.ط
+                <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#64748b', fontSize: '0.95rem' }}>
+                  —
                 </td>
                 <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#0284c7' }}>
                   {fmtInt(aggregatedReport.totalPeriodArea)} م²
@@ -1317,7 +1317,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
                 <div style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '0.85rem' }}>
                   رقم التقرير: <strong style={{ color: '#1e3a8a' }}>{saved.reportNumber}</strong>
                   <br />
-                  إجمالي الطول المنفذ: <strong style={{ color: '#16a34a' }}>+{fmtInt(saved.totalMeters)} م.ط</strong>
+                  المساحة المنفذة: <strong style={{ color: '#0284c7' }}>{fmtInt(saved.totalArea)} م²</strong>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>

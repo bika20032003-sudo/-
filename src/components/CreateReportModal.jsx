@@ -925,7 +925,7 @@ export const CreateReportModal = ({
                     بيان الأطوال والمعدات المستهدفة للأقسام التشغيلية:
                   </strong>
                   <div style={{ fontSize: '0.82rem', color: '#0369a1', fontWeight: 800 }}>
-                    إجمالي الأطوال: {totalTargetLength.toLocaleString()} م.ط • إجمالي المعدات: {totalTargetEquipment} آلية وطاقم
+                    إجمالي المعدات والأطقم المستهدفة: {totalTargetEquipment} آلية وطاقم
                   </div>
                 </div>
 

@@ -310,17 +310,17 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
       }}>
         <div className="kpi-metric-card" style={{ borderRight: '4px solid #0284c7' }}>
           <div className="kpi-card-header">
-            <span className="kpi-title">إجمالي الأطوال المستهدفة</span>
+            <span className="kpi-title">المساحات السطحية المستهدفة</span>
             <div className="kpi-icon-circle blue">
               <Milestone size={20} />
             </div>
           </div>
           <div className="kpi-value-center">
-            <span className="kpi-big-num">{totalLengthMeters.toLocaleString('en-US')}</span>
-            <span className="kpi-unit-label">متر طولي (م.ط)</span>
+            <span className="kpi-big-num">{totalAreaSqM.toLocaleString('en-US')}</span>
+            <span className="kpi-unit-label">متر مربع (م²)</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-badge">محسوب من جداول محطات FDR والأساس والاسفلت</span>
+            <span className="kpi-green-badge">مسطحات الرصف والفرم والأساس المعتمدة</span>
           </div>
         </div>
 
@@ -688,8 +688,8 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>إجمالي الأطوال المستهدفة:</span>
-                <span style={{ fontWeight: 800, color: '#0284c7' }}>{Number(viewDetailsReport.totalTargetLength || 0).toLocaleString('en-US')} م.ط</span>
+                <span style={{ color: '#64748b' }}>حالة بنود المسار:</span>
+                <span style={{ fontWeight: 800, color: '#0284c7' }}>كل بند يقاس بصورة مستقلة</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ color: '#64748b' }}>إجمالي المعدات والأطقم:</span>
