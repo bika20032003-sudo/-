@@ -567,7 +567,7 @@ export const RoadDailyReportForm = ({
         salesAmount: calculatedTotals.totalLength,
         totalLength: calculatedTotals.totalLength,
         totalArea: calculatedTotals.totalArea,
-        notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - إجمالي الأطوال: ${fmtNum(calculatedTotals.totalLength)} م.ط - إجمالي المساحة: ${fmtNum(calculatedTotals.totalArea)} م²`,
+        notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - إجمالي الأطوال: ${fmtNum(calculatedTotals.totalLength)} م.ط `,
         createdAt: new Date().toISOString()
       };
 
@@ -994,7 +994,7 @@ export const RoadDailyReportForm = ({
           </div>
         </div>
 
-        {/* Card 2: Total Area */}
+        {/* Card 2: Sector & Specifications Status */}
         <div style={{
           background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
           color: '#ffffff',
@@ -1002,12 +1002,12 @@ export const RoadDailyReportForm = ({
           padding: '1.1rem 1.25rem',
           boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
         }}>
-          <div style={{ fontSize: '0.84rem', opacity: 0.95, fontWeight: 700 }}>إجمالي المساحة المنجزة</div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
-            {fmtNum(calculatedTotals.totalArea)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>م²</span>
+          <div style={{ fontSize: '0.84rem', opacity: 0.95, fontWeight: 700 }}>حالة مطابقة المواصفات</div>
+          <div style={{ fontSize: '1.45rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }}>
+            مطابقة ومعتمدة
           </div>
           <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>
-            إجمالي مسطحات الرصف والفرم والأساس
+            كل بند يُقاس وتُعتمد مساحته بصورة مستقلة
           </div>
         </div>
 
@@ -1334,8 +1334,8 @@ export const RoadDailyReportForm = ({
                 <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', color: '#64748b' }}>
                   —
                 </td>
-                <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.95rem', fontWeight: 900, color: '#166534' }} dir="ltr">
-                  {fmtNum(calculatedTotals.totalArea)} م²
+                <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', color: '#64748b' }}>
+                  —
                 </td>
                 <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.85rem' }}>
                   {calculatedTotals.itemsCount} بنود منجزة

@@ -289,7 +289,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           ]);
         });
         dataRows.push([]);
-        dataRows.push(['الإجمالي المعتمد:', '', '—', report.totalArea || 0, report.totalVolume || 0, '', report.totalValue || 0, '']);
+        dataRows.push(['الإجمالي المعتمد:', '', '—', '—', '—', '', report.totalValue || 0, '']);
       } else if (Boolean(report.isTwoPhaseProgressReport || report.reportType === 'تقرير إنجاز المرحلتين' || report.reportCategory === 'two_phase' || (Array.isArray(report.phase1Items) && report.phase1Items.length > 0))) {
         dataRows = [
           ['مشروع صيانة طريق أوباري غات - تقرير الأعمال المنجزة للمرحلتين'],
@@ -2139,8 +2139,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                   <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1d4ed8' }}>{(report.totalValue || 0).toLocaleString()} د.ل</div>
                 </div>
                 <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#f8fafc' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#075985' }}>المساحات والحجوم</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0284c7' }}>{(report.totalArea || 0).toLocaleString()} م² | {(report.totalVolume || 0).toLocaleString()} م³</div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#075985' }}>حالة القياس والاعتماد</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 900, color: '#0284c7' }}>قياس مستقل لكل بند</div>
                 </div>
                 <div style={{ border: '1.5px solid #000000', padding: '8px', textAlign: 'center', background: '#fefce8' }}>
                   <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#854d0e' }}>أيام العمل الفعلية</div>
@@ -2184,8 +2184,8 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     <tr style={{ background: '#f1f5f9', fontWeight: 900, borderTop: '2px solid #000000' }}>
                       <td colSpan={2} style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>الإجمالي المعتمد للفترة:</td>
                       <td style={{ border: '1px solid #000', padding: '5px', color: '#64748b' }}>—</td>
-                      <td style={{ border: '1px solid #000', padding: '5px' }}>{(report.totalArea || 0).toLocaleString()} م²</td>
-                      <td style={{ border: '1px solid #000', padding: '5px' }}>{(report.totalVolume || 0).toLocaleString()} م³</td>
+                      <td style={{ border: '1px solid #000', padding: '5px', color: '#64748b' }}>—</td>
+                      <td style={{ border: '1px solid #000', padding: '5px', color: '#64748b' }}>—</td>
                       <td style={{ border: '1px solid #000', padding: '5px' }}>—</td>
                       <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'left', color: '#1d4ed8' }}>{(report.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</td>
                       <td style={{ border: '1px solid #000', padding: '5px' }}>—</td>

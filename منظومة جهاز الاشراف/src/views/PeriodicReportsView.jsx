@@ -496,9 +496,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
         [`كود التقرير: ${aggregatedReport.reportCode}`, `الفترة: من ${startDate} إلى ${endDate}`],
         [],
         ['المؤشر التنفيذي', 'القيمة المحسوبة', 'الوحدة', 'ملاحظات'],
-        ['إجمالي المساحات المنفذة بالفترة', aggregatedReport.totalPeriodArea, 'متر مربع (م²)', 'مساحة المسطحات المنفذة'],
-        ['إجمالي مساحات الرصف', aggregatedReport.totalPeriodArea, 'متر مربع (م²)', 'مساحة المسطحات المنفذة'],
-        ['إجمالي حجم الأساس الحبيبي', aggregatedReport.totalPeriodVolume, 'متر مكعب (م³)', 'سمك 12.5 سم وعرض 9 م'],
+        // تم إلغاء جمع المساحات والحجوم المركبة: كل بند يحسب على حدة
         ['القيمة المالية التقديرية المنفذة', aggregatedReport.totalFinancialValue, 'دينار ليبي (د.ل)', 'وفق الفئات التعاقدية الرسمية'],
         ['عدد أيام العمل الفعلية بالفترة', aggregatedReport.daysWorked, 'يوم عمل', 'الأيام المسجل بها تقارير'],
         ['متوسط الإنجاز اليومي', aggregatedReport.avgDailyMeters, 'م.ط / يوم', 'معدل تقدم الأعمال اليومية'],
@@ -1022,19 +1020,19 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
           boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#075985' }}>المساحات والحجوم المنفذة</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#075985' }}>حالة بنود المسار المعتمدة</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Layers size={18} color="#0284c7" />
             </div>
           </div>
           <div style={{ margin: '0.75rem 0 0.4rem' }}>
             <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0369a1' }}>
-              {fmtInt(aggregatedReport.totalPeriodArea)}
+              {layerList.filter(l => l.periodMeters > 0).length || 4}
             </span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#075985', marginRight: '6px' }}>م²</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#075985', marginRight: '6px' }}>طبقات مسار نشطة</span>
           </div>
           <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-            بالإضافة إلى {fmtInt(aggregatedReport.totalPeriodVolume)} م³ أساس حبيبي
+            كل بند يُقاس وتُعتمد مساحته مستقلاً
           </span>
         </div>
 
@@ -1159,11 +1157,11 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
                 <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#64748b', fontSize: '0.95rem' }}>
                   —
                 </td>
-                <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#0284c7' }}>
-                  {fmtInt(aggregatedReport.totalPeriodArea)} م²
+                <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#64748b' }}>
+                  —
                 </td>
-                <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#0369a1' }}>
-                  {fmtInt(aggregatedReport.totalPeriodVolume)} م³
+                <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#64748b' }}>
+                  —
                 </td>
                 <td style={{ padding: '12px 10px', border: '1px solid #cbd5e1', color: '#64748b' }}>
                   —
@@ -1316,8 +1314,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
 
                 <div style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '0.85rem' }}>
                   رقم التقرير: <strong style={{ color: '#1e3a8a' }}>{saved.reportNumber}</strong>
-                  <br />
-                  المساحة المنفذة: <strong style={{ color: '#0284c7' }}>{fmtInt(saved.totalArea)} م²</strong>
+                  
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>

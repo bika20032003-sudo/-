@@ -2233,7 +2233,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                     —
                   </td>
                   <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.95rem', fontWeight: 900, color: '#166534' }}>
-                    {totalRoadArea ? totalRoadArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'} م²
+                    —
                   </td>
                   <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.85rem', color: '#64748b' }}>
                     {roadItems.filter(i => i.item).length} بنود مسجلة

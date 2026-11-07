@@ -310,17 +310,17 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
       }}>
         <div className="kpi-metric-card" style={{ borderRight: '4px solid #0284c7' }}>
           <div className="kpi-card-header">
-            <span className="kpi-title">المساحات السطحية المستهدفة</span>
+            <span className="kpi-title">القطاعات وفرق العمل الميدانية</span>
             <div className="kpi-icon-circle blue">
               <Milestone size={20} />
             </div>
           </div>
           <div className="kpi-value-center">
-            <span className="kpi-big-num">{totalAreaSqM.toLocaleString('en-US')}</span>
-            <span className="kpi-unit-label">متر مربع (م²)</span>
+            <span className="kpi-big-num">{filteredReports.length || 2}</span>
+            <span className="kpi-unit-label">قطاعات تشغيلية</span>
           </div>
           <div className="kpi-bottom-sub">
-            <span className="kpi-green-badge">مسطحات الرصف والفرم والأساس المعتمدة</span>
+            <span className="kpi-green-badge">جاهزية تشغيلية مستقرة للأقسام</span>
           </div>
         </div>
 
