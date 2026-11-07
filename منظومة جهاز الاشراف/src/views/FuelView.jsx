@@ -83,7 +83,19 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
 
     const handleUpdate = () => fetchFuelReports();
     window.addEventListener('report-saved', handleUpdate);
-    return () => window.removeEventListener('report-saved', handleUpdate);
+    window.addEventListener('report-updated', handleUpdate);
+    window.addEventListener('report-deleted', handleUpdate);
+    window.addEventListener('fuel-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    const interval = setInterval(handleUpdate, 8000);
+    return () => {
+      window.removeEventListener('report-saved', handleUpdate);
+      window.removeEventListener('report-updated', handleUpdate);
+      window.removeEventListener('report-deleted', handleUpdate);
+      window.removeEventListener('fuel-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
   // Strict & Accurate Calculations directly from Daily Fuel Reports:

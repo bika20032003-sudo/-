@@ -283,15 +283,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab }) => {
             <span>+ إضافة تقرير يومي للفترة</span>
           </button>
 
-          <button 
-            className="secondary-action-btn"
-            onClick={fetchPeriodicReport}
-            disabled={isLoading}
-            style={{ height: '40px', padding: '0 1rem', fontSize: '0.85rem' }}
-          >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            <span>تحديث التوليد الآلي</span>
-          </button>
+          
 
           <button 
             className="secondary-action-btn"

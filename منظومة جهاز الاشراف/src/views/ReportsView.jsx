@@ -46,6 +46,19 @@ export const ReportsView = () => {
     };
     useEffect(() => {
         fetchReportsData();
+        const handleUpdate = () => fetchReportsData();
+        window.addEventListener('report-saved', handleUpdate);
+        window.addEventListener('report-updated', handleUpdate);
+        window.addEventListener('report-deleted', handleUpdate);
+        window.addEventListener('storage', handleUpdate);
+        const interval = setInterval(handleUpdate, 8000);
+        return () => {
+          window.removeEventListener('report-saved', handleUpdate);
+          window.removeEventListener('report-updated', handleUpdate);
+          window.removeEventListener('report-deleted', handleUpdate);
+          window.removeEventListener('storage', handleUpdate);
+          clearInterval(interval);
+        };
     }, [selectedReportType, dateRange, selectedSector]);
     const handleExportExcel = () => {
         const selectedTemplate = reportTemplates.find(t => t.id === selectedReportType);
@@ -148,10 +161,7 @@ export const ReportsView = () => {
           </select>
         </div>
 
-        <button className="secondary-action-btn" onClick={fetchReportsData} disabled={isLoading}>
-          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''}/>
-          <span>تحديث البيانات</span>
-        </button>
+        
       </div>
 
       {/* Report Preview Document Card */}

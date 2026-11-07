@@ -94,6 +94,24 @@ export const SectorDashboardView = ({ currentUser }) => {
   useEffect(() => {
     fetchSectorSummary();
     fetchSectorReports();
+
+    const handleUpdate = () => {
+      fetchSectorSummary();
+      fetchSectorReports();
+    };
+
+    window.addEventListener('report-saved', handleUpdate);
+    window.addEventListener('report-updated', handleUpdate);
+    window.addEventListener('report-deleted', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    const interval = setInterval(handleUpdate, 8000);
+    return () => {
+      window.removeEventListener('report-saved', handleUpdate);
+      window.removeEventListener('report-updated', handleUpdate);
+      window.removeEventListener('report-deleted', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
+    };
   }, [sectorCode]);
 
   // Handle File Selection

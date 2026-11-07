@@ -95,7 +95,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
     window.addEventListener('messages-updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
-    const interval = setInterval(fetchMessages, 15000);
+    const interval = setInterval(fetchMessages, 8000);
 
     return () => {
       window.removeEventListener('messages-updated', handleUpdate);
@@ -475,25 +475,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
             <span>حذف الكل</span>
           </button>
 
-          <button
-            type="button"
-            onClick={fetchMessages}
-            title="تحديث صندوق البريد"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#f1f5f9',
-              cursor: 'pointer'
-            }}
-          >
-            <RefreshCw size={17} />
-          </button>
+          
         </div>
       </div>
 

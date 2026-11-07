@@ -214,6 +214,8 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         window.addEventListener('fuel-updated', handleSync);
         window.addEventListener('equipment-updated', handleSync);
         window.addEventListener('report-deleted', handleSync);
+        window.addEventListener('storage', handleSync);
+        const autoInterval = setInterval(handleSync, 8000);
 
         return () => {
             window.removeEventListener('report-saved', handleSync);

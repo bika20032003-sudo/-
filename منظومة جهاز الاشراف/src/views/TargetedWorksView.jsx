@@ -77,7 +77,17 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
 
     const handleUpdate = () => fetchTargetedReports();
     window.addEventListener('report-saved', handleUpdate);
-    return () => window.removeEventListener('report-saved', handleUpdate);
+    window.addEventListener('report-updated', handleUpdate);
+    window.addEventListener('report-deleted', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    const interval = setInterval(handleUpdate, 8000);
+    return () => {
+      window.removeEventListener('report-saved', handleUpdate);
+      window.removeEventListener('report-updated', handleUpdate);
+      window.removeEventListener('report-deleted', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleDeleteReport = async () => {
@@ -208,15 +218,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
             <span>تصدير Excel</span>
           </button>
 
-          <button
-            type="button"
-            onClick={fetchTargetedReports}
-            className="secondary-action-btn"
-            style={{ height: '42px', padding: '0 1rem', borderRadius: '8px' }}
-            title="تحديث"
-          >
-            <RefreshCw size={16} />
-          </button>
+          
         </div>
       </div>
 

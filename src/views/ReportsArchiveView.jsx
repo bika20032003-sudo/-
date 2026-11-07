@@ -194,6 +194,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     window.addEventListener('report-deleted', handleGlobalDelete);
     window.addEventListener('report-saved', handleGlobalSaved);
     window.addEventListener('report-updated', handleGlobalSaved);
+    window.addEventListener('storage', handleGlobalSaved);
+    const autoInterval = setInterval(handleGlobalSaved, 8000);
     return () => {
       window.removeEventListener('report-deleted', handleGlobalDelete);
       window.removeEventListener('report-saved', handleGlobalSaved);

@@ -86,6 +86,8 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
 
         window.addEventListener('report-saved', handleRealtimeUpdate);
         window.addEventListener('road-progress-updated', handleRealtimeUpdate);
+        window.addEventListener('storage', handleRealtimeUpdate);
+        const autoInterval = setInterval(handleRealtimeUpdate, 8000);
         return () => {
           window.removeEventListener('report-saved', handleRealtimeUpdate);
           window.removeEventListener('road-progress-updated', handleRealtimeUpdate);
@@ -256,10 +258,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
             <span>{activeViewMode === 'form' ? 'الرجوع لمتابعة المسار' : 'تعديل تقرير أعمال الطريق المعتمد (24/10/2026)'}</span>
           </button>
 
-          <button className="secondary-action-btn" onClick={fetchRoadProgress} disabled={isLoading} style={{ height: '38px' }}>
-            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/>
-            <span>تحديث البيانات</span>
-          </button>
+          
 
           <button className="primary-action-btn" onClick={handleExportExcel} style={{ height: '38px', background: '#16a34a', border: 'none' }}>
             <FileSpreadsheet size={16}/>

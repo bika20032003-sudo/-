@@ -177,6 +177,16 @@ export const EquipmentView = ({ currentUser }) => {
 
   useEffect(() => {
     fetchEquipment();
+
+    const handleSync = () => fetchEquipment();
+    window.addEventListener('equipment-updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    const interval = setInterval(handleSync, 8000);
+    return () => {
+      window.removeEventListener('equipment-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+      clearInterval(interval);
+    };
   }, []);
 
   // Quick Counter Increment / Decrement
@@ -465,15 +475,7 @@ export const EquipmentView = ({ currentUser }) => {
             <span>+ إضافة معدة بالاسم والعدد</span>
           </button>
 
-          <button 
-            className="secondary-action-btn"
-            onClick={fetchEquipment}
-            disabled={isLoading}
-            style={{ height: '38px', padding: '0 1rem', fontSize: '0.85rem' }}
-          >
-            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
-            <span>تحديث</span>
-          </button>
+          
 
           <button 
             className="secondary-action-btn"
