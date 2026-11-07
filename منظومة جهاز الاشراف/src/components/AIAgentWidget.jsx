@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Bot, Sparkles, X, Send, Copy, Check, RefreshCw, Key, 
+  Bot, Sparkles, X, Send, Copy, Check, Key, 
   ChevronDown, Maximize2, Minimize2, Paperclip, FileSpreadsheet,
-  FileText, Image as ImageIcon, Layers, Milestone, Fuel, AlertTriangle, Newspaper
+  FileText, Image as ImageIcon, Layers, Milestone, Fuel, AlertTriangle, Newspaper,
+  ExternalLink, UserCheck
 } from 'lucide-react';
 import { 
   processLocalQuery, 
@@ -390,6 +391,33 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {onNavigateTab && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onNavigateTab('ai-agent');
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.18)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    color: '#ffffff',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="فتح في الواجهة الرئيسية الكاملة"
+                >
+                  <ExternalLink size={13} />
+                  <span>الواجهة الكاملة</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
@@ -672,7 +700,24 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                 cursor: 'pointer'
               }}
             >
-              📰 طلب آخر المستجدات وتقرير الحالة لمدير المشروع
+              📰 طلب آخر المستجدات لمدير المشروع
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSendMessage('عرض وموقف المهام الإشرافية وتكليفات مدير المشروع')}
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 900,
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: '1.5px solid #2563eb',
+                background: '#eff6ff',
+                color: '#1e40af',
+                cursor: 'pointer'
+              }}
+            >
+              📋 عرض المهام الإشرافية
             </button>
 
             <button

@@ -94,6 +94,24 @@ export const SectorDashboardView = ({ currentUser }) => {
   useEffect(() => {
     fetchSectorSummary();
     fetchSectorReports();
+
+    const handleUpdate = () => {
+      fetchSectorSummary();
+      fetchSectorReports();
+    };
+
+    window.addEventListener('report-saved', handleUpdate);
+    window.addEventListener('report-updated', handleUpdate);
+    window.addEventListener('report-deleted', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    const interval = setInterval(handleUpdate, 8000);
+    return () => {
+      window.removeEventListener('report-saved', handleUpdate);
+      window.removeEventListener('report-updated', handleUpdate);
+      window.removeEventListener('report-deleted', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
+    };
   }, [sectorCode]);
 
   // Handle File Selection
@@ -864,25 +882,7 @@ export const SectorDashboardView = ({ currentUser }) => {
               </button>
             )}
 
-            <button
-              onClick={fetchSectorReports}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                color: '#334155',
-                padding: '0.4rem 0.75rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              <RefreshCw size={13} />
-              <span>تحديث</span>
-            </button>
+            
           </div>
         </div>
 

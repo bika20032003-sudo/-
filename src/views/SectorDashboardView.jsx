@@ -882,25 +882,7 @@ export const SectorDashboardView = ({ currentUser }) => {
               </button>
             )}
 
-            <button
-              onClick={fetchSectorReports}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                color: '#334155',
-                padding: '0.4rem 0.75rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              <RefreshCw size={13} />
-              <span>تحديث</span>
-            </button>
+            
           </div>
         </div>
 

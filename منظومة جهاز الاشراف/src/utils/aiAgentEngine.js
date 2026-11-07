@@ -18,6 +18,23 @@ import * as XLSX from 'xlsx';
 import { parseCleanNumber, CERTIFIED_RATES, CERTIFIED_PROJECT_META, calculateReadyToWorkPipeline } from './engineeringFormulas.js';
 import { initialExecutiveData } from '../components/ExecutiveProgressForm.jsx';
 import { initialMCOStations, initialFDRStations, initialAsphaltStations, initialBaseStations } from '../components/StationQuantitiesModal.jsx';
+import {
+  DEFAULT_SUPERVISORY_TASKS,
+  getSupervisoryTasks,
+  saveSupervisoryTask,
+  updateSupervisoryTaskStatus,
+  deleteSupervisoryTask,
+  generateSupervisoryTasksArticle
+} from './supervisoryTasks.js';
+
+export {
+  DEFAULT_SUPERVISORY_TASKS,
+  getSupervisoryTasks,
+  saveSupervisoryTask,
+  updateSupervisoryTaskStatus,
+  deleteSupervisoryTask,
+  generateSupervisoryTasksArticle
+};
 
 /**
  * تجميع السياق الحي والمتزامن للمشروع من التخزين المحلي والحالات المعتمدة
@@ -88,7 +105,7 @@ export function fmt(num, decimals = 2) {
 }
 
 /**
- * أداة تحليل وفك شفرة الملفات المرفوعة للوكيل (Excel, CSV, TXT, Images)
+ * أداة تحليل وفك شفرة الملفات المرفوعة لمساعد جهاز الإشراف (Excel, CSV, TXT, Images)
  */
 export async function parseUploadedFile(file) {
   if (!file) return null;
@@ -322,6 +339,28 @@ export function processLocalQuery(queryText, attachedFile = null) {
       title: `تقرير فحص وتحليل المستند: ${attachedFile.name}`,
       content: fileAnalysisContent,
       quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'الجاهز للأسفلت']
+    };
+  }
+
+  // 0. استعلامات وسجل المهام الإشرافية وتكليفات مدير المشروع
+  if (
+    q.includes('مهام') || 
+    q.includes('المهام') || 
+    q.includes('تكليف') || 
+    q.includes('تكليفات') || 
+    q.includes('مهمة') || 
+    q.includes('تقديم المهام') || 
+    q.includes('مهام مدير المشروع') || 
+    q.includes('التكليفات الميدانية') || 
+    q.includes('المهام المفتوحة') || 
+    q.includes('المهام الجارية') ||
+    q.includes('توزيع المهام')
+  ) {
+    return {
+      type: 'supervisory_tasks',
+      title: 'سجل وموقف المهام الإشرافية وتكليفات مدير المشروع',
+      content: generateSupervisoryTasksArticle(),
+      quickSuggestions: ['📰 مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'الجاهز لطبقة الأسفلت']
     };
   }
 
@@ -605,6 +644,7 @@ export async function callGeminiCloudAgent(apiKey, userMessage, conversationHist
 - عائق المرحلة الأولى: المحطة 165+000 وجود عبارة منهارة تحتاج صيانة بطول 130 م.ط (نسبة إنجاز المرحلة الأولى تتجاوز 99.94%).
 - الوقود: استهلاك اليوم 591 لتر، الوارد 14 لتر، المتبقي 209 لتر (مواقع 107، 240، والكسارات). موقع 107 يحتاج تزويد عاجل.
 - أسطول المعدات والآليات: 25 آلية ومعدة ميدانية عاملة بنسبة جاهزية 100%.
+- المهام والتكليفات الإشرافية الميدانية: يوجد سجل مهام إشرافية نشط لتوجيهات وتكليفات مدير المشروع للمهندسين الميدانيين (م. الصالحين بريكاو - مشرف قطاع أ، م. صلاح العربي - مشرف قطاع ب، م. صالح بن يحي - مهندس ضبط الجودة والمختبر، م. عيسى الطاهر - مشرف محطة الخلط والموقع). إذا سئلت عن المهام أو تكليفات مدير المشروع، اعرض تفاصيل المهام وحالتها وأولوياتها بدقة وتنسيق هندسي مرتب.
 
 ميزة المقالة التقريرية لمدير المشروع:
 إذا طلب مدير المشروع (م. عبدالرحمن الأنصاري) أو أي مهندس "آخر المستجدات" أو "المستجدات الهندسية" أو "مقالة عن المستجدات" أو "تقرير شامل للمدير"، قم فوراً بصياغة مقالة تقريرية استراتيجية رفيعة المستوى وشاملة تليق بمدير المشروع، تحتوي على:

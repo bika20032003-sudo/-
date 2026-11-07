@@ -425,25 +425,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             <span>تصدير Excel</span>
           </button>
 
-          <button
-            onClick={fetchReports}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: '#f8fafc',
-              color: '#475569',
-              border: '1px solid #cbd5e1',
-              padding: '0.7rem 1.1rem',
-              borderRadius: '10px',
-              fontWeight: 800,
-              fontSize: '0.88rem',
-              cursor: 'pointer'
-            }}
-          >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            <span>تحديث</span>
-          </button>
+          
         </div>
       </div>
 
