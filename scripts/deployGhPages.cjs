@@ -45,7 +45,7 @@ try {
   // Add all changes, commit and push
   run('git add -A');
   try {
-    run('git commit -m "deploy: resolve AI agent import crash, eliminate recovery screen, and lock 1-page fit"');
+    run('git commit -m "deploy: full reactive dashboard with executive progress, two-phase reports, fuel sync and periodic reports"');
     run('git push origin gh-pages');
     console.log('Successfully pushed to gh-pages!');
   } catch (err) {
