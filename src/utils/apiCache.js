@@ -308,14 +308,14 @@ export function getFallbackData(url) {
         currency: 'دينار',
         reportDate: '2026-10-24',
         reportNumber: '093436_24.10.2026',
-        basicTotals: { executedValue: 631848792.36, percentage: 70.19 },
+        basicTotals: { executedValue: 638329685.46, percentage: 71.11 },
         additionalTotals: { executedValue: 93573854.26 },
         grandTotals: {
           contractValue: 897665675.030,
-          totalExecutedValue: 732648221.31,
-          totalRemainingValue: 165017453.72,
-          overallFinancialPercentage: 81.62,
-          basicItemsPercentage: 70.19
+          totalExecutedValue: 638329685.46,
+          totalRemainingValue: 259335989.57,
+          overallFinancialPercentage: 71.11,
+          basicItemsPercentage: 71.11
         }
       }
     };
@@ -880,7 +880,7 @@ export async function fastFetch(rawUrl, options = {}) {
   }
 
   const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
-  const apiBase = import.meta.env.VITE_API_BASE || '';
+  const apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
 
   // If in static hosting on GitHub Pages without a backend, serve mock data
   if (isGitHubPages && !apiBase) {

@@ -67,16 +67,17 @@ export const calculateExecutiveTotals = (contractValRaw, basicItems = [], additi
     return acc + val;
   }, 0);
 
-  const grandExecutedSum = basicExecutedSum + additionalExecutedSum;
+  // البنود الأساسية فقط هي التي تُجمع طبقاً لتوجيهات جهاز الإشراف
+  const grandExecutedSum = basicExecutedSum;
   const grandRemainingVal = Math.max(0, contractVal - grandExecutedSum);
 
   const basicPercentage = contractVal > 0 ? (basicExecutedSum / contractVal) * 100 : 0;
-  const overallFinancialPercentage = contractVal > 0 ? (grandExecutedSum / contractVal) * 100 : 0;
+  const overallFinancialPercentage = basicPercentage;
 
   return {
     contractVal,
     basicExecutedSum: parseFloat(basicExecutedSum.toFixed(2)),
-    additionalExecutedSum: parseFloat(additionalExecutedSum.toFixed(2)),
+    additionalExecutedSum: 0,
     grandExecutedSum: parseFloat(grandExecutedSum.toFixed(2)),
     grandRemainingVal: parseFloat(grandRemainingVal.toFixed(2)),
     basicPercentage: parseFloat(basicPercentage.toFixed(2)),

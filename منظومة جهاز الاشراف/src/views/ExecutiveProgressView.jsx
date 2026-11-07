@@ -45,12 +45,12 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
   // Financial summary
   const contractVal = Number(executiveData.contractValue) || 897665675.03;
   
+  // البنود الأساسية فقط هي التي تُجمع وتُحسب طبقاً لتوجيهات جهاز الإشراف
   const basicExecutedSum = (executiveData.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
-  const additionalExecutedSum = (executiveData.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
-  const totalExecutedVal = basicExecutedSum + additionalExecutedSum;
-  const totalRemainingVal = Math.max(0, contractVal - totalExecutedVal);
-  const overallFinancialPercent = contractVal > 0 ? ((totalExecutedVal / contractVal) * 100).toFixed(2) : 0;
+  const totalExecutedVal = basicExecutedSum;
+  const totalRemainingVal = Math.max(0, contractVal - basicExecutedSum);
   const basicFinancialPercent = contractVal > 0 ? ((basicExecutedSum / contractVal) * 100).toFixed(2) : 0;
+  const overallFinancialPercent = basicFinancialPercent;
 
   const getExecutiveReportData = () => ({
     isExecutiveProgressReport: true,
@@ -298,7 +298,7 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
             <CheckCircle2 size={24} />
           </div>
           <div>
-            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>إجمالي المنفذ (أساسية + إضافية)</span>
+            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>إجمالي المنفذ الفعلي التعاقدي (البنود الأساسية)</span>
             <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#16a34a', direction: 'ltr', textAlign: 'right' }}>
               {fmt(totalExecutedVal)} <span style={{ fontSize: '0.78rem', color: '#64748b' }}>د.ل</span>
             </div>
@@ -329,7 +329,7 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
             <TrendingUp size={24} />
           </div>
           <div>
-            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>نسبة الإنجاز المالي الإجمالي</span>
+            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>نسبة الإنجاز المالي العام</span>
             <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#b45309' }}>
               %{overallFinancialPercent}
             </div>
@@ -440,20 +440,8 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
                 </p>
               </div>
 
-              {/* Additional Items */}
-              <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <strong style={{ fontSize: '0.92rem', color: '#1e293b' }}>البنود الإضافية (أساس حبيبي وطريق خدمي)</strong>
-                  <span style={{ fontWeight: 800, color: '#8b5cf6', fontSize: '0.92rem' }}>منفذة</span>
-                </div>
-                <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.75rem' }}>
-                  <div style={{ width: '100%', height: '100%', background: '#8b5cf6', borderRadius: '4px' }}></div>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-                  قيمة المنفذ: 93,573,854.26 د.ل (207,597 م3 أساس حبيبي + 225.6 كم خدمي)
-                </p>
+              {/* تم إلغاء البنود الإضافية من التجميع والعرض طبقاً لتعليمات جهاز الإشراف */}
               </div>
-            </div>
           </div>
 
           {/* Quick Edit CTA Card */}

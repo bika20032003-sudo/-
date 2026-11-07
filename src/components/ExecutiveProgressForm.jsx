@@ -314,15 +314,13 @@ export const ExecutiveProgressForm = ({
     const basicItems = data.basicItems || [];
     const additionalItems = data.additionalItems || [];
 
+    // البنود الأساسية فقط هي التي تُجمع وتُحسب طبقاً لتعليمات جهاز الإشراف
     const basicExecutedSum = basicItems.reduce((acc, curr) => acc + (parseFloat(toCleanLatin(curr.executedValue)) || 0), 0);
-    const additionalExecutedSum = additionalItems.reduce((acc, curr) => acc + (parseFloat(toCleanLatin(curr.executedValue)) || 0), 0);
-    const grandExecutedSum = basicExecutedSum + additionalExecutedSum;
-
-    const contractVal = parseFloat(toCleanLatin(data.contractValue)) || 897665675.030;
+    const additionalExecutedSum = 0;
+    const grandExecutedSum = basicExecutedSum;
     const grandRemainingVal = Math.max(0, contractVal - grandExecutedSum);
-
     const basicPercentage = contractVal > 0 ? parseFloat(((basicExecutedSum / contractVal) * 100).toFixed(2)) : 0;
-    const overallFinancialPercentage = contractVal > 0 ? parseFloat(((grandExecutedSum / contractVal) * 100).toFixed(2)) : 0;
+    const overallFinancialPercentage = basicPercentage;
 
     return {
       contractVal,
@@ -584,7 +582,7 @@ export const ExecutiveProgressForm = ({
         contractValue: calculations.contractVal,
         totalExecutedValue: calculations.grandExecutedSum,
         totalRemainingValue: calculations.grandRemainingVal,
-        overallFinancialPercentage: calculations.overallFinancialPercentage,
+        overallFinancialPercentage: calculations.basicPercentage,
         basicItemsPercentage: calculations.basicPercentage
       }
     };
@@ -937,7 +935,7 @@ export const ExecutiveProgressForm = ({
           padding: '1.25rem',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
         }}>
-          <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 800 }}>منجز البنود الأساسية التعاقدية</span>
+          <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 800 }}>قيمة المنفذ من البنود الأساسية</span>
           <div style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0f172a', margin: '0.35rem 0', direction: 'ltr', textAlign: 'right' }}>
             {fmt(calculations.basicExecutedSum)} <span style={{ fontSize: '0.85rem', color: '#64748b' }}>د.ل</span>
           </div>
@@ -1438,104 +1436,7 @@ export const ExecutiveProgressForm = ({
         </div>
       </div>
 
-      {/* Secondary Table: Additional Items (بنود إضافية) */}
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '14px',
-        padding: '1.25rem',
-        marginBottom: '1.5rem',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
-          <span style={{
-            background: '#e0e7ff',
-            color: '#3730a3',
-            padding: '0.3rem 0.8rem',
-            borderRadius: '6px',
-            fontWeight: 900,
-            fontSize: '0.85rem'
-          }}>
-            بنود إضافية
-          </span>
-          <span style={{ fontSize: '0.88rem', color: '#64748b', fontWeight: 700 }}>
-            (تشمل طبقة الأساس الحبيبي الإضافية والطريق الخدمي)
-          </span>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc' }}>
-                <th style={{ width: '45px', textAlign: 'center', padding: '0.6rem 0.4rem' }}>البند</th>
-                <th style={{ minWidth: '300px', padding: '0.6rem 0.75rem' }}>الوصف المعتمد للبند</th>
-                <th style={{ width: '85px', textAlign: 'center', padding: '0.6rem 0.4rem' }}>الوحدة</th>
-                <th style={{ width: '130px', textAlign: 'center', padding: '0.6rem 0.4rem' }}>المنفذ</th>
-                <th style={{ width: '160px', textAlign: 'center', padding: '0.6rem 0.4rem' }}>قيمة المنفذ (د.ل)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.additionalItems.map((item, idx) => (
-                <tr key={item.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ textAlign: 'center', fontWeight: 800 }}>{item.itemNumber}</td>
-                  <td style={{ padding: '0.55rem 0.75rem', fontWeight: 700, color: '#1e293b' }}>
-                    {readOnlyMode ? item.description : (
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => handleAdditionalItemChange(idx, 'description', e.target.value)}
-                        style={{ width: '100%', padding: '0.3rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontWeight: 700 }}
-                      />
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'center', fontWeight: 700, color: '#64748b' }}>{item.unit}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    {readOnlyMode ? (
-                      <span style={{ fontWeight: 800, color: '#16a34a' }} dir="ltr">{fmt(item.executedQuantity)}</span>
-                    ) : (
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        lang="en-US"
-                        dir="ltr"
-                        value={toCleanLatin(item.executedQuantity ?? '')}
-                        onChange={(e) => handleAdditionalItemChange(idx, 'executedQuantity', e.target.value)}
-                        style={{ width: '110px', textAlign: 'center', padding: '0.25rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontWeight: 800, direction: 'ltr', fontFamily: "'Segoe UI', Roboto, Tahoma, Arial, sans-serif" }}
-                      />
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    {readOnlyMode ? (
-                      <strong style={{ color: '#0f172a' }} dir="ltr">{fmt(item.executedValue)}</strong>
-                    ) : (
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        lang="en-US"
-                        dir="ltr"
-                        value={toCleanLatin(item.executedValue ?? '')}
-                        onChange={(e) => handleAdditionalItemChange(idx, 'executedValue', e.target.value)}
-                        style={{ width: '140px', textAlign: 'center', padding: '0.25rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontWeight: 900, direction: 'ltr', fontFamily: "'Segoe UI', Roboto, Tahoma, Arial, sans-serif" }}
-                      />
-                    )}
-                  </td>
-                </tr>
-              ))}
-
-              {/* Subtotal of Additional Items */}
-              <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #0f172a' }}>
-                <td colSpan={4} style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#0f172a', fontSize: '0.92rem' }}>
-                  إجمالي البنود الإضافية:
-                </td>
-                <td style={{ textAlign: 'center', color: '#1e3a8a', fontSize: '0.95rem', direction: 'ltr' }}>
-                  {fmt(calculations.additionalExecutedSum)} د.ل
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+      {/* تم إلغاء جدول البنود الإضافية لعدم شمولها في التجميع التعاقدي */}
       {/* Grand Total Summary Box (إجمالي الموقف التنفيذي العام) */}
       <div style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -1548,7 +1449,7 @@ export const ExecutiveProgressForm = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.15)', paddingBottom: '1rem', marginBottom: '1rem' }}>
           <div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 900, margin: 0, color: '#f8fafc' }}>
-              📊 الإجمالي العام للموقف التنفيذي (البنود الأساسية + الإضافية)
+              📊 الإجمالي العام للموقف التنفيذي التعاقدي (البنود الأساسية المعتمدة)
             </h3>
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: '#94a3b8' }}>
               مطابقة شاملة للقيمة الإجمالية المنفذة، المتبقي المالي، ونسب الإنجاز العامة للعقد

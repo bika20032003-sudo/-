@@ -198,7 +198,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
         const grandPct = contractVal > 0 ? ((grandSum / contractVal) * 100).toFixed(2) : 0;
 
         dataRows.push([]);
-        dataRows.push(['الإجمالي العام للموقف التنفيذي:']);
+        dataRows.push(['الإجمالي العام للموقف التنفيذي التعاقدي (البنود الأساسية):']);
         dataRows.push([`قيمة العقد: ${Number(contractVal).toLocaleString('en-US', { minimumFractionDigits: 3 })} د.ل`, `إجمالي المنفذ الفعلي: ${Number(grandSum).toLocaleString('en-US', { minimumFractionDigits: 2 })} د.ل`, `المتبقي المالي: ${Number(grandRem).toLocaleString('en-US', { minimumFractionDigits: 2 })} د.ل`, `نسبة الإنجاز: ${grandPct}%`]);
 
         dataRows.push([]);
@@ -1126,47 +1126,10 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     </td>
                   </tr>
 
-                  {/* شريط الأقسام الأصفر: بنود إضافية */}
-                  <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, pageBreakInside: 'avoid' }}>
-                    <td colSpan={9} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
-                      بنود إضافية
-                    </td>
-                  </tr>
-
-                  {/* أسطر البنود الإضافية موحدة في نفس الأعمدة الـ 8 */}
-                  {(report.additionalItems || []).map((item, idx) => (
-                    <tr key={item.id || idx} style={{ pageBreakInside: 'avoid' }}>
-                      <td style={{ border: '1px solid #000000', padding: '3px 2px', fontWeight: 800 }}>{item.itemNumber || idx + 1}</td>
-                      <td style={{ border: '1px solid #000000', padding: '3px 6px', textAlign: 'right', fontWeight: 700, fontSize: '0.76rem' }}>{item.description}</td>
-                      <td style={{ border: '1px solid #000000', padding: '3px 2px', fontWeight: 700 }}>{item.unit}</td>
-                      <td style={{ border: '1px solid #000000', padding: '3px', color: '#64748b' }}>—</td>
-                      <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800, color: '#166534' }} dir="ltr">
-                        {fmtNum(item.executedQuantity)}
-                      </td>
-                      <td style={{ border: '1px solid #000000', padding: '3px', color: '#64748b' }}>—</td>
-                      <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800 }} dir="ltr">
-                        {item.unitRate !== '' && item.unitRate !== null && item.unitRate !== undefined ? fmtNum(item.unitRate) : '—'}
-                      </td>
-                      <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 900 }} dir="ltr">
-                        {fmtNum(item.executedValue)}
-                      </td>
-                      <td style={{ border: '1px solid #000000', padding: '3px', color: '#64748b' }}>—</td>
-                    </tr>
-                  ))}
-
-                  {/* سطر إجمالي البنود الإضافية */}
-                  <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000', borderBottom: '2px solid #000000', pageBreakInside: 'avoid' }}>
-                    <td colSpan={7} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
-                      إجمالي البنود الإضافية
-                    </td>
-                    <td style={{ border: '1px solid #000000', padding: '5px', fontSize: '0.88rem', fontWeight: 900 }} dir="ltr">
-                      {fmtNum(report.calculations?.additionalExecutedSum || (report.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0))} د.ل
-                    </td>
-                    <td style={{ border: '1px solid #000000', padding: '5px' }}>—</td>
-                  </tr>
-                </tbody>
+                  </tbody>
               </table>
 
+              {/* تم إلغاء البنود الإضافية: التجميع والاعتماد للبنود الأساسية فقط */}
               {/* Grand Summary 4-Box Row */}
               <div style={{
                 display: 'grid',
@@ -1185,19 +1148,19 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 <div style={{ padding: '6px', borderLeft: '1px solid #000000' }}>
                   <div style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 800 }}>إجمالي المنفذ الفعلي</div>
                   <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#166534' }} dir="ltr">
-                    {fmtNum(report.calculations?.grandExecutedSum || ((report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0) + (report.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0)))} د.ل
+                    {fmtNum(report.calculations?.basicExecutedSum || (report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0))} د.ل
                   </div>
                 </div>
                 <div style={{ padding: '6px', borderLeft: '1px solid #000000' }}>
                   <div style={{ fontSize: '0.74rem', color: '#c2410c', fontWeight: 800 }}>المتبقي المالي من العقد</div>
                   <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#ea580c' }} dir="ltr">
-                    {fmtNum(report.calculations?.grandRemainingVal || Math.max(0, (report.contractValue || 897665675.03) - ((report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0) + (report.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0))))} د.ل
+                    {fmtNum(report.calculations?.grandRemainingVal || Math.max(0, (report.contractValue || report.calculations?.contractVal || 897665675.03) - (report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0)))} د.ل
                   </div>
                 </div>
                 <div style={{ padding: '6px' }}>
                   <div style={{ fontSize: '0.74rem', color: '#1e40af', fontWeight: 800 }}>نسبة الإنجاز المالي الإجمالية</div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#1d4ed8' }} dir="ltr">
-                    %{report.calculations?.overallFinancialPercentage || fmtNum((((report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0) + (report.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0)) / (report.contractValue || 897665675.03)) * 100, 2, 2)}
+                    %{fmtNum(report.calculations?.basicPercentage || (((report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0) / (report.contractValue || report.calculations?.contractVal || 897665675.03)) * 100), 2, 2)}
                   </div>
                 </div>
               </div>
