@@ -211,6 +211,11 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
         console.error(e);
       }
 
+      try {
+        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
+        window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
+      } catch (e) {}
+
       setCreatedReport(saved);
       setStatusMessage({ type: 'success', text: `تم حفظ تقرير كميات الوقود اليومية برقم (${saved.reportNumber}) بنجاح!` });
 

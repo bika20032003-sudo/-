@@ -195,10 +195,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     } catch (e) {}
                 }
 
-                // Certified baseline: 22,738 L dispatched / 14,631 L received / 210,697 L tank stock
-                const finalFuelDispatched = computedFuelDispatched || summaryRes.totalSolar || summaryRes.totalFuel || 22738;
-                const finalFuelReceived = computedFuelReceived || summaryRes.totalFuelReceived || 14631;
-                const finalFuelRemaining = computedFuelRemaining || summaryRes.totalFuelRemaining || 210697;
+                // Strict & real: exactly matches fuel section (0 if no fuel reports exist)
+                const finalFuelDispatched = computedFuelDispatched || 0;
+                const finalFuelReceived = computedFuelReceived || 0;
+                const finalFuelRemaining = computedFuelRemaining || 0;
 
                 setMetrics(prev => ({
                     ...prev,
@@ -727,13 +727,17 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           </div>
           <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
             <span className="kpi-big-num" style={{ fontSize: '2.1rem', color: '#c2410c' }}>
-              {(metrics.totalSolar || metrics.totalFuel || 22738).toLocaleString()}
+              {(metrics.totalSolar || metrics.totalFuel || 0).toLocaleString()}
             </span>
             <span className="kpi-unit-label" style={{ fontSize: '0.9rem', color: '#9a3412', fontWeight: 700 }}>لتر ديزل</span>
           </div>
           <div className="kpi-bottom-sub">
             <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#ea580c' }}>
-              منصرف تشغيل: {(metrics.totalSolar || 22738).toLocaleString()} لتر | المخزون بالصهاريج: {(metrics.totalFuelRemaining || 210697).toLocaleString()} لتر
+              {(metrics.totalSolar || metrics.totalFuel) > 0 ? (
+                `منصرف تشغيل: ${(metrics.totalSolar || metrics.totalFuel).toLocaleString()} لتر | المخزون بالصهاريج: ${(metrics.totalFuelRemaining || 0).toLocaleString()} لتر`
+              ) : (
+                'قسم الوقود خالي من الكميات (0 لتر ديزل)'
+              )}
             </span>
           </div>
         </div>
