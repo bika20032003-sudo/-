@@ -5,7 +5,6 @@ import {
   Upload, 
   ShieldCheck, 
   History, 
-  RefreshCw, 
   CheckCircle2, 
   AlertCircle, 
   X, 
@@ -466,7 +465,7 @@ export const DataBackupModal = ({ isOpen, onClose, currentUser }) => {
                   cursor: 'pointer'
                 }}
               >
-                <RefreshCw size={14} />
+                <History size={14} />
                 <span>حفظ نقطة استعادة فورية الآن</span>
               </button>
             </div>

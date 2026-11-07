@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
-  FileSpreadsheet, Printer, Save, RefreshCw, Plus, Trash2, 
+  FileSpreadsheet, Printer, Save, RotateCcw, Plus, Trash2, 
   CheckCircle2, AlertCircle, Edit3, Eye, FileText, Send, 
   HelpCircle, UserCheck, Shield, Award, DollarSign, Calendar,
   TrendingUp, BarChart3, ChevronLeft, ArrowDownRight, Layers, Calculator
@@ -827,7 +827,7 @@ export const ExecutiveProgressForm = ({
                 cursor: 'pointer'
               }}
             >
-              <RefreshCw size={15} />
+              <RotateCcw size={15} />
               <span>إعادة ضبط</span>
             </button>
           )}

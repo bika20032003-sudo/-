@@ -278,28 +278,7 @@ export const AlertsView = ({ currentUser, onNavigateTab }) => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <button 
-            type="button"
-            onClick={fetchAlerts}
-            disabled={isLoading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              background: 'rgba(255, 255, 255, 0.12)',
-              color: '#ffffff',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              padding: '0.65rem 1rem',
-              borderRadius: '10px',
-              fontWeight: 800,
-              fontSize: '0.86rem',
-              cursor: 'pointer'
-            }}
-            title="تحديث قائمة التنبيهات"
-          >
-            <RefreshCw size={16} className={isLoading ? 'spin-animation' : ''} />
-            <span>تحديث</span>
-          </button>
+          
 
           <button 
             type="button"

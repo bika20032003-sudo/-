@@ -316,25 +316,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
             <span>تصدير إكسل</span>
           </button>
 
-          {/* Refresh Button */}
-          <button
-            type="button"
-            onClick={fetchFuelReports}
-            className="secondary-action-btn"
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.4rem', 
-              padding: '0.7rem 1rem', 
-              borderRadius: '10px', 
-              fontWeight: 800,
-              fontSize: '0.88rem'
-            }}
-            title="تحديث البيانات"
-          >
-            <RefreshCw size={17} color="#475569" />
-            <span>تحديث</span>
-          </button>
+
         </div>
       </div>
 

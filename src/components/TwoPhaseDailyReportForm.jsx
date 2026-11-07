@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Layers, Plus, Trash2, Printer, Send, CheckCircle2, 
   AlertCircle, FileSpreadsheet, FileText, Calendar, 
-  TrendingUp, BarChart3, RefreshCw, Eye, Edit3, Save, 
+  TrendingUp, BarChart3, RotateCcw, Eye, Edit3, Save, 
   HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check
 } from 'lucide-react';
 import { 
@@ -1230,7 +1230,7 @@ export const TwoPhaseDailyReportForm = ({
               cursor: 'pointer'
             }}
           >
-            <RefreshCw size={15} />
+            <RotateCcw size={15} />
             <span>مسح الحقول</span>
           </button>
 

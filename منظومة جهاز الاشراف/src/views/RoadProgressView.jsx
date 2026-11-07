@@ -416,7 +416,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
                 <th style={{ width: '120px', textAlign: 'center' }}>الزيادة / الفارق</th>
                 <th style={{ width: '120px', textAlign: 'center' }}>الجاهز للعمل بالبند</th>
                 <th style={{ minWidth: '150px', textAlign: 'right' }}>ملاحظات الموقع</th>
-                <th style={{ width: '75px', textAlign: 'center' }}>تحديث</th>
+                <th style={{ width: '75px', textAlign: 'center' }}>تعديل</th>
               </tr>
             </thead>
             <tbody>
@@ -548,7 +548,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
                         </button>
                       </div>
                     ) : (
-                      <button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', color: '#2563eb' }} title="تحديث منجز اليوم">
+                      <button onClick={() => { setEditingId(item.id); setEditMeters(item.todayMeters); setEditNotes(item.notes || ''); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', color: '#2563eb' }} title="تعديل منجز اليوم">
                         <Edit3 size={14}/>
                       </button>
                     )}
@@ -647,25 +647,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
             >
               <span>+ رفع تقرير إنجاز جديد</span>
             </button>
-            <button
-              onClick={fetchProgressReports}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                padding: '0.5rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                color: '#1d4ed8',
-                cursor: 'pointer'
-              }}
-            >
-              <RefreshCw size={14} />
-              <span>تحديث</span>
-            </button>
+
           </div>
         </div>
 

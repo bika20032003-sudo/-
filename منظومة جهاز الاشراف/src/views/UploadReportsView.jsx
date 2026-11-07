@@ -685,7 +685,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                     cursor: 'pointer'
                   }}
                 >
-                  <span>📊 الانتقال للوحة التحكم (الداشبورد) لمشاهدة التحديث</span>
+                  <span>📊 الانتقال للوحة التحكم (الداشبورد) لمشاهدة الإنجاز</span>
                 </button>
 
                 <button 

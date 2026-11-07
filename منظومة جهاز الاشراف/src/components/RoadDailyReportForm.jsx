@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  FileSpreadsheet, Printer, Save, RefreshCw, Plus, Trash2, 
+  FileSpreadsheet, Printer, Save, RotateCcw, Plus, Trash2, 
   CheckCircle2, AlertCircle, Edit3, Eye, FileText, Send, 
   MapPin, Calendar, Clock, Milestone, Award, UserCheck, ShieldCheck
 } from 'lucide-react';
@@ -896,7 +896,7 @@ export const RoadDailyReportForm = ({
               cursor: 'pointer'
             }}
           >
-            <RefreshCw size={15} />
+            <RotateCcw size={15} />
             <span>استعادة البيانات المعتمدة (24/10/2026)</span>
           </button>
 

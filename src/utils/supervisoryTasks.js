@@ -219,3 +219,4 @@ export function generateSupervisoryTasksArticle() {
   report += `\n💡 *ملاحظة:* يمكن لمدير المشروع تقديم وتكليف مهام جديدة مباشرة عبر **تبويب مكتب مدير المشروع** في واجهة مساعد جهاز الإشراف.`;
   return report;
 }
+

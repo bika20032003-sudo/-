@@ -1044,7 +1044,7 @@ export const EquipmentView = ({ currentUser }) => {
                   }}
                 >
                   <Check size={16} />
-                  <span>{editingItem ? 'تحديث السجل' : 'حفظ المعدة'}</span>
+                  <span>{editingItem ? 'حفظ التعديلات' : 'حفظ المعدة'}</span>
                 </button>
               </div>
 
