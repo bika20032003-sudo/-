@@ -24,6 +24,12 @@ try {
   run('git checkout gh-pages');
   run('git pull origin gh-pages');
 
+  // Delete old assets folder on gh-pages to prevent bloat
+  const oldAssets = path.join(root, 'assets');
+  if (fs.existsSync(oldAssets)) {
+    fs.rmSync(oldAssets, { recursive: true, force: true });
+  }
+
   // Copy temp contents into root
   const items = fs.readdirSync(tempDir);
   items.forEach(item => {

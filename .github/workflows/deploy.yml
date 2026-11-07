@@ -30,6 +30,9 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Remove git history from deployment bundle
+        run: rm -rf .git
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
