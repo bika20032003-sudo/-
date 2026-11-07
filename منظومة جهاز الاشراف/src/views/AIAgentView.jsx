@@ -876,10 +876,10 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                 <Fuel size={18} color="#eab308" />
               </div>
               <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ca8a04' }}>
-                209.00 لتر
+                {liveContext.fuelData?.totalRemainingLiters ? `${Number(liveContext.fuelData.totalRemainingLiters).toLocaleString()} لتر` : '0 لتر'}
               </div>
               <span style={{ fontSize: '0.74rem', color: '#a16207', fontWeight: 800 }}>
-                مواقع 107 و 240 والكسارات
+                {liveContext.fuelData?.totalRemainingLiters ? 'المخزون الحالي بالصهاريج' : 'خالي من الكميات بقسم الوقود'}
               </span>
             </div>
           </div>

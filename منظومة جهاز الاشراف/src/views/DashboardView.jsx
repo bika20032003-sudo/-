@@ -196,7 +196,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     totalSharshoor: summaryRes.totalSharshoor || 0,
                     totalEquipment: eqTotal || summaryRes.totalEquipment || 25,
                     activeEquipment: eqActive || summaryRes.activeEquipment || 25,
-                    stoppedEquipment: eqStopped !== undefined && eqStopped !== null ? eqStopped : (summaryRes.stoppedEquipment ?? 2),
+                    stoppedEquipment: eqStopped !== undefined && eqStopped !== null ? eqStopped : (summaryRes.stoppedEquipment || 0),
                     operatingHours: summaryRes.operatingHours || 0,
                     sectorAFuel: summaryRes.sectorAFuel || 0,
                     sectorBFuel: summaryRes.sectorBFuel || 0,
@@ -349,11 +349,11 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
               <strong style={{ fontSize: '1.15rem', color: '#16a34a' }}>+{metrics.roadProgress.totalTodayMeters} م.ط</strong>
             </div>
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
-              <div style={{ width: '88%', height: '100%', background: '#16a34a', borderRadius: '4px' }}/>
+              <div style={{ width: `${Math.min(100, Math.round(((metrics.activeEquipment || 25) / (metrics.totalEquipment || 25)) * 100))}%`, height: '100%', background: '#16a34a', borderRadius: '4px' }}/>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>{metrics.operatingHours} ساعة تشغيل اليوم</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>{metrics.activeEquipment} معدة ميدانية جاهزة</span>
+              <span>إنجاز رصف اليوم بالمرحلتين</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>{metrics.activeEquipment || 25} معدة وآلية عاملة بالميدان</span>
             </div>
           </div>
         </div>
@@ -428,7 +428,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
               {/* Left Side: Layer Completion Grouped Bars */}
               <div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginBottom: '1rem', display: 'block' }}>
-                  نسب الإنجاز التفصيلية لطبقات الطريق (المسافة الكلية 226.28 كم):
+                  نسب الإنجاز التفصيلية لطبقات الطريق (المسافة الكلية 360.00 كم):
                 </span>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
@@ -453,7 +453,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#64748b', marginTop: '0.25rem' }}>
                         <span>المنجز: <strong>{layer.meters.toLocaleString()} م.ط</strong></span>
-                        <span>المتبقي: <strong style={{ color: '#dc2626' }}>{Math.max(0, 226280 - layer.meters).toLocaleString()} م.ط</strong></span>
+                        <span>المتبقي: <strong style={{ color: '#dc2626' }}>{Math.max(0, 360000 - layer.meters).toLocaleString()} م.ط</strong></span>
                         <span style={{ color: '#16a34a', fontWeight: 700 }}>الحالة: نشط ومستمر</span>
                       </div>
                     </div>))}
@@ -507,7 +507,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
 
                 <div style={{ height: '170px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '2px solid #e2e8f0', gap: '0.5rem' }}>
                   {metrics.weeklyTrends.map((trend, idx) => {
-                const heightPercent = Math.min(100, ((trend.meters || 800) / 1200) * 100);
+                const heightPercent = Math.min(100, ((trend.meters || 0) / 1200) * 100);
                 return (<div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.35rem' }}>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563eb' }}>{trend.meters || 0}</span>
                         <div style={{
@@ -530,7 +530,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
 
                 <div style={{ height: '140px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '2px solid #fed7aa', gap: '0.4rem' }}>
                   {metrics.weeklyTrends.map((trend, idx) => {
-                const heightPercent = Math.min(100, (trend.fuel / 4500) * 100);
+                const heightPercent = Math.min(100, (trend.fuel > 0 ? trend.fuel / 4500 : 0) * 100);
                 return (<div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.25rem' }}>
                         <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ea580c' }}>{trend.fuel}</span>
                         <div style={{
@@ -554,7 +554,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
               <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#16a34a', margin: '0.4rem 0' }}>
                 {metrics.activeEquipment}
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#15803d' }}>نسبة تشغيل 83.3% من الأسطول</span>
+              <span style={{ fontSize: '0.78rem', color: '#15803d' }}>نسبة تشغيل {metrics.totalEquipment > 0 ? Math.round((metrics.activeEquipment / metrics.totalEquipment) * 100) : 100}% من الأسطول</span>
             </div>
 
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '1.25rem', textAlign: 'center' }}>
@@ -566,11 +566,11 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             </div>
 
             <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e3a8a' }}>إجمالي ساعات التشغيل اليوم</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e3a8a' }}>إجمالي الآليات المعتمدة</span>
               <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#2563eb', margin: '0.4rem 0' }}>
-                {metrics.operatingHours}
+                {metrics.totalEquipment || 25}
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#1d4ed8' }}>متوسط 8.2 ساعة / معدة</span>
+              <span style={{ fontSize: '0.78rem', color: '#1d4ed8' }}>أسطول معدات وآليات المشروع بالموقع</span>
             </div>
           </div>)}
 
@@ -744,7 +744,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           </div>
           <div className="kpi-bottom-sub">
             <span className="kpi-green-text" style={{ fontSize: '0.78rem', color: '#2563eb' }}>
-              {metrics.activeEquipment || metrics.totalEquipment || 25} آلية عاملة بالميدان | {metrics.stoppedEquipment ?? 2} تحت الصيانة
+              {metrics.stoppedEquipment > 0 
+                ? `${metrics.activeEquipment || 25} آلية عاملة بالميدان | ${metrics.stoppedEquipment} تحت الصيانة`
+                : `${metrics.activeEquipment || 25} آلية عاملة بالميدان (15 مرحلة أولى | 10 مرحلة ثانية)`
+              }
             </span>
           </div>
         </div>

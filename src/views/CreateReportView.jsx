@@ -85,7 +85,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
     { id: 3, location: '', dispatchedLiters: '', receivedLiters: '', remainingLiters: '' }
   ]);
 
-  const locationPresets = ['107', '240', 'الكسارات', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
+  const locationPresets = ['خزان نقطة 107', 'خزان نقطة 240', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
 
   // 3. Targeted Works Sections State initialized with approved document data (Sunday 25/10/2026)
   const [targetedSections, setTargetedSections] = useState(() => 
@@ -1883,7 +1883,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                       <input
                         type="text"
                         list={`fuel-loc-${row.id}`}
-                        placeholder="الموقع (مثل: 107 / 240 / الكسارات)..."
+                        placeholder="الموقع (مثل: خزان 107 / خزان 240)..."
                         value={row.location}
                         onChange={(e) => handleFuelRowChange(row.id, 'location', e.target.value)}
                         style={{

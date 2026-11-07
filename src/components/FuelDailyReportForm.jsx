@@ -32,28 +32,19 @@ export const initialFuelDailyData = {
     {
       id: 1,
       seq: '1',
-      location: '107',
-      dispatchedLiters: '570.00',
-      receivedLiters: '0.00',
-      remainingLiters: '49,829.00',
+      location: 'خزان نقطة 107',
+      dispatchedLiters: '',
+      receivedLiters: '',
+      remainingLiters: '',
       notes: ''
     },
     {
       id: 2,
       seq: '2',
-      location: '240',
-      dispatchedLiters: '17,530.00',
-      receivedLiters: '14,631.00',
-      remainingLiters: '141,795.00',
-      notes: ''
-    },
-    {
-      id: 3,
-      seq: '3',
-      location: 'الكسارات',
-      dispatchedLiters: '4,638.00',
-      receivedLiters: '0.00',
-      remainingLiters: '19,073.00',
+      location: 'خزان نقطة 240',
+      dispatchedLiters: '',
+      receivedLiters: '',
+      remainingLiters: '',
       notes: ''
     }
   ]
@@ -145,7 +136,7 @@ export const FuelDailyReportForm = ({
     }
   };
 
-  const locationPresets = ['107', '240', 'الكسارات', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
+  const locationPresets = ['خزان نقطة 107', 'خزان نقطة 240', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
 
   // Helper to parse numbers safely
   const parseNum = (val) => {
@@ -844,7 +835,7 @@ export const FuelDailyReportForm = ({
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
             {fmtNum(calculatedTotals.totalDispatched)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>لتر</span>
           </div>
-          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>استهلاك المعدات والآليات والكسارات</div>
+          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>استهلاك المعدات والآليات الميدانية</div>
         </div>
 
         {/* Card 2: Received */}
@@ -874,7 +865,7 @@ export const FuelDailyReportForm = ({
           <div style={{ fontSize: '1.65rem', fontWeight: 900, marginTop: '0.35rem', letterSpacing: '-0.5px' }} dir="ltr">
             {fmtNum(calculatedTotals.totalRemaining)} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>لتر</span>
           </div>
-          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>المخزون الاستراتيجي بالمواقع 107 و 240 والكسارات</div>
+          <div style={{ fontSize: '0.76rem', opacity: 0.85, marginTop: '0.2rem' }}>المخزون الاستراتيجي بالخزانات الميدانية (نقطة 107 و 240)</div>
         </div>
 
         {/* Card 4: Signatures Summary */}
@@ -992,7 +983,7 @@ export const FuelDailyReportForm = ({
                     />
                   </td>
 
-                  {/* Location (107 / 240 / الكسارات) */}
+                  {/* Location (نقطة 107 / نقطة 240) */}
                   <td style={{ border: '2px solid #000000', padding: '0.65rem 1rem', fontWeight: 800 }}>
                     <div style={{ position: 'relative' }}>
                       <input 

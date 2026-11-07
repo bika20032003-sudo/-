@@ -53,8 +53,8 @@ const INITIAL_CORRESPONDENCE_MESSAGES = [
     toName: 'م. عبدالرحمن الأنصاري',
     toRole: 'مدير المشروع',
     type: 'إحالة تقرير يومي',
-    subject: 'موقف تشغيل كسارة المرحلة الثانية ومخزون الركام',
-    content: 'تواصل الكسارة إنتاج الركام المتدرج والشرشور بمعدل إنتاج يومي 1,450 طن مع انتظام إمدادات الوقود للمعدات بالموقع دون أي معوقات تشغيلية.',
+    subject: 'متابعة أعمال طبقة إعادة التدوير FDR بالمرحلة الثانية',
+    content: 'تتواصل أعمال فرم وتأهيل طبقة إعادة التدوير (FDR) بالقطاع الثاني بمعدل يومي متقدم مع انتظام عمل الآليات ومداحل الدك الميدانية وفق المخطط الزمني المعتمد للمشروع.',
     reportNumber: null,
     isRead: true,
     createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
@@ -207,7 +207,7 @@ export function getFallbackData(url) {
     // Dynamic Equipment count from localStorage
     let eqTotal = 25;
     let eqActive = 25;
-    let eqStopped = 2;
+    let eqStopped = 0;
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const rawEq = localStorage.getItem('system_equipment_list');
@@ -232,7 +232,7 @@ export function getFallbackData(url) {
       totalSharshoor: initialDailySummary?.sharshoor?.total || 0,
       totalEquipment: eqTotal || 25,
       activeEquipment: eqActive || 25,
-      stoppedEquipment: eqStopped ?? 2,
+      stoppedEquipment: eqStopped || 0,
       operatingHours: 0,
       sectorAFuel: 0,
       sectorBFuel: 0,
@@ -312,9 +312,9 @@ export function getFallbackData(url) {
         additionalTotals: { executedValue: 93573854.26 },
         grandTotals: {
           contractValue: 897665675.030,
-          totalExecutedValue: 725422646.62,
-          totalRemainingValue: 172243028.41,
-          overallFinancialPercentage: 80.81,
+          totalExecutedValue: 732648221.31,
+          totalRemainingValue: 165017453.72,
+          overallFinancialPercentage: 81.62,
           basicItemsPercentage: 70.19
         }
       }
@@ -733,9 +733,9 @@ export function getFallbackData(url) {
       analysisDate: targetDateStr,
       sector: sectorFilter || 'all',
       operational: {
-        totalEquipment: sectorFilter ? 8 : 16,
-        workingEquipment: sectorFilter ? 7 : 14,
-        stoppedEquipment: sectorFilter ? 1 : 2,
+        totalEquipment: sectorFilter ? (sectorFilter.includes('A') ? 15 : 10) : 25,
+        workingEquipment: sectorFilter ? (sectorFilter.includes('A') ? 15 : 10) : 25,
+        stoppedEquipment: 0,
         standbyEquipment: 0,
         totalOperatingHours: sectorFilter ? 52 : 105,
         estimatedStoppedHours: 16,

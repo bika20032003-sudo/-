@@ -190,17 +190,21 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
           setFuelRemaining(prev => prev || String(Math.max(1000, maxNum * 1.5)));
         } else if (selectedCategory === 'targeted') {
           const validLengths = extractedNums.filter(n => n >= 100 && n <= 5000);
-          const totalLen = validLengths.reduce((a, b) => a + b, 0) || 1200;
-          setTargetLength(prev => prev || String(totalLen));
-          setTargetEquipment(prev => prev || '8');
+          const totalLen = validLengths.reduce((a, b) => a + b, 0);
+          if (totalLen > 0) setTargetLength(prev => prev || String(totalLen));
         } else if (selectedCategory === 'two_phase') {
-          const maxNum = Math.max(...extractedNums, 1450);
-          setTwoPhaseToday(prev => prev || String(maxNum));
-          setTwoPhaseTotal(prev => prev || String(maxNum * 14));
+          const validNums = extractedNums.filter(n => n > 0);
+          if (validNums.length > 0) {
+            const maxNum = Math.max(...validNums);
+            setTwoPhaseToday(prev => prev || String(maxNum));
+          }
         } else if (selectedCategory === 'road') {
-          const maxNum = Math.max(...extractedNums, 950);
-          setRoadMeters(prev => prev || String(maxNum));
-          setRoadArea(prev => prev || String(maxNum * 7.5));
+          const validNums = extractedNums.filter(n => n > 0);
+          if (validNums.length > 0) {
+            const maxNum = Math.max(...validNums);
+            setRoadMeters(prev => prev || String(maxNum));
+            setRoadArea(prev => prev || String(Math.round(maxNum * 7.5)));
+          }
         } else {
           setCrusherProduction(prev => prev || '1250');
           setSharshoorAmount(prev => prev || '750');
@@ -1007,7 +1011,6 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   <option value="خزان 240">خزان 240</option>
                   <option value="خزان المرحلة الأولى">خزان المرحلة الأولى</option>
                   <option value="خزان المرحلة الثانية">خزان المرحلة الثانية</option>
-                  <option value="الكسارات">الكسارات</option>
                   <option value="محطة الخلط">محطة الخلط</option>
                 </select>
               </div>

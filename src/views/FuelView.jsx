@@ -350,7 +350,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
                 عداد الوقود (المنصرف)
               </span>
               <div style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 700, marginTop: '2px' }}>
-                وقود الآليات والكسارات والمعدات الميدانية
+                وقود الآليات والمعدات الميدانية
               </div>
             </div>
             <div className="kpi-icon-circle orange" style={{ background: '#ffedd5', color: '#ea580c' }}>

@@ -185,25 +185,29 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         // Smart fill based on selectedCategory
         if (selectedCategory === 'fuel') {
           const maxNum = Math.max(...extractedNums, 2500);
-          setFuelDispatched(prev => prev || String(maxNum > 100 ? maxNum : 2850));
+          setFuelDispatched(prev => prev || (maxNum > 0 ? String(maxNum) : ""));
           setFuelReceived(prev => prev || '0');
           setFuelRemaining(prev => prev || String(Math.max(1000, maxNum * 1.5)));
         } else if (selectedCategory === 'targeted') {
           const validLengths = extractedNums.filter(n => n >= 100 && n <= 5000);
-          const totalLen = validLengths.reduce((a, b) => a + b, 0) || 1200;
-          setTargetLength(prev => prev || String(totalLen));
-          setTargetEquipment(prev => prev || '8');
+          const totalLen = validLengths.reduce((a, b) => a + b, 0);
+          if (totalLen > 0) setTargetLength(prev => prev || String(totalLen));
         } else if (selectedCategory === 'two_phase') {
-          const maxNum = Math.max(...extractedNums, 1450);
-          setTwoPhaseToday(prev => prev || String(maxNum));
-          setTwoPhaseTotal(prev => prev || String(maxNum * 14));
+          const validNums = extractedNums.filter(n => n > 0);
+          if (validNums.length > 0) {
+            const maxNum = Math.max(...validNums);
+            setTwoPhaseToday(prev => prev || String(maxNum));
+          }
         } else if (selectedCategory === 'road') {
-          const maxNum = Math.max(...extractedNums, 950);
-          setRoadMeters(prev => prev || String(maxNum));
-          setRoadArea(prev => prev || String(maxNum * 7.5));
+          const validNums = extractedNums.filter(n => n > 0);
+          if (validNums.length > 0) {
+            const maxNum = Math.max(...validNums);
+            setRoadMeters(prev => prev || String(maxNum));
+            setRoadArea(prev => prev || String(Math.round(maxNum * 7.5)));
+          }
         } else {
-          setCrusherProduction(prev => prev || '1250');
-          setSharshoorAmount(prev => prev || '750');
+          setCrusherProduction(prev => prev || "");
+          setSharshoorAmount(prev => prev || "");
         }
 
         setDetectedIssues(issues.length > 0 ? issues : ['فحص دوري ومطابقة بيانات التقرير']);
@@ -217,9 +221,9 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
     // Default Smart Parsing for Images / PDFs / Text
     setTimeout(() => {
       if (selectedCategory === 'fuel') {
-        setFuelDispatched(prev => prev || '2850');
+        setFuelDispatched(prev => prev || "");
         setFuelReceived(prev => prev || '0');
-        setFuelRemaining(prev => prev || '4200');
+        setFuelRemaining(prev => prev || "");
       } else if (selectedCategory === 'targeted') {
         setTargetLength(prev => prev || '1400');
         setTargetEquipment(prev => prev || '12');
@@ -235,8 +239,8 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         setRoadMeters(prev => prev || '850');
         setRoadArea(prev => prev || '6375');
       } else {
-        setCrusherProduction(prev => prev || '1150');
-        setSharshoorAmount(prev => prev || '690');
+        setCrusherProduction(prev => prev || "");
+        setSharshoorAmount(prev => prev || "");
       }
 
       setDetectedIssues(['تم فحص المستند واستخراج البيانات الرقمية بنجاح']);
@@ -1007,7 +1011,6 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
                   <option value="خزان 240">خزان 240</option>
                   <option value="خزان المرحلة الأولى">خزان المرحلة الأولى</option>
                   <option value="خزان المرحلة الثانية">خزان المرحلة الثانية</option>
-                  <option value="الكسارات">الكسارات</option>
                   <option value="محطة الخلط">محطة الخلط</option>
                 </select>
               </div>

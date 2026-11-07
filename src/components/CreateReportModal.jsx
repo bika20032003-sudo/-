@@ -74,9 +74,8 @@ export const CreateReportModal = ({
   // 2. Fuel Items State
   // -------------------------------------------------------------
   const [fuelItems, setFuelItems] = useState([
-    { id: 1, location: '107', dispatchedLiters: '570.00', receivedLiters: '0.00', remainingLiters: '49,829.00' },
-    { id: 2, location: '240', dispatchedLiters: '17,530.00', receivedLiters: '14,631.00', remainingLiters: '141,795.00' },
-    { id: 3, location: 'الكسارات', dispatchedLiters: '4,638.00', receivedLiters: '0.00', remainingLiters: '19,073.00' }
+    { id: 1, location: 'خزان نقطة 107', dispatchedLiters: '', receivedLiters: '', remainingLiters: '' },
+    { id: 2, location: 'خزان نقطة 240', dispatchedLiters: '', receivedLiters: '', remainingLiters: '' }
   ]);
 
   const totalSolarDispatched = useMemo(() => {

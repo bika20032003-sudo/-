@@ -409,7 +409,7 @@ export const SectorDashboardView = ({ currentUser }) => {
             <div>
               <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>أعمال اليوم بمسار القطاع</span>
               <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', marginTop: '0.3rem' }}>
-                {sectorData?.todayMeters ? sectorData.todayMeters.toLocaleString() : '620'} <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>م.ط</span>
+                {sectorData?.todayMeters ? sectorData.todayMeters.toLocaleString() : (isSectorA ? '0' : '1,980')} <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>م.ط</span>
               </div>
             </div>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -421,32 +421,7 @@ export const SectorDashboardView = ({ currentUser }) => {
           </div>
         </div>
 
-        {/* Card 2: Sector Crusher Production */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '14px',
-          padding: '1.35rem',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>إنتاج كسارة {sectorName}</span>
-              <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', marginTop: '0.3rem' }}>
-                {sectorData?.crushers?.productionToday ? sectorData.crushers.productionToday.toLocaleString() : (isSectorA ? '850' : '620')} <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>طن</span>
-              </div>
-            </div>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Factory size={20} />
-            </div>
-          </div>
-          <div style={{ marginTop: '0.75rem', fontSize: '0.76rem', color: '#64748b', fontWeight: 700 }}>
-            رصيد الشرشور المنتج: <strong>{sectorData?.crushers?.sharshoorToday || (isSectorA ? '510' : '372')} طن</strong>
-          </div>
-        </div>
+
 
         {/* Card 3: Sector Fuel Dispensed */}
         <div style={{
@@ -463,7 +438,7 @@ export const SectorDashboardView = ({ currentUser }) => {
             <div>
               <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>ديزل منصرف لآليات القطاع</span>
               <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', marginTop: '0.3rem' }}>
-                {sectorData?.fuel?.dispensedToday ? sectorData.fuel.dispensedToday.toLocaleString() : (isSectorA ? '1,850' : '2,100')} <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>لتر</span>
+                {sectorData?.fuel?.dispensedToday ? sectorData.fuel.dispensedToday.toLocaleString() : '0'} <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 700 }}>لتر</span>
               </div>
             </div>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#fdf2f8', color: '#db2777', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -471,7 +446,7 @@ export const SectorDashboardView = ({ currentUser }) => {
             </div>
           </div>
           <div style={{ marginTop: '0.75rem', fontSize: '0.76rem', color: '#64748b', fontWeight: 700 }}>
-            رصيد خزان القطاع الميداني: <strong>{sectorData?.fuel?.balanceLiters ? sectorData.fuel.balanceLiters.toLocaleString() : '26,000'} لتر</strong>
+            {sectorData?.fuel?.dispensedToday ? 'منصرف تشغيلي مسجل' : 'لا توجد كميات منصرفة مسجلة اليوم (0 لتر)'}
           </div>
         </div>
 
@@ -490,7 +465,7 @@ export const SectorDashboardView = ({ currentUser }) => {
             <div>
               <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>آليات ومعدات القطاع</span>
               <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', marginTop: '0.3rem' }}>
-                {sectorData?.equipment?.active || '10'} <span style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: 700 }}>عاملة</span>
+                {sectorData?.equipment?.active || (isSectorA ? 15 : 10)} <span style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: 700 }}>عاملة</span>
               </div>
             </div>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -498,7 +473,7 @@ export const SectorDashboardView = ({ currentUser }) => {
             </div>
           </div>
           <div style={{ marginTop: '0.75rem', fontSize: '0.76rem', color: '#64748b', fontWeight: 700 }}>
-            الإجمالي: {sectorData?.equipment?.total || '12'} آلية ({sectorData?.equipment?.stopped || '2'} متوقفة للصيانة)
+            الإجمالي: {sectorData?.equipment?.total || (isSectorA ? 15 : 10)} آلية ومعدة مخصصة للمسار
           </div>
         </div>
 
@@ -648,18 +623,7 @@ export const SectorDashboardView = ({ currentUser }) => {
 
           {/* Row 2: Quantities (Production, Fuel, Meters) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-                إنتاج الكسارة اليوم (طن)
-              </label>
-              <input
-                type="text" inputMode="decimal" dir="ltr" lang="en"
-                placeholder="مثال: 850"
-                value={productionAmount}
-                onChange={(e) => setProductionAmount(e.target.value)}
-                style={{ width: '100%', padding: '0.7rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
-              />
-            </div>
+
 
             <div>
               <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>

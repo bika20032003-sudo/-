@@ -305,7 +305,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
           <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
             <div style={{ width: `${Math.min(100, aggStats.percentage)}%`, height: '100%', background: '#16a34a' }}/>
           </div>
-          <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.4rem', display: 'block' }}>توريد من كسارات الموقع</span>
+          <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.4rem', display: 'block' }}>توريد وفرش طبقة الأساس الحبيبي</span>
         </div>
 
         {/* Card 3: MCO */}
