@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Target, X, Plus, Trash2, Printer, Send, CheckCircle2, 
   FileSpreadsheet, AlertCircle, RefreshCw, Calendar, Clock,
@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { saveReportToIndexedDB } from '../utils/secureDatabase.js';
+import { calculateStationLength } from '../utils/engineeringFormulas.js';
 
 // Approved Targeted Works Data from official document (Sunday 25/10/2026)
 export const initialTargetedWorksSections = [
@@ -302,6 +303,12 @@ export const CreateTargetedWorksReportModal = ({
   const handleDateChange = (newDate) => {
     setReportDate(newDate);
     setDayName(getDayName(newDate));
+    if (!reportToEdit) {
+      const parts = (newDate || '').split('-');
+      if (parts.length === 3) {
+        setReportNumber('TARGET-' + parts[2] + '.' + parts[1] + '.' + parts[0]);
+      }
+    }
   };
 
   // Section level changes

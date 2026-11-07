@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
+import { calculateStationLength } from '../utils/engineeringFormulas.js';
 
 // Safe number parsing
 const cleanNum = (val) => {
