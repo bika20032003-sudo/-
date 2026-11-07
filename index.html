@@ -24,9 +24,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <script>
-    // Normalize trailing slash for GitHub Pages
+    // Normalize trailing slash for GitHub Pages & bust stale version query
     if (window.location.pathname === '/-') {
       window.location.replace('/-/');
+    }
+    // Clean old caches if any
+    if ('caches' in window) {
+      try {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+      } catch (e) {}
     }
   </script>
   <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
