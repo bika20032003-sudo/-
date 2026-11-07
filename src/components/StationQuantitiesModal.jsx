@@ -118,7 +118,7 @@ export const initialBaseStations = [
   { id: 25, from: 237630, to: 238950, length: 1320, width: 9, area: 11880, thicknessCm: 12.5, volume: 1485 }
 ];
 
-export const StationQuantitiesModal = ({ isOpen, onClose }) => {
+export const StationQuantitiesModal = ({ isOpen, onClose, onApplyTotals }) => {
   const [activeLayer, setActiveLayer] = useState('mco'); // 'mco' | 'fdr' | 'asphalt' | 'base'
   const [mcoList, setMcoList] = useState(initialMCOStations);
   const [fdrList, setFdrList] = useState(initialFDRStations);
@@ -136,6 +136,24 @@ export const StationQuantitiesModal = ({ isOpen, onClose }) => {
   const totalVolume = activeLayer === 'base' ? currentList.reduce((acc, row) => acc + parseCleanNumber(row.volume), 0) : null;
 
   // Handle cell edits with automatic recalculation of length, area, volume
+  
+  const handleApplyToExecutive = () => {
+    const mcoArea = mcoList.reduce((acc, row) => acc + parseCleanNumber(row.area), 0);
+    const fdrArea = fdrList.reduce((acc, row) => acc + parseCleanNumber(row.area), 0);
+    const asphaltArea = asphaltList.reduce((acc, row) => acc + parseCleanNumber(row.area), 0);
+    const baseVolume = baseList.reduce((acc, row) => acc + parseCleanNumber(row.volume), 0);
+
+    if (onApplyTotals) {
+      onApplyTotals({
+        mco: { area: parseFloat(mcoArea.toFixed(2)) },
+        fdr: { area: parseFloat(fdrArea.toFixed(2)) },
+        asphalt: { area: parseFloat(asphaltArea.toFixed(2)) },
+        base: { volume: parseFloat(baseVolume.toFixed(2)) }
+      });
+    }
+    if (onClose) onClose();
+  };
+
   const handleCellChange = (id, field, value) => {
     setList(prev => prev.map(row => {
       if (row.id !== id) return row;
@@ -284,19 +302,46 @@ export const StationQuantitiesModal = ({ isOpen, onClose }) => {
               <FileSpreadsheet size={16} />
               <span>تصدير Excel</span>
             </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {onApplyTotals && (
+              <button
+                type="button"
+                onClick={handleApplyToExecutive}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  background: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.55rem 1.25rem',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)'
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>تطبيق الكميات المحسوبة على جدول الموقف التنفيذي</span>
+              </button>
+            )}
             <button
+              type="button"
               onClick={onClose}
               style={{
-                background: 'rgba(255,255,255,0.15)',
+                padding: '0.55rem 1.25rem',
+                background: '#0f172a',
+                color: '#ffffff',
                 border: 'none',
-                color: '#fff',
                 borderRadius: '8px',
-                padding: '0.45rem',
+                fontWeight: 800,
                 cursor: 'pointer'
               }}
             >
-              <X size={20} />
+              إغلاق النافذة
             </button>
+          </div>
           </div>
         </div>
 

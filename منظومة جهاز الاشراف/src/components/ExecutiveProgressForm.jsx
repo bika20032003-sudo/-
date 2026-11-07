@@ -249,6 +249,7 @@ export const ExecutiveProgressForm = ({
       contractQuantity: item.contractQuantity !== '' && item.contractQuantity !== null && item.contractQuantity !== undefined ? toCleanLatin(item.contractQuantity) : '',
       executedQuantity: item.executedQuantity !== '' && item.executedQuantity !== null && item.executedQuantity !== undefined ? toCleanLatin(item.executedQuantity) : '',
       remainingQuantity: item.remainingQuantity !== '' && item.remainingQuantity !== null && item.remainingQuantity !== undefined ? toCleanLatin(item.remainingQuantity) : '',
+      unitRate: item.unitRate !== '' && item.unitRate !== null && item.unitRate !== undefined ? toCleanLatin(item.unitRate) : '',
       executedValue: item.executedValue !== '' && item.executedValue !== null && item.executedValue !== undefined ? toCleanLatin(item.executedValue) : '',
       percentage: item.percentage !== '' && item.percentage !== null && item.percentage !== undefined ? toCleanLatin(item.percentage) : ''
     }));
@@ -414,23 +415,28 @@ export const ExecutiveProgressForm = ({
     setData(prev => ({ ...prev, [field]: toCleanLatin(val) }));
   };
 
-  // Handle Basic Item change
+    // Handle Basic Item change with real-time automatic calculation
   const handleBasicItemChange = (idx, field, val) => {
     const cleanVal = toCleanLatin(val);
     setData(prev => {
       const updated = [...prev.basicItems];
       const item = { ...updated[idx], [field]: cleanVal };
 
-      // Auto compute remaining & percentage when contractQuantity or executedQuantity changes
-      if (field === 'contractQuantity' || field === 'executedQuantity') {
-        const cQ = field === 'contractQuantity' ? parseFloat(cleanVal) : parseFloat(toCleanLatin(item.contractQuantity));
-        const eQ = field === 'executedQuantity' ? parseFloat(cleanVal) : parseFloat(toCleanLatin(item.executedQuantity));
-        if (!isNaN(cQ) && !isNaN(eQ)) {
-          item.remainingQuantity = String(parseFloat(Math.max(0, cQ - eQ).toFixed(2)));
-          if (cQ > 0) {
-            item.percentage = String(parseFloat(((eQ / cQ) * 100).toFixed(2)));
-          }
-        }
+      const cQ = parseFloat(toCleanLatin(field === 'contractQuantity' ? cleanVal : item.contractQuantity)) || 0;
+      const eQ = parseFloat(toCleanLatin(field === 'executedQuantity' ? cleanVal : item.executedQuantity)) || 0;
+      const rate = parseFloat(toCleanLatin(field === 'unitRate' ? cleanVal : item.unitRate)) || 0;
+
+      // 1. المتبقي = كمية العقد - المنفذ
+      item.remainingQuantity = String(parseFloat(Math.max(0, cQ - eQ).toFixed(3)));
+
+      // 2. قيمة المنفذ = المنفذ × الفئة
+      item.executedValue = String(parseFloat((eQ * rate).toFixed(2)));
+
+      // 3. النسبة % = (المنفذ / العقد) × 100
+      if (cQ > 0) {
+        item.percentage = String(parseFloat(((eQ / cQ) * 100).toFixed(2)));
+      } else {
+        item.percentage = '0.00';
       }
 
       updated[idx] = item;
@@ -438,12 +444,27 @@ export const ExecutiveProgressForm = ({
     });
   };
 
-  // Handle Additional Item change
+    // Handle Additional Item change with real-time automatic calculation
   const handleAdditionalItemChange = (idx, field, val) => {
     const cleanVal = toCleanLatin(val);
     setData(prev => {
       const updated = [...prev.additionalItems];
-      updated[idx] = { ...updated[idx], [field]: cleanVal };
+      const item = { ...updated[idx], [field]: cleanVal };
+
+      const eQ = parseFloat(toCleanLatin(field === 'executedQuantity' ? cleanVal : item.executedQuantity)) || 0;
+      const rate = parseFloat(toCleanLatin(field === 'unitRate' ? cleanVal : item.unitRate)) || 0;
+      const cQ = parseFloat(toCleanLatin(field === 'contractQuantity' ? cleanVal : item.contractQuantity)) || 0;
+
+      // 1. قيمة المنفذ = المنفذ × الفئة
+      item.executedValue = String(parseFloat((eQ * rate).toFixed(2)));
+
+      // 2. المتبقي والنسبة إذا توفرت كمية تعاقدية
+      if (cQ > 0) {
+        item.remainingQuantity = String(parseFloat(Math.max(0, cQ - eQ).toFixed(3)));
+        item.percentage = String(parseFloat(((eQ / cQ) * 100).toFixed(2)));
+      }
+
+      updated[idx] = item;
       return { ...prev, additionalItems: updated };
     });
   };
@@ -1091,6 +1112,87 @@ export const ExecutiveProgressForm = ({
         </div>
       </div>
 
+            {/* Certified Rates & Formulas Banner (مطابقة لوثيقة الإكسل المعتمدة 29/10/2026) */}
+      <div style={{
+        background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+        border: '1.5px solid #a7f3d0',
+        borderRadius: '12px',
+        padding: '1.25rem 1.5rem',
+        marginBottom: '1.5rem',
+        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.08)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#059669', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Calculator size={20} />
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#065f46' }}>
+                معدلات وفئات الحساب التلقائي المعتمدة (مطابقة لوثيقة الإكسل 29/10/2026)
+              </h4>
+              <span style={{ fontSize: '0.78rem', color: '#047857' }}>
+                المعادلات الهندسية: المتبقي = كمية العقد - المنفذ | قيمة المنفذ = المنفذ × الفئة | النسبة % = (المنفذ / العقد) × 100
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowStationModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: '#047857',
+              color: '#ffffff',
+              border: 'none',
+              padding: '0.55rem 1.15rem',
+              borderRadius: '8px',
+              fontWeight: 800,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)'
+            }}
+          >
+            <Layers size={16} />
+            <span>عرض وتعديل محطات الرصف الميدانية (حساب تلقائي)</span>
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.65rem' }}>
+          <div style={{ background: '#ffffff', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
+            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, display: 'block' }}>إعادة تدوير FDR (م2)</span>
+            <strong style={{ fontSize: '0.92rem', color: '#065f46' }}>119.44 د.ل</strong>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>المنفذ: 2,239,792.63 م2</span>
+          </div>
+          <div style={{ background: '#ffffff', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
+            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, display: 'block' }}>رش تشريب MCO (م2)</span>
+            <strong style={{ fontSize: '0.92rem', color: '#065f46' }}>13.73 د.ل</strong>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>المنفذ: 2,179,342.47 م2</span>
+          </div>
+          <div style={{ background: '#ffffff', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
+            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, display: 'block' }}>اسفلت محسن 6سم (م2)</span>
+            <strong style={{ fontSize: '0.92rem', color: '#065f46' }}>145.35 د.ل</strong>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>المنفذ: 2,139,464.47 م2</span>
+          </div>
+          <div style={{ background: '#ffffff', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
+            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, display: 'block' }}>أساس حبيبي (م3)</span>
+            <strong style={{ fontSize: '0.92rem', color: '#065f46' }}>299.52 د.ل</strong>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>المنفذ: 270,078.68 م3</span>
+          </div>
+          <div style={{ background: '#ffffff', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
+            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, display: 'block' }}>طريق خدمي (كم)</span>
+            <strong style={{ fontSize: '0.92rem', color: '#065f46' }}>59,500.00 د.ل</strong>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>المنفذ: 225.623 كم</span>
+          </div>
+          <div style={{ background: '#ffffff', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #d1fae5' }}>
+            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, display: 'block' }}>خطوط الطلاء (م.ط)</span>
+            <strong style={{ fontSize: '0.92rem', color: '#065f46' }}>23.07 د.ل</strong>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>أصفر 15سم / أبيض 15سم</span>
+          </div>
+        </div>
+      </div>
+
       {/* Main Table: Basic Items (بنود أساسية) */}
       <div style={{
         background: '#ffffff',
@@ -1166,7 +1268,7 @@ export const ExecutiveProgressForm = ({
                   <React.Fragment key={item.id || idx}>
                     {showSectionHeader && item.section && (
                       <tr style={{ background: '#fef9c3', borderTop: '2px solid #facc15', borderBottom: '1px solid #fde047' }}>
-                        <td colSpan={readOnlyMode ? 9 : 10} style={{ padding: '0.45rem 1rem', fontWeight: 900, color: '#854d0e', fontSize: '0.86rem' }}>
+                        <td colSpan={readOnlyMode ? 10 : 11} style={{ padding: '0.45rem 1rem', fontWeight: 900, color: '#854d0e', fontSize: '0.86rem' }}>
                           📂 {item.section}
                         </td>
                       </tr>

@@ -3,6 +3,7 @@ const path = require('path');
 
 const filesToSync = [
   'src/components/ExecutiveProgressForm.jsx',
+  'src/components/StationQuantitiesModal.jsx',
   'src/components/RoadDailyReportForm.jsx',
   'src/components/FuelDailyReportForm.jsx',
   'src/components/OfficialPrintModal.jsx',
@@ -16,6 +17,7 @@ const filesToSync = [
   'src/components/Sidebar.jsx',
   'src/components/AIAgentWidget.jsx',
   'src/views/DashboardView.jsx',
+  'src/views/ExecutiveProgressView.jsx',
   'src/views/UsersView.jsx',
   'src/views/EquipmentView.jsx',
   'src/views/CreateReportView.jsx',

@@ -13,6 +13,7 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
   const [executiveData, setExecutiveData] = useState(initialExecutiveData);
   const [loading, setLoading] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showStationModal, setShowStationModal] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -498,6 +499,80 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
             </button>
           </div>
         </div>
+      )}
+
+            {showStationModal && (
+        <StationQuantitiesModal
+          isOpen={showStationModal}
+          onClose={() => setShowStationModal(false)}
+          onApplyTotals={(stationTotals) => {
+            if (!stationTotals) return;
+            setExecutiveData(prev => {
+              const updatedBasic = (prev.basicItems || []).map(item => {
+                if (item.id === 2 || item.itemNumber === '2') {
+                  const eQ = stationTotals.fdr?.area || 2239792.63;
+                  const rate = Number(item.unitRate) || 119.44;
+                  const cQ = Number(item.contractQuantity) || 3060000;
+                  return {
+                    ...item,
+                    executedQuantity: eQ,
+                    remainingQuantity: Math.max(0, cQ - eQ),
+                    executedValue: Number((eQ * rate).toFixed(2)),
+                    percentage: Number(((eQ / cQ) * 100).toFixed(2))
+                  };
+                }
+                if (item.id === 3 || item.itemNumber === '3') {
+                  const eQ = stationTotals.mco?.area || 2179342.47;
+                  const rate = Number(item.unitRate) || 13.73;
+                  const cQ = Number(item.contractQuantity) || 3060000;
+                  return {
+                    ...item,
+                    executedQuantity: eQ,
+                    remainingQuantity: Math.max(0, cQ - eQ),
+                    executedValue: Number((eQ * rate).toFixed(2)),
+                    percentage: Number(((eQ / cQ) * 100).toFixed(2))
+                  };
+                }
+                if (item.id === 4 || item.itemNumber === '4') {
+                  const eQ = stationTotals.asphalt?.area || 2139464.47;
+                  const rate = Number(item.unitRate) || 145.35;
+                  const cQ = Number(item.contractQuantity) || 3060000;
+                  return {
+                    ...item,
+                    executedQuantity: eQ,
+                    remainingQuantity: Math.max(0, cQ - eQ),
+                    executedValue: Number((eQ * rate).toFixed(2)),
+                    percentage: Number(((eQ / cQ) * 100).toFixed(2))
+                  };
+                }
+                return item;
+              });
+
+              const updatedAdd = (prev.additionalItems || []).map(item => {
+                if (item.id === 1 || item.itemNumber === '1') {
+                  const eQ = stationTotals.base?.volume || 270078.68;
+                  const rate = Number(item.unitRate) || 299.52;
+                  return {
+                    ...item,
+                    executedQuantity: eQ,
+                    executedValue: Number((eQ * rate).toFixed(2))
+                  };
+                }
+                return item;
+              });
+
+              const updated = {
+                ...prev,
+                basicItems: updatedBasic,
+                additionalItems: updatedAdd
+              };
+              try {
+                localStorage.setItem('executive_progress_data', JSON.stringify(updated));
+              } catch (_) {}
+              return updated;
+            });
+          }}
+        />
       )}
 
       {/* Official Print Modal (Direct trigger from Dashboard View) */}
