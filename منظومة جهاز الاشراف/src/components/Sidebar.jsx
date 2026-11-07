@@ -284,7 +284,7 @@ export const Sidebar = ({
           {menuGroups.map((group, gIdx) => {
             const visibleItems = group.items.filter(item => {
               if (isDev) return true;
-              if (Array.isArray(userAllowedSections) && userAllowedSections.length > 0) {
+              if (Array.isArray(userAllowedSections)) {
                 return userAllowedSections.includes(item.id);
               }
               return true;

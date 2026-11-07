@@ -11,7 +11,6 @@ const DEFAULT_USERS = [
     title: 'حساب التطوير والإشراف البرمجي الكامل',
     sector: 'all',
     email: 'dev@mot.gov.ly',
-    phone: '091-2345678',
     password: 'admin1234'
   },
   {
@@ -22,7 +21,6 @@ const DEFAULT_USERS = [
     title: 'رئيس جهاز الإشراف والمتابعة',
     sector: 'all',
     email: 'abrikaw@mot.gov.ly',
-    phone: '091-3456789',
     password: 'abrikaw123'
   },
   {
@@ -33,7 +31,6 @@ const DEFAULT_USERS = [
     title: 'مسؤول ضبط ومراقبة الجودة الفنية',
     sector: 'all',
     email: 'hammad.quality@mot.gov.ly',
-    phone: '091-4567890',
     password: 'quality123'
   },
   {
@@ -44,7 +41,6 @@ const DEFAULT_USERS = [
     title: 'مهندس مشرف - المرحلة الأولى',
     sector: 'المرحلة الأولى',
     email: 'alarabi.phase1@mot.gov.ly',
-    phone: '091-5678901',
     password: 'sectora123'
   },
   {
@@ -55,7 +51,6 @@ const DEFAULT_USERS = [
     title: 'مهندس مشرف - المرحلة الثانية',
     sector: 'المرحلة الثانية',
     email: 'altahir.phase2@mot.gov.ly',
-    phone: '091-6789012',
     password: 'sectorb123'
   },
   {
@@ -66,7 +61,6 @@ const DEFAULT_USERS = [
     title: 'مدير المشروع (جهاز الإشراف)',
     sector: 'all',
     email: 'alansari@mot.gov.ly',
-    phone: '091-2345678',
     password: 'admin1234'
   }
 ];
@@ -316,7 +310,6 @@ export const LoginPage = ({ onLoginSuccess }) => {
                 title: matchedUser.title || matchedUser.role,
                 sector: matchedUser.sector || 'all',
                 email: matchedUser.email || '',
-                phone: matchedUser.phone || '',
                 avatar: userAvatar
             });
         }, 300);

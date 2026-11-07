@@ -70,7 +70,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
           const lowU = (u || '').toLowerCase();
           const n = currentUser?.name;
           const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-          if (Array.isArray(userPerms) && userPerms.length > 0 && !userPerms.includes(tabId)) {
+          if (Array.isArray(userPerms) && !userPerms.includes(tabId)) {
             console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
             return;
           }
@@ -90,7 +90,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             const lowU = (u || '').toLowerCase();
             const n = currentUser?.name;
             const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-            if (Array.isArray(userPerms) && userPerms.length > 0 && !userPerms.includes(activeTab)) {
+            if (Array.isArray(userPerms) && !userPerms.includes(activeTab)) {
               setActiveTab(userPerms[0] || 'dashboard');
             }
           } catch (e) {}

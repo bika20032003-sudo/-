@@ -107,7 +107,13 @@ export const UserProfileModal = ({ isOpen, onClose, currentUser, onUpdateUser })
           return;
         }
 
-        const success = updateUserPassword(currentUser.username, newPass);
+        const success = updateUserPassword(currentUser.username, newPass.trim());
+        if (currentUser.name) {
+          updateUserPassword(currentUser.name, newPass.trim());
+        }
+        window.dispatchEvent(new CustomEvent('passwords-updated', { 
+          detail: { username: currentUser.username, newPassword: newPass.trim() } 
+        }));
         if (!success) {
           setFeedback({ type: 'error', text: 'فشل في تحديث كلمة المرور' });
           setIsSaving(false);
@@ -118,7 +124,8 @@ export const UserProfileModal = ({ isOpen, onClose, currentUser, onUpdateUser })
       // Save user info
       const updatedData = {
         name: name.trim() || currentUser.name,
-        avatar: avatar
+        avatar: avatar,
+        ...(newPass && newPass.trim() ? { password: newPass.trim() } : {})
       };
 
       // Save to localStorage custom users

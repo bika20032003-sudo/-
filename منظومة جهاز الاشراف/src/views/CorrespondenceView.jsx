@@ -3,7 +3,7 @@ import {
   Mail, Send, Inbox, ArrowUpRight, CheckCheck, Trash2, 
   FileText, Printer, PlusCircle, Search, Filter, RefreshCw, 
   User, CheckCircle2, Clock, AlertCircle, Eye, ShieldCheck, 
-  Paperclip, ArrowRight
+  Paperclip, ArrowRight, CornerDownLeft, MessageSquare, Sparkles
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 
@@ -17,7 +17,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const [statusNotification, setStatusNotification] = useState(null);
 
   // Compose Form State
-  const [composeRecipient, setComposeRecipient] = useState('admin');
+  const [composeRecipient, setComposeRecipient] = useState('project_manager');
   const [composeType, setComposeType] = useState('إحالة تقرير يومي');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
@@ -27,7 +27,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   // Expanded message for detailed reading
   const [selectedMessage, setSelectedMessage] = useState(null);
 
-  const username = currentUser?.username || 'admin';
+  const username = currentUser?.username || 'project_manager';
 
   const officialSupervisors = [
     { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', badge: 'إشراف عام' },
@@ -37,11 +37,11 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)', badge: 'المرحلة الثانية' },
   ];
 
-  // Fetch messages from backend
+  // Fetch messages from backend & local storage
   const fetchMessages = async () => {
     setIsLoading(true);
     try {
-      const res = await fastFetch(`http://localhost:5000/api/messages?username=${encodeURIComponent(username)}`);
+      const res = await fastFetch(`/api/messages?username=${encodeURIComponent(username)}`);
       if (res && res.messages) {
         setMessages(res.messages);
       } else if (Array.isArray(res)) {
@@ -53,7 +53,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       console.warn('Could not load messages from server:', err);
       // Fallback to local storage if offline
       try {
-        const local = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        const local = JSON.parse(localStorage.getItem('system_messages') || localStorage.getItem('local_messages') || '[]');
         setMessages(local);
       } catch {
         setMessages([]);
@@ -66,9 +66,14 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   // Fetch available reports for attachment
   const fetchReports = async () => {
     try {
-      const res = await fastFetch('http://localhost:5000/api/reports');
+      const res = await fastFetch('/api/reports');
       const list = res?.reports || (Array.isArray(res) ? res : []);
-      setReportsList(list);
+      if (list.length > 0) {
+        setReportsList(list);
+      } else {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        setReportsList(local);
+      }
     } catch {
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
@@ -82,17 +87,49 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   useEffect(() => {
     fetchMessages();
     fetchReports();
-    const interval = setInterval(fetchMessages, 30000);
-    return () => clearInterval(interval);
+
+    const handleUpdate = () => {
+      fetchMessages();
+      fetchReports();
+    };
+
+    window.addEventListener('messages-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    const interval = setInterval(fetchMessages, 15000);
+
+    return () => {
+      window.removeEventListener('messages-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
+    };
   }, [username]);
 
   // Filter messages for Inbox vs Sent
-  const inboxMessages = messages.filter(m => 
-    (m.toUsername === username || m.toUsername === 'all' || ((username === 'admin' || username === 'project_manager') && (m.toUsername === 'admin' || m.toUsername === 'project_manager')) || (!m.toUsername && m.fromUsername !== username))
-  );
+  const isManagerOrAdmin = username === 'admin' || username === 'project_manager' || username === 'alansari';
+  
+  const inboxMessages = messages.filter(m => {
+    // If current user is sender, it belongs strictly in Sent
+    if (m.fromUsername === username) return false;
+    
+    // Broadcast message to everyone
+    if (m.toUsername === 'all') return true;
+    
+    // Specifically targeted to user
+    if (m.toUsername === username) return true;
+    
+    // Management accounts share access to administration mail
+    if (isManagerOrAdmin && (m.toUsername === 'admin' || m.toUsername === 'project_manager')) {
+      return true;
+    }
+    
+    // Legacy or unaddressed messages go to admin/manager
+    if (!m.toUsername && isManagerOrAdmin) return true;
+    
+    return false;
+  });
 
   const sentMessages = messages.filter(m => 
-    m.fromUsername === username
+    m.fromUsername === username || (isManagerOrAdmin && (m.fromUsername === 'admin' || m.fromUsername === 'project_manager'))
   );
 
   const unreadCount = inboxMessages.filter(m => !m.isRead).length;
@@ -118,7 +155,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       const matchSub = (m.subject || '').toLowerCase().includes(q);
       const matchTo = (m.toName || '').toLowerCase().includes(q);
       const matchRep = (m.reportNumber || '').toLowerCase().includes(q);
-      return matchSub || matchTo || matchRep;
+      const matchBody = (m.content || '').toLowerCase().includes(q);
+      return matchSub || matchTo || matchRep || matchBody;
     }
     return true;
   });
@@ -126,7 +164,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   // Handle Mark as Read
   const handleMarkAsRead = async (msgId) => {
     try {
-      await fastFetch(`http://localhost:5000/api/messages/${msgId}/read`, { method: 'PUT' });
+      await fastFetch(`/api/messages/${msgId}/read`, { method: 'PUT' });
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isRead: true } : m));
     } catch (err) {
       console.warn('Failed to mark read on server, updating local state:', err);
@@ -138,7 +176,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const handleDeleteMessage = async (msgId) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه المراسلة؟')) return;
     try {
-      await fastFetch(`http://localhost:5000/api/messages/${msgId}`, { method: 'DELETE' });
+      await fastFetch(`/api/messages/${msgId}`, { method: 'DELETE' });
       setMessages(prev => prev.filter(m => m.id !== msgId));
       if (selectedMessage?.id === msgId) setSelectedMessage(null);
       setStatusNotification({ type: 'success', text: 'تم حذف المراسلة بنجاح.' });
@@ -179,8 +217,9 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     }
 
     const payload = {
-      fromUsername: currentUser?.username || 'user',
-      fromName: currentUser?.name || 'مهندس الإشراف',
+      id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      fromUsername: currentUser?.username || 'project_manager',
+      fromName: currentUser?.name || 'مدير المشروع',
       fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
       toUsername: composeRecipient,
       toName,
@@ -191,17 +230,18 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       reportId: attachedReportId || null,
       reportNumber: repNumber,
       reportData: repData,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isRead: false
     };
 
     try {
-      const res = await fastFetch('http://localhost:5000/api/messages', {
+      const res = await fastFetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const newMsg = res?.message || { id: Date.now(), ...payload };
+      const newMsg = res?.message || payload;
       setMessages(prev => [newMsg, ...prev]);
 
       // Reset form
@@ -212,8 +252,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       setActiveSubTab('sent');
     } catch (err) {
       console.error('Error sending message:', err);
-      // Fallback
-      const newMsg = { id: Date.now(), ...payload };
+      const newMsg = payload;
       setMessages(prev => [newMsg, ...prev]);
       setStatusNotification({ type: 'success', text: `تم تسجيل وإرسال المراسلة محلياً بنجاح.` });
       setActiveSubTab('sent');
@@ -224,7 +263,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
   // Reply shortcut
   const handleReplyTo = (msg) => {
-    setComposeRecipient(msg.fromUsername || 'admin');
+    const replyRecipient = msg.fromUsername || 'project_manager';
+    setComposeRecipient(replyRecipient);
     setComposeSubject(`رد: ${msg.subject}`);
     setComposeBody(`\n\n--------------------\nرداً على مراسلة ${msg.fromName} بتاريخ ${new Date(msg.createdAt).toLocaleDateString('ar-LY')}:\n${msg.content}`);
     if (msg.reportId) {
@@ -232,6 +272,13 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     }
     setActiveSubTab('compose');
     setSelectedMessage(null);
+  };
+
+  // Template Quick Chips
+  const applyQuickTemplate = (templateSubject, templateBody, type = 'إحالة تقرير يومي') => {
+    setComposeSubject(templateSubject);
+    setComposeBody(templateBody);
+    setComposeType(type);
   };
 
   const getTypeBadgeStyle = (type) => {
@@ -244,6 +291,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
         return { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' };
       case 'طلب فحص أو اختبار جودة':
         return { bg: '#fffbeb', color: '#b45309', border: '#fde68a' };
+      case 'إحاطة إدارية ومتابعة الموقف التنفيذي':
+        return { bg: '#fdf2f8', color: '#be185d', border: '#fbcfe8' };
       default:
         return { bg: '#f8fafc', color: '#475569', border: '#e2e8f0' };
     }
@@ -284,7 +333,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
               البريد والمراسلات الرسمية
             </h1>
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.86rem', color: '#94a3b8' }}>
-              إرسال واستقبال التقارير الميدانية والتوجيهات الفنية بين مدير المشروع، رئيس الجهاز، ومسؤولي القطاعات والجودة
+              إرسال واستقبال التقارير الميدانية والتوجيهات الفنية المباشرة بين مدير المشروع، رئيس الجهاز، ومهندسي الإشراف الميداني
             </p>
           </div>
         </div>
@@ -293,14 +342,37 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
             type="button"
+            onClick={() => { setActiveSubTab('compose'); setSelectedMessage(null); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <PlusCircle size={18} />
+            <span>إرسال مراسلة جديدة</span>
+          </button>
+
+          <button
+            type="button"
             onClick={fetchMessages}
             title="تحديث صندوق البريد"
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: '10px',
               background: 'rgba(255, 255, 255, 0.08)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -314,8 +386,20 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       </div>
 
       {/* Quick KPI Stat Badges */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div 
+          onClick={() => { setActiveSubTab('inbox'); setSelectedMessage(null); }}
+          style={{ 
+            background: activeSubTab === 'inbox' ? '#eff6ff' : '#fff', 
+            borderRadius: '12px', 
+            padding: '1rem 1.25rem', 
+            border: activeSubTab === 'inbox' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            cursor: 'pointer'
+          }}
+        >
           <div>
             <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>صندوق الوارد</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a' }}>{inboxMessages.length}</div>
@@ -325,7 +409,19 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
           </div>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div 
+          onClick={() => { setActiveSubTab('inbox'); setFilterType('unread'); setSelectedMessage(null); }}
+          style={{ 
+            background: filterType === 'unread' && activeSubTab === 'inbox' ? '#fef2f2' : '#fff', 
+            borderRadius: '12px', 
+            padding: '1rem 1.25rem', 
+            border: filterType === 'unread' && activeSubTab === 'inbox' ? '2px solid #ef4444' : '1px solid #e2e8f0', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            cursor: 'pointer'
+          }}
+        >
           <div>
             <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>رسائل غير مقروءة</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 900, color: unreadCount > 0 ? '#ef4444' : '#10b981' }}>{unreadCount}</div>
@@ -335,7 +431,19 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
           </div>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div 
+          onClick={() => { setActiveSubTab('inbox'); setFilterType('with-report'); setSelectedMessage(null); }}
+          style={{ 
+            background: filterType === 'with-report' && activeSubTab === 'inbox' ? '#f5f3ff' : '#fff', 
+            borderRadius: '12px', 
+            padding: '1rem 1.25rem', 
+            border: filterType === 'with-report' && activeSubTab === 'inbox' ? '2px solid #8b5cf6' : '1px solid #e2e8f0', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            cursor: 'pointer'
+          }}
+        >
           <div>
             <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>تقارير محالة رسميًا</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#3b82f6' }}>
@@ -347,7 +455,19 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
           </div>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div 
+          onClick={() => { setActiveSubTab('sent'); setSelectedMessage(null); }}
+          style={{ 
+            background: activeSubTab === 'sent' ? '#f8fafc' : '#fff', 
+            borderRadius: '12px', 
+            padding: '1rem 1.25rem', 
+            border: activeSubTab === 'sent' ? '2px solid #475569' : '1px solid #e2e8f0', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            cursor: 'pointer'
+          }}
+        >
           <div>
             <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>البريد الصادر</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a' }}>{sentMessages.length}</div>
@@ -358,7 +478,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
         </div>
       </div>
 
-      {/* Status Notification if any */}
+      {/* Status Notification */}
       {statusNotification && (
         <div style={{
           padding: '0.85rem 1.25rem',
@@ -373,7 +493,10 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <span>{statusNotification.text}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CheckCircle2 size={18} />
+            <span>{statusNotification.text}</span>
+          </div>
           <button
             type="button"
             onClick={() => setStatusNotification(null)}
@@ -388,8 +511,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
         
         {/* Navigation Tabs Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
             <button
               type="button"
               onClick={() => { setActiveSubTab('inbox'); setSelectedMessage(null); }}
@@ -439,11 +562,32 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                 {sentMessages.length}
               </span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => { setActiveSubTab('compose'); setSelectedMessage(null); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.9rem 1.25rem',
+                border: 'none',
+                background: activeSubTab === 'compose' ? '#eff6ff' : 'transparent',
+                borderBottom: activeSubTab === 'compose' ? '3px solid #2563eb' : '3px solid transparent',
+                color: activeSubTab === 'compose' ? '#2563eb' : '#64748b',
+                fontWeight: activeSubTab === 'compose' ? 800 : 600,
+                fontSize: '0.92rem',
+                cursor: 'pointer'
+              }}
+            >
+              <Send size={18} />
+              <span>إرسال مراسلة جديدة</span>
+            </button>
           </div>
 
           {/* Quick Search */}
           {(activeSubTab === 'inbox' || activeSubTab === 'sent') && (
-            <div style={{ position: 'relative', width: '280px' }}>
+            <div style={{ position: 'relative', width: '280px', margin: '0.5rem 0' }}>
               <input
                 type="text"
                 placeholder="بحث في المراسلات..."
@@ -520,127 +664,134 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                   cursor: 'pointer'
                 }}
               >
-                تحتوي على تقارير ({inboxMessages.filter(m => m.reportNumber).length})
+                مرفق تقرير ({inboxMessages.filter(m => m.reportNumber).length})
               </button>
             </div>
 
-            {/* Empty State */}
-            {filteredInbox.length === 0 ? (
-              <div style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#94a3b8' }}>
-                  <Inbox size={32} />
-                </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#334155', margin: 0 }}>
-                  صندوق الوارد فارغ ونظيف
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.35rem 0 1.25rem' }}>
-                  لا توجد مراسلات أو إحالات تقارير واردة لحسابك حالياً.
+            {/* List or Expanded View */}
+            {isLoading ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginBottom: '0.5rem' }} />
+                <p>جاري تحميل المراسلات...</p>
+              </div>
+            ) : filteredInbox.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#94a3b8' }}>
+                <Inbox size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#475569' }}>لا توجد رسائل واردة حالياً</h3>
+                <p style={{ margin: '0.5rem 0 1rem', fontSize: '0.85rem' }}>
+                  يمكنك بدء التواصل وإرسال التوجيهات أو التقارير لأي مهندس بالنقر أدناه
                 </p>
                 <button
                   type="button"
-                  onClick={() => setActiveSubTab('compose')}
+                  onClick={() => { setActiveSubTab('compose'); setSelectedMessage(null); }}
                   style={{
+                    background: '#2563eb',
+                    color: '#fff',
+                    border: 'none',
                     padding: '0.6rem 1.25rem',
                     borderRadius: '8px',
-                    background: '#2563eb',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '0.85rem',
                     fontWeight: 700,
                     cursor: 'pointer'
                   }}
                 >
-                  إرسال مراسلة جديدة
+                  إنشاء مراسلة جديدة
                 </button>
               </div>
             ) : (
-              /* Message List */
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {filteredInbox.map((msg) => {
+                  const isSelected = selectedMessage?.id === msg.id;
                   const typeStyle = getTypeBadgeStyle(msg.type);
-                  const isExpanded = selectedMessage?.id === msg.id;
 
                   return (
                     <div 
                       key={msg.id}
+                      onClick={() => {
+                        setSelectedMessage(isSelected ? null : msg);
+                        if (!msg.isRead) handleMarkAsRead(msg.id);
+                      }}
                       style={{
                         padding: '1.25rem',
                         borderBottom: '1px solid #f1f5f9',
-                        background: msg.isRead ? '#ffffff' : '#f0f7ff',
-                        transition: 'background 0.2s ease',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => {
-                        if (!msg.isRead) handleMarkAsRead(msg.id);
-                        setSelectedMessage(isExpanded ? null : msg);
+                        background: msg.isRead ? '#ffffff' : '#f8fafc',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
+                        borderRight: msg.isRead ? '3px solid transparent' : '3px solid #2563eb'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
-                        {/* Sender Avatar & Info */}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem' }}>
-                          <div style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '50%',
-                            background: msg.isRead ? '#e2e8f0' : '#2563eb',
-                            color: msg.isRead ? '#475569' : '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 800,
-                            fontSize: '0.95rem',
-                            flexShrink: 0
-                          }}>
-                            {(msg.fromName || 'م')[0]}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.92rem', fontWeight: msg.isRead ? 700 : 900, color: '#0f172a' }}>
+                              {msg.fromName}
+                            </span>
+                            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                              ({msg.fromRole})
+                            </span>
+                            <span style={{
+                              fontSize: '0.72rem',
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '6px',
+                              background: typeStyle.bg,
+                              color: typeStyle.color,
+                              border: `1px solid ${typeStyle.border}`,
+                              fontWeight: 700
+                            }}>
+                              {msg.type}
+                            </span>
+                            {!msg.isRead && (
+                              <span style={{ fontSize: '0.68rem', background: '#ef4444', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 800 }}>
+                                جديد
+                              </span>
+                            )}
                           </div>
 
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.92rem', fontWeight: msg.isRead ? 700 : 800, color: '#0f172a' }}>
-                                {msg.fromName}
-                              </span>
-                              <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                                ({msg.fromRole})
-                              </span>
-                              <span style={{
-                                fontSize: '0.72rem',
-                                padding: '0.15rem 0.5rem',
-                                borderRadius: '6px',
-                                background: typeStyle.bg,
-                                color: typeStyle.color,
-                                border: `1px solid ${typeStyle.border}`,
-                                fontWeight: 700
-                              }}>
-                                {msg.type}
-                              </span>
-
-                              {!msg.isRead && (
-                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                              )}
-                            </div>
-
-                            <div style={{ fontSize: '0.95rem', fontWeight: msg.isRead ? 600 : 800, color: '#1e293b', marginTop: '0.25rem' }}>
-                              {msg.subject}
-                            </div>
-
-                            <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', lineHeight: 1.5 }}>
-                              {isExpanded ? msg.content : `${(msg.content || '').slice(0, 110)}${(msg.content || '').length > 110 ? '...' : ''}`}
-                            </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: msg.isRead ? 600 : 800, color: '#1e293b', marginTop: '0.35rem' }}>
+                            {msg.subject}
                           </div>
+
+                          <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '0.25rem', lineHeight: 1.5 }}>
+                            {isSelected ? msg.content : (msg.content?.length > 130 ? msg.content.slice(0, 130) + '...' : msg.content)}
+                          </div>
+
+                          {msg.reportNumber && (
+                            <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.25rem 0.65rem', fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 700 }}>
+                              <FileText size={14} />
+                              <span>مرفق تقرير: {msg.reportNumber}</span>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Date and Quick Actions */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
                           <span style={{ fontSize: '0.76rem', color: '#94a3b8', fontWeight: 600 }}>
                             {new Date(msg.createdAt).toLocaleDateString('ar-LY')}
                           </span>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleReplyTo(msg); }}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: '6px',
+                                background: '#eff6ff',
+                                border: '1px solid #bfdbfe',
+                                color: '#2563eb',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem'
+                              }}
+                            >
+                              <CornerDownLeft size={13} />
+                              <span>رد</span>
+                            </button>
 
                             <button
                               type="button"
-                              onClick={() => handleDeleteMessage(msg.id)}
-                              title="حذف المراسلة"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
                               style={{
                                 padding: '0.35rem',
                                 borderRadius: '6px',
@@ -656,74 +807,100 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                         </div>
                       </div>
 
-                      {/* Attached Report Box if Present */}
-                      {(msg.reportNumber || msg.reportData) && (
-                        <div 
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            marginTop: '0.85rem',
-                            padding: '0.85rem 1rem',
-                            background: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            flexWrap: 'wrap',
-                            gap: '0.75rem'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1d4ed8' }}>
-                              <FileText size={17} />
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
-                                التقرير المرفق: ({msg.reportNumber || msg.reportData?.reportNumber})
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                {msg.reportData?.sector || 'موقع المشروع'} • {msg.reportData?.roadMeters ? `إنجاز: ${msg.reportData.roadMeters} متر` : 'تقرير شامل'}
-                              </div>
-                            </div>
+                      {/* Expanded Card Details */}
+                      {isSelected && (
+                        <div style={{
+                          marginTop: '1.25rem',
+                          padding: '1.25rem',
+                          background: '#f8fafc',
+                          borderRadius: '10px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: 700 }}>
+                            نص المراسلة الكامل:
+                          </div>
+                          <div style={{ fontSize: '0.9rem', color: '#0f172a', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                            {msg.content}
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {/* Report Quick Action Box if attached */}
+                          {msg.reportNumber && (
+                            <div style={{
+                              marginTop: '1rem',
+                              padding: '0.85rem 1rem',
+                              background: '#ffffff',
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '0.75rem'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                <FileText size={20} color="#2563eb" />
+                                <div>
+                                  <strong style={{ fontSize: '0.88rem', color: '#0f172a', display: 'block' }}>
+                                    مرفق تقرير رقم: {msg.reportNumber}
+                                  </strong>
+                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    {msg.reportData?.title || 'تقرير ميداني معتمد'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onPrintReport && msg.reportData) {
+                                      onPrintReport(msg.reportData);
+                                    } else if (onNavigateTab) {
+                                      onNavigateTab('reports-archive');
+                                    }
+                                  }}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    padding: '0.45rem 0.85rem',
+                                    background: '#2563eb',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Printer size={14} />
+                                  <span>معاينة وطباعة التقرير</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem' }}>
                             <button
                               type="button"
-                              onClick={() => onPrintReport && onPrintReport(msg.reportData || { reportNumber: msg.reportNumber })}
+                              onClick={(e) => { e.stopPropagation(); handleReplyTo(msg); }}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.8rem',
-                                borderRadius: '6px',
+                                gap: '0.4rem',
+                                padding: '0.5rem 1rem',
                                 background: '#2563eb',
+                                color: '#ffffff',
                                 border: 'none',
-                                color: '#fff',
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
+                                borderRadius: '8px',
+                                fontSize: '0.84rem',
+                                fontWeight: 800,
                                 cursor: 'pointer'
                               }}
                             >
-                              <Printer size={14} />
-                              <span>معاينة وطباعة التقرير</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => onNavigateTab && onNavigateTab('reports-archive')}
-                              style={{
-                                padding: '0.4rem 0.8rem',
-                                borderRadius: '6px',
-                                background: '#fff',
-                                border: '1px solid #cbd5e1',
-                                color: '#475569',
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              أرشيف التقارير
+                              <CornerDownLeft size={15} />
+                              <span>رد على المراسلة الآن</span>
                             </button>
                           </div>
                         </div>
@@ -736,17 +913,36 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
           </div>
         )}
 
-        {/* Tab 2: SENT MAIL */}
+        {/* Tab 2: SENT */}
         {activeSubTab === 'sent' && (
           <div>
-            {filteredSent.length === 0 ? (
-              <div style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#94a3b8' }}>
-                  <ArrowUpRight size={32} />
-                </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#334155', margin: 0 }}>
-                  لا توجد مراسلات صادرة
-                </h3>
+            {isLoading ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginBottom: '0.5rem' }} />
+                <p>جاري تحميل المراسلات...</p>
+              </div>
+            ) : filteredSent.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#94a3b8' }}>
+                <ArrowUpRight size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#475569' }}>لا توجد رسائل صادرة بعد</h3>
+                <p style={{ margin: '0.5rem 0 1rem', fontSize: '0.85rem' }}>
+                  الرسائل التي ترسلها لأعضاء جهاز الإشراف ستظهر هنا
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSubTab('compose'); setSelectedMessage(null); }}
+                  style={{
+                    background: '#2563eb',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إنشاء مراسلة جديدة
+                </button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -789,7 +985,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                             {msg.subject}
                           </div>
 
-                          <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '0.25rem', lineHeight: 1.5 }}>
+                          <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '0.25rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                             {msg.content}
                           </div>
 
@@ -829,6 +1025,302 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
             )}
           </div>
         )}
+
+        {/* Tab 3: COMPOSE NEW MESSAGE (Full-featured, professional form) */}
+        {activeSubTab === 'compose' && (
+          <div style={{ padding: '1.5rem', background: '#ffffff' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+              border: '1px solid #bfdbfe',
+              borderRadius: '12px',
+              padding: '1rem 1.25rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <Send size={22} color="#2563eb" />
+              <div>
+                <strong style={{ fontSize: '0.98rem', color: '#1e3a8a', display: 'block' }}>
+                  إنشاء وإرسال مراسلة رسمية جديدة
+                </strong>
+                <span style={{ fontSize: '0.78rem', color: '#475569' }}>
+                  اختر المسؤول المستلم وأرفق التقرير المعتمد (إن وجد) لتسجيل المراسلة فوراً بحساب المستلم
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Templates Toolbar */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '0.5rem' }}>
+                نماذج سريعة للمراسلات الفنية:
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => applyQuickTemplate(
+                    'إحالة التقرير اليومي للأعمال المنجزة',
+                    'السيد مدير المشروع المحترم،\n\nنحيل إليكم التقرير اليومي للأعمال الميدانية المنفذة اليوم بعد تدقيق قياسات المحطات ونسب الإنجاز للاعتماد.',
+                    'إحالة تقرير يومي'
+                  )}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #bfdbfe',
+                    background: '#eff6ff',
+                    color: '#1d4ed8',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  📝 إحالة تقرير يومي
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyQuickTemplate(
+                    'طلب فحص واختبار الكثافة الحقلية لطبقة FDR',
+                    'السيد مسؤول ضبط الجودة والمختبر المحترم،\n\nيرجى التكرم بإجراء الفحوصات المخبرية وأخذ عينات الكثافة الحقلية للمقاطع المنجزة اليوم للتأكد من مطابقة نسبة الدمك.',
+                    'طلب فحص أو اختبار جودة'
+                  )}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #fde68a',
+                    background: '#fffbeb',
+                    color: '#b45309',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔬 طلب فحص مخبري FDR
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyQuickTemplate(
+                    'توجيه فني: الالتزام باشتراطات الرصف وتدقيق محطات العمل',
+                    'السادة مهندسي الإشراف الميداني،\n\nنؤكد على ضرورة المتابعة المستمرة لدرجات حرارة الأسفلت ومطابقة عروض وطبقات الرصف الحبيبي وفق المواصفات القياسية.',
+                    'توجيه فني وملاحظات ميدانية'
+                  )}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd6fe',
+                    background: '#f5f3ff',
+                    color: '#6d28d9',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚠️ توجيه فني للموقع
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyQuickTemplate(
+                    'موقف مخزون الوقود الميداني بمحطات وصهاريج المشروع',
+                    'السيد مدير المشروع المحترم،\n\nنحيطكم علماً بأن مخزون الديزل بالخزانات الميدانية بحالة مستقرة وتكفي لتشغيل أسطول المعدات والكسارات للأيام القادمة.',
+                    'إحاطة إدارية ومتابعة الموقف التنفيذي'
+                  )}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #bbf7d0',
+                    background: '#f0fdf4',
+                    color: '#15803d',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⛽ متابعة مخزون الوقود
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSendMessage}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                {/* Recipient Dropdown */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
+                    المسؤول المستلم للمراسلة: <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    value={composeRecipient}
+                    onChange={(e) => setComposeRecipient(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      background: '#fff',
+                      color: '#0f172a'
+                    }}
+                  >
+                    <option value="project_manager">م. عبدالرحمن الأنصاري - (مدير المشروع)</option>
+                    <option value="abrikaw">م. عبدالسلام ابريكاو - (رئيس جهاز الإشراف)</option>
+                    <option value="saleh_quality">م. صالح حماد - (مسؤول الجودة)</option>
+                    <option value="salah_alarabi">م. صلاح العربي - (مهندس مشرف المرحلة الأولى)</option>
+                    <option value="issa_altahir">م. عيسى الطاهر - (مهندس مشرف المرحلة الثانية)</option>
+                    <option value="all">📢 تعميم رسمي لكافة أعضاء جهاز الإشراف</option>
+                  </select>
+                </div>
+
+                {/* Message Type Dropdown */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
+                    نوع وتصنيف المراسلة: <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    value={composeType}
+                    onChange={(e) => setComposeType(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      background: '#fff',
+                      color: '#0f172a'
+                    }}
+                  >
+                    <option value="إحالة تقرير يومي">إحالة تقرير يومي</option>
+                    <option value="توجيه فني وملاحظات ميدانية">توجيه فني وملاحظات ميدانية</option>
+                    <option value="إشعار اعتماد">إشعار اعتماد</option>
+                    <option value="طلب فحص أو اختبار جودة">طلب فحص أو اختبار جودة</option>
+                    <option value="إحاطة إدارية ومتابعة الموقف التنفيذي">إحاطة إدارية ومتابعة الموقف التنفيذي</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Subject Input */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
+                  موضوع المراسلة: <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="مثال: إحالة تقرير كميات الرصف لمحطة 241+200 للاعتماد..."
+                  value={composeSubject}
+                  onChange={(e) => setComposeSubject(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    background: '#fff'
+                  }}
+                />
+              </div>
+
+              {/* Report Attachment Dropdown */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
+                  إرفاق تقرير من سجل المشروع (اختياري):
+                </label>
+                <select
+                  value={attachedReportId}
+                  onChange={(e) => setAttachedReportId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.86rem',
+                    background: '#fff',
+                    color: '#334155'
+                  }}
+                >
+                  <option value="">-- بدون إرفاق تقرير (مراسلة نصية فقط) --</option>
+                  {reportsList.map((r, idx) => (
+                    <option key={r.id || idx} value={r.id || r.reportNumber}>
+                      {r.reportNumber ? `[${r.reportNumber}] ` : ''}
+                      {r.title || r.reportType || 'تقرير ميداني'} 
+                      {r.dateFormatted || r.date ? ` - بتاريخ ${r.dateFormatted || r.date}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Message Content */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
+                  نص المراسلة والتفاصيل الميدانية: <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <textarea
+                  rows={6}
+                  placeholder="اكتب تفاصيل التوجيه أو التقرير أو الإحاطة الهندسية..."
+                  value={composeBody}
+                  onChange={(e) => setComposeBody(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    lineHeight: 1.6,
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              {/* Form Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('inbox')}
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#475569',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.65rem 1.75rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    cursor: isSending ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                    opacity: isSending ? 0.7 : 1
+                  }}
+                >
+                  <Send size={16} />
+                  <span>{isSending ? 'جاري الإرسال...' : 'إرسال المراسلة الآن ✉️'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
       </div>
     </div>
   );

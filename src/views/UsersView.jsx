@@ -234,7 +234,18 @@ export const UsersView = ({ currentUser }) => {
     if (!selectedUser) return;
 
     if (formData.password && formData.password.trim()) {
-      updateUserPassword(selectedUser.username, formData.password.trim());
+      const p = formData.password.trim();
+      updateUserPassword(selectedUser.username, p);
+      if (selectedUser.name) {
+        updateUserPassword(selectedUser.name, p);
+      }
+      try {
+        fetch('/api/users/' + (selectedUser.id || selectedUser.username), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: p })
+        }).catch(() => {});
+      } catch (e) {}
     }
 
     const isDefaultUser = [1, 2, 3, 4, 5, 6].includes(selectedUser.id) || ['admin', 'project_manager'].includes(selectedUser.username);
@@ -252,7 +263,8 @@ export const UsersView = ({ currentUser }) => {
         ...selectedUser,
         name: formData.name.trim(),
         role: formData.role,
-        sector: formData.sector
+        sector: formData.sector,
+        password: formData.password && formData.password.trim() ? formData.password.trim() : selectedUser.password
       });
     }
 
@@ -425,7 +437,7 @@ export const UsersView = ({ currentUser }) => {
 
         <button 
           onClick={() => {
-            setFormData({ name: '', username: '', role: 'مهندس مشرف (المرحلة الأولى)', sector: 'المرحلة الأولى', password: '', phone: '' });
+            setFormData({ name: '', username: '', role: 'مهندس مشرف (المرحلة الأولى)', sector: 'المرحلة الأولى', password: '' });
             setIsAddModalOpen(true);
           }}
           style={{

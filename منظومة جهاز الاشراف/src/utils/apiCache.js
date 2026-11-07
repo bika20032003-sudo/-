@@ -1,3 +1,66 @@
+const INITIAL_CORRESPONDENCE_MESSAGES = [
+  {
+    id: 'msg-seed-1',
+    fromUsername: 'project_manager',
+    fromName: 'م. عبدالرحمن الأنصاري',
+    fromRole: 'مدير المشروع',
+    toUsername: 'all',
+    toName: 'كافة أعضاء جهاز الإشراف (تعميم)',
+    toRole: 'جهاز الإشراف والمتابعة',
+    type: 'توجيه فني وملاحظات ميدانية',
+    subject: 'تعميم إداري وفني بشأن التوثيق اليومي للأعمال المنجزة وتتبع الوقود',
+    content: 'السادة مهندسي ومسؤولي جهاز الإشراف الميداني، يُرجى التأكيد على دقة تسجيل قياسات المحطات الميدانية بالكيلومترات، وتدقيق استهلاك الوقود للآليات العاملة بالقطاعين أولاً بأول لضمان المطابقة الفنية والمحاسبية.',
+    reportNumber: null,
+    isRead: false,
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
+  },
+  {
+    id: 'msg-seed-2',
+    fromUsername: 'salah_alarabi',
+    fromName: 'م. صلاح العربي',
+    fromRole: 'مهندس مشرف (المرحلة الأولى)',
+    toUsername: 'project_manager',
+    toName: 'م. عبدالرحمن الأنصاري',
+    toRole: 'مدير المشروع',
+    type: 'إحالة تقرير يومي',
+    subject: 'إحالة التقرير اليومي لمحطة القطاع الأول (كم 241 إلى كم 242)',
+    content: 'تم بحمد الله إنجاز أعمال طبقة الأساس الحبيبي بمعدل طول 300 م.ط ورش مادة التشريب MCO بنجاح وفق الاشتراطات الهندسية. مرفق التقرير الميداني للاعتماد.',
+    reportNumber: 'TARGET-SEC-A-5310',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
+  },
+  {
+    id: 'msg-seed-3',
+    fromUsername: 'saleh_quality',
+    fromName: 'م. صالح حماد',
+    fromRole: 'مسؤول الجودة',
+    toUsername: 'project_manager',
+    toName: 'م. عبدالرحمن الأنصاري',
+    toRole: 'مدير المشروع',
+    type: 'طلب فحص أو اختبار جودة',
+    subject: 'الموقف الفني لنتائج فحوصات الكثافة الحقلية وعينات FDR',
+    content: 'أفيدكم بأن كافة نتائج اختبارات الكثافة الحقلية لمقاطع FDR بمحطات المرحلة الأولى أظهرت نسبة دمك أعلى من 98% ومطابقة كاملة للمواصفات الفنية المعتمدة للمشروع.',
+    reportNumber: null,
+    isRead: false,
+    createdAt: new Date(Date.now() - 3600000 * 8).toISOString()
+  },
+  {
+    id: 'msg-seed-4',
+    fromUsername: 'issa_altahir',
+    fromName: 'م. عيسى الطاهر',
+    fromRole: 'مهندس مشرف (المرحلة الثانية)',
+    toUsername: 'project_manager',
+    toName: 'م. عبدالرحمن الأنصاري',
+    toRole: 'مدير المشروع',
+    type: 'إحالة تقرير يومي',
+    subject: 'موقف تشغيل كسارة المرحلة الثانية ومخزون الركام',
+    content: 'تواصل الكسارة إنتاج الركام المتدرج والشرشور بمعدل إنتاج يومي 1,450 طن مع انتظام إمدادات الوقود للمعدات بالموقع دون أي معوقات تشغيلية.',
+    reportNumber: null,
+    isRead: true,
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
+  }
+];
+
 import {
   getStoredTwoPhaseReport,
   saveStoredTwoPhaseReport,
@@ -61,15 +124,29 @@ export function getFallbackData(url) {
           if (m && m.id) map.set(String(m.id), m);
         });
         allMsgs = Array.from(map.values());
+        
+        // Seed initial communications if empty
+        if (allMsgs.length === 0) {
+          allMsgs = [...INITIAL_CORRESPONDENCE_MESSAGES];
+          localStorage.setItem('system_messages', JSON.stringify(allMsgs));
+        }
       }
     } catch {}
+    if (allMsgs.length === 0) {
+      allMsgs = [...INITIAL_CORRESPONDENCE_MESSAGES];
+    }
     
     // Filter by username if specified
     const match = url.match(/username=([^&]+)/);
     if (match && match[1]) {
       const u = decodeURIComponent(match[1]);
+      const isManagerOrAdmin = u === 'admin' || u === 'project_manager' || u === 'alansari';
       const filtered = allMsgs.filter(m => 
-        m.toUsername === u || m.toUsername === 'all' || m.fromUsername === u || (!m.toUsername && m.fromUsername !== u)
+        m.toUsername === u || 
+        m.toUsername === 'all' || 
+        m.fromUsername === u ||
+        (isManagerOrAdmin && (m.toUsername === 'admin' || m.toUsername === 'project_manager')) ||
+        (!m.toUsername && (m.fromUsername !== u || isManagerOrAdmin))
       );
       return { success: true, messages: filtered };
     }
@@ -651,12 +728,12 @@ export function getFallbackData(url) {
     return {
       success: true,
       users: [
-        { id: 1, name: 'م. حساب التطوير', username: 'admin', email: 'dev@mot.gov.ly', phone: '091-2345678', role: 'حساب التطوير', title: 'حساب التطوير والإشراف البرمجي الكامل', sector: 'all', createdAt: '2026-01-10' },
-        { id: 2, name: 'م. عبدالسلام ابريكاو', username: 'abrikaw', email: 'abrikaw@mot.gov.ly', phone: '091-3456789', role: 'رئيس جهاز الإشراف', title: 'رئيس جهاز الإشراف والمتابعة', sector: 'all', createdAt: '2026-01-15' },
-        { id: 3, name: 'م. صالح حماد', username: 'saleh_quality', email: 'hammad.quality@mot.gov.ly', phone: '091-4567890', role: 'مسؤول الجودة', title: 'مسؤول ضبط ومراقبة الجودة الفنية', sector: 'all', createdAt: '2026-01-18' },
-        { id: 4, name: 'م. صلاح العربي', username: 'salah_alarabi', email: 'alarabi.phase1@mot.gov.ly', phone: '091-5678901', role: 'مهندس مشرف (المرحلة الأولى)', title: 'مهندس مشرف - المرحلة الأولى', sector: 'المرحلة الأولى', createdAt: '2026-01-20' },
-        { id: 5, name: 'م. عيسى الطاهر', username: 'issa_altahir', email: 'altahir.phase2@mot.gov.ly', phone: '091-6789012', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية', sector: 'المرحلة الثانية', createdAt: '2026-01-25' },
-        { id: 6, name: 'م. عبدالرحمن الأنصاري', username: 'project_manager', email: 'alansari@mot.gov.ly', phone: '091-2345678', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)', sector: 'all', createdAt: '2026-01-28' }
+        { id: 1, name: 'م. حساب التطوير', username: 'admin', email: 'dev@mot.gov.ly', role: 'حساب التطوير', title: 'حساب التطوير والإشراف البرمجي الكامل', sector: 'all', createdAt: '2026-01-10' },
+        { id: 2, name: 'م. عبدالسلام ابريكاو', username: 'abrikaw', email: 'abrikaw@mot.gov.ly', role: 'رئيس جهاز الإشراف', title: 'رئيس جهاز الإشراف والمتابعة', sector: 'all', createdAt: '2026-01-15' },
+        { id: 3, name: 'م. صالح حماد', username: 'saleh_quality', email: 'hammad.quality@mot.gov.ly', role: 'مسؤول الجودة', title: 'مسؤول ضبط ومراقبة الجودة الفنية', sector: 'all', createdAt: '2026-01-18' },
+        { id: 4, name: 'م. صلاح العربي', username: 'salah_alarabi', email: 'alarabi.phase1@mot.gov.ly', role: 'مهندس مشرف (المرحلة الأولى)', title: 'مهندس مشرف - المرحلة الأولى', sector: 'المرحلة الأولى', createdAt: '2026-01-20' },
+        { id: 5, name: 'م. عيسى الطاهر', username: 'issa_altahir', email: 'altahir.phase2@mot.gov.ly', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية', sector: 'المرحلة الثانية', createdAt: '2026-01-25' },
+        { id: 6, name: 'م. عبدالرحمن الأنصاري', username: 'project_manager', email: 'alansari@mot.gov.ly', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)', sector: 'all', createdAt: '2026-01-28' }
       ]
     };
   }
