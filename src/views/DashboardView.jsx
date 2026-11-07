@@ -3,6 +3,7 @@ import { Fuel, AlertTriangle, UploadCloud, Truck, CheckCircle2, X, FileText, Cal
 import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
+import { getStoredTwoPhaseReport, calculateTwoPhaseRoadMetrics } from '../utils/twoPhaseSync.js';
 
 export const DashboardView = ({ onNavigateTab, currentUser }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -67,177 +68,198 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
     });
     const fetchDashboardData = async () => {
         try {
-            const summaryRes = await fastFetch('/api/dashboard/summary');
-            if (summaryRes && summaryRes.success) {
-                const roadRes = summaryRes.roadProgress;
-                const fdrP = roadRes?.kpis?.fdr?.percentage !== undefined ? parseFloat(roadRes.kpis.fdr.percentage) : 67.3;
-                const asphP = roadRes?.kpis?.asphalt?.percentage !== undefined ? parseFloat(roadRes.kpis.asphalt.percentage) : 65.1;
-                const aggP = roadRes?.kpis?.aggregateBase?.percentage !== undefined ? parseFloat(roadRes.kpis.aggregateBase.percentage) : 65.7;
-                const mcoP = roadRes?.kpis?.mco?.percentage !== undefined ? parseFloat(roadRes.kpis.mco.percentage) : 65.7;
-                
-                // Certified Executive Progress calculations (الموقف التنفيذي المعتمد: 81.62%)
-                let execOverallP = 81.62;
-                let execContractVal = 897665675.03;
-                let execTotalExecuted = 732648221.31;
-                let execBasicExecuted = 638329685.46;
-                let execAdditionalExecuted = 94318535.86;
-                let execRemainingVal = 165017453.72;
-                let execBasicP = 71.11;
-
-                if (typeof window !== 'undefined' && window.localStorage) {
-                    try {
-                        const rawExec = localStorage.getItem('executive_progress_data');
-                        if (rawExec) {
-                            const parsedExec = JSON.parse(rawExec);
-                            const cVal = Number(parsedExec.contractValue) || 897665675.03;
-                            const bSum = (parsedExec.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
-                            const aSum = (parsedExec.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
-                            const totalExec = bSum + aSum;
-                            if (cVal > 0) {
-                                execOverallP = parseFloat(((totalExec / cVal) * 100).toFixed(2));
-                                execBasicP = parseFloat(((bSum / cVal) * 100).toFixed(2));
-                                execContractVal = cVal;
-                                execTotalExecuted = totalExec;
-                                execBasicExecuted = bSum;
-                                execAdditionalExecuted = aSum;
-                                execRemainingVal = Math.max(0, cVal - totalExec);
-                            }
-                        }
-                    } catch (e) {}
+            // 1. LIVE TWO-PHASE ROAD REPORT METRICS (تقرير إنجاز المرحلتين الميداني):
+            let roadRes = null;
+            let twoPhaseRep = null;
+            try {
+                twoPhaseRep = getStoredTwoPhaseReport();
+                if (twoPhaseRep) {
+                    roadRes = calculateTwoPhaseRoadMetrics(twoPhaseRep);
                 }
-
-                const overallVal = execOverallP;
-                const secAVal = roadRes?.sectorAPercentage !== undefined ? parseFloat(roadRes.sectorAPercentage) : 100.0;
-                const secBVal = roadRes?.sectorBPercentage !== undefined ? parseFloat(roadRes.sectorBPercentage) : 8.4;
-                const execKm = roadRes?.totalExecutedKm !== undefined ? parseFloat(roadRes.totalExecutedKm) : 237.39;
-                const remKm = roadRes?.remainingKm !== undefined ? parseFloat(roadRes.remainingKm) : 122.61;
-                const todayM = roadRes?.kpis?.totalTodayMeters !== undefined ? parseFloat(roadRes.kpis.totalTodayMeters) : 3820;
-
-                let reportsList = summaryRes.recentReports || [];
-                if (typeof window !== 'undefined' && window.localStorage) {
-                    try {
-                        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-                        const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
-                        const existingIds = new Set(reportsList.map(r => String(r.id || r.reportNumber)));
-                        const validLocal = local.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)) && !existingIds.has(String(r.id || r.reportNumber)));
-                        reportsList = [...validLocal, ...reportsList];
-                        reportsList = reportsList.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
-                        reportsList.sort((a, b) => {
-                            const dateA = a.date ? new Date(a.date).getTime() : (Number(a.id) || 0);
-                            const dateB = b.date ? new Date(b.date).getTime() : (Number(b.id) || 0);
-                            return dateB - dateA;
-                        });
-                    } catch (storageErr) {}
-                }
-
-                // Dynamic Equipment metrics from storage / backend
-                let eqTotal = summaryRes.totalEquipment || 0;
-                let eqActive = summaryRes.activeEquipment || 0;
-                let eqStopped = summaryRes.stoppedEquipment || 0;
-                if (typeof window !== 'undefined' && window.localStorage) {
-                    try {
-                        const rawEq = localStorage.getItem('system_equipment_list');
-                        if (rawEq) {
-                            const eqList = JSON.parse(rawEq);
-                            if (Array.isArray(eqList) && eqList.length > 0) {
-                                eqTotal = eqList.reduce((acc, it) => acc + (Number(it.count) || 1), 0);
-                                eqActive = eqList.reduce((acc, it) => acc + (Number(it.operationalCount) || Number(it.count) || 1), 0);
-                                eqStopped = eqList.reduce((acc, it) => acc + (Number(it.maintenanceCount) || 0), 0);
-                            }
-                        }
-                    } catch (e) {}
-                }
-
-                // Dynamic Fuel metrics from reports list and local storage
-                const fuelReports = reportsList.filter(r => 
-                    r.isFuelReport || 
-                    r.reportType === 'تقرير كميات الوقود اليومية' || 
-                    (r.title && r.title.includes('تقرير كميات الوقود')) ||
-                    (Array.isArray(r.fuelItems) && r.fuelItems.length > 0)
-                );
-
-                let computedFuelDispatched = 0;
-                let computedFuelReceived = 0;
-                let computedFuelRemaining = 0;
-
-                fuelReports.forEach(rep => {
-                    const items = Array.isArray(rep?.fuelItems) ? rep.fuelItems : [];
-                    const disp = parseFloat(String(rep?.totalDispatchedLiters || '').replace(/,/g, '')) || 
-                                 parseFloat(String(rep?.fuelAmount || '').replace(/,/g, '')) || 
-                                 items.reduce((s, c) => s + (parseFloat(String(c?.dispatchedLiters || '').replace(/,/g, '')) || 0), 0);
-                    computedFuelDispatched += disp;
-
-                    const rec = parseFloat(String(rep?.totalReceivedLiters || '').replace(/,/g, '')) || 
-                                items.reduce((s, c) => s + (parseFloat(String(c?.receivedLiters || '').replace(/,/g, '')) || 0), 0);
-                    computedFuelReceived += rec;
-                });
-
-                const latestFuelRep = fuelReports[0];
-                if (latestFuelRep) {
-                    const items = Array.isArray(latestFuelRep?.fuelItems) ? latestFuelRep.fuelItems : [];
-                    computedFuelRemaining = parseFloat(String(latestFuelRep?.totalRemainingLiters || '').replace(/,/g, '')) ||
-                                           items.reduce((s, c) => s + (parseFloat(String(c?.remainingLiters || '').replace(/,/g, '')) || 0), 0);
-                }
-
-
-
-                // Strict & real: exactly matches fuel section (0 if no fuel reports exist)
-                const finalFuelDispatched = computedFuelDispatched || 0;
-                const finalFuelReceived = computedFuelReceived || 0;
-                const finalFuelRemaining = computedFuelRemaining || 0;
-
-                setMetrics(prev => ({
-                    ...prev,
-                    totalProduction: summaryRes.totalProduction || 0,
-                    totalFuel: finalFuelDispatched,
-                    totalSolar: finalFuelDispatched,
-                    totalFuelReceived: finalFuelReceived,
-                    totalFuelRemaining: finalFuelRemaining,
-                    totalSharshoor: summaryRes.totalSharshoor || 0,
-                    totalEquipment: eqTotal || summaryRes.totalEquipment || 25,
-                    activeEquipment: eqActive || summaryRes.activeEquipment || 25,
-                    stoppedEquipment: eqStopped !== undefined && eqStopped !== null ? eqStopped : (summaryRes.stoppedEquipment || 0),
-                    operatingHours: summaryRes.operatingHours || 0,
-                    sectorAFuel: summaryRes.sectorAFuel || 0,
-                    sectorBFuel: summaryRes.sectorBFuel || 0,
-                    sectorAProd: summaryRes.sectorAProd || 0,
-                    sectorBProd: summaryRes.sectorBProd || 0,
-                    recentReports: reportsList,
-                    recentAlerts: summaryRes.recentAlerts || [],
-                    urgentIssues: summaryRes.urgentIssues || [],
-                    tomorrowPlan: summaryRes.tomorrowPlan || null,
-                    roadProgress: {
-                        totalRoadLengthKm: 360.00,
-                        overallPercentage: overallVal || 81.62,
-                        sectorAPercentage: secAVal || 100.0,
-                        sectorBPercentage: secBVal || 8.4,
-                        totalExecutedKm: execKm,
-                        remainingKm: remKm,
-                        totalTodayMeters: todayM,
-                        latestTwoPhaseReport: roadRes?.latestTwoPhaseReport || null,
-                        layers: [
-                            { name: 'إعادة التدوير (FDR)', meters: roadRes?.kpis?.fdr?.meters || 242323, percentage: fdrP, color: '#2563eb', sectorA: 100.0, sectorB: 12.1 },
-                            { name: 'الأساس الحبيبي (الشرشور)', meters: roadRes?.kpis?.aggregateBase?.meters || 236493, percentage: aggP, color: '#16a34a', sectorA: 100.0, sectorB: 7.8 },
-                            { name: 'رش التشريب (MCO)', meters: roadRes?.kpis?.mco?.meters || 236493, percentage: mcoP, color: '#ea580c', sectorA: 100.0, sectorB: 7.8 },
-                            { name: 'الاسفلت المحسن', meters: roadRes?.kpis?.asphalt?.meters || 234243, percentage: asphP, color: '#7c3aed', sectorA: 100.0, sectorB: 6.1 }
-                        ]
-                    },
-                    weeklyTrends: [
-                        { day: 'السبت', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
-                        { day: 'الأحد', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
-                        { day: 'الإثنين', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
-                        { day: 'الثلاثاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
-                        { day: 'الأربعاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
-                        { day: 'الخميس', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
-                        { day: 'اليوم', production: summaryRes.totalProduction || 0, fuel: summaryRes.totalFuel || 0, sharshoor: summaryRes.totalSharshoor || 0, meters: todayM }
-                    ]
-                }));
+            } catch (tpErr) {
+                console.warn('Error reading stored two phase report in dashboard:', tpErr);
             }
-        }
-        catch (e) {
+
+            // 2. LIVE EXECUTIVE PROGRESS (الموقف التنفيذي المالي والفني المعتمد):
+            let execOverallP = 81.62;
+            let execContractVal = 897665675.03;
+            let execTotalExecuted = 732648221.31;
+            let execBasicExecuted = 638329685.46;
+            let execAdditionalExecuted = 94318535.86;
+            let execRemainingVal = 165017453.72;
+            let execBasicP = 71.11;
+
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    const rawExec = localStorage.getItem('executive_progress_data');
+                    if (rawExec) {
+                        const parsedExec = JSON.parse(rawExec);
+                        const cVal = Number(parsedExec.contractValue) || 897665675.03;
+                        const bSum = (parsedExec.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
+                        const aSum = (parsedExec.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
+                        const totalExec = bSum + aSum;
+                        if (cVal > 0) {
+                            execOverallP = parseFloat(((totalExec / cVal) * 100).toFixed(2));
+                            execBasicP = parseFloat(((bSum / cVal) * 100).toFixed(2));
+                            execContractVal = cVal;
+                            execTotalExecuted = totalExec;
+                            execBasicExecuted = bSum;
+                            execAdditionalExecuted = aSum;
+                            execRemainingVal = Math.max(0, cVal - totalExec);
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            // Fallback or auxiliary data from API (equipment, alerts, plans)
+            let summaryRes = null;
+            try {
+                summaryRes = await fastFetch('/api/dashboard/summary');
+            } catch (_) {}
+
+            if (!roadRes && summaryRes?.roadProgress) {
+                roadRes = summaryRes.roadProgress;
+            }
+
+            const fdrM = roadRes?.kpis?.fdr?.meters ?? 242323;
+            const fdrP = roadRes?.kpis?.fdr?.percentage ?? 67.3;
+            const asphM = roadRes?.kpis?.asphalt?.meters ?? 234243;
+            const asphP = roadRes?.kpis?.asphalt?.percentage ?? 65.1;
+            const aggM = roadRes?.kpis?.aggregateBase?.meters ?? 236493;
+            const aggP = roadRes?.kpis?.aggregateBase?.percentage ?? 65.7;
+            const mcoM = roadRes?.kpis?.mco?.meters ?? 236493;
+            const mcoP = roadRes?.kpis?.mco?.percentage ?? 65.7;
+
+            const secAVal = roadRes?.sectorAPercentage !== undefined ? parseFloat(roadRes.sectorAPercentage) : 100.0;
+            const secBVal = roadRes?.sectorBPercentage !== undefined ? parseFloat(roadRes.sectorBPercentage) : 8.4;
+            const execKm = roadRes?.totalExecutedKm !== undefined ? parseFloat(roadRes.totalExecutedKm) : 237.39;
+            const remKm = roadRes?.remainingKm !== undefined ? parseFloat(roadRes.remainingKm) : 122.61;
+            const todayM = roadRes?.totalTodayMeters !== undefined ? parseFloat(roadRes.totalTodayMeters) : 1980;
+
+            // 3. LIVE FUEL METRICS (مؤشرات وسجل الوقود الميداني):
+            let reportsList = summaryRes?.recentReports || [];
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                    const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+                    const existingIds = new Set(reportsList.map(r => String(r.id || r.reportNumber)));
+                    const validLocal = local.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)) && !existingIds.has(String(r.id || r.reportNumber)));
+                    reportsList = [...validLocal, ...reportsList];
+                    reportsList = reportsList.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+                    reportsList.sort((a, b) => {
+                        const dateA = a.date ? new Date(a.date).getTime() : (Number(a.id) || 0);
+                        const dateB = b.date ? new Date(b.date).getTime() : (Number(b.id) || 0);
+                        return dateB - dateA;
+                    });
+                } catch (storageErr) {}
+            }
+
+            const fuelReports = reportsList.filter(r => 
+                r.isFuelReport || 
+                r.reportType === 'تقرير كميات الوقود اليومية' || 
+                (r.title && r.title.includes('تقرير كميات الوقود')) ||
+                (Array.isArray(r.fuelItems) && r.fuelItems.length > 0)
+            );
+
+            let computedFuelDispatched = 0;
+            let computedFuelReceived = 0;
+            let computedFuelRemaining = 0;
+
+            fuelReports.forEach(rep => {
+                const items = Array.isArray(rep?.fuelItems) ? rep.fuelItems : [];
+                const disp = parseFloat(String(rep?.totalDispatchedLiters || '').replace(/,/g, '')) || 
+                             parseFloat(String(rep?.fuelAmount || '').replace(/,/g, '')) || 
+                             items.reduce((s, c) => s + (parseFloat(String(c?.dispatchedLiters || '').replace(/,/g, '')) || 0), 0);
+                computedFuelDispatched += disp;
+
+                const rec = parseFloat(String(rep?.totalReceivedLiters || '').replace(/,/g, '')) || 
+                            items.reduce((s, c) => s + (parseFloat(String(c?.receivedLiters || '').replace(/,/g, '')) || 0), 0);
+                computedFuelReceived += rec;
+            });
+
+            const latestFuelRep = fuelReports[0];
+            if (latestFuelRep) {
+                const items = Array.isArray(latestFuelRep?.fuelItems) ? latestFuelRep.fuelItems : [];
+                computedFuelRemaining = parseFloat(String(latestFuelRep?.totalRemainingLiters || '').replace(/,/g, '')) ||
+                                       items.reduce((s, c) => s + (parseFloat(String(c?.remainingLiters || '').replace(/,/g, '')) || 0), 0);
+            }
+
+            // Equipment metrics
+            let eqTotal = summaryRes?.totalEquipment || 25;
+            let eqActive = summaryRes?.activeEquipment || 25;
+            let eqStopped = summaryRes?.stoppedEquipment || 0;
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    const rawEq = localStorage.getItem('system_equipment_list');
+                    if (rawEq) {
+                        const eqList = JSON.parse(rawEq);
+                        if (Array.isArray(eqList) && eqList.length > 0) {
+                            eqTotal = eqList.reduce((acc, it) => acc + (Number(it.count) || 1), 0);
+                            eqActive = eqList.reduce((acc, it) => acc + (Number(it.operationalCount) || Number(it.count) || 1), 0);
+                            eqStopped = eqList.reduce((acc, it) => acc + (Number(it.maintenanceCount) || 0), 0);
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            setMetrics(prev => ({
+                ...prev,
+                totalProduction: summaryRes?.totalProduction || 0,
+                totalFuel: computedFuelDispatched,
+                totalSolar: computedFuelDispatched,
+                totalFuelReceived: computedFuelReceived,
+                totalFuelRemaining: computedFuelRemaining,
+                totalSharshoor: summaryRes?.totalSharshoor || 0,
+                totalEquipment: eqTotal,
+                activeEquipment: eqActive,
+                stoppedEquipment: eqStopped,
+                operatingHours: summaryRes?.operatingHours || 0,
+                sectorAFuel: summaryRes?.sectorAFuel || 0,
+                sectorBFuel: summaryRes?.sectorBFuel || 0,
+                recentReports: reportsList,
+                recentAlerts: summaryRes?.recentAlerts || [],
+                urgentIssues: summaryRes?.urgentIssues || [],
+                tomorrowPlan: summaryRes?.tomorrowPlan || null,
+                // 1. الموقف التنفيذي الحي المتزامن مع واجهة الموقف التنفيذي:
+                executiveProgress: {
+                    overallPercentage: execOverallP,
+                    contractValue: execContractVal,
+                    totalExecutedValue: execTotalExecuted,
+                    basicExecutedValue: execBasicExecuted,
+                    additionalExecutedValue: execAdditionalExecuted,
+                    remainingValue: execRemainingVal,
+                    basicPercentage: execBasicP
+                },
+                // 2. تقرير إنجاز المرحلتين الحي المتزامن مع واجهة إنجاز المرحلتين:
+                roadProgress: {
+                    totalRoadLengthKm: 360.00,
+                    overallPercentage: execOverallP || 81.62,
+                    sectorAPercentage: secAVal,
+                    sectorBPercentage: secBVal,
+                    totalExecutedKm: execKm,
+                    remainingKm: remKm,
+                    totalTodayMeters: todayM,
+                    latestTwoPhaseReport: twoPhaseRep || roadRes?.latestTwoPhaseReport || null,
+                    layers: [
+                        { name: 'إعادة التدوير (FDR)', meters: fdrM, percentage: fdrP, color: '#2563eb', sectorA: 100.0, sectorB: 12.1 },
+                        { name: 'الأساس الحبيبي (الشرشور)', meters: aggM, percentage: aggP, color: '#16a34a', sectorA: 100.0, sectorB: 7.8 },
+                        { name: 'رش التشريب (MCO)', meters: mcoM, percentage: mcoP, color: '#ea580c', sectorA: 100.0, sectorB: 7.8 },
+                        { name: 'الاسفلت المحسن', meters: asphM, percentage: asphP, color: '#7c3aed', sectorA: 100.0, sectorB: 6.1 }
+                    ]
+                },
+                weeklyTrends: [
+                    { day: 'السبت', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                    { day: 'الأحد', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                    { day: 'الإثنين', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                    { day: 'الثلاثاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                    { day: 'الأربعاء', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                    { day: 'الخميس', production: 0, fuel: 0, sharshoor: 0, meters: 0 },
+                    { day: 'اليوم', production: 0, fuel: computedFuelDispatched, sharshoor: 0, meters: todayM }
+                ]
+            }));
+        } catch (e) {
             console.error('Error fetching dashboard data', e);
-        }
-        finally {
+        } finally {
             setIsLoading(false);
         }
     };
@@ -245,22 +267,30 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
     useEffect(() => {
         fetchDashboardData();
 
-        // Reactive updates whenever a report is saved or uploaded
+        // Reactive updates whenever reports or core views (Executive Progress, Two Phase, Fuel) change
         const handleSync = () => fetchDashboardData();
         window.addEventListener('report-saved', handleSync);
         window.addEventListener('road-progress-updated', handleSync);
+        window.addEventListener('two-phase-updated', handleSync);
+        window.addEventListener('executive-progress-updated', handleSync);
         window.addEventListener('fuel-updated', handleSync);
         window.addEventListener('equipment-updated', handleSync);
         window.addEventListener('report-deleted', handleSync);
+        window.addEventListener('reports-updated', handleSync);
         window.addEventListener('storage', handleSync);
-        const autoInterval = setInterval(handleSync, 8000);
+        const autoInterval = setInterval(handleSync, 4000);
 
         return () => {
             window.removeEventListener('report-saved', handleSync);
             window.removeEventListener('road-progress-updated', handleSync);
+            window.removeEventListener('two-phase-updated', handleSync);
+            window.removeEventListener('executive-progress-updated', handleSync);
             window.removeEventListener('fuel-updated', handleSync);
             window.removeEventListener('equipment-updated', handleSync);
             window.removeEventListener('report-deleted', handleSync);
+            window.removeEventListener('reports-updated', handleSync);
+            window.removeEventListener('storage', handleSync);
+            clearInterval(autoInterval);
         };
     }, []);
     return (<div className="view-content" style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -283,7 +313,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                 مشروع صيانة وتطوير طريق أوباري - غات (نسبة الإنجاز من الموقف التنفيذي)
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0.2rem 0 0' }}>
-                نسبة الإنجاز المالي العام المعتمدة: <strong>%{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</strong> • إجمالي المنفذ: <strong>{(metrics.executiveProgress?.totalExecutedValue || 732648221.31).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</strong> من <strong>897,665,675.03 د.ل</strong> • المسار المنجز: <strong>{(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</strong> من <strong>360.00 كم</strong>
+                نسبة الإنجاز المالي العام المعتمدة: <strong>%{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</strong> • إجمالي المنفذ: <strong>{(metrics.executiveProgress?.totalExecutedValue || 732648221.31).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</strong> من <strong>{(metrics.executiveProgress?.contractValue || 897665675.03).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</strong> • المسار المنجز: <strong>{(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</strong> من <strong>360.00 كم</strong>
               </p>
             </div>
           </div>

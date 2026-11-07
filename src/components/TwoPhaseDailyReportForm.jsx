@@ -478,6 +478,7 @@ export const TwoPhaseDailyReportForm = ({
       try {
         window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
+        window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: saved }));
       } catch (evtErr) {
         console.warn('Event dispatch error:', evtErr);
       }

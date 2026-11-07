@@ -598,6 +598,10 @@ export const ExecutiveProgressForm = ({
 
       localStorage.setItem('executive_progress_data', JSON.stringify(payload));
       clearApiCache();
+      try {
+        window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: payload }));
+        window.dispatchEvent(new CustomEvent('report-saved', { detail: payload }));
+      } catch (_) {}
       setShowForwardModal(true);
       setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت بيانات الموقف التنفيذي بنجاح في قاعدة البيانات!' });
       if (onSaved) onSaved(payload);
@@ -615,6 +619,12 @@ export const ExecutiveProgressForm = ({
   const handleResetToStandard = () => {
     if (window.confirm('هل تريد استعادة البيانات الأصلية المعتمدة للموقف التنفيذي؟')) {
       setData(initialExecutiveData);
+      localStorage.removeItem('executive_progress_data');
+      clearApiCache();
+      try {
+        window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: initialExecutiveData }));
+        window.dispatchEvent(new CustomEvent('report-saved'));
+      } catch (_) {}
       setStatusMessage({ type: 'info', text: 'تمت استعادة البيانات القياسية المعتمدة للمشروع.' });
     }
   };
