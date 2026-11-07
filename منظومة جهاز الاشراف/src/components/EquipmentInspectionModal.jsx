@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   ClipboardList, CheckCircle2, AlertTriangle, Wrench, X, 
   Printer, Download, Plus, Trash2, Fuel, Clock, MapPin, 
-  User, ShieldCheck, FileSpreadsheet, Truck 
+  User, ShieldCheck, FileSpreadsheet, Truck, Check, Eye
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -14,26 +14,28 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
   const dayName = daysOfWeek[new Date().getDay()];
 
   const [inspectionData, setInspectionData] = useState({
-    inspectionNumber: `EQ-INSP-${Date.now().toString().slice(-6)}`,
+    inspectionNumber: `EQP-INSP-${Date.now().toString().slice(-6)}`,
     date: todayStr,
     dayName: dayName,
-    location: 'مسار طريق أوباري - غات (360 كم)',
+    location: 'مسار طريق أوباري - غات (360 كم) • المرحلة الأولى والثانية',
+    contractor: 'الشركة العامة للطرق والجسور / ائتلاف الشركات المنفذة',
     inspectorName: currentUser?.name || 'م. مهندس الآليات والمعدات',
-    inspectorRole: currentUser?.title || currentUser?.role || 'مسؤول الحركة والآليات',
-    notes: 'تم فحص ومطابقة المعدات والآليات بالموقع الميداني والتأكد من الجاهزية التشغيلية.'
+    inspectorRole: currentUser?.title || currentUser?.role || 'مسؤول المعدات والآليات الميداني',
+    weather: 'صحو ومعتدل (ملائم للتشغيل والإنتاج)',
+    notes: 'تمت المعاينة والفحص الميداني لكافة الآليات والمعدات في مواقع العمل، والتأكد من الجاهزية التشغيلية وسجلات الصيانة اليومية ومناسيب الوقود.'
   });
 
   const [equipmentRows, setEquipmentRows] = useState([
-    { id: 1, name: 'ماكينة تدوير FDR-01', code: 'FDR-01', operator: 'محمود التاورغي', status: 'operational', meterHours: '1240', fuelLevel: '85%', notes: 'جاهزة للوردية الصباحية' },
-    { id: 2, name: 'ماكينة تدوير FDR-02', code: 'FDR-02', operator: 'عبدالسلام الزروق', status: 'operational', meterHours: '980', fuelLevel: '90%', notes: 'جاهزة وتعمل بكفاءة' },
-    { id: 3, name: 'جريدر CAT 140K', code: 'GRD-01', operator: 'علي الصويعي', status: 'operational', meterHours: '3420', fuelLevel: '75%', notes: 'أعمال تسوية وضبط مناسيب' },
-    { id: 4, name: 'جريدر Komatsu 705', code: 'GRD-02', operator: 'عمر المهدوي', status: 'operational', meterHours: '2890', fuelLevel: '80%', notes: 'أعمال تسوية الأساس' },
-    { id: 5, name: 'هراس حافر غنم Hamm', code: 'ROL-01', operator: 'محمد الطاهر', status: 'operational', meterHours: '1850', fuelLevel: '70%', notes: 'دك أولي لطبقة الفرمة' },
-    { id: 6, name: 'هراس تربة ناعم Bomag', code: 'ROL-02', operator: 'إبراهيم غيث', status: 'operational', meterHours: '2100', fuelLevel: '85%', notes: 'دمك نهائي وتثبيت السطح' },
-    { id: 7, name: 'صهريج مياه Mercedes (30 طن)', code: 'WTR-01', operator: 'فرج المقرحي', status: 'operational', meterHours: '4210', fuelLevel: '95%', notes: 'تغذية ماكينة FDR بالمياه' },
-    { id: 8, name: 'لودر CAT 950', code: 'LDR-01', operator: 'يوسف العريبي', status: 'operational', meterHours: '3150', fuelLevel: '65%', notes: 'تشوين ومناولة الركام' },
-    { id: 9, name: 'قلاب نقل ركام (4 محاور)', code: 'TRK-01', operator: 'جمعة السنوسي', status: 'operational', meterHours: '5120', fuelLevel: '80%', notes: 'نقل وتوزيع السن' },
-    { id: 10, name: 'ماسينزا رش الأسفلت MCO', code: 'MSN-01', operator: 'رمضان الفيتوري', status: 'maintenance', meterHours: '1430', fuelLevel: '50%', notes: 'صيانة دورية للرشاشات والمضخة' }
+    { id: 1, name: 'ماكينة إعادة التدوير على البارد (FDR-01)', code: 'FDR-01', operator: 'محمود التاورغي', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '1,240', fuelLevel: '85%', notes: 'جاهزة للوردية الصباحية ودك الأساس' },
+    { id: 2, name: 'ماكينة إعادة التدوير على البارد (FDR-02)', code: 'FDR-02', operator: 'عبدالسلام الزروق', sector: 'المرحلة الثانية (كم 242)', status: 'operational', meterHours: '980', fuelLevel: '90%', notes: 'جاهزة وتعمل بكفاءة عالية' },
+    { id: 3, name: 'جريدر تسوية وضبط مناسيب (CAT 140K)', code: 'GRD-01', operator: 'علي الصويعي', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '3,420', fuelLevel: '75%', notes: 'تسوية وضبط ميول طبقة الأساس' },
+    { id: 4, name: 'جريدر تسوية وضبط مناسيب (Komatsu 705)', code: 'GRD-02', operator: 'عمر المهدوي', sector: 'المرحلة الثانية (كم 241)', status: 'operational', meterHours: '2,890', fuelLevel: '80%', notes: 'ضبط المناسيب والميول الهندسية' },
+    { id: 5, name: 'هراس حافر غنم دك عميق (Hamm 3411)', code: 'ROL-01', operator: 'محمد الطاهر', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '1,850', fuelLevel: '70%', notes: 'دك أولي لطبقة الفرمة والأساس' },
+    { id: 6, name: 'هراس تربة ناعم (Bomag BW213)', code: 'ROL-02', operator: 'إبراهيم غيث', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '2,100', fuelLevel: '85%', notes: 'دمك وتثبيت نهائي للسطح' },
+    { id: 7, name: 'شاحنة صهريج مياه Mercedes (30 طن)', code: 'WTR-01', operator: 'فرج المقرحي', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '4,210', fuelLevel: '95%', notes: 'رش وترطيب وتغذية ماكينة FDR' },
+    { id: 8, name: 'لودر تشوين ومناولة (CAT 950)', code: 'LDR-01', operator: 'يوسف العريبي', sector: 'الكسارة موقع 107', status: 'operational', meterHours: '3,150', fuelLevel: '65%', notes: 'مناولة الركام وتشوين مواد الأساس' },
+    { id: 9, name: 'شاحنة قلاب نقل ركام (Mercedes Actros)', code: 'TRK-01', operator: 'جمعة السنوسي', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '5,120', fuelLevel: '80%', notes: 'نقل وتوزيع السن والركام الميداني' },
+    { id: 10, name: 'ماسينزا رش أسفلت وتوزيع MC0', code: 'MSN-01', operator: 'رمضان الفيتوري', sector: 'المرحلة الأولى (كم 236)', status: 'maintenance', meterHours: '1,430', fuelLevel: '50%', notes: 'صيانة دورية للمضخة ورؤوس الرش' }
   ]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -47,6 +49,7 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
         name: '',
         code: '',
         operator: '',
+        sector: 'مسار طريق أوباري - غات',
         status: 'operational',
         meterHours: '',
         fuelLevel: '100%',
@@ -75,11 +78,15 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
   const handleExportExcel = () => {
     try {
       const dataRows = [
-        ['كشف حصر وفحص المعدات والآليات الميدانية اليومي'],
-        [`رقم الكشف: ${inspectionData.inspectionNumber}`, `التاريخ: ${inspectionData.date}`, `اليوم: ${inspectionData.dayName}`],
-        [`الموقع: ${inspectionData.location}`, `المفتش / المشرف: ${inspectionData.inspectorName}`],
+        ['دولة ليبيا - وزارة المواصلات - جهاز تنفيذ مشروعات المواصلات'],
+        ['مشروع صيانة وتطوير طريق أوباري - غات (360 كم)'],
+        ['كشف وسجل حصر وفحص المعدات والآليات الميدانية الرسمي (المعتمد)'],
         [],
-        ['م', 'اسم المعدة / الآلية', 'كود الآلية / اللوحة', 'السائق / المشغل', 'الحالة الفنية', 'ساعات التشغيل', 'مستوى الوقود', 'ملاحظات الفحص']
+        [`رقم الكشف المرجعي: ${inspectionData.inspectionNumber}`, `التاريخ: ${inspectionData.date}`, `اليوم: ${inspectionData.dayName}`],
+        [`الموقع والقطاع: ${inspectionData.location}`, `المقاول المنفذ: ${inspectionData.contractor}`],
+        [`مهندس الفحص والمشرف: ${inspectionData.inspectorName}`, `حالة الطقس: ${inspectionData.weather}`],
+        [],
+        ['م', 'اسم ونوع المعدة / الآلية', 'كود الآلية / اللوحة', 'السائق / المشغل', 'قطاع وموقع العمل', 'الحالة الفنية والتشغيلية', 'ساعات التشغيل (العداد)', 'منسوب الوقود (%)', 'ملاحظات الفحص والجاهزية']
       ];
 
       equipmentRows.forEach((r, idx) => {
@@ -88,6 +95,7 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
           r.name || '-',
           r.code || '-',
           r.operator || '-',
+          r.sector || '-',
           r.status === 'operational' ? 'جاهزة وتعمل' : r.status === 'maintenance' ? 'تحت الصيانة' : 'معطلة / متوقفة',
           r.meterHours || '-',
           r.fuelLevel || '-',
@@ -96,20 +104,22 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
       });
 
       dataRows.push([]);
-      dataRows.push(['إجمالي المعدات المفحوصة:', totalInspected, 'الجاهزة والعاملة:', operationalCount, 'تحت الصيانة:', maintenanceCount, 'نسبة الجاهزية:', `${readinessPct}%`]);
+      dataRows.push(['إجمالي المعدات المفحوصة:', totalInspected, 'الجاهزة والعاملة:', operationalCount, 'تحت الصيانة:', maintenanceCount, 'المتوقفة:', stoppedCount, 'نسبة الجاهزية التشغيلية:', `${readinessPct}%`]);
       dataRows.push([]);
-      dataRows.push(['مهندس الآليات:', inspectionData.inspectorName, '', 'مدير المشروع:', 'م. عبدالرحمن الأنصاري']);
+      dataRows.push(['ملاحظات الفحص:', inspectionData.notes]);
+      dataRows.push([]);
+      dataRows.push(['مهندس الآليات والحركة:', inspectionData.inspectorName, '', 'مهندس الجودة:', 'م. صالح بن يحي', '', 'مدير المشروع:', 'م. عبدالرحمن الأنصاري']);
 
       const ws = XLSX.utils.aoa_to_sheet(dataRows);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'كشف المعدات');
-      XLSX.writeFile(wb, `كشف_المعدات_${inspectionData.inspectionNumber}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, 'كشف المعدات الرسمي');
+      XLSX.writeFile(wb, `كشف_المعدات_الرسمي_${inspectionData.inspectionNumber}.xlsx`);
     } catch (err) {
       console.error('Error exporting equipment sheet:', err);
     }
   };
 
-  // Print
+  // Direct Print
   const handlePrint = () => {
     window.print();
   };
@@ -132,6 +142,7 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
       const existing = JSON.parse(localStorage.getItem('equipment_inspection_sheets') || '[]');
       existing.unshift(sheetPayload);
       localStorage.setItem('equipment_inspection_sheets', JSON.stringify(existing));
+      window.dispatchEvent(new CustomEvent('equipment-updated'));
     } catch (e) {
       console.error('Error saving equipment inspection sheet:', e);
     }
@@ -146,490 +157,688 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(15, 23, 42, 0.78)',
-      backdropFilter: 'blur(6px)',
-      zIndex: 99999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      direction: 'rtl',
-      padding: '1rem',
-      overflowY: 'auto'
-    }}>
+    <>
+      {/* Print Specific CSS to ensure letter-perfect official output */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #official-equipment-print-area,
+          #official-equipment-print-area * {
+            visibility: visible !important;
+          }
+          #official-equipment-print-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm 12mm !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .no-print-zone {
+            display: none !important;
+          }
+          @page {
+            size: A4 landscape;
+            margin: 8mm;
+          }
+        }
+      `}</style>
+
       <div style={{
-        background: '#ffffff',
-        borderRadius: '16px',
-        maxWidth: '1150px',
-        width: '100%',
-        maxHeight: '92vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(15, 23, 42, 0.78)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 99999,
         display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-        border: '1px solid #cbd5e1',
-        overflow: 'hidden'
+        alignItems: 'center',
+        justifyContent: 'center',
+        direction: 'rtl',
+        padding: '1rem',
+        overflowY: 'auto'
       }}>
-        {/* Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-          color: '#ffffff',
-          padding: '1.25rem 1.75rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '2px solid #1d4ed8'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'rgba(255, 255, 255, 0.18)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <ClipboardList size={24} />
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900 }}>
-                كشف حصر وفحص المعدات والآليات الميدانية
-              </h2>
-              <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={handlePrint}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: 'rgba(255,255,255,0.18)',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.3)',
-                padding: '0.45rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              <Printer size={15} />
-              <span>طباعة</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleExportExcel}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: '#16a34a',
-                color: '#fff',
-                border: 'none',
-                padding: '0.45rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              <FileSpreadsheet size={15} />
-              <span>إكسل</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#ffffff',
-                cursor: 'pointer',
-                padding: '0.4rem',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <X size={22} />
-            </button>
-          </div>
-        </div>
-
-        {/* Form Body */}
-        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          
-          {savedSuccess && (
-            <div style={{
-              background: '#f0fdf4',
-              color: '#166534',
-              border: '1px solid #bbf7d0',
-              padding: '0.85rem 1.25rem',
-              borderRadius: '10px',
-              fontWeight: 800,
-              fontSize: '0.9rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <CheckCircle2 size={18} />
-              <span>تم حفظ كشف فحص المعدات بنجاح في السجل الميداني!</span>
-            </div>
-          )}
-
-          {/* Meta Info Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1rem',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            padding: '1.1rem',
-            borderRadius: '12px'
+        <div 
+          id="official-equipment-print-area"
+          style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '1280px',
+            width: '100%',
+            maxHeight: '94vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            border: '2px solid #0f172a',
+            overflow: 'hidden',
+            fontFamily: 'inherit'
+          }}
+        >
+          {/* Action Toolbar Header (Hidden on Print) */}
+          <div className="no-print-zone" style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            color: '#ffffff',
+            padding: '1rem 1.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '2px solid #334155'
           }}>
-            <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>
-                رقم الكشف المرجعي
-              </label>
-              <input
-                type="text"
-                value={inspectionData.inspectionNumber}
-                onChange={(e) => setInspectionData({ ...inspectionData, inspectionNumber: e.target.value })}
-                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>
-                تاريخ الكشف
-              </label>
-              <input
-                type="date"
-                value={inspectionData.date}
-                onChange={(e) => setInspectionData({ ...inspectionData, date: e.target.value })}
-                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>
-                الموقع / المحطة الميدانية
-              </label>
-              <input
-                type="text"
-                value={inspectionData.location}
-                onChange={(e) => setInspectionData({ ...inspectionData, location: e.target.value })}
-                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>
-                مهندس الفحص / المشرف
-              </label>
-              <input
-                type="text"
-                value={inspectionData.inspectorName}
-                onChange={(e) => setInspectionData({ ...inspectionData, inspectorName: e.target.value })}
-                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
-              />
-            </div>
-          </div>
-
-          {/* KPI Summary Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.85rem' }}>
-            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '0.85rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.76rem', color: '#1e40af', fontWeight: 800 }}>إجمالي المعدات المفحوصة</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1d4ed8', marginTop: '0.15rem' }}>
-                {totalInspected} <span style={{ fontSize: '0.8rem' }}>آلية</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}>
+                <ClipboardList size={22} color="#ffffff" />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900 }}>
+                  فورم كشف حصر وفحص المعدات والآليات الميدانية الرسمي (بالشعار)
+                </h2>
+                <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  جهاز تنفيذ مشروعات المواصلات • مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
+                </span>
               </div>
             </div>
 
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '0.85rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.76rem', color: '#166534', fontWeight: 800 }}>المعدات الجاهزة والعاملة</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#15803d', marginTop: '0.15rem' }}>
-                {operationalCount} <span style={{ fontSize: '0.8rem' }}>آلية</span>
-              </div>
-            </div>
-
-            <div style={{ background: '#fefce8', border: '1px solid #fef08a', borderRadius: '10px', padding: '0.85rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.76rem', color: '#a16207', fontWeight: 800 }}>المعدات قيد الصيانة</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ca8a04', marginTop: '0.15rem' }}>
-                {maintenanceCount} <span style={{ fontSize: '0.8rem' }}>آلية</span>
-              </div>
-            </div>
-
-            <div style={{ background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: '10px', padding: '0.85rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.76rem', color: '#7e22ce', fontWeight: 800 }}>نسبة الجاهزية الميدانية</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#9333ea', marginTop: '0.15rem' }}>
-                {readinessPct}%
-              </div>
-            </div>
-          </div>
-
-          {/* Equipment Table */}
-          <div style={{ border: '1.5px solid #000000', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{
-              background: '#0284c7',
-              color: '#ffffff',
-              padding: '0.75rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <span style={{ fontWeight: 900, fontSize: '0.95rem' }}>
-                جدول حصر المعدات والآليات وحالتها الفنية
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <button
                 type="button"
-                onClick={handleAddRow}
+                onClick={handlePrint}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
-                  background: '#ffffff',
-                  color: '#0284c7',
+                  gap: '0.45rem',
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+                  color: '#fff',
                   border: 'none',
-                  padding: '0.35rem 0.85rem',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  cursor: 'pointer'
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '8px',
+                  fontSize: '0.86rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(37,99,235,0.3)'
                 }}
               >
-                <Plus size={14} />
-                <span>+ إضافة معدة للكشف</span>
+                <Printer size={16} />
+                <span>طباعة الكشف الرسمي</span>
               </button>
-            </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.88rem' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', color: '#000000', fontWeight: 900 }}>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '40px' }}>م</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', minWidth: '180px' }}>اسم ونوع المعدة</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '110px' }}>كود الآلية / اللوحة</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '140px' }}>السائق / المشغل</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '140px' }}>الحالة الفنية</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '110px' }}>العداد (ساعة)</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '90px' }}>الوقود</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', minWidth: '160px' }}>ملاحظات الفحص</th>
-                    <th style={{ border: '1px solid #cbd5e1', padding: '0.6rem', width: '50px' }}>حذف</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {equipmentRows.map((row, idx) => (
-                    <tr key={row.id} style={{ background: idx % 2 === 0 ? '#ffffff' : '#fbfcfd' }}>
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.45rem', fontWeight: 800 }}>{idx + 1}</td>
-                      
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <input
-                          type="text"
-                          value={row.name}
-                          onChange={(e) => handleUpdateRow(row.id, 'name', e.target.value)}
-                          placeholder="مثال: جريدر تسوية CAT"
-                          style={{ width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '5px', fontSize: '0.85rem', fontWeight: 700 }}
-                        />
-                      </td>
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  background: '#16a34a',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '8px',
+                  fontSize: '0.86rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(22,163,74,0.3)'
+                }}
+              >
+                <FileSpreadsheet size={16} />
+                <span>تصدير Excel</span>
+              </button>
 
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <input
-                          type="text"
-                          value={row.code}
-                          onChange={(e) => handleUpdateRow(row.id, 'code', e.target.value)}
-                          placeholder="كود"
-                          style={{ width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '5px', fontSize: '0.85rem', textAlign: 'center', direction: 'ltr' }}
-                        />
-                      </td>
-
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <input
-                          type="text"
-                          value={row.operator}
-                          onChange={(e) => handleUpdateRow(row.id, 'operator', e.target.value)}
-                          placeholder="اسم المشغل"
-                          style={{ width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '5px', fontSize: '0.85rem' }}
-                        />
-                      </td>
-
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <select
-                          value={row.status}
-                          onChange={(e) => handleUpdateRow(row.id, 'status', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '0.4rem 0.5rem',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '5px',
-                            fontSize: '0.82rem',
-                            fontWeight: 800,
-                            background: row.status === 'operational' ? '#f0fdf4' : row.status === 'maintenance' ? '#fefce8' : '#fef2f2',
-                            color: row.status === 'operational' ? '#166534' : row.status === 'maintenance' ? '#854d0e' : '#991b1b'
-                          }}
-                        >
-                          <option value="operational">🟢 جاهزة وتعمل</option>
-                          <option value="maintenance">🟡 صيانة دورية</option>
-                          <option value="stopped">🔴 متوقفة عطل</option>
-                        </select>
-                      </td>
-
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <input
-                          type="text"
-                          value={row.meterHours}
-                          onChange={(e) => handleUpdateRow(row.id, 'meterHours', e.target.value)}
-                          placeholder="ساعات"
-                          style={{ width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '5px', fontSize: '0.85rem', textAlign: 'center', direction: 'ltr' }}
-                        />
-                      </td>
-
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <input
-                          type="text"
-                          value={row.fuelLevel}
-                          onChange={(e) => handleUpdateRow(row.id, 'fuelLevel', e.target.value)}
-                          placeholder="%"
-                          style={{ width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '5px', fontSize: '0.85rem', textAlign: 'center' }}
-                        />
-                      </td>
-
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <input
-                          type="text"
-                          value={row.notes}
-                          onChange={(e) => handleUpdateRow(row.id, 'notes', e.target.value)}
-                          placeholder="ملاحظات"
-                          style={{ width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '5px', fontSize: '0.82rem' }}
-                        />
-                      </td>
-
-                      <td style={{ border: '1px solid #cbd5e1', padding: '0.35rem' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRow(row.id)}
-                          style={{
-                            background: '#fee2e2',
-                            color: '#dc2626',
-                            border: 'none',
-                            borderRadius: '5px',
-                            width: '28px',
-                            height: '28px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            margin: '0 auto'
-                          }}
-                          title="حذف هذا الصف"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title="إغلاق النافذة"
+              >
+                <X size={20} />
+              </button>
             </div>
           </div>
 
-          {/* Signatures & General Notes */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '0.5rem' }}>
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '0.3rem' }}>
-                ملاحظات وتوصيات الفحص الميداني:
+          {/* Form Printable Body */}
+          <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            
+            {savedSuccess && (
+              <div className="no-print-zone" style={{
+                background: '#f0fdf4',
+                color: '#166534',
+                border: '1.5px solid #86efac',
+                padding: '0.85rem 1.25rem',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '0.92rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <CheckCircle2 size={20} color="#16a34a" />
+                <span>تم حفظ واعتماد كشف المعدات بنجاح في السجل الميداني للمنظومة!</span>
+              </div>
+            )}
+
+            {/* 1. Official Libyan Government Letterhead with Agency Emblem */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '2.5px solid #000000',
+              paddingBottom: '0.65rem',
+              marginBottom: '0.5rem'
+            }}>
+              {/* Right: State Entities */}
+              <div style={{ textAlign: 'right' }}>
+                <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#000000' }}>دولة ليبيا</h4>
+                <h3 style={{ margin: '0.15rem 0', fontSize: '1.1rem', fontWeight: 900, color: '#000000' }}>وزارة المواصلات</h3>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#1e3a8a' }}>جهاز تنفيذ مشروعات المواصلات</h2>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.88rem', fontWeight: 800, color: '#334155' }}>
+                  مكتب جهاز الإشراف والمتابعة • إدارة المشروعات الكبرى
+                </p>
+              </div>
+
+              {/* Center: Official Agency Emblem */}
+              <div style={{ textAlign: 'center' }}>
+                <img
+                  src={`${import.meta.env.BASE_URL}logo-agency.jpg`}
+                  alt="شعار جهاز تنفيذ مشروعات المواصلات"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'contain',
+                    borderRadius: '50%',
+                    border: '2px solid #000000',
+                    padding: '3px',
+                    background: '#ffffff',
+                    display: 'inline-block',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#1e3a8a', marginTop: '0.25rem' }}>
+                  جهاز الإشراف المعتمد
+                </div>
+              </div>
+
+              {/* Left: Official Reference Metadata */}
+              <div style={{ textAlign: 'left', direction: 'ltr', fontSize: '0.86rem', fontWeight: 800, color: '#000000' }}>
+                <div><strong>Manifest No:</strong> {inspectionData.inspectionNumber}</div>
+                <div><strong>Date:</strong> {inspectionData.date} ({inspectionData.dayName})</div>
+                <div><strong>Project:</strong> Obari - Ghat (360 km)</div>
+                <div style={{ color: '#16a34a' }}><strong>Status:</strong> Certified Active Fleet</div>
+              </div>
+            </div>
+
+            {/* 2. Official Cyan / Gold Title Banner */}
+            <div style={{
+              background: '#38bdf8',
+              color: '#000000',
+              textAlign: 'center',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '6px',
+              border: '2px solid #000000',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+            }}>
+              <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 900, letterSpacing: '-0.3px' }}>
+                كشف وسجل حصر وفحص المعدات والآليات الميدانية الرسمي
+              </h1>
+              <p style={{ margin: '0.3rem 0 0', fontSize: '0.92rem', fontWeight: 800 }}>
+                مشروع صيانة وتطوير طريق أوباري - غات بطول 360 كم (المرحلة الأولى: 226.08 كم • المرحلة الثانية: 133.92 كم)
+              </p>
+            </div>
+
+            {/* 3. Official Project & Site Metadata Strip */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '0.75rem',
+              background: '#f8fafc',
+              border: '1.5px solid #000000',
+              padding: '0.85rem 1.15rem',
+              borderRadius: '8px'
+            }}>
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '2px' }}>
+                  الموقع الميداني وجبهات العمل:
+                </label>
+                <input
+                  type="text"
+                  value={inspectionData.location}
+                  onChange={(e) => setInspectionData({ ...inspectionData, location: e.target.value })}
+                  style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '2px' }}>
+                  المقاول المنفذ / جهة التشغيل:
+                </label>
+                <input
+                  type="text"
+                  value={inspectionData.contractor}
+                  onChange={(e) => setInspectionData({ ...inspectionData, contractor: e.target.value })}
+                  style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '2px' }}>
+                  مهندس الفحص / مسؤول الآليات:
+                </label>
+                <input
+                  type="text"
+                  value={inspectionData.inspectorName}
+                  onChange={(e) => setInspectionData({ ...inspectionData, inspectorName: e.target.value })}
+                  style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '2px' }}>
+                  ظروف الطقس والتشغيل:
+                </label>
+                <input
+                  type="text"
+                  value={inspectionData.weather}
+                  onChange={(e) => setInspectionData({ ...inspectionData, weather: e.target.value })}
+                  style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+            </div>
+
+            {/* 4. Fleet Statistics & Readiness Strip */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(5, 1fr)',
+              gap: '0.5rem',
+              textAlign: 'center'
+            }}>
+              <div style={{ border: '1.5px solid #000000', background: '#f8fafc', padding: '0.5rem', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>إجمالي المعدات المفحوصة</div>
+                <strong style={{ fontSize: '1.35rem', color: '#1e3a8a', display: 'block' }}>
+                  {totalInspected} <span style={{ fontSize: '0.8rem' }}>آلية</span>
+                </strong>
+              </div>
+
+              <div style={{ border: '1.5px solid #000000', background: '#f0fdf4', padding: '0.5rem', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#166534' }}>الجاهزة والعاملة فورياً</div>
+                <strong style={{ fontSize: '1.35rem', color: '#15803d', display: 'block' }}>
+                  {operationalCount} <span style={{ fontSize: '0.8rem' }}>آلية</span>
+                </strong>
+              </div>
+
+              <div style={{ border: '1.5px solid #000000', background: '#fefce8', padding: '0.5rem', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#a16207' }}>المعدات قيد الصيانة</div>
+                <strong style={{ fontSize: '1.35rem', color: '#ca8a04', display: 'block' }}>
+                  {maintenanceCount} <span style={{ fontSize: '0.8rem' }}>آلية</span>
+                </strong>
+              </div>
+
+              <div style={{ border: '1.5px solid #000000', background: '#fef2f2', padding: '0.5rem', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#991b1b' }}>المتوقفة / الاحتياطية</div>
+                <strong style={{ fontSize: '1.35rem', color: '#dc2626', display: 'block' }}>
+                  {stoppedCount} <span style={{ fontSize: '0.8rem' }}>آلية</span>
+                </strong>
+              </div>
+
+              <div style={{ border: '1.5px solid #000000', background: '#eff6ff', padding: '0.5rem', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#1d4ed8' }}>نسبة الجاهزية الميدانية</div>
+                <strong style={{ fontSize: '1.35rem', color: '#2563eb', display: 'block' }}>
+                  %{readinessPct}
+                </strong>
+              </div>
+            </div>
+
+            {/* 5. Detailed Equipment Manifest Table */}
+            <div style={{ border: '2px solid #000000', borderRadius: '6px', overflow: 'hidden' }}>
+              <div style={{
+                background: '#1e3a8a',
+                color: '#ffffff',
+                padding: '0.65rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <span style={{ fontWeight: 900, fontSize: '0.98rem' }}>
+                  جدول كشف حصر وتوزيع المعدات والآليات الميدانية
+                </span>
+                <button
+                  type="button"
+                  className="no-print-zone"
+                  onClick={handleAddRow}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    background: '#ffffff',
+                    color: '#1e3a8a',
+                    border: 'none',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 900,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Plus size={15} />
+                  <span>+ إضافة آلية للكشف</span>
+                </button>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.86rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', color: '#000000', fontWeight: 900 }}>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '38px' }}>م</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', minWidth: '190px' }}>اسم ونوع المعدة / الآلية</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '105px' }}>كود / اللوحة</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '130px' }}>السائق / المشغل</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '150px' }}>قطاع وجبهة العمل</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '135px' }}>الحالة التشغيلية</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '100px' }}>العداد (ساعة)</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '80px' }}>الوقود</th>
+                      <th style={{ border: '1.5px solid #000000', padding: '0.55rem', minWidth: '160px' }}>ملاحظات الفحص والجاهزية</th>
+                      <th className="no-print-zone" style={{ border: '1.5px solid #000000', padding: '0.55rem', width: '45px' }}>إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {equipmentRows.map((row, idx) => (
+                      <tr key={row.id} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                        <td style={{ border: '1px solid #000000', padding: '0.4rem', fontWeight: 900 }}>{idx + 1}</td>
+                        
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.name}
+                            onChange={(e) => handleUpdateRow(row.id, 'name', e.target.value)}
+                            placeholder="اسم المعدة"
+                            style={{ width: '100%', padding: '0.35rem 0.5rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.84rem', fontWeight: 800 }}
+                          />
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.code}
+                            onChange={(e) => handleUpdateRow(row.id, 'code', e.target.value)}
+                            placeholder="كود الآلية"
+                            style={{ width: '100%', padding: '0.35rem 0.4rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.84rem', textAlign: 'center', direction: 'ltr', fontWeight: 800 }}
+                          />
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.operator}
+                            onChange={(e) => handleUpdateRow(row.id, 'operator', e.target.value)}
+                            placeholder="اسم السائق"
+                            style={{ width: '100%', padding: '0.35rem 0.4rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.84rem' }}
+                          />
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.sector}
+                            onChange={(e) => handleUpdateRow(row.id, 'sector', e.target.value)}
+                            placeholder="قطاع العمل"
+                            style={{ width: '100%', padding: '0.35rem 0.4rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.82rem' }}
+                          />
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <select
+                            value={row.status}
+                            onChange={(e) => handleUpdateRow(row.id, 'status', e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '0.35rem 0.4rem',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '4px',
+                              fontSize: '0.82rem',
+                              fontWeight: 900,
+                              background: row.status === 'operational' ? '#f0fdf4' : row.status === 'maintenance' ? '#fefce8' : '#fef2f2',
+                              color: row.status === 'operational' ? '#166534' : row.status === 'maintenance' ? '#854d0e' : '#991b1b'
+                            }}
+                          >
+                            <option value="operational">🟢 جاهزة وتعمل</option>
+                            <option value="maintenance">🟡 صيانة دورية</option>
+                            <option value="stopped">🔴 متوقفة عطل</option>
+                          </select>
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.meterHours}
+                            onChange={(e) => handleUpdateRow(row.id, 'meterHours', e.target.value)}
+                            placeholder="ساعات"
+                            style={{ width: '100%', padding: '0.35rem 0.4rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.84rem', textAlign: 'center', direction: 'ltr', fontWeight: 800 }}
+                          />
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.fuelLevel}
+                            onChange={(e) => handleUpdateRow(row.id, 'fuelLevel', e.target.value)}
+                            placeholder="%"
+                            style={{ width: '100%', padding: '0.35rem 0.4rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.84rem', textAlign: 'center', fontWeight: 800 }}
+                          />
+                        </td>
+
+                        <td style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <input
+                            type="text"
+                            value={row.notes}
+                            onChange={(e) => handleUpdateRow(row.id, 'notes', e.target.value)}
+                            placeholder="ملاحظات فنية"
+                            style={{ width: '100%', padding: '0.35rem 0.4rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.82rem' }}
+                          />
+                        </td>
+
+                        <td className="no-print-zone" style={{ border: '1px solid #000000', padding: '0.3rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRow(row.id)}
+                            style={{
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              border: 'none',
+                              borderRadius: '4px',
+                              width: '26px',
+                              height: '26px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              margin: '0 auto'
+                            }}
+                            title="حذف هذا الصف"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: '#e2e8f0', fontWeight: 900, color: '#000000' }}>
+                      <td colSpan={5} style={{ border: '1.5px solid #000000', padding: '0.6rem', textAlign: 'right', fontSize: '0.92rem' }}>
+                        الإجمالي العام لأسطول المعدات والآليات المفحوصة بالكشف
+                      </td>
+                      <td style={{ border: '1.5px solid #000000', padding: '0.6rem', fontSize: '0.92rem' }}>
+                        {totalInspected} آلية (جاهز: {operationalCount})
+                      </td>
+                      <td colSpan={3} style={{ border: '1.5px solid #000000', padding: '0.6rem', textAlign: 'center', fontSize: '0.88rem', color: '#1e3a8a' }}>
+                        نسبة الجاهزية التشغيلية: %{readinessPct}
+                      </td>
+                      <td className="no-print-zone" style={{ border: '1.5px solid #000000' }}></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* 6. Technical Recommendations & Notes */}
+            <div style={{
+              background: '#f8fafc',
+              border: '1.5px solid #000000',
+              borderRadius: '8px',
+              padding: '0.85rem 1.15rem'
+            }}>
+              <label style={{ fontSize: '0.84rem', fontWeight: 900, color: '#0f172a', display: 'block', marginBottom: '4px' }}>
+                ملاحظات وتوصيات الفحص الميداني والجاهزية الفنية:
               </label>
               <textarea
                 value={inspectionData.notes}
                 onChange={(e) => setInspectionData({ ...inspectionData, notes: e.target.value })}
-                rows={3}
-                style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', resize: 'vertical' }}
+                rows={2}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.86rem', resize: 'vertical', fontFamily: 'inherit' }}
               />
             </div>
 
+            {/* 7. Official Endorsements & Signatures Section */}
             <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '0.85rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-around'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '0.75rem',
+              marginTop: '0.5rem',
+              textAlign: 'center'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem' }}>
-                <span style={{ fontWeight: 800, color: '#475569' }}>مهندس الآليات والحركة:</span>
-                <span style={{ fontWeight: 900, color: '#0f172a' }}>{inspectionData.inspectorName}</span>
+              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
+                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>مهندس الآليات والمعدات</h4>
+                <div style={{ margin: '0.35rem 0', fontWeight: 800, fontSize: '0.85rem', color: '#1e3a8a' }}>
+                  {inspectionData.inspectorName}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>التوقيع: .....................</div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem' }}>
-                <span style={{ fontWeight: 800, color: '#475569' }}>اعتماد مدير المشروع:</span>
-                <span style={{ fontWeight: 900, color: '#1e40af' }}>المهندس عبدالرحمن الأنصاري</span>
+
+              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
+                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>مهندس ضبط الجودة والمختبر</h4>
+                <div style={{ margin: '0.35rem 0', fontWeight: 800, fontSize: '0.85rem', color: '#1e3a8a' }}>
+                  م. صالح بن يحي
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>التوقيع: .....................</div>
+              </div>
+
+              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
+                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>اعتماد مدير المشروع</h4>
+                <div style={{ margin: '0.35rem 0', fontWeight: 900, fontSize: '0.85rem', color: '#16a34a' }}>
+                  م. عبدالرحمن الأنصاري
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>التوقيع والاعتماد: .....................</div>
+              </div>
+
+              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
+                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>ختم واعتماد الجهة المالكة</h4>
+                <div style={{ margin: '0.35rem 0', fontWeight: 900, fontSize: '0.78rem', color: '#1e3a8a' }}>
+                  جهاز تنفيذ مشروعات المواصلات
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>الختم الرسمي للمشروع</div>
               </div>
             </div>
+
           </div>
 
-        </div>
+          {/* Modal Footer Controls (Hidden on Print) */}
+          <div className="no-print-zone" style={{
+            padding: '1rem 1.75rem',
+            background: '#f8fafc',
+            borderTop: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem'
+          }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '0.65rem 1.35rem',
+                borderRadius: '8px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#475569',
+                fontWeight: 800,
+                cursor: 'pointer',
+                fontSize: '0.88rem'
+              }}
+            >
+              إلغاء
+            </button>
 
-        {/* Footer */}
-        <div style={{
-          padding: '1rem 1.75rem',
-          background: '#f8fafc',
-          borderTop: '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.75rem'
-        }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '0.65rem 1.35rem',
-              borderRadius: '8px',
-              background: '#ffffff',
-              border: '1px solid #cbd5e1',
-              color: '#475569',
-              fontWeight: 800,
-              cursor: 'pointer',
-              fontSize: '0.88rem'
-            }}
-          >
-            إلغاء
-          </button>
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              <button
+                type="button"
+                onClick={handlePrint}
+                style={{
+                  padding: '0.65rem 1.35rem',
+                  borderRadius: '8px',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#1e293b',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontSize: '0.88rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem'
+                }}
+              >
+                <Printer size={16} />
+                <span>طباعة الكشف الرسمي</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            style={{
-              padding: '0.65rem 1.75rem',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-              color: '#ffffff',
-              border: 'none',
-              fontWeight: 900,
-              cursor: 'pointer',
-              fontSize: '0.92rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)'
-            }}
-          >
-            <CheckCircle2 size={17} />
-            <span>حفظ واعتماد كشف المعدات</span>
-          </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                style={{
+                  padding: '0.65rem 1.75rem',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  fontSize: '0.92rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)'
+                }}
+              >
+                <CheckCircle2 size={18} />
+                <span>حفظ واعتماد كشف المعدات</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
+
+export default EquipmentInspectionModal;

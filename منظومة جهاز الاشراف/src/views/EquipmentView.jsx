@@ -456,7 +456,7 @@ export const EquipmentView = ({ currentUser }) => {
             }}
           >
             <ClipboardList size={16} />
-            <span>📋 فورم كشف المعدات الميداني</span>
+            <span>📋 فورم كشف المعدات والآليات الرسمي (بالشعار)</span>
           </button>
 
           <button 
@@ -577,7 +577,7 @@ export const EquipmentView = ({ currentUser }) => {
             }}
           >
             <ClipboardList size={16} />
-            <span>فتح فورم كشف المعدات 📋</span>
+            <span>فتح فورم كشف المعدات الرسمي (بالشعار) 📋</span>
           </button>
         </div>
 

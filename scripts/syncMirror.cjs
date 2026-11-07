@@ -9,6 +9,7 @@ const filesToSync = [
   'src/components/CreateFuelReportModal.jsx',
   'src/components/CreateTargetedWorksReportModal.jsx',
   'src/components/TwoPhaseDailyReportForm.jsx',
+  'src/components/EquipmentInspectionModal.jsx',
   'src/components/UserProfileModal.jsx',
   'src/components/LoginPage.jsx',
   'src/components/ErrorBoundary.jsx',
