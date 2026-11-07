@@ -434,6 +434,25 @@ export const CreateTargetedWorksReportModal = ({
     return sum + sec.equipmentItems.reduce((secSum, e) => secSum + (parseFloat(e.count) || 0), 0);
   }, 0);
 
+  // Group each targeted work item independently (متابعة كل بند يتجمع بروحه)
+  const targetedItemSummaries = useMemo(() => {
+    const map = new Map();
+    sections.forEach(sec => {
+      sec.workItems.forEach(w => {
+        const rawName = (w.item || '').trim();
+        if (!rawName) return;
+        const len = parseFloat(toCleanLatinDigits(w.length)) || 0;
+        if (!map.has(rawName)) {
+          map.set(rawName, { name: rawName, totalLength: 0, count: 0 });
+        }
+        const entry = map.get(rawName);
+        entry.totalLength += len;
+        entry.count += 1;
+      });
+    });
+    return Array.from(map.values());
+  }, [sections]);
+
   // Formatted date string for the banner: DD - MM - YYYY
   const dateParts = reportDate.split('-');
   const formattedDashDate = dateParts.length === 3 ? `${dateParts[2]} - ${dateParts[1]} - ${dateParts[0]}` : reportDate;
@@ -1415,6 +1434,50 @@ export const CreateTargetedWorksReportModal = ({
                 <span>+ إضافة قسم مستهدف جديد (Custom Section)</span>
               </button>
             </div>
+
+            {/* Dynamic Grouped Summary Per Item (حساب وتجميع كل بند على حدة) */}
+            {targetedItemSummaries.length > 0 && (
+              <div style={{
+                marginTop: '1.25rem',
+                padding: '0.85rem 1rem',
+                borderRadius: '8px',
+                background: '#f8fafc',
+                border: '1.5px solid #cbd5e1'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a' }}>
+                    📊 ملخص كميات الأعمال المستهدفة (حساب وتجميع كل بند على حدة):
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                    إجمالي {targetedItemSummaries.length} بنود مستهدفة
+                  </span>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '0.65rem'
+                }}>
+                  {targetedItemSummaries.map((it, idx) => (
+                    <div key={idx} style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      padding: '0.6rem 0.85rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem'
+                    }}>
+                      <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#1e293b' }}>
+                        {it.name} {it.count > 1 ? `(${it.count} قطاعات)` : ''}
+                      </div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0284c7', direction: 'ltr', textAlign: 'right' }}>
+                        {it.totalLength.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style={{ fontSize: '0.76rem', color: '#64748b' }}>م.ط</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Grand Summary Strip */}
             <div style={{

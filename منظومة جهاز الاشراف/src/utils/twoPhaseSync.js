@@ -1,4 +1,5 @@
 import { deepSanitizeLatinDigits, toCleanLatinDigits } from './forceLatinDigits.js';
+import { saveReportToIndexedDB } from './secureDatabase.js';
 
 // Unified synchronization utility linking Two-Phase Achievement Report (تقرير إنجاز المرحلتين)
 // directly with the Dashboard (الداشبورد) and the 360 Road Progress View (متابعة إنجاز الطريق 360 كم).
@@ -182,6 +183,10 @@ export function saveStoredTwoPhaseReport(report) {
     );
     filtered.unshift(enriched);
     localStorage.setItem('local_reports', JSON.stringify(filtered));
+
+    try {
+      saveReportToIndexedDB(enriched);
+    } catch (_) {}
 
     // Dispatch custom events for real-time reactive sync across all open views
     window.dispatchEvent(new CustomEvent('report-saved', { detail: enriched }));

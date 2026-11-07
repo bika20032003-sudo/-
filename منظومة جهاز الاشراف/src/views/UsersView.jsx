@@ -49,7 +49,7 @@ export const saveUserSectionPermissions = (username, sections, userObj = null) =
 import React, { useState, useEffect } from 'react';
 import { 
   Search, X, ShieldCheck, UserPlus, Edit2, Trash2, Key, UserCheck, 
-  Eye, EyeOff, Save, AlertCircle, CheckCircle2, Phone, Shield, 
+  Eye, EyeOff, Save, AlertCircle, CheckCircle2, Shield, 
   Award, Building2, Users, MapPin, Check, Lock, ChevronLeft
 } from 'lucide-react';
 import { getSystemUsers, updateUserPassword, saveCustomUser, deleteCustomUser } from '../components/LoginPage';
@@ -704,7 +704,7 @@ export const UsersView = ({ currentUser }) => {
             <Search size={18} color="#94a3b8" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               type="text" 
-              placeholder="بحث بالاسم، اسم الدخول، الدور أو رقم الهاتف..." 
+              placeholder="بحث بالاسم، اسم الدخول، الدور أو القطاع..." 
               value={searchTerm} 
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{

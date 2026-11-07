@@ -28,6 +28,7 @@ const filesToSync = [
   'src/utils/aiAgentEngine.js',
   'src/utils/engineeringFormulas.js',
   'src/utils/twoPhaseSync.js',
+  'src/utils/secureDatabase.js',
   'src/utils/apiCache.js',
   'src/index.css',
   'src/premium-ui.css'

@@ -335,11 +335,15 @@ export function processLocalQuery(queryText, attachedFile = null) {
     q.includes('آخر المستجدات') || 
     q.includes('أحدث المستجدات') || 
     q.includes('تقرير شامل للمدير') ||
-    q.includes('تقرير تنفيذي')
+    q.includes('تقرير تنفيذي') ||
+    q.includes('يقدم حالة') ||
+    q.includes('حالة المشروع') ||
+    q.includes('تقرير الحالة') ||
+    q.includes('موقف المشروع')
   ) {
     return {
       type: 'executive_article',
-      title: 'المقالة التقريرية الشاملة لمدير المشروع (آخر المستجدات)',
+      title: 'تقرير آخر المستجدات والموقف التنفيذي لمدير المشروع',
       content: generateExecutiveBriefingArticle(ctx),
       quickSuggestions: ['الموقف التنفيذي والمالي', 'الجاهز لطبقة الأسفلت', 'أرصدة الوقود اليومية']
     };

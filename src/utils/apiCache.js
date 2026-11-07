@@ -13,6 +13,7 @@ export {
   generateRoadProgressItems,
   updateRoadProgressItem
 };
+import { deleteReportFromIndexedDB } from './secureDatabase.js';
 import {
   initialDailySummary,
   initialRecentReports,
@@ -787,6 +788,8 @@ export async function fastFetch(rawUrl, options = {}) {
             const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
             const updatedLocal = local.filter(r => String(r.id) !== String(reportId) && String(r.reportNumber) !== String(reportId));
             localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+
+            deleteReportFromIndexedDB(reportId);
           } catch (e) {
             console.error('Error syncing report deletion in fastFetch:', e);
           }

@@ -80,8 +80,34 @@ export const EquipmentView = ({ currentUser }) => {
     setOfficialEquipmentReportForPrint(reportObj);
   };
 
+  const syncEquipmentStorage = (list) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('system_equipment_list', JSON.stringify(list));
+        window.dispatchEvent(new CustomEvent('equipment-updated', { detail: list }));
+      }
+    } catch (e) {
+      console.warn('Storage sync error:', e);
+    }
+  };
+
   const fetchEquipment = async () => {
     setIsLoading(true);
+    // 1. Initial load from localStorage if present
+    let initialList = null;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem('system_equipment_list');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            initialList = parsed;
+            setEquipmentList(parsed);
+          }
+        }
+      }
+    } catch (_) {}
+
     try {
       const res = await fetch('http://localhost:5000/api/equipment');
       const data = await res.json();
@@ -92,6 +118,7 @@ export const EquipmentView = ({ currentUser }) => {
 
         if (hasCounts) {
           setEquipmentList(rawList);
+          syncEquipmentStorage(rawList);
         } else {
           // Group individual records by machine type/name
           const groupedMap = {};
@@ -127,16 +154,22 @@ export const EquipmentView = ({ currentUser }) => {
           const consolidated = Object.values(groupedMap);
           if (consolidated.length > 0) {
             setEquipmentList(consolidated);
-          } else {
+            syncEquipmentStorage(consolidated);
+          } else if (!initialList) {
             setEquipmentList(initialDefaultEquipment);
+            syncEquipmentStorage(initialDefaultEquipment);
           }
         }
-      } else {
+      } else if (!initialList) {
         setEquipmentList(initialDefaultEquipment);
+        syncEquipmentStorage(initialDefaultEquipment);
       }
     } catch (err) {
-      console.warn('Backend unavailable, using default road equipment list:', err);
-      setEquipmentList(initialDefaultEquipment);
+      console.warn('Backend unavailable, using stored/default equipment list:', err);
+      if (!initialList) {
+        setEquipmentList(initialDefaultEquipment);
+        syncEquipmentStorage(initialDefaultEquipment);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -162,6 +195,7 @@ export const EquipmentView = ({ currentUser }) => {
     });
 
     setEquipmentList(updatedList);
+    syncEquipmentStorage(updatedList);
 
     // Save update to backend if possible
     try {
@@ -239,7 +273,9 @@ export const EquipmentView = ({ currentUser }) => {
         notes: formData.notes || ''
       };
 
-      setEquipmentList(prev => prev.map(i => i.id === editingItem.id ? updatedItem : i));
+      const updatedList = equipmentList.map(i => i.id === editingItem.id ? updatedItem : i);
+      setEquipmentList(updatedList);
+      syncEquipmentStorage(updatedList);
       setIsModalOpen(false);
 
       try {
@@ -267,7 +303,9 @@ export const EquipmentView = ({ currentUser }) => {
         notes: formData.notes || ''
       };
 
-      setEquipmentList(prev => [newItem, ...prev]);
+      const updatedList = [newItem, ...equipmentList];
+      setEquipmentList(updatedList);
+      syncEquipmentStorage(updatedList);
       setIsModalOpen(false);
 
       try {
@@ -285,8 +323,10 @@ export const EquipmentView = ({ currentUser }) => {
 
   // Delete Item
   const handleDeleteItem = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه المعدة من السجل؟')) return;
-    setEquipmentList(prev => prev.filter(i => i.id !== id));
+    if (!window.confirm('هل أنت متأكد من حذف هذه المعدة من السجل نهائياً؟')) return;
+    const updatedList = equipmentList.filter(i => i.id !== id);
+    setEquipmentList(updatedList);
+    syncEquipmentStorage(updatedList);
     try {
       await fetch(`http://localhost:5000/api/equipment/${id}`, { method: 'DELETE' });
       clearApiCache();

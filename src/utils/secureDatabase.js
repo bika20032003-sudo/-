@@ -129,18 +129,38 @@ export async function getAllReportsFromIndexedDB() {
   });
 }
 
-// 5. Delete report from IndexedDB
+// 5. Delete report from IndexedDB (permanent physical purge by ID and reportNumber)
 export async function deleteReportFromIndexedDB(reportId) {
   const db = await openSecureDB();
   if (!db || !reportId) return false;
 
+  const targetStr = String(reportId).trim();
   return new Promise((resolve) => {
     try {
       const tx = db.transaction([REPORTS_STORE], 'readwrite');
       const store = tx.objectStore(REPORTS_STORE);
+      
+      // Direct key attempts
       store.delete(reportId);
       store.delete(Number(reportId));
-      store.delete(String(reportId));
+      store.delete(targetStr);
+
+      // Also scan cursor to delete by matching id or reportNumber
+      const request = store.openCursor();
+      request.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          const val = cursor.value;
+          if (val && (
+            String(val.id) === targetStr || 
+            String(val.reportNumber) === targetStr ||
+            (targetStr && val.reportNumber && String(val.reportNumber).trim() === targetStr)
+          )) {
+            cursor.delete();
+          }
+          cursor.continue();
+        }
+      };
 
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => resolve(false);
@@ -322,23 +342,42 @@ export async function initSecureDatabaseEngine() {
     const db = await openSecureDB();
     if (!db) return;
 
-    // 3. Two-way sync: If IndexedDB has reports not in localStorage, restore them
+    // 3. Two-way sync with strict deletion enforcement
     const idbReports = await getAllReportsFromIndexedDB();
+    let deletedIds = [];
+    try {
+      deletedIds = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String);
+    } catch (_) {}
+    const deletedSet = new Set(deletedIds);
+
+    // Physically purge any deleted reports remaining in IndexedDB
+    for (const r of idbReports) {
+      if (r && (deletedSet.has(String(r.id)) || deletedSet.has(String(r.reportNumber)))) {
+        await deleteReportFromIndexedDB(r.id);
+        if (r.reportNumber) await deleteReportFromIndexedDB(r.reportNumber);
+      }
+    }
+
+    const cleanIdbReports = idbReports.filter(r => r && !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+
     let localReports = [];
     try {
       localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
     } catch (_) {}
+    const cleanLocalReports = localReports.filter(r => r && !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
 
-    if (idbReports.length > localReports.length) {
-      console.log(`[SecureDB] Restoring ${idbReports.length} reports from IndexedDB into localStorage`);
-      localStorage.setItem('local_reports', JSON.stringify(idbReports));
+    // Only restore if localStorage was cleared/empty and clean IDB has data
+    if (cleanLocalReports.length === 0 && cleanIdbReports.length > 0) {
+      localStorage.setItem('local_reports', JSON.stringify(cleanIdbReports));
       window.dispatchEvent(new CustomEvent('report-saved'));
-    } else if (localReports.length > idbReports.length) {
-      console.log(`[SecureDB] Backing up ${localReports.length} reports from localStorage into IndexedDB`);
+    } else {
+      // Keep IndexedDB synced with clean localReports
       const tx = db.transaction([REPORTS_STORE], 'readwrite');
       const store = tx.objectStore(REPORTS_STORE);
-      localReports.forEach(r => {
-        if (r && r.id) store.put(r);
+      cleanLocalReports.forEach(r => {
+        if (r && r.id && !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber))) {
+          store.put(r);
+        }
       });
     }
 
@@ -350,16 +389,16 @@ export async function initSecureDatabaseEngine() {
 
     // 5. Listen to report-saved and mirror immediately into IndexedDB
     window.addEventListener('report-saved', (e) => {
-      if (e.detail) {
+      if (e.detail && !deletedSet.has(String(e.detail.id)) && !deletedSet.has(String(e.detail.reportNumber))) {
         saveReportToIndexedDB(e.detail);
       }
     });
 
     window.addEventListener('report-deleted', (e) => {
       const delId = e.detail?.id;
-      if (delId) {
-        deleteReportFromIndexedDB(delId);
-      }
+      const delNum = e.detail?.reportNumber;
+      if (delId) deleteReportFromIndexedDB(delId);
+      if (delNum) deleteReportFromIndexedDB(delNum);
     });
   } catch (e) {
     console.warn('[SecureDB] Engine init warning:', e);

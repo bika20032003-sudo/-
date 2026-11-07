@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
+import { deleteReportFromIndexedDB } from '../utils/secureDatabase.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport, isDevUser } from '../utils/permissionUtils';
 import { CreateReportModal } from '../components/CreateReportModal';
@@ -285,6 +286,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       if (deleteIdentifier) {
         await fastFetch(`http://localhost:5000/api/reports/${deleteIdentifier}`, { method: 'DELETE' }).catch(() => {});
       }
+
+      // 1.1 Physically purge from IndexedDB
+      if (targetId) await deleteReportFromIndexedDB(targetId);
+      if (targetNum) await deleteReportFromIndexedDB(targetNum);
 
       // 2. Remove from localStorage 'local_reports'
       try {

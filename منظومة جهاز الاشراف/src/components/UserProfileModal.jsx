@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   X, Camera, Trash2, CheckCircle2, AlertCircle, 
-  Key, Mail, Phone, MapPin, User, ShieldCheck, 
+  Key, Mail, MapPin, User, ShieldCheck, 
   Building, Calendar, Save, RefreshCw
 } from 'lucide-react';
 import { updateUserPassword } from './LoginPage';

@@ -693,16 +693,23 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
   // Forward Report to ALL supervision users (from Project Manager to the last member, excluding Dev Account)
   const handleForwardReport = async () => {
+    const isSecB = sector?.includes('B');
+    const computedTitle = reportCategory === 'fuel' 
+      ? 'تقرير كميات الوقود اليومية' 
+      : (reportCategory === 'targeted' 
+        ? `بيان أعمال يوم ${dayName} ${displayDateStr}` 
+        : `بيان أعمال يوم ${dayName} ${displayDateStr}`);
+
     let rep = createdReport;
     if (!rep) {
       rep = {
         id: Date.now(),
         reportNumber: reportNumber || `REP-LIVE-${Date.now().toString().slice(-4)}`,
-        title: reportTitle || 'تقرير ميداني معتمد',
+        title: computedTitle,
         reportType: reportCategory === 'fuel' ? 'تقرير وقود يومي' : (reportCategory === 'targeted' ? 'تقرير الأعمال المستهدفة' : 'تقرير أعمال الطريق اليومي'),
         date: new Date().toISOString(),
-        sector: reportCategory === 'fuel' ? 'محطات وصهاريج الوقود' : (sectorOption === 'A' ? 'القطاع 01: أوباري - تين أوباو (المرحلة الأولى)' : 'طريق أوباري - غات'),
-        sectorDirector: sectorDirector || 'م. مروان الهوني',
+        sector: sector || (reportCategory === 'fuel' ? 'محطات وصهاريج الوقود' : (isSecB ? 'المرحلة الثانية' : 'المرحلة الأولى')),
+        sectorDirector: sectorDirector || 'م. صلاح العربي',
         ownerRepresentative: ownerRepresentative || 'م. عبدالرحمن الأنصاري'
       };
     }
@@ -726,7 +733,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           toRole: targetUser.role,
           type: 'إحالة تقرير رسمي',
           subject: 'إحالة ' + (rep.title || rep.reportType) + ' - رقم (' + rep.reportNumber + ')',
-          content: forwardNote.trim() || ('نحيل إليكم رسمياً نسخة معتمدة من ' + (rep.title || rep.reportType) + ' بموقع ' + rep.sector + ' للإحاطة والمتابعة الهندسية.'),
+          content: forwardNote.trim() || ('نحيل إليكم رسمياً نسخة معتمدة من ' + (rep.title || rep.reportType) + ' بموقع ' + (rep.sector || sector) + ' للإحاطة والمتابعة الهندسية.'),
           reportId: rep.id,
           reportNumber: rep.reportNumber,
           reportData: rep,

@@ -787,19 +787,24 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
         }}>
           <button
             type="button"
-            onClick={() => handleSendMessage('📰 المقالة التقريرية الشاملة لمدير المشروع')}
+            onClick={() => handleSendMessage('طلب آخر المستجدات وتقرير الحالة لمدير المشروع')}
             style={{
-              fontSize: '0.78rem',
+              fontSize: '0.82rem',
               fontWeight: 900,
-              padding: '6px 12px',
+              padding: '7px 14px',
               borderRadius: '8px',
-              border: '1.5px solid #93c5fd',
-              background: '#eff6ff',
-              color: '#1d4ed8',
-              cursor: 'pointer'
+              border: '2px solid #0284c7',
+              background: '#e0f2fe',
+              color: '#0369a1',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.15)'
             }}
           >
-            📰 مقالة المستجدات لمدير المشروع
+            <Newspaper size={15} />
+            <span>طلب آخر المستجدات وتقرير الحالة لمدير المشروع</span>
           </button>
 
           <button

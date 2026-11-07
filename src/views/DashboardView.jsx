@@ -130,6 +130,24 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     } catch (storageErr) {}
                 }
 
+                // Dynamic Equipment metrics from storage / backend
+                let eqTotal = summaryRes.totalEquipment || 0;
+                let eqActive = summaryRes.activeEquipment || 0;
+                let eqStopped = summaryRes.stoppedEquipment || 0;
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    try {
+                        const rawEq = localStorage.getItem('system_equipment_list');
+                        if (rawEq) {
+                            const eqList = JSON.parse(rawEq);
+                            if (Array.isArray(eqList) && eqList.length > 0) {
+                                eqTotal = eqList.reduce((acc, it) => acc + (Number(it.count) || 1), 0);
+                                eqActive = eqList.reduce((acc, it) => acc + (Number(it.operationalCount) || Number(it.count) || 1), 0);
+                                eqStopped = eqList.reduce((acc, it) => acc + (Number(it.maintenanceCount) || 0), 0);
+                            }
+                        }
+                    } catch (e) {}
+                }
+
                 setMetrics(prev => ({
                     ...prev,
                     totalProduction: summaryRes.totalProduction || 0,
@@ -138,9 +156,9 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     totalFuelReceived: summaryRes.totalFuelReceived || 0,
                     totalFuelRemaining: summaryRes.totalFuelRemaining || 0,
                     totalSharshoor: summaryRes.totalSharshoor || 0,
-                    totalEquipment: summaryRes.totalEquipment || 0,
-                    activeEquipment: summaryRes.activeEquipment || 0,
-                    stoppedEquipment: summaryRes.stoppedEquipment || 0,
+                    totalEquipment: eqTotal || summaryRes.totalEquipment || 38,
+                    activeEquipment: eqActive || summaryRes.activeEquipment || 36,
+                    stoppedEquipment: eqStopped ?? summaryRes.stoppedEquipment ?? 2,
                     operatingHours: summaryRes.operatingHours || 0,
                     sectorAFuel: summaryRes.sectorAFuel || 0,
                     sectorBFuel: summaryRes.sectorBFuel || 0,
@@ -194,12 +212,14 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         window.addEventListener('report-saved', handleSync);
         window.addEventListener('road-progress-updated', handleSync);
         window.addEventListener('fuel-updated', handleSync);
+        window.addEventListener('equipment-updated', handleSync);
         window.addEventListener('report-deleted', handleSync);
 
         return () => {
             window.removeEventListener('report-saved', handleSync);
             window.removeEventListener('road-progress-updated', handleSync);
             window.removeEventListener('fuel-updated', handleSync);
+            window.removeEventListener('equipment-updated', handleSync);
             window.removeEventListener('report-deleted', handleSync);
         };
     }, []);

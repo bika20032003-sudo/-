@@ -660,19 +660,19 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
           }}>
             <button
               type="button"
-              onClick={() => handleSendMessage('📰 المقالة التقريرية الشاملة لمدير المشروع')}
+              onClick={() => handleSendMessage('طلب آخر المستجدات وتقرير الحالة لمدير المشروع')}
               style={{
-                fontSize: '0.73rem',
+                fontSize: '0.75rem',
                 fontWeight: 900,
-                padding: '4px 8px',
+                padding: '4px 10px',
                 borderRadius: '6px',
-                border: '1px solid #93c5fd',
-                background: '#eff6ff',
-                color: '#1d4ed8',
+                border: '1.5px solid #0284c7',
+                background: '#e0f2fe',
+                color: '#0369a1',
                 cursor: 'pointer'
               }}
             >
-              📰 مقالة المستجدات لمدير المشروع
+              📰 طلب آخر المستجدات وتقرير الحالة لمدير المشروع
             </button>
 
             <button
