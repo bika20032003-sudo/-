@@ -3,8 +3,7 @@ import {
   Layers, Plus, Trash2, Printer, Send, CheckCircle2, 
   AlertCircle, FileSpreadsheet, FileText, Calendar, 
   TrendingUp, BarChart3, RotateCcw, Eye, Edit3, Save, 
-  HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check
-} from 'lucide-react';
+  HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check, RefreshCw } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
   CartesianGrid, Tooltip, Cell 

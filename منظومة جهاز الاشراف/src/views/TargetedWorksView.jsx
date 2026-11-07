@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Target, Plus, Search, FileSpreadsheet, 
   Printer, Eye, Trash2, Calendar, Milestone, Truck, 
-  Layers, CheckCircle2, AlertCircle, FileText, Send, Clock, Edit3
+  Layers, CheckCircle2, AlertCircle, FileText, Send, Clock, Edit3,
+  RefreshCw
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
