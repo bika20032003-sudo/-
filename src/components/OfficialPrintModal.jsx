@@ -193,7 +193,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
         const addSum = (report.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
         dataRows.push(['', 'إجمالي البنود الإضافية', '', '', '', '', addSum, '']);
 
-        const grandSum = basicSum + addSum;
+        const grandSum = basicSum;
         const grandRem = Math.max(0, contractVal - grandSum);
         const grandPct = contractVal > 0 ? ((grandSum / contractVal) * 100).toFixed(2) : 0;
 

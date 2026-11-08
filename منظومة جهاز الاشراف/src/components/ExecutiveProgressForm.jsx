@@ -315,6 +315,7 @@ export const ExecutiveProgressForm = ({
     const additionalItems = data.additionalItems || [];
 
     // البنود الأساسية فقط هي التي تُجمع وتُحسب طبقاً لتعليمات جهاز الإشراف
+    const contractVal = parseFloat(toCleanLatin(data.contractValue)) || 897665675.030;
     const basicExecutedSum = basicItems.reduce((acc, curr) => acc + (parseFloat(toCleanLatin(curr.executedValue)) || 0), 0);
     const additionalExecutedSum = 0;
     const grandExecutedSum = basicExecutedSum;
