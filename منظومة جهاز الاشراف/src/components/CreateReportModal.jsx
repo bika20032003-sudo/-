@@ -185,8 +185,8 @@ export const CreateReportModal = ({
   };
 
   // Submit Handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, sendAfter = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     setIsSubmitting(true);
 
     const day = getDayName(reportDate);
@@ -386,10 +386,36 @@ export const CreateReportModal = ({
         window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
       } catch (evErr) {}
 
+      if (sendAfter) {
+        try {
+          const autoMsg = {
+            id: Date.now(),
+            fromUsername: currentUser?.username || 'user',
+            fromName: currentUser?.name || sectorDirector,
+            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+            toUsername: 'all',
+            toName: 'كافة أعضاء جهاز الإشراف',
+            toRole: 'جهاز الإشراف والقيادة',
+            type: 'إحالة تقرير رسمي فوري',
+            subject: `إحالة ${saved.title || saved.reportType} - رقم (${saved.reportNumber})`,
+            content: `تم حفظ وإحالة التقرير رسمياً برقم (${saved.reportNumber}) للمتابعة والاعتماد.`,
+            reportId: saved.id,
+            reportNumber: saved.reportNumber,
+            reportData: saved,
+            createdAt: new Date().toISOString()
+          };
+          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+          locMsgs.unshift(autoMsg);
+          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
+          window.dispatchEvent(new CustomEvent('messages-updated'));
+        } catch (_) {}
+      }
+
       setCreatedReportData({
         report: saved,
         destTab: targetTab,
-        destName: targetSectionName
+        destName: targetSectionName,
+        sentToMessages: sendAfter
       });
 
       if (onReportCreated) onReportCreated(saved);
@@ -500,7 +526,7 @@ export const CreateReportModal = ({
             </div>
 
             <h3 style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
-              تم حفظ التقرير وتوجيهه بنجاح!
+              {createdReportData.sentToMessages ? 'تم حفظ التقرير وإحالته للمراسلات بنجاح!' : 'تم حفظ التقرير المعتمد في قسمه والأرشيف بنجاح!'}
             </h3>
             <p style={{ fontSize: '0.95rem', color: '#475569', maxWidth: '520px', margin: '0 auto 1.75rem auto', lineHeight: 1.6 }}>
               تم تسجيل <strong>{createdReportData.report?.title || createdReportData.report?.reportType}</strong> برقم{' '}
@@ -1116,13 +1142,38 @@ export const CreateReportModal = ({
               </button>
 
               <button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
+                onClick={(e) => handleSubmit(e, true)}
                 style={{
-                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  background: '#0284c7',
                   border: 'none',
                   borderRadius: '10px',
-                  padding: '0.7rem 1.8rem',
+                  padding: '0.7rem 1.4rem',
+                  fontWeight: 900,
+                  fontSize: '0.92rem',
+                  color: '#ffffff',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
+                  opacity: isSubmitting ? 0.7 : 1
+                }}
+              >
+                <Send size={16} />
+                <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={(e) => handleSubmit(e, false)}
+                style={{
+                  background: '#16a34a',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.7rem 1.6rem',
                   fontWeight: 900,
                   fontSize: '0.92rem',
                   color: '#ffffff',
@@ -1134,8 +1185,8 @@ export const CreateReportModal = ({
                   opacity: isSubmitting ? 0.7 : 1
                 }}
               >
-                <Send size={16} />
-                <span>{isSubmitting ? 'جاري الحفظ والتوجيه...' : 'حفظ التقرير وتوجيهه للقسم ⚡'}</span>
+                <CheckCircle2 size={16} />
+                <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
               </button>
             </div>
           </form>

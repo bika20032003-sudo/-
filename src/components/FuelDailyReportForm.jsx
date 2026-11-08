@@ -359,7 +359,7 @@ export const FuelDailyReportForm = ({
   };
 
   // Save report
-  const handleSave = async () => {
+  const handleSave = async (sendAfter = false) => {
     setIsSaving(true);
     setStatusMessage(null);
     try {
@@ -419,11 +419,18 @@ export const FuelDailyReportForm = ({
       } catch (e) {}
 
       setCreatedReportForForward(printableObj);
-      setShowForwardModal(true);
-      setStatusMessage({
-        type: 'success',
-        text: `تم حفظ واعتماد تقرير كميات الوقود اليومية برقم (${printableObj.reportNumber}) بنجاح، وتحديث الأرشيف وقاعدة البيانات.`
-      });
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({
+          type: 'success',
+          text: `تم حفظ تقرير كميات الوقود برقم (${printableObj.reportNumber}) وجاري إحالته للمراسلات...`
+        });
+      } else {
+        setStatusMessage({
+          type: 'success',
+          text: `تم حفظ التقرير المعتمد برقم (${printableObj.reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!`
+        });
+      }
 
       if (onSaved) onSaved(printableObj);
     } catch (e) {
@@ -792,7 +799,31 @@ export const FuelDailyReportForm = ({
 
           <button
             type="button"
-            onClick={handleSave}
+            onClick={() => handleSave(true)}
+            disabled={isSaving}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.55rem 1.15rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#0284c7',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+              opacity: isSaving ? 0.7 : 1
+            }}
+          >
+            <Send size={16} />
+            <span>حفظ وإحالة للمراسلات</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSave(false)}
             disabled={isSaving}
             style={{
               display: 'flex',
@@ -800,18 +831,18 @@ export const FuelDailyReportForm = ({
               gap: '0.45rem',
               padding: '0.55rem 1.25rem',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #b45309 0%, #d97706 100%)',
+              background: '#16a34a',
               border: 'none',
               color: '#ffffff',
-              fontWeight: 900,
+              fontWeight: 800,
               fontSize: '0.88rem',
               cursor: isSaving ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)',
+              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
               opacity: isSaving ? 0.7 : 1
             }}
           >
-            <Save size={16} />
-            <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير والاعتماد'}</span>
+            <CheckCircle2 size={16} />
+            <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
           </button>
         </div>
       </div>
@@ -1198,7 +1229,61 @@ export const FuelDailyReportForm = ({
 
       </div>
 
-      {/* Forward Modal Portal */}
+      {/* Bottom Standardized Action Bar */}
+      <div style={{
+        marginTop: '1.5rem',
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        gap: '0.75rem',
+        paddingBottom: '2rem'
+      }}>
+        <button
+          type="button"
+          onClick={() => handleSave(true)}
+          disabled={isSaving}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            padding: '0.7rem 1.4rem',
+            borderRadius: '8px',
+            border: 'none',
+            background: '#0284c7',
+            color: '#ffffff',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            cursor: isSaving ? 'not-allowed' : 'pointer',
+            boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+          }}
+        >
+          <Send size={17} />
+          <span>حفظ وإحالة للمراسلات</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleSave(false)}
+          disabled={isSaving}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            padding: '0.7rem 1.6rem',
+            borderRadius: '8px',
+            border: 'none',
+            background: '#16a34a',
+            color: '#ffffff',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            cursor: isSaving ? 'not-allowed' : 'pointer',
+            boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+          }}
+        >
+          <CheckCircle2 size={18} />
+          <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+        </button>
+      </div>
       {showForwardModal && (
         <div style={{
           position: 'fixed',

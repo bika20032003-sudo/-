@@ -731,8 +731,8 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
           </button>
 
           <button
-            onClick={handleSavePeriodicReport}
-            disabled={isGenerating}
+            type="button"
+            onClick={() => setShowForwardModal(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -744,31 +744,35 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
               border: 'none',
               fontWeight: 800,
               fontSize: '0.85rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
             }}
           >
-            <Save size={18} />
-            {isGenerating ? 'جاري الأرشفة...' : 'حفظ في الأرشيف'}
+            <Send size={18} />
+            <span>حفظ وإحالة للمراسلات</span>
           </button>
 
           <button
-            onClick={() => setShowForwardModal(true)}
+            type="button"
+            onClick={handleSavePeriodicReport}
+            disabled={isGenerating}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               padding: '9px 16px',
               borderRadius: '8px',
-              background: '#475569',
+              background: '#16a34a',
               color: '#ffffff',
               border: 'none',
               fontWeight: 800,
               fontSize: '0.85rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
             }}
           >
-            <Share2 size={18} />
-            إحالة بمذكرة
+            <CheckCircle2 size={18} />
+            <span>{isGenerating ? 'جاري الأرشفة...' : 'حفظ التقرير المعتمد'}</span>
           </button>
         </div>
       </div>

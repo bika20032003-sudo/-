@@ -215,11 +215,20 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
       } catch (e) {}
 
       setCreatedReport(saved);
-      setStatusMessage({ type: 'success', text: `تم حفظ تقرير كميات الوقود اليومية برقم (${saved.reportNumber}) بنجاح!` });
-
       if (onReportCreated) onReportCreated(saved);
 
-      setShowForwardModal(true);
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ تقرير كميات الوقود برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
+        });
+      } else {
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!` 
+        });
+      }
     } catch (error) {
       console.error('Error saving fuel report:', error);
       setStatusMessage({ type: 'danger', text: 'حدث خطأ أثناء حفظ التقرير.' });
@@ -732,36 +741,12 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleSaveReport(false)}
-              style={{
-                flex: 1,
-                padding: '0.75rem 1.25rem',
-                borderRadius: '8px',
-                background: '#1e293b',
-                border: 'none',
-                color: '#fff',
-                fontSize: '0.92rem',
-                fontWeight: 800,
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.4rem'
-              }}
-            >
-              <CheckCircle2 size={16} />
-              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ تقرير الوقود في الأرشيف'}</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
               onClick={() => handleSaveReport(true)}
               style={{
                 flex: 1.2,
                 padding: '0.75rem 1.25rem',
                 borderRadius: '8px',
-                background: '#f59e0b',
+                background: '#0284c7',
                 border: 'none',
                 color: '#fff',
                 fontSize: '0.92rem',
@@ -771,11 +756,36 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.4rem',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.35)'
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)'
               }}
             >
               <Send size={16} />
-              <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإرسال بالبريد إلى المسؤول'}</span>
+              <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleSaveReport(false)}
+              style={{
+                flex: 1,
+                padding: '0.75rem 1.25rem',
+                borderRadius: '8px',
+                background: '#16a34a',
+                border: 'none',
+                color: '#fff',
+                fontSize: '0.92rem',
+                fontWeight: 800,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+              }}
+            >
+              <CheckCircle2 size={16} />
+              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
             </button>
 
             <button

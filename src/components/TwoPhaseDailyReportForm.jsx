@@ -483,12 +483,18 @@ export const TwoPhaseDailyReportForm = ({
         console.warn('Event dispatch error:', evtErr);
       }
 
-      setStatusMessage({ 
-        type: 'success', 
-        text: `تم حفظ تقرير الأعمال المنجزة للمرحلتين برقم (${saved.reportNumber}) بنجاح!` 
-      });
-
-      setShowForwardModal(true);
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ تقرير الأعمال المنجزة للمرحلتين برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
+        });
+      } else {
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسم إنجاز المرحلتين والأرشيف!` 
+        });
+      }
     } catch (err) {
       console.error('Failed to save two-phase report:', err);
       setStatusMessage({ 
@@ -1279,7 +1285,7 @@ export const TwoPhaseDailyReportForm = ({
           <button
             type="button"
             disabled={isSubmitting}
-            onClick={() => handleSubmitReport(false)}
+            onClick={() => handleSubmitReport(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1287,16 +1293,39 @@ export const TwoPhaseDailyReportForm = ({
               padding: '0.55rem 1.15rem',
               borderRadius: '8px',
               border: 'none',
-              background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+              background: '#0284c7',
               color: '#ffffff',
               fontSize: '0.85rem',
               fontWeight: 800,
               cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              boxShadow: '0 3px 10px rgba(29, 78, 216, 0.3)'
+              boxShadow: '0 3px 10px rgba(2, 132, 199, 0.3)'
             }}
           >
-            {isSubmitting ? <RefreshCw className="spin-slow" size={16} /> : <Save size={16} />}
-            <span>حفظ التقرير</span>
+            <Send size={16} />
+            <span>حفظ وإحالة للمراسلات</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => handleSubmitReport(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.55rem 1.25rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#16a34a',
+              color: '#ffffff',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              boxShadow: '0 3px 10px rgba(22, 163, 74, 0.3)'
+            }}
+          >
+            {isSubmitting ? <RefreshCw className="spin-slow" size={16} /> : <CheckCircle2 size={16} />}
+            <span>حفظ التقرير المعتمد</span>
           </button>
         </div>
       </div>

@@ -588,12 +588,18 @@ export const CreateTargetedWorksReportModal = ({
 
       if (onReportCreated) onReportCreated(saved);
 
-      setStatusMessage({ 
-        type: 'success', 
-        text: `تم حفظ واعتماد ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح في قاعدة البيانات!` 
-      });
-
-      setShowForwardModal(true);
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ البيان برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
+        });
+      } else {
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ البيان المعتمد برقم (${saved.reportNumber}) بنجاح في قسم الأعمال المستهدفة والأرشيف!` 
+        });
+      }
     } catch (err) {
       console.error('Error saving targeted works report:', err);
       setStatusMessage({ type: 'danger', text: 'حدث خطأ أثناء حفظ تقرير الأعمال المستهدفة.' });
@@ -1533,9 +1539,9 @@ export const CreateTargetedWorksReportModal = ({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleSaveReport(false)}
+              onClick={() => handleSaveReport(true)}
               style={{
-                flex: 1,
+                flex: 1.2,
                 padding: '0.75rem 1.25rem',
                 borderRadius: '8px',
                 background: '#0284c7',
@@ -1551,19 +1557,19 @@ export const CreateTargetedWorksReportModal = ({
                 boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)'
               }}
             >
-              {isSubmitting ? <RefreshCw size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-              <span>حفظ بيان الأعمال المستهدفة</span>
+              <Send size={18} />
+              <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
             </button>
 
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleSaveReport(true)}
+              onClick={() => handleSaveReport(false)}
               style={{
                 flex: 1,
                 padding: '0.75rem 1.25rem',
                 borderRadius: '8px',
-                background: '#1e293b',
+                background: '#16a34a',
                 border: 'none',
                 color: '#fff',
                 fontSize: '0.92rem',
@@ -1573,11 +1579,11 @@ export const CreateTargetedWorksReportModal = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)'
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.35)'
               }}
             >
-              <Send size={18} />
-              <span>حفظ وإحالة بالبريد والمراسلات</span>
+              {isSubmitting ? <RefreshCw size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
             </button>
 
             <button

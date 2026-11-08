@@ -576,7 +576,7 @@ export const ExecutiveProgressForm = ({
   };
 
   // Save to API & LocalStorage
-  const handleSave = async () => {
+  const handleSave = async (sendAfter = false) => {
     setIsSaving(true);
     setStatusMessage(null);
 
@@ -611,13 +611,18 @@ export const ExecutiveProgressForm = ({
         window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: payload }));
         window.dispatchEvent(new CustomEvent('report-saved', { detail: payload }));
       } catch (_) {}
-      setShowForwardModal(true);
-      setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت بيانات الموقف التنفيذي بنجاح في قاعدة البيانات!' });
+
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ type: 'success', text: 'تم حفظ بيانات الموقف التنفيذي وجاري إحالتها للمراسلات...' });
+      } else {
+        setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت الموقف التنفيذي المعتمد بنجاح في قسمه وأرشيف المنظومة!' });
+      }
       if (onSaved) onSaved(payload);
     } catch (e) {
       console.error(e);
       localStorage.setItem('executive_progress_data', JSON.stringify(payload));
-      setStatusMessage({ type: 'success', text: 'تم حفظ البيانات محلياً بنجاح!' });
+      setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت الموقف التنفيذي المعتمد بنجاح في قسمه وأرشيف المنظومة!' });
       if (onSaved) onSaved(payload);
     } finally {
       setIsSaving(false);
@@ -782,28 +787,55 @@ export const ExecutiveProgressForm = ({
 
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {!readOnlyMode && (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              style={{
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '8px',
-                fontWeight: 800,
-                fontSize: '0.86rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)'
-              }}
-            >
-              <Save size={16} />
-              <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التعديلات في المنظومة'}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => handleSave(true)}
+                disabled={isSaving}
+                style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  fontSize: '0.86rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)',
+                  opacity: isSaving ? 0.7 : 1
+                }}
+              >
+                <Send size={16} />
+                <span>حفظ وإحالة للمراسلات</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSave(false)}
+                disabled={isSaving}
+                style={{
+                  background: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.55rem 1.25rem',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  fontSize: '0.86rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
+                  opacity: isSaving ? 0.7 : 1
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+              </button>
+            </>
           )}
 
           <button
@@ -1675,7 +1707,63 @@ export const ExecutiveProgressForm = ({
         </div>
       </div>
 
-      {/* Forward Modal Portal */}
+      {/* Bottom Standardized Action Bar */}
+      {!readOnlyMode && (
+        <div style={{
+          marginTop: '1.5rem',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: '0.75rem',
+          paddingBottom: '2rem'
+        }}>
+          <button
+            type="button"
+            onClick={() => handleSave(true)}
+            disabled={isSaving}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.7rem 1.4rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#0284c7',
+              color: '#ffffff',
+              fontSize: '0.9rem',
+              fontWeight: 800,
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+            }}
+          >
+            <Send size={17} />
+            <span>حفظ وإحالة للمراسلات</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSave(false)}
+            disabled={isSaving}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.7rem 1.6rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#16a34a',
+              color: '#ffffff',
+              fontSize: '0.9rem',
+              fontWeight: 800,
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+            }}
+          >
+            <CheckCircle2 size={18} />
+            <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+          </button>
+        </div>
+      )}
       {showForwardModal && (
         <div style={{
           position: 'fixed',

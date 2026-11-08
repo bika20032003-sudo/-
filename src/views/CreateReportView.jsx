@@ -640,8 +640,18 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       } catch (evtErr) {}
 
       setCreatedReport(saved);
-      setShowForwardModal(true);
-      setStatusMessage({ type: 'success', text: `تم حفظ ${saved.title || saved.reportType} برقم (${saved.reportNumber}) بنجاح وتوجيهه للقسم المختص!` });
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ ${saved.title || saved.reportType} برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
+        });
+      } else {
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسمه والأرشيف!` 
+        });
+      }
 
       if (sendAfter) {
         // Automatically broadcast to all supervision users from Project Manager down, excluding dev account
@@ -2295,39 +2305,12 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         <button
           type="button"
           disabled={isSubmitting}
-          onClick={() => handleSaveReport(false)}
-          style={{
-            flex: 1,
-            padding: '0.85rem 1.5rem',
-            borderRadius: '10px',
-            background: '#1e293b',
-            border: 'none',
-            color: '#fff',
-            fontSize: '0.95rem',
-            fontWeight: 800,
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            boxShadow: '0 4px 12px rgba(30, 41, 59, 0.2)'
-          }}
-        >
-          <CheckCircle2 size={18} />
-          <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير في الأرشيف'}</span>
-        </button>
-
-        <button
-          type="button"
-          disabled={isSubmitting}
           onClick={() => handleSaveReport(true)}
           style={{
-            flex: 1.3,
+            flex: 1.2,
             padding: '0.85rem 1.5rem',
             borderRadius: '10px',
-            background: reportCategory === 'fuel' 
-              ? 'linear-gradient(135deg, #d97706 0%, #b45309 100%)' 
-              : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+            background: '#0284c7',
             border: 'none',
             color: '#fff',
             fontSize: '0.95rem',
@@ -2341,7 +2324,32 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           }}
         >
           <Send size={18} />
-          <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإرسال بالبريد إلى المسؤول'}</span>
+          <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+        </button>
+
+        <button
+          type="button"
+          disabled={isSubmitting}
+          onClick={() => handleSaveReport(false)}
+          style={{
+            flex: 1,
+            padding: '0.85rem 1.5rem',
+            borderRadius: '10px',
+            background: '#16a34a',
+            border: 'none',
+            color: '#fff',
+            fontSize: '0.95rem',
+            fontWeight: 800,
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+          }}
+        >
+          <CheckCircle2 size={18} />
+          <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
         </button>
 
         <button
