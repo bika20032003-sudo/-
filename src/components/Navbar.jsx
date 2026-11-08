@@ -32,11 +32,19 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
     React.useEffect(() => {
         fetchUnreadAlerts();
         fetchUnreadMessages();
+        const handleMsgUpdate = () => fetchUnreadMessages();
+        const handleAlertsUpdate = () => fetchUnreadAlerts();
+        window.addEventListener('messages-updated', handleMsgUpdate);
+        window.addEventListener('alerts-updated', handleAlertsUpdate);
         const interval = setInterval(() => {
             fetchUnreadAlerts();
             fetchUnreadMessages();
-        }, 20000);
-        return () => clearInterval(interval);
+        }, 15000);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('messages-updated', handleMsgUpdate);
+            window.removeEventListener('alerts-updated', handleAlertsUpdate);
+        };
     }, [currentUser?.username]);
 
     // Determine clean official name and role

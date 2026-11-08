@@ -809,7 +809,7 @@ export async function fastFetch(rawUrl, options = {}) {
     }
   }
 
-  // Intercept and handle /api/messages natively for 100% reliable messaging
+  // Intercept and handle /api/messages with Dual Cloud & Local Persistence
   if (typeof url === 'string' && url.includes('/api/messages')) {
     const method = (options.method || 'GET').toUpperCase();
     if (method === 'POST') {
@@ -821,6 +821,7 @@ export async function fastFetch(rawUrl, options = {}) {
           isRead: false,
           ...bodyObj
         };
+        // 1. Optimistic Local Update
         if (typeof window !== 'undefined' && window.localStorage) {
           const sys = JSON.parse(localStorage.getItem('system_messages') || '[]');
           localStorage.setItem('system_messages', JSON.stringify([newMsg, ...sys]));
@@ -828,6 +829,12 @@ export async function fastFetch(rawUrl, options = {}) {
           localStorage.setItem('local_messages', JSON.stringify([newMsg, ...loc]));
           window.dispatchEvent(new CustomEvent('messages-updated'));
         }
+        // 2. Forward to Cloud Server in Background
+        nativeFetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newMsg)
+        }).catch(() => {});
         return { success: true, message: newMsg };
       } catch (err) {
         console.error('Error saving message in fastFetch:', err);
@@ -844,6 +851,8 @@ export async function fastFetch(rawUrl, options = {}) {
         updateRead('system_messages');
         updateRead('local_messages');
         window.dispatchEvent(new CustomEvent('messages-updated'));
+        // Forward read state to server
+        nativeFetch(url, { method: 'PUT' }).catch(() => {});
       }
       return { success: true, message: 'Marked read' };
     } else if (method === 'DELETE') {
@@ -853,6 +862,7 @@ export async function fastFetch(rawUrl, options = {}) {
         localStorage.setItem('local_messages', JSON.stringify([]));
         localStorage.setItem('system_messages_initialized', 'true');
         window.dispatchEvent(new CustomEvent('messages-updated'));
+        nativeFetch('/api/messages/clear-all', { method: 'DELETE' }).catch(() => {});
         return { success: true, message: 'All messages cleared' };
       }
       const msgId = url.split('/api/messages/')[1]?.split('?')[0];
@@ -865,9 +875,20 @@ export async function fastFetch(rawUrl, options = {}) {
         deleteItem('system_messages');
         deleteItem('local_messages');
         window.dispatchEvent(new CustomEvent('messages-updated'));
+        nativeFetch(url, { method: 'DELETE' }).catch(() => {});
       }
       return { success: true, message: 'Deleted message' };
     } else if (method === 'GET') {
+      // First try live server with short timeout
+      const liveData = await fetchWithTimeout(url, options, 1200);
+      if (liveData && liveData.success && Array.isArray(liveData.messages)) {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem('system_messages', JSON.stringify(liveData.messages));
+          } catch (_) {}
+        }
+        return liveData;
+      }
       return getFallbackData(url);
     }
   }

@@ -1,10 +1,12 @@
 # ==============================================================================
-# تكوين جذر المستودع لخادم cPanel / Apache / LiteSpeed
-# إخفاء مسار public_html وضمان عمل المنظومة مباشرة على الدومين الرئيسي
+# تكوين خادم أباتشي وسي بانل (cPanel / Apache / LiteSpeed)
+# لمنظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
 # ==============================================================================
 
-DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
+# 1. تحديد أولوية الملفات الافتراضية لمنع الشاشة البيضاء نهائياً
+DirectoryIndex index.html index.htm index.php
 
+# 2. إجبار الخادم على إرسال نوع المحتوى الصحيح (MIME Types) لكافة ملفات النظام
 <IfModule mod_mime.c>
   AddType application/javascript .js .mjs
   AddType text/javascript .js
@@ -17,29 +19,36 @@ DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
   AddType font/woff .woff
 </IfModule>
 
+# 3. توجيه المسارات لتطبيقات الصفحة الواحدة (SPA Routing) وإخفاء مسار public_html نهائياً
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # 1. إخفاء وإزالة مسار public_html من شريط العناوين بالمتصفح وتحويله إلى الدومين النظيف
+  # إزالة وإخفاء كلمة public_html من شريط العناوين بالمتصفح فوراً
   RewriteCond %{THE_REQUEST} \s/public_html/([^\s?]*) [NC]
   RewriteRule ^ /%1 [R=301,L]
 
-  # 2. السماح بالوصول المباشر للملفات والمجلدات الموجودة في الجذر
+  # 1. توجيه كافة طلبات API إلى سكربت المزامنة السحابية المركزي (PHP API)
+  RewriteRule ^api(/.*)?$ api/index.php [QSA,L]
+
+  # 2. السماح بالوصول المباشر للملفات والمجلدات الحقيقية (CSS, JS, صور, خطوط)
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 3. إذا كان مجلد public_html موجوداً، التوجيه الداخلي الصامت إليه دون ظهور اسمه في الرابط
-  RewriteCond %{REQUEST_URI} !^/public_html/
-  RewriteCond %{DOCUMENT_ROOT}/public_html%{REQUEST_URI} -f [OR]
-  RewriteCond %{DOCUMENT_ROOT}/public_html%{REQUEST_URI} -d
-  RewriteRule ^(.*)$ public_html/$1 [L]
-
-  # 4. توجيه كافة مسارات SPA داخلياً إلى index.html في public_html دون تغيير الرابط
-  RewriteCond %{REQUEST_URI} !^/public_html/
-  RewriteCond %{DOCUMENT_ROOT}/public_html/index.html -f
-  RewriteRule ^(.*)$ public_html/index.html [L]
-
-  # 5. التوجيه الداخلي الاحتياطي لـ index.html
+  # 3. توجيه كافة المسارات الأخرى إلى index.html لضمان عمل واجهة التطبيق
   RewriteRule ^ index.html [L]
+</IfModule>
+
+# تحسين كفاءة التخزين المؤقت وضغط الملفات لسرعة استجابة فائقة
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
 </IfModule>

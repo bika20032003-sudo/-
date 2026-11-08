@@ -45,6 +45,12 @@ if (fs.existsSync(path.join(rootPublicHtml, 'assets'))) {
 copyRecursiveSync(distDir, publicHtmlDir);
 copyRecursiveSync(distDir, rootPublicHtml);
 
+// Copy Cloud API folder to public_html release
+const apiSource = path.join(rootPublicHtml, 'api');
+if (fs.existsSync(apiSource)) {
+  copyRecursiveSync(apiSource, path.join(publicHtmlDir, 'api'));
+}
+
 // Also copy dist to server/public so if running node server/src/index.js directly it finds it
 const serverDest = path.join(outDir, 'server');
 fs.mkdirSync(serverDest, { recursive: true });
@@ -80,8 +86,8 @@ DirectoryIndex index.html index.htm index.php
   RewriteCond %{THE_REQUEST} \s/public_html/([^\s?]*) [NC]
   RewriteRule ^ /%1 [R=301,L]
 
-  # 1. توجيه طلبات واجهة البرمجة (API) إلى خادم الباك إند (إذا كان Node.js يعمل على المنفذ 5000)
-  # RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
+  # 1. توجيه كافة طلبات API إلى سكربت المزامنة السحابية المركزي (PHP API)
+  RewriteRule ^api(/.*)?$ api/index.php [QSA,L]
 
   # 2. السماح بالوصول المباشر للملفات والمجلدات الحقيقية (CSS, JS, صور, خطوط)
   RewriteCond %{REQUEST_FILENAME} -f [OR]
