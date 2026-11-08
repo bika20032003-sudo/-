@@ -1,0 +1,50 @@
+# ==============================================================================
+# تكوين خادم أباتشي وسي بانل (cPanel / Apache / LiteSpeed)
+# لمنظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
+# ==============================================================================
+
+# 1. تحديد أولوية الملفات الافتراضية لمنع الشاشة البيضاء نهائياً
+DirectoryIndex index.html index.htm index.php
+
+# 2. إجبار الخادم على إرسال نوع المحتوى الصحيح (MIME Types) لكافة ملفات النظام
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType text/javascript .js
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType image/jpeg .jpg .jpeg
+  AddType image/png .png
+  AddType application/json .json
+  AddType font/woff2 .woff2
+  AddType font/woff .woff
+</IfModule>
+
+# 3. توجيه المسارات لتطبيقات الصفحة الواحدة (SPA Routing)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1. توجيه طلبات واجهة البرمجة (API) إلى خادم الباك إند (إذا كان Node.js يعمل على المنفذ 5000)
+  # RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
+
+  # 2. السماح بالوصول المباشر للملفات والمجلدات الحقيقية (CSS, JS, صور, خطوط)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 3. توجيه كافة المسارات الأخرى إلى index.html لضمان عمل واجهة التطبيق
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# تحسين كفاءة التخزين المؤقت وضغط الملفات لسرعة استجابة فائقة
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+</IfModule>

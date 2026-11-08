@@ -41,12 +41,12 @@
       margin: 4mm 5mm;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-Bf5rz5Aj-1794141066653.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794141066653.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-Dmz0IyYW-1794141066653.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794141066653.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-Bp6FrhZC-1794141066653.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-BQQNvDTK-1794141066653.css">
+  <script type="module" crossorigin src="./assets/index-CSLcAx-0-1794143359879.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794143359879.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-BH9PxD3J-1794143359879.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794143359879.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-dCBFxP7H-1794143359879.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-BQQNvDTK-1794143359879.css">
 </head>
 
 <body>
@@ -82,21 +82,21 @@
       }
     });
 
-    // إذا تم رفع ملف الجذر بالخطأ على الاستضافة، التوجيه التلقائي لمجلد الإنتاج public_html
+    // إذا تم رفع ملف الجذر بالخطأ على الاستضافة، التوجيه التلقائي لمجلد الإنتاج dist
     (function() {
       var isDev = window.location.port === '3000' || window.location.port === '5173' || window.location.hostname === 'localhost';
-      if (!isDev && !window.location.pathname.includes('/public_html') && !window.location.pathname.includes('/dist')) {
-        fetch('public_html/index.html', { method: 'HEAD' })
+      if (!isDev && !window.location.pathname.includes('/dist')) {
+        fetch('dist/index.html', { method: 'HEAD' })
           .then(function(res) {
             if (res.ok) {
-              window.location.replace('public_html/' + window.location.search + window.location.hash);
+              window.location.replace('dist/' + window.location.search + window.location.hash);
             }
           })
           .catch(function() {});
       }
     })();
   </script>
-
+
 </body>
 
 </html>
