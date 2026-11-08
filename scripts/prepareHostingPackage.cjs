@@ -13,17 +13,14 @@ if (fs.existsSync(outDir)) {
 }
 fs.mkdirSync(outDir, { recursive: true });
 
-// 2. Prepare public_html (Frontend production build)
-const publicHtmlDir = path.join(outDir, 'public_html');
-fs.mkdirSync(publicHtmlDir, { recursive: true });
-
+// 2. Build or verify dist
 const distDir = path.join(rootDir, 'dist');
 if (!fs.existsSync(distDir)) {
   console.log('[Hosting Package] Building frontend first...');
   execSync('npm run build', { cwd: rootDir, stdio: 'inherit' });
 }
 
-// Copy dist files to public_html
+// Copy dist files helper
 function copyRecursiveSync(src, dest) {
   const exists = fs.existsSync(src);
   const stats = exists && fs.statSync(src);
@@ -38,19 +35,12 @@ function copyRecursiveSync(src, dest) {
   }
 }
 
-const rootPublicHtml = path.join(rootDir, 'public_html');
-if (fs.existsSync(path.join(rootPublicHtml, 'assets'))) {
-  fs.rmSync(path.join(rootPublicHtml, 'assets'), { recursive: true, force: true });
-}
-copyRecursiveSync(distDir, publicHtmlDir);
-copyRecursiveSync(distDir, rootPublicHtml);
-
-// Also copy dist to server/public so if running node server/src/index.js directly it finds it
+// Copy dist to server/public so if running node server/src/index.js directly it finds it
 const serverDest = path.join(outDir, 'server');
 fs.mkdirSync(serverDest, { recursive: true });
 copyRecursiveSync(distDir, path.join(serverDest, 'public'));
 
-// 3. Add .htaccess for Apache / cPanel / LiteSpeed to public_html
+// 3. Add .htaccess for Apache / cPanel / LiteSpeed to dist
 const htaccessContent = `# ==============================================================================
 # تكوين خادم أباتشي وسي بانل (cPanel / Apache / LiteSpeed)
 # لمنظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
@@ -102,13 +92,10 @@ DirectoryIndex index.html index.htm index.php
   ExpiresByType application/javascript "access plus 1 month"
 </IfModule>
 `;
-fs.writeFileSync(path.join(publicHtmlDir, '.htaccess'), htaccessContent, 'utf8');
-fs.writeFileSync(path.join(rootPublicHtml, '.htaccess'), htaccessContent, 'utf8');
+fs.writeFileSync(path.join(distDir, '.htaccess'), htaccessContent, 'utf8');
 
 // Copy index.html to index.htm as well to prevent any server mismatch
-if (fs.existsSync(path.join(publicHtmlDir, 'index.html'))) {
-  fs.copyFileSync(path.join(publicHtmlDir, 'index.html'), path.join(publicHtmlDir, 'index.htm'));
-  fs.copyFileSync(path.join(rootPublicHtml, 'index.html'), path.join(rootPublicHtml, 'index.htm'));
+if (fs.existsSync(path.join(distDir, 'index.html'))) {
   fs.copyFileSync(path.join(distDir, 'index.html'), path.join(distDir, 'index.htm'));
 }
 
@@ -136,8 +123,7 @@ const webConfigContent = `<?xml version="1.0" encoding="UTF-8"?>
   </system.webServer>
 </configuration>
 `;
-fs.writeFileSync(path.join(publicHtmlDir, 'web.config'), webConfigContent, 'utf8');
-fs.writeFileSync(path.join(rootPublicHtml, 'web.config'), webConfigContent, 'utf8');
+fs.writeFileSync(path.join(distDir, 'web.config'), webConfigContent, 'utf8');
 
 // 5. Add .cpanel.yml for cPanel "Deploy HEAD Commit"
 const cpanelYmlContent = `---
@@ -154,11 +140,11 @@ deployment:
     - if [ ! -d "$DEPLOYPATH" ]; then export DEPLOYPATH=./; fi
     - /bin/mkdir -p $DEPLOYPATH
 
-    # 2. نسخ ملفات الواجهة الأمامية الجاهزة إلى مجلد public_html
-    - if [ -d "public_html" ]; then /bin/cp -a public_html/. $DEPLOYPATH/; elif [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
+    # 2. نسخ ملفات الواجهة الأمامية الجاهزة من dist مباشرة
+    - if [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
 
     # 3. التأكد من نقل ملف تكوين الروابط والـ SPA Routing (.htaccess)
-    - if [ -f "public_html/.htaccess" ]; then /bin/cp -f public_html/.htaccess $DEPLOYPATH/; elif [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
+    - if [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
 
     # 4. نسخ ملف index.htm لضمان التوافق مع كافة مزودات الاستضافة
     - if [ -f "$DEPLOYPATH/index.html" ]; then /bin/cp -f $DEPLOYPATH/index.html $DEPLOYPATH/index.htm; fi
@@ -216,8 +202,7 @@ echo json_encode([
     'timestamp' => date('Y-m-d H:i:s')
 ]);
 `;
-fs.writeFileSync(path.join(publicHtmlDir, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
-fs.writeFileSync(path.join(rootPublicHtml, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
+fs.writeFileSync(path.join(distDir, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
 
 // 7. Copy backend server source files
 const srcServerDir = path.join(rootDir, 'server');
@@ -482,10 +467,10 @@ try {
   console.warn('[Hosting Package] Zip command warning:', zipErr.message);
 }
 
-console.log('[Hosting Package] Compressing frontend only into: ملفات_الرفع_المباشر_public_html.zip...');
+console.log('[Hosting Package] Compressing frontend files directly from dist into: ملفات_الموقع_جاهزة_للاستضافة.zip...');
 try {
-  execSync('powershell -Command "Compress-Archive -Path \'نسخة_المشروع_للاستضافة\\public_html\\*\' -DestinationPath \'ملفات_الرفع_المباشر_public_html.zip\' -Force"', { cwd: rootDir });
-  console.log('[Hosting Package] ✅ Frontend direct zip created successfully!');
+  execSync('powershell -Command "Compress-Archive -Path \'dist\\*\' -DestinationPath \'ملفات_الموقع_جاهزة_للاستضافة.zip\' -Force"', { cwd: rootDir });
+  console.log('[Hosting Package] ✅ Direct website zip created successfully!');
 } catch (zipErr2) {
   console.warn('[Hosting Package] Direct zip command warning:', zipErr2.message);
 }

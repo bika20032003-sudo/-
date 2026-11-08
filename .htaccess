@@ -1,9 +1,9 @@
 # ==============================================================================
 # تكوين جذر المستودع لخادم cPanel / Apache / LiteSpeed
-# لحماية الموقع في حال تم رفع كامل مجلد المشروع إلى public_html على الاستضافة
+# لحماية الموقع في حال تم رفع كامل مجلد المشروع على الاستضافة
 # ==============================================================================
 
-DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
+DirectoryIndex index.html index.htm dist/index.html dist/index.htm
 
 <IfModule mod_mime.c>
   AddType application/javascript .js .mjs
@@ -18,13 +18,13 @@ DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # إذا كان مجلد public_html موجوداً وتم طلب الجذر، وجّه الطلب تلقائياً إلى public_html/index.html
-  RewriteCond %{REQUEST_URI} !^/public_html/
-  RewriteCond %{DOCUMENT_ROOT}/public_html/index.html -f
-  RewriteRule ^$ public_html/index.html [L]
+  # إذا كان مجلد dist موجوداً وتم طلب الجذر، وجّه الطلب تلقائياً إلى dist/index.html
+  RewriteCond %{REQUEST_URI} !^/dist/
+  RewriteCond %{DOCUMENT_ROOT}/dist/index.html -f
+  RewriteRule ^$ dist/index.html [L]
 
-  # توجيه طلبات assets إلى public_html/assets إذا طُلبت من الجذر
+  # توجيه طلبات assets إلى dist/assets إذا طُلبت من الجذر
   RewriteCond %{REQUEST_URI} ^/assets/(.*)$
-  RewriteCond %{DOCUMENT_ROOT}/public_html/assets/%1 -f
-  RewriteRule ^assets/(.*)$ public_html/assets/$1 [L]
+  RewriteCond %{DOCUMENT_ROOT}/dist/assets/%1 -f
+  RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
 </IfModule>

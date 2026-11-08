@@ -12,11 +12,11 @@ deployment:
     - if [ ! -d "$DEPLOYPATH" ]; then export DEPLOYPATH=./; fi
     - /bin/mkdir -p $DEPLOYPATH
 
-    # 2. نسخ ملفات الواجهة الأمامية الجاهزة إلى مجلد public_html
-    - if [ -d "public_html" ]; then /bin/cp -a public_html/. $DEPLOYPATH/; elif [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
+    # 2. نسخ ملفات الواجهة الأمامية الجاهزة من dist مباشرة
+    - if [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
 
     # 3. التأكد من نقل ملف تكوين الروابط والـ SPA Routing (.htaccess)
-    - if [ -f "public_html/.htaccess" ]; then /bin/cp -f public_html/.htaccess $DEPLOYPATH/; elif [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
+    - if [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
 
     # 4. نسخ ملف index.htm لضمان التوافق مع كافة مزودات الاستضافة
     - if [ -f "$DEPLOYPATH/index.html" ]; then /bin/cp -f $DEPLOYPATH/index.html $DEPLOYPATH/index.htm; fi
