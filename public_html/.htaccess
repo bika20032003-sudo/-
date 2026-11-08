@@ -19,9 +19,13 @@ DirectoryIndex index.html index.htm index.php
   AddType font/woff .woff
 </IfModule>
 
-# 3. توجيه المسارات لتطبيقات الصفحة الواحدة (SPA Routing)
+# 3. توجيه المسارات لتطبيقات الصفحة الواحدة (SPA Routing) وإخفاء مسار public_html نهائياً
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  # إزالة وإخفاء كلمة public_html من شريط العناوين بالمتصفح فوراً
+  RewriteCond %{THE_REQUEST} s/public_html/([^s?]*) [NC]
+  RewriteRule ^ /%1 [R=301,L]
 
   # 1. توجيه طلبات واجهة البرمجة (API) إلى خادم الباك إند (إذا كان Node.js يعمل على المنفذ 5000)
   # RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]

@@ -75,20 +75,6 @@
         '</div>';
       }
     });
-
-    // إذا تم رفع ملف الجذر بالخطأ على الاستضافة، التوجيه التلقائي لمجلد الإنتاج public_html
-    (function() {
-      var isDev = window.location.port === '3000' || window.location.port === '5173' || window.location.hostname === 'localhost';
-      if (!isDev && !window.location.pathname.includes('/public_html') && !window.location.pathname.includes('/dist')) {
-        fetch('public_html/index.html', { method: 'HEAD' })
-          .then(function(res) {
-            if (res.ok) {
-              window.location.replace('public_html/' + window.location.search + window.location.hash);
-            }
-          })
-          .catch(function() {});
-      }
-    })();
   </script>
 
   <script type="module" src="/src/main.jsx"></script>

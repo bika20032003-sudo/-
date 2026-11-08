@@ -46,3 +46,4 @@ fi
 
 echo "[Deploy] HEAD Commit deployed successfully!"
 exit 0
+

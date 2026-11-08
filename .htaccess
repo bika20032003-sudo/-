@@ -1,6 +1,6 @@
 # ==============================================================================
 # تكوين جذر المستودع لخادم cPanel / Apache / LiteSpeed
-# لحماية الموقع في حال تم رفع كامل مجلد المشروع إلى public_html على الاستضافة
+# إخفاء مسار public_html وضمان عمل المنظومة مباشرة على الدومين الرئيسي
 # ==============================================================================
 
 DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
@@ -10,6 +10,8 @@ DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
   AddType text/javascript .js
   AddType text/css .css
   AddType image/svg+xml .svg
+  AddType image/jpeg .jpg .jpeg
+  AddType image/png .png
   AddType application/json .json
   AddType font/woff2 .woff2
   AddType font/woff .woff
@@ -18,13 +20,26 @@ DirectoryIndex index.html index.htm public_html/index.html public_html/index.htm
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # إذا كان مجلد public_html موجوداً وتم طلب الجذر، وجّه الطلب تلقائياً إلى public_html/index.html
+  # 1. إخفاء وإزالة مسار public_html من شريط العناوين بالمتصفح وتحويله إلى الدومين النظيف
+  RewriteCond %{THE_REQUEST} \s/public_html/([^\s?]*) [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # 2. السماح بالوصول المباشر للملفات والمجلدات الموجودة في الجذر
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 3. إذا كان مجلد public_html موجوداً، التوجيه الداخلي الصامت إليه دون ظهور اسمه في الرابط
+  RewriteCond %{REQUEST_URI} !^/public_html/
+  RewriteCond %{DOCUMENT_ROOT}/public_html%{REQUEST_URI} -f [OR]
+  RewriteCond %{DOCUMENT_ROOT}/public_html%{REQUEST_URI} -d
+  RewriteRule ^(.*)$ public_html/$1 [L]
+
+  # 4. توجيه كافة مسارات SPA داخلياً إلى index.html في public_html دون تغيير الرابط
   RewriteCond %{REQUEST_URI} !^/public_html/
   RewriteCond %{DOCUMENT_ROOT}/public_html/index.html -f
-  RewriteRule ^$ public_html/index.html [L]
+  RewriteRule ^(.*)$ public_html/index.html [L]
 
-  # توجيه طلبات assets إلى public_html/assets إذا طُلبت من الجذر
-  RewriteCond %{REQUEST_URI} ^/assets/(.*)$
-  RewriteCond %{DOCUMENT_ROOT}/public_html/assets/%1 -f
-  RewriteRule ^assets/(.*)$ public_html/assets/$1 [L]
+  # 5. التوجيه الداخلي الاحتياطي لـ index.html
+  RewriteRule ^ index.html [L]
 </IfModule>
