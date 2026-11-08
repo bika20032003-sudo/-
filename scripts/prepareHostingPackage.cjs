@@ -145,17 +145,10 @@ fs.writeFileSync(path.join(rootPublicHtml, 'web.config'), webConfigContent, 'utf
 
 // 5. Add .cpanel.yml for cPanel "Deploy HEAD Commit"
 const cpanelYmlContent = `---
-# ==============================================================================
-# تكوين النشر التلقائي المعتمد لـ cPanel Git™ Version Control
-# ==============================================================================
 deployment:
   tasks:
     - export DEPLOYPATH=$HOME/public_html/
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -rf public_html/* $DEPLOYPATH/ 2>/dev/null || true
-    - /bin/cp -f public_html/.htaccess $DEPLOYPATH/ 2>/dev/null || true
-    - /bin/cp -f public_html/index.html $DEPLOYPATH/index.htm 2>/dev/null || true
-    - /bin/bash cpanel_deploy.sh 2>/dev/null || true
+    - /bin/cp -a public_html/. $DEPLOYPATH
 `;
 fs.writeFileSync(path.join(outDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
 fs.writeFileSync(path.join(rootDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
