@@ -707,32 +707,13 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         </div>
       </div>
 
-      {/* ================= TOP 3 KPI CARDS: ROAD, FUEL, EQUIPMENT BREAKDOWNS ================= */}
+      {/* ================= TOP KPI CARDS: FUEL & EQUIPMENT ================= */}
       <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.5rem'
         }}>
-        {/* Card 1: إنجاز رصف الطريق اليوم */}
-        <div className="kpi-metric-card" onClick={() => onNavigateTab('road-progress')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #16a34a' }} title="فتح متابعة إنجاز الطريق">
-          <div className="kpi-card-header">
-            <span className="kpi-title" style={{ fontSize: '0.88rem', fontWeight: 800 }}>إنجاز رصف الطريق اليوم</span>
-            <div className="kpi-icon-circle green">
-              <Milestone size={20} color="#16a34a"/>
-            </div>
-          </div>
-          <div className="kpi-value-center" style={{ margin: '0.6rem 0' }}>
-            <span className="kpi-big-num" style={{ fontSize: '2.1rem' }}>
-              +{(metrics.roadProgress?.totalTodayMeters || 1980).toLocaleString()}
-            </span>
-            <span className="kpi-unit-label" style={{ fontSize: '0.9rem' }}>م.ط</span>
-          </div>
-          <div className="kpi-bottom-sub">
-            <span className="kpi-green-text" style={{ fontSize: '0.78rem' }}>نسبة الإنجاز المالي العام %{metrics.executiveProgress?.overallPercentage || metrics.roadProgress?.overallPercentage || 71.11}</span>
-          </div>
-        </div>
-
         {/* Card 2: عداد الوقود والمخزون الميداني */}
         <div className="kpi-metric-card" onClick={() => onNavigateTab('fuel')} style={{ padding: '1.25rem 1.5rem', cursor: 'pointer', borderTop: '3px solid #ea580c' }} title="فتح قسم إدارة الوقود">
           <div className="kpi-card-header">

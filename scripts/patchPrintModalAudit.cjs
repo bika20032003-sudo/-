@@ -64,3 +64,4 @@ printFiles.forEach(filePath => {
   fs.writeFileSync(filePath, content, 'utf8');
   console.log('Successfully patched print modal:', filePath);
 });
+
