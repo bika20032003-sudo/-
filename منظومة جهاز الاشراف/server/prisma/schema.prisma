@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user") // admin, manager, user
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DailyReport {
+  id               Int      @id @default(autoincrement())
+  reportNumber     String?
+  date             DateTime
+  sector           String?  @default("القطعة A")
+  reportType       String?  @default("تقرير يومي شامل")
+  crusherName      String
+  materialName     String
+  productionAmount Float
+  salesAmount      Float    @default(0)
+  fileName         String?
+  fileType         String?
+  fileData         String?  @db.LongText
+  imageUrl         String?  @db.LongText
+  uploadedBy       String?  @default("م. عبدالرحمن")
+  status           String   @default("approved")
+  parsedData       String?  @db.LongText
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  issues           Issue[]
+}
+
+model EquipmentStatus {
+  id             Int      @id @default(autoincrement())
+  date           DateTime
+  equipmentName  String
+  equipmentType  String
+  status         String
+  operatingHours Float
+  imageUrl       String?  @db.LongText
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model FuelLog {
+  id            Int      @id @default(autoincrement())
+  date          DateTime
+  equipmentName String
+  fuelType      String
+  amount        Float
+  cost          Float?
+  imageUrl      String?  @db.LongText
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TomorrowPlan {
+  id            Int                @id @default(autoincrement())
+  date          DateTime           @default(now())
+  planDate      DateTime
+  title         String
+  description   String?            @db.Text
+  status        String             @default("draft")
+  approvedBy    String?
+  approvedAt    DateTime?
+  notes         String?            @db.Text
+  executionRate Float?             @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  items         TomorrowPlanItem[]
+}
+
+model TomorrowPlanItem {
+  id                  Int          @id @default(autoincrement())
+  planId              Int
+  plan                TomorrowPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  targetType          String
+  targetCode          String?
+  targetName          String
+  sector              String?      @default("القطعة A")
+  currentStatus       String?
+  plannedDecision     String
+  targetQuantity      Float?
+  targetUnit          String?
+  reason              String?      @db.Text
+  notes               String?      @db.Text
+  actualExecuted      Float?       @default(0)
+  actualStatus        String?
+  executionPercentage Float?       @default(0)
+  varianceReason      String?      @db.Text
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+}
+
+model Issue {
+  id              Int          @id @default(autoincrement())
+  date            DateTime     @default(now())
+  sector          String?      @default("القطعة A")
+  equipmentCode   String?
+  equipmentName   String?
+  category        String
+  title           String
+  description     String       @db.Text
+  severity        String       @default("warning")
+  status          String       @default("open")
+  suggestedAction String?      @db.Text
+  reportId        Int?
+  report          DailyReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Equipment {
+  id                  Int      @id @default(autoincrement())
+  code                String   @unique
+  name                String
+  type                String
+  category            String
+  status              String   @default("operational")
+  driver              String?
+  location            String?
+  dailyHours          Float    @default(0)
+  fuelConsumptionRate Float    @default(0)
+  imageUrl            String?  @db.LongText
+  notes               String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model FuelDispatchLog {
+  id            Int      @id @default(autoincrement())
+  ticketNumber  String   @unique
+  date          DateTime @default(now())
+  equipmentName String
+  liters        Float
+  driverName    String?
+  pumpOperator  String?
+  tankSource    String?
+  meterBefore   Float?
+  meterAfter    Float?
+  imageUrl      String?  @db.LongText
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+}
+
+model CrusherLog {
+  id                  Int      @id @default(autoincrement())
+  date                DateTime @default(now())
+  name                String
+  sector              String
+  dailyProductionTons Float
+  sharshoorTons       Float
+  imageUrl            String?  @db.LongText
+  notes               String?  @db.Text
+  createdAt           DateTime @default(now())
+}
+
+model SharshoorLog {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  sector      String
+  crusher     String
+  amountTons  Float
+  truckCode   String
+  destination String
+  imageUrl    String?  @db.LongText
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+}
+
+model Alert {
+  id              Int      @id @default(autoincrement())
+  type            String
+  title           String
+  message         String   @db.Text
+  targetSector    String?
+  suggestedAction String?  @db.Text
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model RoadProgressLog {
+  id             Int      @id @default(autoincrement())
+  date           DateTime @default(now())
+  sector         String
+  itemName       String
+  category       String   @default("بنود أساسية")
+  todayMeters    Float    @default(0)
+  previousMeters Float    @default(0)
+  totalMeters    Float    @default(0)
+  dailyTarget    Float    @default(500)
+  varianceMeters Float    @default(0)
+  readyLength    Float    @default(0)
+  startStation   String?
+  endStation     String?
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+}

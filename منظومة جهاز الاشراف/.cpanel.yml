@@ -1,0 +1,25 @@
+---
+# ==============================================================================
+# ملف النشر والتحديث التلقائي لـ cPanel Git™ Version Control
+# خيار: Deploy HEAD Commit / النشر التلقائي للالتزام الأخير
+# ==============================================================================
+deployment:
+  tasks:
+    # 1. تحديد مسار النشر (مجلد public_html لحسابك في cPanel)
+    # ملاحظة: يمكنك ترك $(whoami) أو استبدالها باسم مستخدم cPanel الخاص بك مباشرة
+    - export DEPLOYPATH=/home/$(whoami)/public_html/
+    - /bin/mkdir -p $DEPLOYPATH
+
+    # 2. نسخ ملفات الواجهة الأمامية الجاهزة إلى مجلد public_html
+    - if [ -d "public_html" ]; then /bin/cp -a public_html/. $DEPLOYPATH/; elif [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
+
+    # 3. التأكد من نقل ملف تكوين الروابط والـ SPA Routing (.htaccess)
+    - if [ -f "public_html/.htaccess" ]; then /bin/cp -f public_html/.htaccess $DEPLOYPATH/; elif [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
+
+    # 4. تثبيت حزم خادم Node.js وتحديثها إذا كان مستخدماً في cPanel
+    - if [ -d "server" ] && [ -f "server/package.json" ]; then cd server && npm install --omit=dev && cd ..; fi
+
+    # 5. إرسال إشارة إعادة تشغيل لتطبيق Node.js تلقائياً عبر Phusion Passenger في cPanel
+    - /bin/mkdir -p tmp
+    - /bin/touch tmp/restart.txt
+
