@@ -109,7 +109,81 @@ const webConfigContent = `<?xml version="1.0" encoding="UTF-8"?>
 `;
 fs.writeFileSync(path.join(publicHtmlDir, 'web.config'), webConfigContent, 'utf8');
 
-// 5. Copy backend server source files
+// 5. Add .cpanel.yml for cPanel "Deploy HEAD Commit"
+const cpanelYmlContent = `---
+# ==============================================================================
+# ملف النشر والتحديث التلقائي لـ cPanel Git™ Version Control
+# خيار: Deploy HEAD Commit / النشر التلقائي للالتزام الأخير
+# ==============================================================================
+deployment:
+  tasks:
+    # 1. تحديد مسار النشر (مجلد public_html لحسابك في cPanel)
+    # ملاحظة: يمكنك ترك $(whoami) أو استبدالها باسم مستخدم cPanel الخاص بك مباشرة
+    - export DEPLOYPATH=/home/$(whoami)/public_html/
+    - /bin/mkdir -p $DEPLOYPATH
+
+    # 2. نسخ ملفات الواجهة الأمامية الجاهزة إلى مجلد public_html
+    - if [ -d "public_html" ]; then /bin/cp -a public_html/. $DEPLOYPATH/; elif [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
+
+    # 3. التأكد من نقل ملف تكوين الروابط والـ SPA Routing (.htaccess)
+    - if [ -f "public_html/.htaccess" ]; then /bin/cp -f public_html/.htaccess $DEPLOYPATH/; elif [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
+
+    # 4. تثبيت حزم خادم Node.js وتحديثها إذا كان مستخدماً في cPanel
+    - if [ -d "server" ] && [ -f "server/package.json" ]; then cd server && npm install --omit=dev && cd ..; fi
+
+    # 5. إرسال إشارة إعادة تشغيل لتطبيق Node.js تلقائياً عبر Phusion Passenger في cPanel
+    - /bin/mkdir -p tmp
+    - /bin/touch tmp/restart.txt
+`;
+fs.writeFileSync(path.join(outDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
+fs.writeFileSync(path.join(rootDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
+
+// 6. Add Webhook deploy script (PHP) for automated GitHub Push deployment
+const deployPhpContent = `<?php
+/**
+ * Auto-Deployment Webhook Script for cPanel Git Version Control
+ * سكربت التحديث التلقائي الفوري عند إرسال أي Commit على GitHub
+ */
+header('Content-Type: application/json; charset=utf-8');
+
+// مفتاح حماية سري لمنع الاستدعاء غير المصرح به
+$secret_key = 'supervision_deploy_secret'; 
+
+$provided_key = $_GET['key'] ?? ($_SERVER['HTTP_X_DEPLOY_KEY'] ?? '');
+if ($secret_key !== '' && $provided_key !== $secret_key) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized: Invalid deploy key']);
+    exit;
+}
+
+$output = [];
+$return_var = 0;
+
+// سحب التحديثات من مستودع Git الرئيسي
+exec('git pull origin main 2>&1', $output, $return_var);
+
+// تشغيل أمر النشر الخاص بـ cPanel
+if (file_exists('.cpanel.yml') || file_exists('../.cpanel.yml')) {
+    exec('/usr/local/cpanel/bin/git-check 2>&1', $output);
+}
+
+// إعادة تشغيل تطبيق Node.js إن وجد
+if (file_exists('tmp/restart.txt')) {
+    touch('tmp/restart.txt');
+} elseif (file_exists('../tmp/restart.txt')) {
+    touch('../tmp/restart.txt');
+}
+
+echo json_encode([
+    'success' => $return_var === 0,
+    'message' => 'HEAD Commit Deployed Successfully',
+    'output' => $output,
+    'timestamp' => date('Y-m-d H:i:s')
+]);
+`;
+fs.writeFileSync(path.join(publicHtmlDir, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
+
+// 7. Copy backend server source files
 const srcServerDir = path.join(rootDir, 'server');
 const serverItems = fs.readdirSync(srcServerDir);
 serverItems.forEach(item => {
@@ -125,7 +199,7 @@ DATABASE_URL="mysql://root:@localhost:3306/crusher_db"
 `;
 fs.writeFileSync(path.join(serverDest, '.env'), serverEnvContent, 'utf8');
 
-// 6. Root package.json for one-click hosting startup
+// 8. Root package.json for one-click hosting startup
 const rootPkg = {
   name: "crusher-supervision-system-hosting",
   version: "2.0.0",
@@ -149,7 +223,7 @@ const rootPkg = {
 };
 fs.writeFileSync(path.join(outDir, 'package.json'), JSON.stringify(rootPkg, null, 2), 'utf8');
 
-// 7. ecosystem.config.cjs for PM2
+// 9. ecosystem.config.cjs for PM2
 const pm2Content = `module.exports = {
   apps: [
     {
@@ -169,7 +243,7 @@ const pm2Content = `module.exports = {
 `;
 fs.writeFileSync(path.join(outDir, 'ecosystem.config.cjs'), pm2Content, 'utf8');
 
-// 8. Dockerfile
+// 10. Dockerfile
 const dockerfileContent = `# ==============================================================================
 # Dockerfile لمنظومة جهاز الإشراف والمتابعة
 # ==============================================================================
@@ -194,7 +268,7 @@ CMD ["node", "server/src/index.js"]
 `;
 fs.writeFileSync(path.join(outDir, 'Dockerfile'), dockerfileContent, 'utf8');
 
-// 9. docker-compose.yml
+// 11. docker-compose.yml
 const dockerComposeContent = `version: '3.8'
 
 services:
@@ -212,7 +286,7 @@ services:
 `;
 fs.writeFileSync(path.join(outDir, 'docker-compose.yml'), dockerComposeContent, 'utf8');
 
-// 10. Startup scripts (Windows & Linux)
+// 12. Startup scripts (Windows & Linux)
 const batContent = `@echo off
 chcp 65001 > nul
 echo ============================================================================
@@ -247,7 +321,7 @@ node src/index.js
 `;
 fs.writeFileSync(path.join(outDir, 'start_server.sh'), shContent, 'utf8');
 
-// 11. Comprehensive Documentation Guide in Arabic
+// 13. Comprehensive Documentation Guide in Arabic
 const guideContent = `# دليل تشغيل ورفع نسخة المشروع على الاستضافة (Hosting Deployment Guide)
 ### منظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
 
@@ -255,28 +329,57 @@ const guideContent = `# دليل تشغيل ورفع نسخة المشروع ع�
 
 ---
 
+## ⚡ تفعيل خيار Deploy HEAD Commit في cPanel:
+إذا كنت تستخدم أداة **cPanel Git™ Version Control**، فقد تم إضافة ملف **\`.cpanel.yml\`** في جذر المشروع وهو المسؤول رسمياً عن تفعيل وظيفة **Deploy HEAD Commit**:
+1. ادخل إلى لوحة التحكم **cPanel** > قسم **Files** > اختر **Git™ Version Control**.
+2. اختر المستودع الخاص بك واضغط على زر **Manage**.
+3. انتقل إلى تبويب **Deploy** في الأعلى.
+4. ستجد زر **Deploy HEAD Commit** أصبح مفعلاً وجاهزاً؛ بمجرد الضغط عليه:
+   * سيتم تلقائياً نسخ أحدث ملفات الواجهة الأمامية إلى مجلد \`public_html\`.
+   * سيتم تطبيق إعدادات الـ \`.htaccess\` لضمان عمل كافة الروابط بدون 404.
+   * سيتم إعادة تشغيل تطبيق Node.js في السيرفر تلقائياً إن وجد.
+
+> **ملاحظة هامة:** في ملف \`.cpanel.yml\` تم تعيين المسار افتراضياً على:
+> \`export DEPLOYPATH=/home/$(whoami)/public_html/\`  
+> إذا كان اسم حسابك في الاستضافة مثلاً \`myuser\` يمكنك فتح ملف \`.cpanel.yml\` وتعديله إلى \`/home/myuser/public_html/\`.
+
+---
+
+## 🔄 التحديث التلقائي الفوري عبر Webhook (بدون دخول cPanel):
+تم تزويد الحزمة بملف **\`public_html/cpanel_deploy.php\`**؛ يمكنك ربطه بـ **GitHub Webhooks**:
+1. في مستودع GitHub ادخل إلى **Settings** > **Webhooks** > **Add webhook**.
+2. في **Payload URL** اكتب:
+   \`\`\`
+   https://your-domain.com/cpanel_deploy.php?key=supervision_deploy_secret
+   \`\`\`
+3. اختر **Content type**: \`application/json\`.
+4. عند كل \`git push\` أو تعديل، سيقوم GitHub بإشعار استضافتك وسحب التحديث ونشره تلقائياً فوراً!
+
+---
+
 ## محتويات حزمة الاستضافة:
-1. **\`public_html/\`**: مجلد الواجهة الأمامية للمنظومة المترجمة والمبنية بأحدث التقنيات مع ملفات \`.htaccess\` لـ cPanel/Apache و \`web.config\` لـ IIS.
-2. **\`server/\`**: خادم الباك إند المتكامل المبني بـ Express.js، ومزود بقاعدة بيانات هجينة فائقة السرعة مع إمكانية الربط بـ MySQL.
-3. **\`ecosystem.config.cjs\`**: إعدادات التشغيل التلقائي وإدارة العمليات عبر **PM2** للسيرفرات السحابية.
-4. **\`Dockerfile\` & \`docker-compose.yml\`**: للتشغيل المباشر عبر الحاويات (Docker) في السيرفرات أو المنصات الحديثة (Render / Railway / DigitalOcean).
-5. **\`تشغيل_الخادم_محليا.bat\` / \`start_server.sh\`**: إطلاق المنظومة بالكامل بنقرة زر واحدة.
+1. **\`.cpanel.yml\`**: ملف تكوين النشر التلقائي وخيار Deploy HEAD Commit لـ cPanel.
+2. **\`public_html/\`**: مجلد الواجهة الأمامية للمنظومة المترجمة والمبنية بأحدث التقنيات مع ملفات \`.htaccess\` لـ cPanel/Apache و \`web.config\` لـ IIS وسكربت \`cpanel_deploy.php\`.
+3. **\`server/\`**: خادم الباك إند المتكامل المبني بـ Express.js، ومزود بقاعدة بيانات هجينة فائقة السرعة مع إمكانية الربط بـ MySQL.
+4. **\`ecosystem.config.cjs\`**: إعدادات التشغيل التلقائي وإدارة العمليات عبر **PM2** للسيرفرات السحابية.
+5. **\`Dockerfile\` & \`docker-compose.yml\`**: للتشغيل المباشر عبر الحاويات (Docker) في السيرفرات أو المنصات الحديثة (Render / Railway / DigitalOcean).
+6. **\`تشغيل_الخادم_محليا.bat\` / \`start_server.sh\`**: إطلاق المنظومة بالكامل بنقرة زر واحدة.
 
 ---
 
 ## 🚀 طرق الرفع والتشغيل بحسب نوع الاستضافة:
 
-### الطريقة الأولى: استضافة مشتركة أو cPanel (الخيار الأكثر شيوعاً)
+### الطريقة الأولى: استضافة cPanel (الخيار الأكثر شيوعاً)
 
 #### أ) إذا كان لديك Node.js مدعوم في cPanel (Node.js Selector):
-1. قم بضغط محتويات هذا المجلد ورفعه عبر **File Manager** إلى الاستضافة.
+1. قم برفع ملف **\`نسخة_الاستضافة_المتكاملة.zip\`** عبر **File Manager** إلى الاستضافة واضغط **Extract**.
 2. ادخل إلى **Setup Node.js App** في cPanel:
    - **Node.js version**: اختر 18 أو 20 أو أحدث.
    - **Application mode**: اختر \`Production\`.
    - **Application root**: اكتب اسم المجلد الذي رفعت فيه ملفات السيرفر.
    - **Application startup file**: اكتب \`server/src/index.js\`.
 3. اضغط **Create** ثم اضغط **Run NPM Install**.
-4. اضغط **Restart** ومبارك، ستعمل المنظومة مباشرة بكامل ميزاتها على رابط موقعك!
+4. اضغط **Restart** وستعمل المنظومة مباشرة بكامل ميزاتها على رابط موقعك!
 
 #### ب) إذا كانت الاستضافة عادية بدون Node.js (واجهة ويب ثابتة فقط):
 1. افتح مجلد **\`public_html/\`**.
@@ -292,29 +395,13 @@ const guideContent = `# دليل تشغيل ورفع نسخة المشروع ع�
    cd /var/www/supervision-system/server
    npm install
    \`\`\`
-3. تشغيل النظام في الخلفية دائماً عبر PM2 مع إعادة التشغيل التلقائي عند انقطاع الكهرباء أو إعادة إقلاع السيرفر:
+3. تشغيل النظام في الخلفية دائماً عبر PM2 مع إعادة التشغيل التلقائي:
    \`\`\`bash
    npm install -g pm2
    cd /var/www/supervision-system
    pm2 start ecosystem.config.cjs
    pm2 save
    pm2 startup
-   \`\`\`
-4. (اختياري) تكوين **Nginx Reverse Proxy**:
-   \`\`\`nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
-
-       location / {
-           proxy_pass http://127.0.0.1:5000;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection 'upgrade';
-           proxy_set_header Host $host;
-           proxy_cache_bypass $http_upgrade;
-       }
-   }
    \`\`\`
 
 ---
@@ -350,4 +437,13 @@ docker-compose up -d --build
 `;
 fs.writeFileSync(path.join(outDir, 'دليل_الرفع_والتشغيل_على_الاستضافة.md'), guideContent, 'utf8');
 
-console.log('[Hosting Package] ✅ Package directory created successfully at:', outDir);
+// 14. Generate single zip archive automatically
+console.log('[Hosting Package] Compressing into: نسخة_الاستضافة_المتكاملة.zip...');
+try {
+  execSync('powershell -Command "Compress-Archive -Path \'نسخة_المشروع_للاستضافة\\*\' -DestinationPath \'نسخة_الاستضافة_المتكاملة.zip\' -Force"', { cwd: rootDir });
+  console.log('[Hosting Package] ✅ Zip archive created successfully!');
+} catch (zipErr) {
+  console.warn('[Hosting Package] Zip command warning:', zipErr.message);
+}
+
+console.log('[Hosting Package] ✅ All hosting assets prepared successfully at:', outDir);
