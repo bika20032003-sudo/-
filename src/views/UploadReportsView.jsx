@@ -33,7 +33,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
       bgLight: '#f0fdf4',
       borderColor: '#16a34a',
       badgeText: 'يوجه تلقائياً إلى: قسم مسار الطريق وسجل الإنجاز 🛣️',
-      description: 'رفع تقرير طبقات الرصف اليومية (FDR، الأساس الحبيبي والشرشور، MCO، الأسفلت) والمحطات بالمتر الطولي والمربع',
+      description: 'رفع تقرير طبقات الرصف اليومية (FDR، الأساس الحبيبي، MCO، الأسفلت) والمحطات بالمتر الطولي والمربع',
       defaultLocation: 'مسار المرحلة الأولى'
     },
     {

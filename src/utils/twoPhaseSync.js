@@ -215,7 +215,7 @@ export function calculateTwoPhaseRoadMetrics(report) {
   const fdrSecA = Math.min(100, parseFloat(((fdrP1 / 226083) * 100).toFixed(1)));
   const fdrSecB = parseFloat(((fdrP2 / 133917) * 100).toFixed(1));
 
-  // 2. Aggregate Base (index 4: طبقة أساس حبيبي والشرشور)
+  // 2. Aggregate Base (index 4: طبقة أساس حبيبي)
   const aggP1 = getP1Total(4, 226083);
   const aggP2 = getP2Total(4, 10410);
   const aggTotal = aggP1 + aggP2;
@@ -268,10 +268,10 @@ export function calculateTwoPhaseRoadMetrics(report) {
     remainingKm,
     totalTodayMeters: todaySum,
     layers: [
-      { name: 'إعادة التدوير (FDR)', meters: fdrTotal, percentage: fdrPct, color: '#2563eb', sectorA: fdrSecA, sectorB: fdrSecB },
-      { name: 'الأساس الحبيبي (الشرشور)', meters: aggTotal, percentage: aggPct, color: '#16a34a', sectorA: aggSecA, sectorB: aggSecB },
-      { name: 'رش التشريب (MCO)', meters: mcoTotal, percentage: mcoPct, color: '#ea580c', sectorA: mcoSecA, sectorB: mcoSecB },
-      { name: 'الاسفلت المحسن', meters: asphTotal, percentage: asphPct, color: '#7c3aed', sectorA: asphSecA, sectorB: asphSecB }
+      { name: 'إعادة التدوير (FDR)', meters: fdrTotal, percentage: fdrPct, color: '#2563eb', phase1: fdrSecA, phase2: fdrSecB, sectorA: fdrSecA, sectorB: fdrSecB },
+      { name: 'طبقة الأساس الحبيبي', meters: aggTotal, percentage: aggPct, color: '#16a34a', phase1: aggSecA, phase2: aggSecB, sectorA: aggSecA, sectorB: aggSecB },
+      { name: 'رش التشريب (MCO)', meters: mcoTotal, percentage: mcoPct, color: '#ea580c', phase1: mcoSecA, phase2: mcoSecB, sectorA: mcoSecA, sectorB: mcoSecB },
+      { name: 'الاسفلت المحسن', meters: asphTotal, percentage: asphPct, color: '#7c3aed', phase1: asphSecA, phase2: asphSecB, sectorA: asphSecA, sectorB: asphSecB }
     ],
     kpis: {
       fdr: { meters: fdrTotal, percentage: fdrPct },

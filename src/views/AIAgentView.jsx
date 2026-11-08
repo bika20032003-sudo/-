@@ -23,10 +23,10 @@ import {
 } from '../utils/aiAgentEngine.js';
 
 const OFFICIAL_SUPERVISORS = [
-  { username: 'abrikaw', name: 'م. الصالحين بريكاو', role: 'مشرف قطاع أ (المرحلة الأولى)' },
+  { username: 'abrikaw', name: 'م. الصالحين بريكاو', role: 'مهندس مشرف - المرحلة الأولى' },
   { username: 'saleh_quality', name: 'م. صالح بن يحي', role: 'مهندس ضبط الجودة والمختبر' },
-  { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مشرف قطاع ب (المرحلة الثانية)' },
-  { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مشرف محطة الخلط والموقع' },
+  { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف - المرحلة الثانية' },
+  { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس إشراف ميداني' },
   { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
   { username: 'all', name: 'كافة مهندسي جهاز الإشراف (تعميم)', role: 'جهاز الإشراف والمتابعة' }
 ];

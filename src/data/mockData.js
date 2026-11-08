@@ -1,13 +1,12 @@
 // بيانات المشروع التشغيلية - جهاز تنفيذ مشروعات المواصلات
-// مشروع صيانة طريق أوباري - غات (226.28 كم) والكسارات والوقود والمعدات
+// مشروع صيانة وتطوير طريق أوباري - غات (360 كم) والوقود والمعدات
 
 export const initialDailySummary = {
-  workingEquipment: { total: 0, sectorA: 0, sectorB: 0, max: 0 },
-  stoppedEquipment: { total: 0, sectorA: 0, sectorB: 0 },
-  operatingHours: { total: 0, sectorA: 0, sectorB: 0, change: '0%' },
-  solarConsumption: { total: 0, sectorA: 0, sectorB: 0, change: '0%' },
-  totalProduction: { total: 0, sectorA: 0, sectorB: 0, change: '0%' },
-  sharshoor: { total: 0, sectorA: 0, sectorB: 0 }
+  workingEquipment: { total: 0, phase1: 0, phase2: 0, max: 0 },
+  stoppedEquipment: { total: 0, phase1: 0, phase2: 0 },
+  operatingHours: { total: 0, phase1: 0, phase2: 0, change: '0%' },
+  fuelConsumption: { total: 0, phase1: 0, phase2: 0, change: '0%' },
+  totalProduction: { total: 0, phase1: 0, phase2: 0, change: '0%' }
 };
 
 export const solarTrend7Days = [];
@@ -18,7 +17,7 @@ export const initialAlerts = [
   {
     id: 'ALT-101',
     title: 'انخفاض مخزون الديزل في خزان 107 (المرحلة الأولى)',
-    message: 'الرصيد المتبقي في خزان 107 يبلغ 15,200 لتر. معدل الاستهلاك الميداني اليومي للآليات يستوجب طلب وتوريد شحنة سولار جديدة خلال 48 ساعة.',
+    message: 'الرصيد المتبقي في خزان 107 يبلغ 15,200 لتر. معدل الاستهلاك الميداني اليومي للآليات يستوجب طلب وتوريد شحنة وقود ديزل جديدة خلال 48 ساعة.',
     type: 'warning',
     category: 'fuel',
     priority: 'high',
@@ -109,7 +108,7 @@ export const initialEquipment = [
   { id: 14, code: 'WT-03', name: 'تانك مياه ميداني 03 (رش وترطيب)', type: 'تانك مياه', category: 'شاحنات صهريج', status: 'operational', driver: 'صلاح الترهوني', location: 'مسار المرحلة الأولى', dailyHours: 8, fuelConsumptionRate: 14, notes: 'رش رطوبة دمك الأساس' },
   { id: 15, code: 'WT-04', name: 'تانك مياه ميداني 04 (رش وترطيب)', type: 'تانك مياه', category: 'شاحنات صهريج', status: 'operational', driver: 'عادل المنفي', location: 'مسار المرحلة الثانية', dailyHours: 8, fuelConsumptionRate: 14, notes: 'رش ترطيب الفرمة' },
   { id: 16, code: 'WT-05', name: 'تانك مياه ميداني 05 (صهريج تزويد)', type: 'تانك مياه', category: 'شاحنات صهريج', status: 'operational', driver: 'بشير الصادق', location: 'مسار المرحلة الثانية', dailyHours: 8, fuelConsumptionRate: 14, notes: 'تزويد ماكينات FDR' },
-  { id: 17, code: 'WT-06', name: 'تانك مياه ميداني 06 (خدمي)', type: 'تانك مياه', category: 'شاحنات صهريج', status: 'operational', driver: 'سعد الحاسي', location: 'قطاع الكسارات والخلط', dailyHours: 8, fuelConsumptionRate: 14, notes: 'تزويد ورش المياه بالموقع' },
+  { id: 17, code: 'WT-06', name: 'تانك مياه ميداني 06 (خدمي)', type: 'تانك مياه', category: 'شاحنات صهريج', status: 'operational', driver: 'سعد الحاسي', location: 'محطة الخلط والموقع', dailyHours: 8, fuelConsumptionRate: 14, notes: 'تزويد ورش المياه بالموقع' },
   { id: 18, code: 'WT-07', name: 'تانك مياه ميداني 07 (احتياطي ميداني)', type: 'تانك مياه', category: 'شاحنات صهريج', status: 'operational', driver: 'ميلاد المجبري', location: 'المستودع الرئيسي', dailyHours: 8, fuelConsumptionRate: 14, notes: 'جاهزية دعم فوري للمسار' },
   // 6. لودر (1 لودر)
   { id: 19, code: 'LDR-01', name: 'لودر كوماتسو WA380 (تشوين ومناولة)', type: 'لودر', category: 'معدات ثقيلة', status: 'operational', driver: 'عمر الدرسي', location: 'موقع الفرمة والتشوين', dailyHours: 8, fuelConsumptionRate: 24, notes: 'مناولة الركام ومواد الفرمة' },

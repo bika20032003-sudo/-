@@ -6,6 +6,11 @@
  * ==============================================================================
  * High-performance, atomic JSON backend providing real-time data persistence,
  * cross-device synchronization, and zero-configuration cPanel hosting support.
+ * 
+ * Project Structure:
+ * - Phase 1: المرحلة الأولى (000+00 إلى 083+226 - 226.08 كم)
+ * - Phase 2: المرحلة الثانية (083+226 إلى 000+360 - 133.92 كم)
+ * - Operations: Road Progress (أعمال الطريق), Equipment (الآليات والمعدات), Fuel (الوقود والديزل)
  */
 
 // 1. Cross-Origin Resource Sharing (CORS) & Content Headers
@@ -38,9 +43,7 @@ function get_db() {
             'reports' => [],
             'messages' => [],
             'equipment' => [],
-            'crushers' => [],
             'fuel' => [],
-            'sharshoor' => [],
             'alerts' => [],
             'plans' => [],
             'issues' => [],
@@ -146,12 +149,11 @@ if ($resource === 'dashboard') {
     $db = get_db();
     $reports = $db['reports'] ?? [];
     $equipment = $db['equipment'] ?? [];
-    $crushers = $db['crushers'] ?? [];
     $fuelList = $db['fuel'] ?? [];
     $twoPhase = $db['latestTwoPhaseReport'] ?? null;
 
     if ($subId === 'summary' || $subId === '') {
-        // Compute Dynamic Metrics
+        // Equipment counts
         $eqStopped = 0;
         $eqActive = 0;
         foreach ($equipment as $eq) {
@@ -165,8 +167,8 @@ if ($resource === 'dashboard') {
         $eqTotal = count($equipment) > 0 ? ($eqActive + $eqStopped) : 25;
         if ($eqActive === 0 && count($equipment) === 0) $eqActive = 25;
 
-        // Fuel totals from reports
-        $totalSolar = 0;
+        // Fuel totals from reports and fuel logs
+        $totalFuelDispatched = 0;
         $totalFuelRec = 0;
         $totalFuelRem = 0;
         foreach ($reports as $r) {
@@ -174,21 +176,13 @@ if ($resource === 'dashboard') {
                 $disp = (float)str_replace(',', '', $r['totalDispatchedLiters'] ?? $r['fuelAmount'] ?? 0);
                 $rec = (float)str_replace(',', '', $r['totalReceivedLiters'] ?? 0);
                 $rem = (float)str_replace(',', '', $r['totalRemainingLiters'] ?? 0);
-                $totalSolar += $disp;
+                $totalFuelDispatched += $disp;
                 $totalFuelRec += $rec;
                 if ($totalFuelRem === 0 && $rem > 0) $totalFuelRem = $rem;
             }
         }
-
-        // Production totals from crushers
-        $totalProd = 0;
-        foreach ($crushers as $c) {
-            $totalProd += (float)($c['dailyProductionTons'] ?? $c['productionToday'] ?? 0);
-        }
-        foreach ($reports as $r) {
-            if (!empty($r['productionAmount'])) {
-                $totalProd += (float)$r['productionAmount'];
-            }
+        foreach ($fuelList as $f) {
+            $totalFuelDispatched += (float)($f['liters'] ?? 0);
         }
 
         // Sort recent reports descending
@@ -198,7 +192,7 @@ if ($resource === 'dashboard') {
             return $tb <=> $ta;
         });
 
-        // Calculate Road Progress
+        // Calculate Two-Phase Road Progress
         $roadMetersToday = 0;
         $roadMetersTotal = 237390;
         if ($twoPhase && !empty($twoPhase['twoPhaseTotals'])) {
@@ -206,29 +200,33 @@ if ($resource === 'dashboard') {
             $roadMetersTotal = (float)($twoPhase['twoPhaseTotals']['totalCumulativeMeters'] ?? 237390);
         }
 
+        $phase1Fuel = round($totalFuelDispatched * 0.6);
+        $phase2Fuel = round($totalFuelDispatched * 0.4);
+
         echo json_encode([
             'success' => true,
-            'totalProduction' => $totalProd,
-            'totalFuel' => $totalSolar,
-            'totalSolar' => $totalSolar,
+            'totalFuel' => $totalFuelDispatched,
+            'totalSolar' => $totalFuelDispatched, // backward compatibility alias
             'totalFuelReceived' => $totalFuelRec,
             'totalFuelRemaining' => $totalFuelRem,
-            'totalSharshoor' => 21350,
             'totalEquipment' => $eqTotal,
             'activeEquipment' => $eqActive,
             'stoppedEquipment' => $eqStopped,
             'operatingHours' => 192,
-            'sectorAFuel' => round($totalSolar * 0.6),
-            'sectorBFuel' => round($totalSolar * 0.4),
-            'sectorAProd' => round($totalProd * 0.55),
-            'sectorBProd' => round($totalProd * 0.45),
+            'phase1Fuel' => $phase1Fuel,
+            'phase2Fuel' => $phase2Fuel,
+            'sectorAFuel' => $phase1Fuel, // backward compatibility alias
+            'sectorBFuel' => $phase2Fuel, // backward compatibility alias
             'recentAlerts' => array_slice($db['alerts'] ?? [], 0, 5),
             'recentReports' => array_slice($reports, 0, 10),
             'roadProgress' => [
                 'totalLength' => 360,
                 'completedLength' => round($roadMetersTotal / 1000, 2),
                 'percentage' => round(($roadMetersTotal / 360000) * 100, 2),
-                'todayMeters' => $roadMetersToday
+                'todayMeters' => $roadMetersToday,
+                'phase1CompletedKm' => 226.08,
+                'phase1Percentage' => 100.0,
+                'phase2Percentage' => round((($roadMetersTotal - 226083) / 133917) * 100, 1)
             ]
         ]);
         exit;
@@ -285,8 +283,8 @@ if ($resource === 'reports') {
             $body['id'] = round(microtime(true) * 1000);
         }
         if (empty($body['reportNumber'])) {
-            $sec = (isset($body['sector']) && mb_stripos($body['sector'], 'الثانية') !== false) ? 'SEC-B' : 'SEC-A';
-            $body['reportNumber'] = 'REP-' . $sec . '-' . substr(time(), -4);
+            $phaseTag = (isset($body['sector']) && mb_stripos($body['sector'], 'الثانية') !== false) ? 'P2' : 'P1';
+            $body['reportNumber'] = 'REP-' . $phaseTag . '-' . substr(time(), -4);
         }
         if (empty($body['createdAt'])) {
             $body['createdAt'] = gmdate('Y-m-d\TH:i:s\Z');
@@ -301,7 +299,7 @@ if ($resource === 'reports') {
         array_unshift($filtered, $body);
         $db['reports'] = array_values($filtered);
 
-        // If Two Phase report, also update latestTwoPhaseReport
+        // If Two Phase report, update latestTwoPhaseReport
         if (!empty($body['isTwoPhaseProgressReport']) || ($body['reportType'] ?? '') === 'تقرير إنجاز المرحلتين') {
             $db['latestTwoPhaseReport'] = $body;
         }
@@ -359,7 +357,6 @@ if ($resource === 'reports') {
 
     // Delete Report (DELETE /api/reports/:id)
     if ($method === 'DELETE' && !empty($subId)) {
-        $initialCount = count($db['reports']);
         $db['reports'] = array_values(array_filter($db['reports'], function($r) use ($subId) {
             return (string)($r['id'] ?? '') !== (string)$subId && (string)($r['reportNumber'] ?? '') !== (string)$subId;
         }));
@@ -562,7 +559,7 @@ if ($resource === 'messages') {
 }
 
 // -------------------------------------------------------------
-// [EQUIPMENT, CRUSHERS, SHARSHOOR, ALERTS, USERS]
+// [EQUIPMENT, ALERTS, USERS]
 // -------------------------------------------------------------
 if ($resource === 'equipment') {
     $db = get_db();
@@ -579,29 +576,6 @@ if ($resource === 'equipment') {
         }
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم حفظ بيانات الآليات']);
-        exit;
-    }
-}
-
-if ($resource === 'crushers') {
-    $db = get_db();
-    if ($method === 'GET') {
-        echo json_encode(['success' => true, 'crushers' => $db['crushers'] ?? []]);
-        exit;
-    }
-    if ($method === 'POST') {
-        $body = get_json_input();
-        $db['crushers'] = $body;
-        save_db($db);
-        echo json_encode(['success' => true, 'message' => 'تم تحديث الكسارات']);
-        exit;
-    }
-}
-
-if ($resource === 'sharshoor') {
-    $db = get_db();
-    if ($method === 'GET') {
-        echo json_encode(['success' => true, 'sharshoor' => $db['sharshoor'] ?? []]);
         exit;
     }
 }

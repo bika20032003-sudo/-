@@ -11,11 +11,11 @@ import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { CreateReportModal } from '../components/CreateReportModal';
 
 export const SectorDashboardView = ({ currentUser }) => {
-  const isSectorA = (currentUser?.sector || '').includes('A') || (currentUser?.sector || '').includes('الأولى') || (currentUser?.username || '').includes('a');
-  const sectorCode = isSectorA ? 'A' : 'B';
+  const isSectorA = (currentUser?.sector || '').includes('الأولى') || (currentUser?.username || '').includes('alarabi') || !(currentUser?.sector || '').includes('الثانية');
+  const sectorCode = isSectorA ? '1' : '2';
   const sectorName = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
   const sectorArabic = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
-  const totalLengthKm = isSectorA ? '115.36' : '110.92';
+  const totalLengthKm = isSectorA ? '226.08' : '133.92';
 
   // Sector Overview Summary Data
   const [sectorData, setSectorData] = useState(null);
@@ -504,10 +504,10 @@ export const SectorDashboardView = ({ currentUser }) => {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {(sectorData?.layers || [
-            { name: 'طبقة إعادة التدوير (FDR)', meters: isSectorA ? 112243 : 107960, percentage: 97.3, color: '#2563eb' },
-            { name: 'طبقة الأساس الحبيبي (الشرشور)', meters: isSectorA ? 109373 : 106110, percentage: 94.8, color: '#16a34a' },
-            { name: 'رش طبقة التشريب (MCO)', meters: isSectorA ? 109373 : 104930, percentage: 94.8, color: '#ea580c' },
-            { name: 'طبقة الاسفلت المحسن', meters: isSectorA ? 107363 : 102560, percentage: 93.1, color: '#7c3aed' }
+            { name: 'طبقة إعادة التدوير (FDR)', meters: isSectorA ? 226083 : 19300, percentage: isSectorA ? 100 : 14.4, color: '#2563eb' },
+            { name: 'طبقة الأساس الحبيبي', meters: isSectorA ? 226083 : 12630, percentage: isSectorA ? 100 : 9.4, color: '#16a34a' },
+            { name: 'رش طبقة التشريب (MCO)', meters: isSectorA ? 226083 : 12520, percentage: isSectorA ? 100 : 9.3, color: '#ea580c' },
+            { name: 'طبقة الاسفلت المحسن', meters: isSectorA ? 226083 : 10290, percentage: isSectorA ? 100 : 7.7, color: '#7c3aed' }
           ]).map((layer, idx) => (
             <div key={idx} style={{
               background: '#f8fafc',
@@ -602,8 +602,8 @@ export const SectorDashboardView = ({ currentUser }) => {
               >
                 <option value="تقرير يومي شامل">تقرير يومي شامل لكافة الأعمال</option>
                 <option value="تقرير تقدم أعمال الرصف">تقرير تقدم أعمال الرصف والطبقات</option>
-                <option value="تقرير تشغيل وإنتاج الكسارة">تقرير تشغيل وإنتاج الكسارة والشرشور</option>
-                <option value="تقرير تزويد واستهلاك الوقود">تقرير تزويد واستهلاك الديزل</option>
+                <option value="تقرير أعمال طبقة الأساس الحبيبي">تقرير أعمال طبقة الأساس الحبيبي</option>
+                <option value="تقرير تزويد واستهلاك الوقود">تقرير تزويد واستهلاك الوقود (ديزل)</option>
                 <option value="تقرير حركة وتشغيل المعدات">تقرير تشغيل وصيانة أسطول المعدات</option>
               </select>
             </div>
@@ -866,9 +866,9 @@ export const SectorDashboardView = ({ currentUser }) => {
                   <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>رقم التقرير</th>
                   <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>التاريخ</th>
                   <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>بيان ونوع التقرير</th>
-                  <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>إنتاج الكسارة</th>
+                  <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>إنجاز الطريق (م.ط)</th>
                   <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>الوثيقة المرفقة</th>
-                  <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>حالة الاعتماد لدى مدير القطاعات</th>
+                  <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>حالة الاعتماد لدى جهاز الإشراف</th>
                   <th style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>الإجراءات</th>
                 </tr>
               </thead>
@@ -893,7 +893,7 @@ export const SectorDashboardView = ({ currentUser }) => {
                       </td>
                       <td style={{ padding: '0.85rem 1rem' }}>
                         <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#2563eb' }}>
-                          {r.productionAmount ? `${r.productionAmount.toLocaleString()} طن` : '-'}
+                          {r.roadMeters || r.todayMeters ? `${Number(r.roadMeters || r.todayMeters).toLocaleString()} م.ط` : (r.productionAmount ? `${Number(r.productionAmount).toLocaleString()} م.ط` : '-')}
                         </span>
                       </td>
                       <td style={{ padding: '0.85rem 1rem' }}>
@@ -1033,17 +1033,17 @@ export const SectorDashboardView = ({ currentUser }) => {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>إنتاج الكسارة:</span>
-                <span style={{ fontWeight: 800, color: '#2563eb' }}>{viewModalReport.productionAmount || 0} طن</span>
+                <span style={{ color: '#64748b' }}>إنجاز أعمال الطريق:</span>
+                <span style={{ fontWeight: 800, color: '#2563eb' }}>{viewModalReport.roadMeters || viewModalReport.todayMeters || viewModalReport.productionAmount || 0} م.ط</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>حالة الاعتماد لدى مدير القطاعات:</span>
+                <span style={{ color: '#64748b' }}>حالة الاعتماد لدى جهاز الإشراف:</span>
                 <span style={{
                   fontWeight: 900,
                   color: viewModalReport.status === 'approved' ? '#16a34a' : viewModalReport.status === 'rejected' ? '#dc2626' : '#d97706'
                 }}>
-                  {viewModalReport.status === 'approved' ? 'معتمد رسمياً ✅' : viewModalReport.status === 'rejected' ? 'مطلوب تعديل ✏️' : 'قيد مراجعة واعتماد مدير القطاعات ⏳'}
+                  {viewModalReport.status === 'approved' ? 'معتمد رسمياً ✅' : viewModalReport.status === 'rejected' ? 'مطلوب تعديل ✏️' : 'قيد المراجعة والاعتماد لدى جهاز الإشراف ⏳'}
                 </span>
               </div>
 

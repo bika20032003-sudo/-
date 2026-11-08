@@ -199,7 +199,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
               </span>
             </div>
             <p style={{ fontSize: '0.84rem', color: '#64748b', marginTop: '0.2rem' }}>
-              المتابعة اليومية الدقيقة لطبقات الرصف وإعادة التدوير والأسفلت والشرشور (الأساس التشغيلي للمنظومة)
+              المتابعة اليومية الدقيقة لطبقات الرصف وإعادة التدوير والأساس الحبيبي والأسفلت بالمرحلتين الأولى والثانية
             </p>
           </div>
         </div>
@@ -296,7 +296,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
         {/* Card 2: Aggregate Base */}
         <div className="dashboard-white-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a' }}>2. الأساس الحبيبي (الشرشور)</span>
+            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a' }}>2. طبقة الأساس الحبيبي</span>
             <span className="stock-pill" style={{ fontSize: '0.78rem', color: '#16a34a' }}>{aggStats.percentage}%</span>
           </div>
           <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#16a34a', marginBottom: '0.4rem' }}>

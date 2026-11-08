@@ -33,7 +33,7 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
     { id: 5, name: 'هراس حافر غنم دك عميق (Hamm 3411)', code: 'ROL-01', operator: 'محمد الطاهر', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '1,850', fuelLevel: '70%', notes: 'دك أولي لطبقة الفرمة والأساس' },
     { id: 6, name: 'هراس تربة ناعم (Bomag BW213)', code: 'ROL-02', operator: 'إبراهيم غيث', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '2,100', fuelLevel: '85%', notes: 'دمك وتثبيت نهائي للسطح' },
     { id: 7, name: 'شاحنة صهريج مياه Mercedes (30 طن)', code: 'WTR-01', operator: 'فرج المقرحي', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '4,210', fuelLevel: '95%', notes: 'رش وترطيب وتغذية ماكينة FDR' },
-    { id: 8, name: 'لودر تشوين ومناولة (CAT 950)', code: 'LDR-01', operator: 'يوسف العريبي', sector: 'الكسارة موقع 107', status: 'operational', meterHours: '3,150', fuelLevel: '65%', notes: 'مناولة الركام وتشوين مواد الأساس' },
+    { id: 8, name: 'لودر تشوين ومناولة (CAT 950)', code: 'LDR-01', operator: 'يوسف العريبي', sector: 'المرحلة الأولى (كم 107)', status: 'operational', meterHours: '3,150', fuelLevel: '65%', notes: 'مناولة الركام وتشوين مواد الأساس' },
     { id: 9, name: 'شاحنة قلاب نقل ركام (Mercedes Actros)', code: 'TRK-01', operator: 'جمعة السنوسي', sector: 'المرحلة الأولى (كم 236)', status: 'operational', meterHours: '5,120', fuelLevel: '80%', notes: 'نقل وتوزيع السن والركام الميداني' },
     { id: 10, name: 'ماسينزا رش أسفلت وتوزيع MC0', code: 'MSN-01', operator: 'رمضان الفيتوري', sector: 'المرحلة الأولى (كم 236)', status: 'maintenance', meterHours: '1,430', fuelLevel: '50%', notes: 'صيانة دورية للمضخة ورؤوس الرش' }
   ]);

@@ -49,10 +49,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             totalExecutedKm: 237.39,
             remainingKm: 122.61,
             layers: [
-                { name: 'إعادة التدوير (FDR)', meters: 242323, percentage: 67.3, color: '#2563eb', sectorA: 100.0, sectorB: 12.1 },
-                { name: 'الأساس الحبيبي (الشرشور)', meters: 236493, percentage: 65.7, color: '#16a34a', sectorA: 100.0, sectorB: 7.8 },
-                { name: 'رش التشريب (MCO)', meters: 236493, percentage: 65.7, color: '#ea580c', sectorA: 100.0, sectorB: 7.8 },
-                { name: 'الاسفلت المحسن', meters: 234243, percentage: 65.1, color: '#7c3aed', sectorA: 100.0, sectorB: 6.1 }
+                { name: 'إعادة التدوير (FDR)', meters: 242323, percentage: 67.3, color: '#2563eb', phase1: 100.0, phase2: 12.1 },
+                { name: 'طبقة الأساس الحبيبي', meters: 236493, percentage: 65.7, color: '#16a34a', phase1: 100.0, phase2: 7.8 },
+                { name: 'رش التشريب (MCO)', meters: 236493, percentage: 65.7, color: '#ea580c', phase1: 100.0, phase2: 7.8 },
+                { name: 'الاسفلت المحسن', meters: 234243, percentage: 65.1, color: '#7c3aed', phase1: 100.0, phase2: 6.1 }
             ]
         },
         // Weekly Trend Data for Charting (Starts at 0 until reports are logged)
@@ -241,10 +241,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     totalTodayMeters: todayM,
                     latestTwoPhaseReport: twoPhaseRep || roadRes?.latestTwoPhaseReport || null,
                     layers: [
-                        { name: 'إعادة التدوير (FDR)', meters: fdrM, percentage: fdrP, color: '#2563eb', sectorA: 100.0, sectorB: 12.1 },
-                        { name: 'الأساس الحبيبي (الشرشور)', meters: aggM, percentage: aggP, color: '#16a34a', sectorA: 100.0, sectorB: 7.8 },
-                        { name: 'رش التشريب (MCO)', meters: mcoM, percentage: mcoP, color: '#ea580c', sectorA: 100.0, sectorB: 7.8 },
-                        { name: 'الاسفلت المحسن', meters: asphM, percentage: asphP, color: '#7c3aed', sectorA: 100.0, sectorB: 6.1 }
+                        { name: 'إعادة التدوير (FDR)', meters: fdrM, percentage: fdrP, color: '#2563eb', phase1: 100.0, phase2: 12.1 },
+                        { name: 'طبقة الأساس الحبيبي', meters: aggM, percentage: aggP, color: '#16a34a', phase1: 100.0, phase2: 7.8 },
+                        { name: 'رش التشريب (MCO)', meters: mcoM, percentage: mcoP, color: '#ea580c', phase1: 100.0, phase2: 7.8 },
+                        { name: 'الاسفلت المحسن', meters: asphM, percentage: asphP, color: '#7c3aed', phase1: 100.0, phase2: 6.1 }
                     ]
                 },
                 weeklyTrends: [

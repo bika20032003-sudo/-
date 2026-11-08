@@ -258,9 +258,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       'م': idx + 1,
       'رقم التقرير': r.reportNumber || `#REP-${r.id}`,
       'التاريخ': r.date ? r.date.split('T')[0] : '',
-      'المرحلة': (r.sector || '').includes('B') || (r.sector || '').includes('الثانية') ? 'المرحلة الثانية' : 'المرحلة الأولى',
+      'المرحلة': (r.sector || '').includes('الثانية') ? 'المرحلة الثانية' : 'المرحلة الأولى',
       'نوع التقرير': r.reportType || 'شامل',
-      'إنتاج الكسارة (طن)': Number(r.productionAmount) || 0,
       'أعمال الرصف (م.ط)': Number(r.roadMeters || r.salesAmount) || 0,
       'الوقود المنصرف (لتر)': Number(r.fuelAmount) || 0,
       'المشرف المعد': r.uploadedBy || '',
@@ -457,8 +456,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
           </div>
         </div>
 
-        {/* إنتاج الكسارات الموثق (مخفي بناء على تعليمات جهاز الإشراف) */}
-
         <div style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
           <div style={{ fontSize: '0.78rem', color: '#9a3412', fontWeight: 800 }}>الرصف المنجز بالأرشيف</div>
           <div style={{ fontSize: '1.7rem', fontWeight: 900, color: '#ea580c', marginTop: '0.2rem' }}>
@@ -485,7 +482,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
           <Search size={18} color="#94a3b8" style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="بحث برقم التقرير، المشرف، الكسارة، أو الملاحظات..."
+            placeholder="بحث برقم التقرير، المشرف، أو الملاحظات..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -593,7 +590,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>التاريخ</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الموقع والجهة المنفذة</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>بيان ونوع التقرير</th>
-                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>إنتاج الكسارة</th>
+                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الوقود (لتر)</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>أعمال الرصف</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>حالة الاعتماد</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569', textAlign: 'center' }}>الإجراءات والطباعة</th>
@@ -649,10 +646,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                         </div>
                       </td>
 
-                      {/* Crusher Production */}
+                      {/* Fuel Amount (Liters) */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.84rem', color: '#2563eb' }}>
-                          {r.productionAmount ? `${Number(r.productionAmount).toLocaleString()} طن` : '—'}
+                        <span style={{ fontWeight: 800, fontSize: '0.84rem', color: '#16a34a' }}>
+                          {r.fuelAmount ? `${Number(r.fuelAmount).toLocaleString()} لتر` : '—'}
                         </span>
                       </td>
 
@@ -838,10 +835,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                 </>
               ) : (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>إنتاج الكسارة:</span>
-                    <span style={{ fontWeight: 800, color: '#2563eb' }}>{viewDetailsReport.productionAmount || 0} طن</span>
-                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                     <span style={{ color: '#64748b' }}>أعمال الرصف المنجزة:</span>
                     <span style={{ fontWeight: 800, color: '#ea580c' }}>{viewDetailsReport.roadMeters || viewDetailsReport.salesAmount || 0} م.ط</span>
