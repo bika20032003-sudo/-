@@ -22,3 +22,4 @@ deployment:
     # 5. إرسال إشارة إعادة تشغيل لتطبيق Node.js تلقائياً عبر Phusion Passenger في cPanel
     - /bin/mkdir -p tmp
     - /bin/touch tmp/restart.txt
+
