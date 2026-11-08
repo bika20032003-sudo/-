@@ -77,7 +77,7 @@ export const calculateExecutiveTotals = (contractValRaw, basicItems = [], additi
   return {
     contractVal,
     basicExecutedSum: parseFloat(basicExecutedSum.toFixed(2)),
-    additionalExecutedSum: 0,
+    additionalExecutedSum: parseFloat(additionalExecutedSum.toFixed(2)),
     grandExecutedSum: parseFloat(grandExecutedSum.toFixed(2)),
     grandRemainingVal: parseFloat(grandRemainingVal.toFixed(2)),
     basicPercentage: parseFloat(basicPercentage.toFixed(2)),

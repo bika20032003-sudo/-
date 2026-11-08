@@ -96,6 +96,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                         const parsedExec = JSON.parse(rawExec);
                         const cVal = Number(parsedExec.contractValue) || 897665675.03;
                         const bSum = (parsedExec.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
+                        const aSum = (parsedExec.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
                         const totalExec = bSum; // البنود الأساسية فقط
                         if (cVal > 0) {
                             execBasicP = parseFloat(((bSum / cVal) * 100).toFixed(2));

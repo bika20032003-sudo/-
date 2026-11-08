@@ -47,6 +47,7 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
   
   // البنود الأساسية فقط هي التي تُجمع وتُحسب طبقاً لتوجيهات جهاز الإشراف
   const basicExecutedSum = (executiveData.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
+  const additionalExecutedSum = (executiveData.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
   const totalExecutedVal = basicExecutedSum;
   const totalRemainingVal = Math.max(0, contractVal - basicExecutedSum);
   const basicFinancialPercent = contractVal > 0 ? ((basicExecutedSum / contractVal) * 100).toFixed(2) : 0;
