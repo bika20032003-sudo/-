@@ -140,7 +140,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
     // Layer definitions with certified engineering rates
     const layerDefs = [
       { id: 'fdr', name: 'طبقة إعادة التدوير (FDR)', unit: 'م.ط', areaRate: CERTIFIED_RATES.fdr, defaultWidth: 9.0, isVolume: false },
-      { id: 'base', name: 'طبقة الأساس الحبيبي (الشرشور)', unit: 'م.ط', areaRate: 0, volumeRate: CERTIFIED_RATES.baseCourse, defaultWidth: 9.0, defaultThickness: 0.125, isVolume: true },
+      { id: 'base', name: 'طبقة الأساس الحبيبي', unit: 'م.ط', areaRate: 0, volumeRate: CERTIFIED_RATES.baseCourse, defaultWidth: 9.0, defaultThickness: 0.125, isVolume: true },
       { id: 'mco', name: 'رش طبقة التشريب (MCO)', unit: 'م.ط', areaRate: CERTIFIED_RATES.mco, defaultWidth: 9.0, isVolume: false },
       { id: 'asphalt', name: 'طبقة الأسفلت المحسن (Polymer)', unit: 'م.ط', areaRate: CERTIFIED_RATES.asphalt, defaultWidth: 9.0, isVolume: false },
       { id: 'fdr_raw', name: 'فرمة أولى بدون أسمنت (FDR)', unit: 'م.ط', areaRate: CERTIFIED_RATES.fdr, defaultWidth: 9.0, isVolume: false },

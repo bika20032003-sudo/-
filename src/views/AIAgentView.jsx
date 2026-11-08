@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Bot, Sparkles, Send, Copy, Check, Key, Plus,
-  Paperclip, FileSpreadsheet, FileText, Image as ImageIcon, X,
+  Bot, Sparkles, Send, Copy, Check, Key, Paperclip, 
+  FileSpreadsheet, FileText, Image as ImageIcon, X,
   Layers, Milestone, Fuel, AlertTriangle, Printer,
-  Award, Newspaper, HardHat, FileCheck2, ChevronLeft,
-  Clock, CheckCircle2, UserCheck, Calendar, ArrowRight,
-  UploadCloud, Mail, Filter, AlertCircle, Trash2
+  Award, Newspaper, HardHat, CheckCircle2, Calendar,
+  ArrowRight, Mail, Search, RefreshCw, ExternalLink,
+  ChevronLeft, Eye, MessageSquare, Clock
 } from 'lucide-react';
 import { 
   processLocalQuery, 
@@ -14,26 +14,12 @@ import {
   getDefaultApiKey, 
   parseUploadedFile,
   fmt,
-  generateExecutiveBriefingArticle,
-  getSupervisoryTasks,
-  saveSupervisoryTask,
-  updateSupervisoryTaskStatus,
-  deleteSupervisoryTask,
-  generateSupervisoryTasksArticle
+  generateExecutiveBriefingArticle
 } from '../utils/aiAgentEngine.js';
 
-const OFFICIAL_SUPERVISORS = [
-  { username: 'abrikaw', name: 'م. الصالحين بريكاو', role: 'مهندس مشرف - المرحلة الأولى' },
-  { username: 'saleh_quality', name: 'م. صالح بن يحي', role: 'مهندس ضبط الجودة والمختبر' },
-  { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف - المرحلة الثانية' },
-  { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس إشراف ميداني' },
-  { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-  { username: 'all', name: 'كافة مهندسي جهاز الإشراف (تعميم)', role: 'جهاز الإشراف والمتابعة' }
-];
-
 export const AIAgentView = ({ currentUser, onNavigateTab }) => {
-  // Navigation tabs within Assistant view
-  const [activeTab, setActiveTab] = useState('manager'); // 'manager' | 'chat' | 'files'
+  // Navigation tabs: 'chat' (المحادثة والاستعلام التنفيذي) | 'feed' (سجل المنظومة والأرشيف الحي)
+  const [activeTab, setActiveTab] = useState('chat');
 
   // Chat states
   const [inputMessage, setInputMessage] = useState('');
@@ -51,89 +37,60 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
   const [isParsingFile, setIsParsingFile] = useState(false);
-
-  // Dedicated file analysis center state
-  const [uploadedFilesCenter, setUploadedFilesCenter] = useState([]);
-  const [selectedFileForAnalysis, setSelectedFileForAnalysis] = useState(null);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [isAnalyzingFileCenter, setIsAnalyzingFileCenter] = useState(false);
-
-  // Project Manager Suite states
-  const [executiveArticle, setExecutiveArticle] = useState(() => generateExecutiveBriefingArticle());
-  const [articleCopied, setArticleCopied] = useState(false);
-  const [supervisoryTasks, setSupervisoryTasks] = useState(() => getSupervisoryTasks());
-  const [taskFilter, setTaskFilter] = useState('all'); // 'all' | 'pending' | 'completed'
-  const [taskNotice, setTaskNotice] = useState('');
-
-  // Task creation form state
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskAssignee, setTaskAssignee] = useState('abrikaw');
-  const [taskSector, setTaskSector] = useState('المرحلة الأولى (المحطة 236)');
-  const [taskPriority, setTaskPriority] = useState('urgent');
-  const [taskDueDate, setTaskDueDate] = useState(() => {
-    const d = new Date(Date.now() + 86400000 * 2);
-    return d.toISOString().split('T')[0];
-  });
-  const [taskDetails, setTaskDetails] = useState('');
+  const [liveContext, setLiveContext] = useState(() => getLiveSystemContext());
 
   const fileInputRef = useRef(null);
-  const centerFileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const liveContext = getLiveSystemContext();
 
+  // Initial welcome message
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'agent',
       time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-      title: 'مرحباً بك! أنا مساعد جهاز الإشراف والمتابعة',
-      text: `أهلاً بك يا باشمهندس **${currentUser?.name || ''}**.
-أنا **مساعد جهاز الإشراف والمتابعة** المعتمد لمشروع **صيانة وتطوير طريق أوباري - غات (360 كم)**.
+      title: 'مرحباً بك! أنا مساعد مدير المشروع',
+      text: `أهلاً بك يا باشمهندس **${currentUser?.name || 'عبدالرحمن الأنصاري'}**.
+أنا **مساعد مدير المشروع** المعتمد لمشروع **صيانة وتطوير طريق أوباري - غات (360 كم)**.
 
-أنا مربوط مباشرة بكافة قواعد بيانات المنظومة والوثائق المعتمدة (29/10/2026): الموقف المالي (71.11%)، حاسبة المحطات، التتابع الإنشائي، أرصدة الوقود، وأسطول الآليات.
+أنا مربوط لحظياً ومباشرة بكافة قواعد بيانات المنظومة:
+• **أرشيف التقارير المعتمدة:** قراءة وبحث فوري في كافة تقارير الطريق والوقود والمرحلتين.
+• **البريد والمراسلات:** متابعة التوجيهات، المراسلات الواردة، والإحالات الرسمية.
+• **الموقف التنفيذي والمالي:** متابعة نسبة الإنجاز (%71.11)، أطوال الرصف، وجاهزية التتابع الإنشائي.
+• **إدارة الوقود والآليات:** مراقبة أرصدة صهاريج نقطة 107 ونقطة 240 وجاهزية الـ 25 آلية.
 
-✨ **القدرات الإشرافية المتاحة بين يديك:**
-1. **مكتب مدير المشروع:** طلب تقرير آخر المستجدات الميدانية بضغطة زر، وتكليف ومتابعة المهام الإشرافية الميدانية.
-2. **مركز رفع وفحص الملفات:** رفع مصنفات الإكسل (XLSX)، الجداول، ومستندات الفحص لتحليلها ومطابقتها فورياً.
-3. **الاستشارات الهندسية:** استعلام مباشر وفوري عن الكميات، المحطات، أسعار البنود، وأرصدة الوقود.`,
+يمكنك الضغط على أي كبسولة استعلام سريعة أدناه، أو كتابة أي سؤال، أو إرفاق مستندات وجداول Excel لتحليلها فورياً!`,
       suggestions: [
-        '📰 مقالة المستجدات لمدير المشروع',
-        '📋 عرض المهام الإشرافية المفتوحة',
-        'ما هو الموقف التنفيذي والمالي اليوم؟',
-        'كم المتر الطولي الجاهز لطبقة الأسفلت؟',
-        'ما هي الفئات التعاقدية للبنود؟',
-        'ما هو رصيد الوقود في المواقع؟'
+        '📰 الموجز التنفيذي لمدير المشروع',
+        '📁 فحص أرشيف التقارير المعتمدة',
+        '📬 المراسلات والبريد الوارد لمدير المشروع',
+        '🛣️ موقف أعمال الطريق (المرحلة 1 و 2)',
+        '⛽ موقف أرصدة واستهلاك الوقود بالمواقع'
       ]
     }
   ]);
 
-  // Load API Key & preferences
+  // Sync live context on mount and on storage/custom events
   useEffect(() => {
-    try {
-      const defaultKey = typeof getDefaultApiKey === 'function' ? getDefaultApiKey() : '';
-      const storedKey = localStorage.getItem('gemini_api_key') || defaultKey;
-      const storedPref = localStorage.getItem('use_cloud_llm') !== 'false';
-      setApiKey(storedKey);
-      setUseCloudLLM(storedPref);
-      if (!localStorage.getItem('gemini_api_key') && defaultKey) {
-        localStorage.setItem('gemini_api_key', defaultKey);
-      }
-      if (!localStorage.getItem('use_cloud_llm')) {
-        localStorage.setItem('use_cloud_llm', 'true');
-      }
-    } catch (_) {}
-  }, []);
-
-  // Listen to supervisory tasks updates and sync in real time
-  useEffect(() => {
-    const handleTasksUpdate = () => {
-      setSupervisoryTasks(getSupervisoryTasks());
+    const refreshContext = () => {
+      setLiveContext(getLiveSystemContext());
     };
-    window.addEventListener('supervisory-tasks-updated', handleTasksUpdate);
-    window.addEventListener('storage', handleTasksUpdate);
+
+    window.addEventListener('storage', refreshContext);
+    window.addEventListener('report-saved', refreshContext);
+    window.addEventListener('report-updated', refreshContext);
+    window.addEventListener('messages-updated', refreshContext);
+    window.addEventListener('fuel-updated', refreshContext);
+    window.addEventListener('road-progress-updated', refreshContext);
+
+    const interval = setInterval(refreshContext, 6000);
     return () => {
-      window.removeEventListener('supervisory-tasks-updated', handleTasksUpdate);
-      window.removeEventListener('storage', handleTasksUpdate);
+      window.removeEventListener('storage', refreshContext);
+      window.removeEventListener('report-saved', refreshContext);
+      window.removeEventListener('report-updated', refreshContext);
+      window.removeEventListener('messages-updated', refreshContext);
+      window.removeEventListener('fuel-updated', refreshContext);
+      window.removeEventListener('road-progress-updated', refreshContext);
+      clearInterval(interval);
     };
   }, []);
 
@@ -143,14 +100,6 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading, activeTab]);
-
-  const handleSaveSettings = () => {
-    try {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
-      localStorage.setItem('use_cloud_llm', useCloudLLM ? 'true' : 'false');
-      setShowSettings(false);
-    } catch (_) {}
-  };
 
   // Handle file select in chat
   const handleChatFileSelect = async (e) => {
@@ -168,36 +117,6 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
     }
   };
 
-  // Handle file select in Dedicated Files Center
-  const handleCenterFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsAnalyzingFileCenter(true);
-    try {
-      const parsed = await parseUploadedFile(file);
-      setUploadedFilesCenter(prev => [parsed, ...prev]);
-      setSelectedFileForAnalysis(parsed);
-
-      // Instant local analysis
-      const analysis = processLocalQuery(`يرجى فحص ومطابقة هذا الملف هندسياً`, parsed);
-      setAnalysisResult(analysis);
-    } catch (err) {
-      console.error('File analysis error:', err);
-    } finally {
-      setIsAnalyzingFileCenter(false);
-      if (centerFileInputRef.current) centerFileInputRef.current.value = '';
-    }
-  };
-
-  const handleRunFileAnalysis = (fileObj, queryText) => {
-    setIsAnalyzingFileCenter(true);
-    setTimeout(() => {
-      const analysis = processLocalQuery(queryText, fileObj);
-      setAnalysisResult(analysis);
-      setIsAnalyzingFileCenter(false);
-    }, 200);
-  };
-
   // Send Chat message
   const handleSendMessage = async (textToSend, overrideFile = null) => {
     const query = (textToSend !== undefined ? textToSend : inputMessage).trim();
@@ -206,7 +125,6 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
     if (!query && !fileToProcess) return;
     if (isLoading) return;
 
-    // If currently on manager or files tab, switch to chat tab smoothly
     if (activeTab !== 'chat') {
       setActiveTab('chat');
     }
@@ -220,7 +138,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
       id: userMsgId,
       sender: 'user',
       time: currentTime,
-      text: query || (fileToProcess ? `يرجى فحص وتحليل هذا المستند المرفق (${fileToProcess.name}) بالتفصيل وتقديم تقرير هندسي لمحتوياته.` : ''),
+      text: query || (fileToProcess ? `يرجى فحص وتحليل هذا المستند المرفق (${fileToProcess.name}) بالتفصيل وتقديم تقرير تنفيذي لمحتوياته.` : ''),
       attachedFile: fileToProcess ? {
         name: fileToProcess.name,
         size: fileToProcess.size,
@@ -236,16 +154,35 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
     try {
       let agentReplyText = '';
       let replyTitle = '';
+      let actionTab = null;
+      let actionLabel = null;
       let suggestions = [];
 
       if (useCloudLLM && apiKey.trim()) {
         agentReplyText = await callGeminiCloudAgent(apiKey.trim(), userMessageObj.text, newMessages, fileToProcess);
-        replyTitle = fileToProcess ? `تقرير فحص وتحليل المستند: ${fileToProcess.name}` : (query.includes('مقالة') || query.includes('المستجدات') ? 'المقالة التقريرية لمدير المشروع (مساعد جهاز الإشراف)' : 'تحليل مساعد جهاز الإشراف');
-        suggestions = ['📰 مقالة المستجدات لمدير المشروع', '📋 عرض المهام الإشرافية المفتوحة', 'الموقف التنفيذي والمالي', 'الجاهز للأسفلت'];
+        replyTitle = fileToProcess ? `تقرير فحص وتحليل المستند: ${fileToProcess.name}` : (query.includes('موجز') || query.includes('المستجدات') || query.includes('المشروع') ? 'الموجز التنفيذي لمدير المشروع' : 'تحليل مساعد مدير المشروع');
+        
+        // Auto-assign navigation quick action if relevant
+        if (query.includes('أرشيف') || query.includes('تقرير') || query.includes('تقارير')) {
+          actionTab = 'reports-archive';
+          actionLabel = 'الانتقال إلى أرشيف التقارير والطباعة';
+        } else if (query.includes('مراسلات') || query.includes('بريد') || query.includes('رسائل') || query.includes('وارد')) {
+          actionTab = 'messages';
+          actionLabel = 'الانتقال إلى صندوق البريد والمراسلات';
+        } else if (query.includes('وقود') || query.includes('ديزل')) {
+          actionTab = 'fuel';
+          actionLabel = 'الانتقال إلى منظومة الوقود';
+        } else if (query.includes('طريق') || query.includes('أسفلت') || query.includes('fdr')) {
+          actionTab = 'road-progress';
+          actionLabel = 'الانتقال إلى متابعة إنجاز الطريق';
+        }
+        suggestions = ['📰 الموجز التنفيذي لمدير المشروع', '📁 فحص أرشيف التقارير المعتمدة', '📬 المراسلات والبريد الوارد', '⛽ موقف أرصدة الوقود بالمواقع'];
       } else {
         const localResult = processLocalQuery(userMessageObj.text, fileToProcess);
         agentReplyText = localResult.content;
         replyTitle = localResult.title;
+        actionTab = localResult.actionTab || null;
+        actionLabel = localResult.actionLabel || null;
         suggestions = localResult.quickSuggestions || [];
       }
 
@@ -257,6 +194,8 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
           time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
           title: replyTitle,
           text: agentReplyText,
+          actionTab,
+          actionLabel,
           suggestions
         }
       ]);
@@ -267,10 +206,10 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
           id: Date.now() + 1,
           sender: 'agent',
           time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-          title: 'تنبيه مساعد الإشراف',
-          text: `⚠️ **تعذر إتمام الاستعلام السحابي:**\n${err.message || 'تم تحويل الطلب تلقائياً للمحرك المدمج لمساعد الإشراف.'}`,
+          title: 'تنبيه مساعد مدير المشروع',
+          text: `⚠️ **تعذر إتمام الاستعلام السحابي:**\n${err.message || 'تم تحويل الطلب تلقائياً للمحرك المدمج لمساعد مدير المشروع.'}`,
           isError: true,
-          suggestions: ['📰 مقالة المستجدات لمدير المشروع', '📋 عرض المهام الإشرافية المفتوحة', 'الموقف التنفيذي والمالي', 'رصيد الوقود']
+          suggestions: ['📰 الموجز التنفيذي لمدير المشروع', '📁 أرشيف التقارير', '📬 المراسلات والبريد الوارد']
         }
       ]);
     } finally {
@@ -285,19 +224,21 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
   };
 
   const handleResetChat = () => {
-    if (window.confirm('هل ترغب في بدء جلسة استعلام جديدة مع مساعد جهاز الإشراف؟')) {
+    if (window.confirm('هل ترغب في بدء جلسة استعلام جديدة مع مساعد مدير المشروع؟')) {
       setMessages([
         {
           id: Date.now(),
           sender: 'agent',
           time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-          title: 'جلسة جديدة - مساعد جهاز الإشراف والمتابعة',
-          text: `أهلاً بك مجدداً يا باشمهندس **${currentUser?.name || ''}**. أنا جاهز لأي استفسارات هندسية، إعداد مقالات المستجدات، أو فحص المستندات والمهام.`,
+          title: 'جلسة جديدة - مساعد مدير المشروع',
+          text: `أهلاً بك مجدداً يا باشمهندس **${currentUser?.name || 'عبدالرحمن الأنصاري'}**. 
+أنا جاهز لأي استفسارات تنفيذية، فحص أرشيف التقارير، متابعة المراسلات، أو رصد الأعمال الميدانية.`,
           suggestions: [
-            '📰 مقالة المستجدات لمدير المشروع',
-            '📋 عرض المهام الإشرافية المفتوحة',
-            'ما هو الموقف التنفيذي والمالي اليوم؟',
-            'كم المتر الطولي الجاهز لطبقة الأسفلت؟'
+            '📰 الموجز التنفيذي لمدير المشروع',
+            '📁 فحص أرشيف التقارير المعتمدة',
+            '📬 المراسلات والبريد الوارد لمدير المشروع',
+            '🛣️ موقف أعمال الطريق (المرحلة 1 و 2)',
+            '⛽ موقف أرصدة واستهلاك الوقود بالمواقع'
           ]
         }
       ]);
@@ -305,61 +246,12 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
     }
   };
 
-  // Project Manager: Generate / Refresh Executive Briefing Article
-  const handleGenerateLatestBriefing = () => {
-    const art = generateExecutiveBriefingArticle();
-    setExecutiveArticle(art);
-    setTaskNotice('تم تحديث المقالة التقريرية لمدير المشروع بأحدث مؤشرات الميدان والقيم التعاقدية المعتمدة.');
-    setTimeout(() => setTaskNotice(''), 4000);
-  };
-
-  const handleCopyArticle = () => {
-    navigator.clipboard.writeText(executiveArticle);
-    setArticleCopied(true);
-    setTimeout(() => setArticleCopied(false), 2000);
-  };
-
-  // Project Manager: Create & Assign Task
-  const handleCreateTask = (e) => {
-    e.preventDefault();
-    if (!taskTitle.trim()) {
-      alert('يرجى كتابة عنوان المهمة الإشرافية.');
-      return;
-    }
-
-    const assignedTarget = OFFICIAL_SUPERVISORS.find(s => s.username === taskAssignee) || OFFICIAL_SUPERVISORS[0];
-
-    const newTask = saveSupervisoryTask({
-      title: taskTitle,
-      assignedToUsername: assignedTarget.username,
-      assignedToName: assignedTarget.name,
-      assignedToRole: assignedTarget.role,
-      sector: taskSector,
-      priority: taskPriority,
-      dueDate: taskDueDate,
-      details: taskDetails
-    }, currentUser);
-
-    if (newTask) {
-      setSupervisoryTasks(getSupervisoryTasks());
-      setTaskTitle('');
-      setTaskDetails('');
-      setTaskNotice(`✅ تم إصدار وتكليف المهمة بنجاح وتوجيه بريد إشرافي رسمي إلى (${assignedTarget.name}).`);
-      setTimeout(() => setTaskNotice(''), 5000);
-    }
-  };
-
-  const handleToggleTaskStatus = (taskId, currentStatus) => {
-    const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
-    updateSupervisoryTaskStatus(taskId, nextStatus);
-    setSupervisoryTasks(getSupervisoryTasks());
-  };
-
-  const handleDeleteTask = (taskId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه المهمة الإشرافية؟')) {
-      deleteSupervisoryTask(taskId);
-      setSupervisoryTasks(getSupervisoryTasks());
-    }
+  const handleSaveSettings = () => {
+    try {
+      localStorage.setItem('gemini_api_key', apiKey.trim());
+      localStorage.setItem('use_cloud_llm', useCloudLLM ? 'true' : 'false');
+      setShowSettings(false);
+    } catch (_) {}
   };
 
   // Render markdown formatting
@@ -405,7 +297,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
 
       return (
         <div key={lIdx} style={{
-          margin: '0.35rem 0',
+          margin: '0.32rem 0',
           lineHeight: '1.65',
           fontSize: trimmed.startsWith('### ') ? '1rem' : (trimmed.startsWith('## ') ? '1.08rem' : '0.92rem'),
           fontWeight: (trimmed.startsWith('### ') || trimmed.startsWith('## ')) ? 900 : 500,
@@ -437,51 +329,41 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
     });
   };
 
-  // Filtered supervisory tasks
-  const filteredTasks = supervisoryTasks.filter(t => {
-    if (taskFilter === 'pending') return t.status === 'pending';
-    if (taskFilter === 'completed') return t.status === 'completed';
-    return true;
-  });
-
-  const pendingCount = supervisoryTasks.filter(t => t.status === 'pending').length;
-  const completedCount = supervisoryTasks.filter(t => t.status === 'completed').length;
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingBottom: '3.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', paddingBottom: '3.5rem' }}>
       
-      {/* 1. Master Header Banner */}
+      {/* 1. Header Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #1e3a8a 100%)',
         color: '#ffffff',
         borderRadius: '16px',
-        padding: '1.4rem 1.8rem',
+        padding: '1.25rem 1.6rem',
         boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '1.25rem'
+        gap: '1rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+            width: '52px',
+            height: '52px',
+            borderRadius: '14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(37,99,235,0.45)',
+            boxShadow: '0 4px 14px rgba(37,99,235,0.4)',
             border: '2px solid rgba(255,255,255,0.2)'
           }}>
-            <Bot size={30} color="#ffffff" />
+            <Bot size={28} color="#ffffff" />
           </div>
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 900 }}>
-                مساعد جهاز الإشراف (AI Supervision Assistant)
+              <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900 }}>
+                مساعد مدير المشروع
               </h1>
               <span style={{
                 background: '#22c55e',
@@ -490,21 +372,21 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                 fontWeight: 900,
                 padding: '2px 8px',
                 borderRadius: '12px',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '5px'
               }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0f172a' }}></span>
-                <span>متصل بالقواعد الهندسية والتقارير الميدانية (تحديث حي ومباشر)</span>
+                <span>مربوط لحظياً بالتقارير، الأرشيف والمراسلات</span>
               </span>
             </div>
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.86rem', color: '#cbd5e1' }}>
-              المنصة الذكية المعتمدة لجهاز الإشراف على مشروع طريق أوباري - غات (360 كم): تقارير مدير المشروع، تكليف المهام، واستشارات هندسية فورية
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.84rem', color: '#cbd5e1' }}>
+              المنصة التنفيذية الذكية لسعادة مدير المشروع م. عبدالرحمن الأنصاري — مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={handleResetChat}
@@ -512,10 +394,10 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
               background: 'rgba(255, 255, 255, 0.1)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               color: '#ffffff',
-              padding: '0.55rem 0.95rem',
+              padding: '0.5rem 0.9rem',
               borderRadius: '8px',
               fontWeight: 800,
-              fontSize: '0.84rem',
+              fontSize: '0.82rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.45rem',
@@ -534,37 +416,37 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
               background: showSettings ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
               border: '1px solid rgba(255, 255, 255, 0.25)',
               color: showSettings ? '#0f172a' : '#ffffff',
-              padding: '0.55rem 1rem',
+              padding: '0.5rem 0.9rem',
               borderRadius: '8px',
               fontWeight: 800,
-              fontSize: '0.84rem',
+              fontSize: '0.82rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.45rem',
               cursor: 'pointer'
             }}
           >
-            <Key size={16} />
-            <span>إعدادات Gemini API</span>
+            <Key size={15} />
+            <span>إعدادات الذكاء الاصطناعي</span>
           </button>
         </div>
       </div>
 
-      {/* Settings Modal (Collapsible) */}
+      {/* Settings Panel (Collapsible) */}
       {showSettings && (
         <div style={{
           background: '#ffffff',
           border: '1.5px solid #bfdbfe',
           borderRadius: '14px',
-          padding: '1.25rem 1.5rem',
+          padding: '1.15rem 1.4rem',
           boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
         }}>
-          <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.98rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Key size={18} color="#2563eb" />
-            <span>إعدادات الاتصال بمحرك Google Gemini API السحابي</span>
+          <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Key size={17} color="#2563eb" />
+            <span>إعدادات الاتصال بمحرك الذكاء الاصطناعي السحابي (Google Gemini)</span>
           </h3>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', marginBottom: '1rem', lineHeight: 1.5 }}>
-            يعمل مساعد جهاز الإشراف تلقائياً وبأقصى كفاءة اعتماداً على مفتاح Gemini المعتمد المدمج والبيانات الهندسية المحدثة. يمكنك تعديل المفتاح أو التحكم بوضع الاتصال:
+          <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+            يعمل مساعد مدير المشروع تلقائياً بمفتاح الذكاء الاصطناعي المدمج المعتمد، ويدعم العمل السحابي والمحلي المباشر:
           </p>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -575,17 +457,17 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
               onChange={(e) => setApiKey(e.target.value)}
               style={{
                 flex: 1,
-                minWidth: '280px',
-                padding: '0.6rem 0.9rem',
+                minWidth: '260px',
+                padding: '0.55rem 0.85rem',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
-                fontSize: '0.86rem',
+                fontSize: '0.84rem',
                 direction: 'ltr',
                 fontFamily: 'monospace'
               }}
             />
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#334155', cursor: 'pointer', fontSize: '0.84rem' }}>
               <input
                 type="checkbox"
                 checked={useCloudLLM}
@@ -601,10 +483,10 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                 background: '#2563eb',
                 color: '#ffffff',
                 border: 'none',
-                padding: '0.6rem 1.35rem',
+                padding: '0.55rem 1.25rem',
                 borderRadius: '8px',
                 fontWeight: 900,
-                fontSize: '0.86rem',
+                fontSize: '0.84rem',
                 cursor: 'pointer'
               }}
             >
@@ -614,49 +496,219 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
         </div>
       )}
 
-      {/* 2. Top Primary Navigation Tabs (Manager Suite | Interactive Chat | File Analysis Center) */}
+      {/* 2. Executive Live Ribbon (5 Interactive Live KPI Cards) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '0.75rem'
+      }}>
+        {/* Reports Archive Card */}
+        <div 
+          onClick={() => handleSendMessage('ما هو موقف أرشيف التقارير المعتمدة بالمنظومة وأحدث التقارير المسجلة؟')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '0.85rem 1rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s, border-color 0.15s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2563eb'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          title="اضغط لاستعلام مساعد مدير المشروع عن أرشيف التقارير"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#64748b' }}>أرشيف التقارير المعتمدة</span>
+            <FileText size={17} color="#2563eb" />
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e3a8a' }}>
+            {liveContext.reportsCount} تقريراً
+          </div>
+          <span style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 800 }}>
+            {liveContext.latestReport?.dateFormatted || 'مربوط بالأرشيف الحي'}
+          </span>
+        </div>
+
+        {/* Correspondence & Messages Card */}
+        <div 
+          onClick={() => handleSendMessage('ما هي المراسلات والبريد الوارد لمدير المشروع؟')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '0.85rem 1rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s, border-color 0.15s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0284c7'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          title="اضغط لاستعلام مساعد مدير المشروع عن المراسلات والتوجيهات"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#64748b' }}>المراسلات والتوجيهات</span>
+            <Mail size={17} color="#0284c7" />
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0369a1' }}>
+            {liveContext.messagesCount} مراسلة
+          </div>
+          <span style={{ fontSize: '0.72rem', color: liveContext.unreadMessagesCount > 0 ? '#dc2626' : '#0284c7', fontWeight: 800 }}>
+            {liveContext.unreadMessagesCount > 0 ? `${liveContext.unreadMessagesCount} وارد غير مقروء` : 'البريد محدث بالكامل'}
+          </span>
+        </div>
+
+        {/* Financial & General Progress Card */}
+        <div 
+          onClick={() => handleSendMessage('ما هو الموقف التنفيذي والمالي لمشروع طريق أوباري - غات؟')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '0.85rem 1rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s, border-color 0.15s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#16a34a'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          title="اضغط لاستعلام مساعد مدير المشروع عن الموقف المالي والتنفيذي"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#64748b' }}>الإنجاز المالي والتعاقدي</span>
+            <Award size={17} color="#16a34a" />
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a' }}>
+            %{liveContext.financialProgressPct}
+          </div>
+          <span style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 800 }}>
+            {fmt(liveContext.grandExecutedSum, 0)} د.ل منجز
+          </span>
+        </div>
+
+        {/* Road Progress Card */}
+        <div 
+          onClick={() => handleSendMessage('ما هو موقف تقدم أعمال الطريق بالمرحلة الأولى والمرحلة الثانية؟')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '0.85rem 1rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s, border-color 0.15s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#ea580c'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          title="اضغط لاستعلام مساعد مدير المشروع عن تقدم الطريق"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#64748b' }}>أعمال الطريق (360 كم)</span>
+            <Milestone size={17} color="#ea580c" />
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ea580c' }}>
+            2,230 م.ط
+          </div>
+          <span style={{ fontSize: '0.72rem', color: '#c2410c', fontWeight: 800 }}>
+            جاهز لطرح الأسفلت فورياً
+          </span>
+        </div>
+
+        {/* Fuel Card */}
+        <div 
+          onClick={() => handleSendMessage('ما هو موقف أرصدة واستهلاك الوقود بالصهاريج في نقطة 107 ونقطة 240؟')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            padding: '0.85rem 1rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s, border-color 0.15s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#ca8a04'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          title="اضغط لاستعلام مساعد مدير المشروع عن أرصدة الوقود"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#64748b' }}>رصيد الوقود بالمواقع</span>
+            <Fuel size={17} color="#ca8a04" />
+          </div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#a16207' }}>
+            {fmt(liveContext.totalRemainingFuel, 0)} لتر
+          </div>
+          <span style={{ fontSize: '0.72rem', color: '#a16207', fontWeight: 800 }}>
+            الخزانات (نقطة 107 و240)
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Executive Action Prompt Pills */}
       <div style={{
         display: 'flex',
-        gap: '8px',
-        borderBottom: '2px solid #e2e8f0',
+        alignItems: 'center',
+        gap: '0.5rem',
+        overflowX: 'auto',
         paddingBottom: '4px',
-        flexWrap: 'wrap'
+        whiteSpace: 'nowrap'
       }}>
-        <button
-          type="button"
-          onClick={() => setActiveTab('manager')}
-          style={{
-            background: activeTab === 'manager' ? '#1e3a8a' : '#ffffff',
-            color: activeTab === 'manager' ? '#ffffff' : '#475569',
-            border: activeTab === 'manager' ? 'none' : '1px solid #cbd5e1',
-            borderRadius: '10px 10px 0 0',
-            padding: '0.75rem 1.4rem',
-            fontWeight: 900,
-            fontSize: '0.92rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: activeTab === 'manager' ? '0 3px 8px rgba(30,58,138,0.25)' : 'none',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <Newspaper size={18} />
-          <span>مكتب مدير المشروع (المستجدات والمهام الإشرافية)</span>
-          {pendingCount > 0 && (
-            <span style={{
-              background: activeTab === 'manager' ? '#ef4444' : '#fee2e2',
-              color: activeTab === 'manager' ? '#ffffff' : '#b91c1c',
-              fontSize: '0.72rem',
-              fontWeight: 900,
-              padding: '2px 7px',
-              borderRadius: '10px'
-            }}>
-              {pendingCount}
-            </span>
-          )}
-        </button>
+        <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '4px' }}>
+          <Sparkles size={14} color="#2563eb" />
+          <span>استعلام سريع:</span>
+        </span>
 
+        {[
+          { label: '📰 الموجز التنفيذي لمدير المشروع', query: 'أريد المقالة التقريرية الشاملة والموجز التنفيذي لمدير المشروع عن آخر المستجدات' },
+          { label: '📁 فحص أرشيف التقارير المعتمدة', query: 'أعطني تفاصيل أرشيف التقارير المسجلة بالمنظومة وأحدث التقارير المعتمدة' },
+          { label: '📬 المراسلات والبريد الوارد لمدير المشروع', query: 'ما هي المراسلات والبريد الوارد لمدير المشروع والتوجيهات المعلقة؟' },
+          { label: '🛣️ موقف أعمال الطريق (المرحلة 1 و 2)', query: 'ما هو موقف أعمال الطريق بالتفصيل بين المرحلة الأولى والمرحلة الثانية؟' },
+          { label: '⛽ موقف أرصدة واستهلاك الوقود بالمواقع', query: 'ما هو موقف أرصدة الوقود في صهاريج نقطة 107 ونقطة 240 والاستهلاك اليومي؟' },
+          { label: '🚜 جاهزية أسطول الآليات (25 آلية)', query: 'ما هي جاهزية أسطول الآليات والمعدات الهندسية العاملة بالمشروع؟' },
+          { label: '⚠️ تنبيهات الجودة والمختبر', query: 'ما هي ملاحظات ضبط الجودة واختبارات المختبر والتنبيهات المفتوحة؟' }
+        ].map((item, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => handleSendMessage(item.query)}
+            disabled={isLoading}
+            style={{
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '20px',
+              padding: '0.4rem 0.85rem',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              color: '#334155',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#eff6ff';
+              e.currentTarget.style.borderColor = '#3b82f6';
+              e.currentTarget.style.color = '#1d4ed8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+              e.currentTarget.style.color = '#334155';
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 4. Clean Navigation Tab Switcher */}
+      <div style={{
+        display: 'flex',
+        gap: '6px',
+        borderBottom: '2px solid #e2e8f0',
+        paddingBottom: '2px'
+      }}>
         <button
           type="button"
           onClick={() => setActiveTab('chat')}
@@ -665,710 +717,75 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
             color: activeTab === 'chat' ? '#ffffff' : '#475569',
             border: activeTab === 'chat' ? 'none' : '1px solid #cbd5e1',
             borderRadius: '10px 10px 0 0',
-            padding: '0.75rem 1.4rem',
+            padding: '0.65rem 1.3rem',
             fontWeight: 900,
-            fontSize: '0.92rem',
+            fontSize: '0.88rem',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: activeTab === 'chat' ? '0 3px 8px rgba(30,58,138,0.25)' : 'none',
-            transition: 'all 0.15s ease'
+            boxShadow: activeTab === 'chat' ? '0 3px 8px rgba(30,58,138,0.2)' : 'none'
           }}
         >
-          <Bot size={18} />
-          <span>المحادثة والاستشارات الهندسية التفاعلية</span>
+          <Bot size={17} />
+          <span>المحادثة والاستعلام التنفيذي لمدير المشروع</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab('files')}
+          onClick={() => setActiveTab('feed')}
           style={{
-            background: activeTab === 'files' ? '#1e3a8a' : '#ffffff',
-            color: activeTab === 'files' ? '#ffffff' : '#475569',
-            border: activeTab === 'files' ? 'none' : '1px solid #cbd5e1',
+            background: activeTab === 'feed' ? '#1e3a8a' : '#ffffff',
+            color: activeTab === 'feed' ? '#ffffff' : '#475569',
+            border: activeTab === 'feed' ? 'none' : '1px solid #cbd5e1',
             borderRadius: '10px 10px 0 0',
-            padding: '0.75rem 1.4rem',
+            padding: '0.65rem 1.3rem',
             fontWeight: 900,
-            fontSize: '0.92rem',
+            fontSize: '0.88rem',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: activeTab === 'files' ? '0 3px 8px rgba(30,58,138,0.25)' : 'none',
-            transition: 'all 0.15s ease'
+            boxShadow: activeTab === 'feed' ? '0 3px 8px rgba(30,58,138,0.2)' : 'none'
           }}
         >
-          <FileSpreadsheet size={18} />
-          <span>مركز رفع وفحص المستندات والملفات</span>
-          {uploadedFilesCenter.length > 0 && (
-            <span style={{
-              background: activeTab === 'files' ? '#22c55e' : '#dcfce7',
-              color: activeTab === 'files' ? '#0f172a' : '#15803d',
-              fontSize: '0.72rem',
-              fontWeight: 900,
-              padding: '2px 7px',
-              borderRadius: '10px'
-            }}>
-              {uploadedFilesCenter.length}
-            </span>
-          )}
+          <FileText size={17} />
+          <span>سجل المنظومة الحي (الأرشيف + المراسلات المباشرة)</span>
+          <span style={{
+            background: activeTab === 'feed' ? '#22c55e' : '#e2e8f0',
+            color: activeTab === 'feed' ? '#0f172a' : '#334155',
+            fontSize: '0.72rem',
+            fontWeight: 900,
+            padding: '2px 7px',
+            borderRadius: '10px'
+          }}>
+            {liveContext.reportsCount + liveContext.messagesCount}
+          </span>
         </button>
       </div>
 
-      {/* Global Status Notice (if any) */}
-      {taskNotice && (
-        <div style={{
-          background: '#f0fdf4',
-          border: '1.5px solid #86efac',
-          color: '#166534',
-          padding: '0.85rem 1.25rem',
-          borderRadius: '12px',
-          fontWeight: 800,
-          fontSize: '0.88rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          boxShadow: '0 2px 8px rgba(22,101,52,0.08)'
-        }}>
-          <CheckCircle2 size={18} color="#16a34a" />
-          <span>{taskNotice}</span>
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* TAB 1: PROJECT MANAGER SUITE (BRIEFINGS & SUPERVISORY TASKS) */}
-      {/* ========================================================= */}
-      {activeTab === 'manager' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {/* Executive Action Bar */}
-          <div style={{
-            background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-            borderRadius: '14px',
-            padding: '1.25rem 1.6rem',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            boxShadow: '0 4px 14px rgba(37,99,235,0.2)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '14px',
-                width: '50px',
-                height: '50px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}>
-                <Newspaper size={26} color="#ffffff" />
-              </div>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>
-                  مكتب مدير المشروع: تقرير آخر المستجدات وإدارة التكليفات الإشرافية
-                </div>
-                <div style={{ fontSize: '0.84rem', color: '#dbeafe', marginTop: '2px' }}>
-                  مكتب سعادة المهندس / عبدالرحمن الأنصاري - متابعة التطورات الميدانية، الرصف، المحروقات، والمهام المفتوحة
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGenerateLatestBriefing}
-              style={{
-                background: '#ffffff',
-                color: '#1e3a8a',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '0.75rem 1.35rem',
-                fontWeight: 900,
-                fontSize: '0.9rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
-              }}
-            >
-              <Sparkles size={17} color="#2563eb" />
-              <span>طلب آخر المستجدات وتقرير الحالة الآن</span>
-            </button>
-          </div>
-
-          {/* KPI Dashboard Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-            gap: '0.85rem'
-          }}>
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '12px',
-              padding: '0.9rem 1.15rem',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>إجمالي المنفذ المالي</span>
-                <Award size={18} color="#16a34a" />
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a' }}>
-                {fmt(liveContext.grandExecutedSum)} د.ل
-              </div>
-              <span style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 800 }}>
-                نسبة الإنجاز المالي: %{liveContext.financialProgressPct}
-              </span>
-            </div>
-
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '12px',
-              padding: '0.9rem 1.15rem',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>الجاهز لطبقة الأسفلت</span>
-                <Milestone size={18} color="#0284c7" />
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0284c7' }}>
-                2,230.00 م.ط
-              </div>
-              <span style={{ fontSize: '0.74rem', color: '#0369a1', fontWeight: 800 }}>
-                مرشوش MC0 وجاهز للطرح فورياً
-              </span>
-            </div>
-
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '12px',
-              padding: '0.9rem 1.15rem',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>الجاهز للأساس الحبيبي</span>
-                <Layers size={18} color="#ea580c" />
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ea580c' }}>
-                6,670.00 م.ط
-              </div>
-              <span style={{ fontSize: '0.74rem', color: '#c2410c', fontWeight: 800 }}>
-                منجز فرمة ثانية وجاهز للفرش
-              </span>
-            </div>
-
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '12px',
-              padding: '0.9rem 1.15rem',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b' }}>رصيد الوقود المتبقي</span>
-                <Fuel size={18} color="#eab308" />
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ca8a04' }}>
-                {liveContext.fuelData?.totalRemainingLiters ? `${Number(liveContext.fuelData.totalRemainingLiters).toLocaleString()} لتر` : '0 لتر'}
-              </div>
-              <span style={{ fontSize: '0.74rem', color: '#a16207', fontWeight: 800 }}>
-                {liveContext.fuelData?.totalRemainingLiters ? 'المخزون الحالي بالصهاريج' : 'خالي من الكميات بقسم الوقود'}
-              </span>
-            </div>
-          </div>
-
-          {/* Section: Task Submission & Task Board */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '1.5rem',
-            alignItems: 'start'
-          }}>
-            
-            {/* Task Creation Form */}
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              border: '1.5px solid #bfdbfe',
-              padding: '1.4rem',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.04)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
-                <div style={{
-                  background: '#eff6ff',
-                  borderRadius: '8px',
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <UserCheck size={20} color="#2563eb" />
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
-                  تقديم وتكليف مهمة إشرافية جديدة
-                </h3>
-              </div>
-              <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '1.15rem' }}>
-                يتم حفظ المهمة بسجل الإشراف وإرسالها فورياً إلى البريد والمراسلات الداخلية للمهندس المكلف:
-              </p>
-
-              <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                    عنوان المهمة الإشرافية *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={taskTitle}
-                    onChange={(e) => setTaskTitle(e.target.value)}
-                    placeholder="مثال: فحص استلام طبقة الأساس بالمحطة 236 أو متابعة الوقود..."
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.9rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.86rem',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                      المهندس المكلف *
-                    </label>
-                    <select
-                      value={taskAssignee}
-                      onChange={(e) => setTaskAssignee(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.84rem',
-                        fontFamily: 'inherit',
-                        background: '#ffffff',
-                        outline: 'none'
-                      }}
-                    >
-                      {OFFICIAL_SUPERVISORS.map(s => (
-                        <option key={s.username} value={s.username}>
-                          {s.name} ({s.role})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                      مستوى الأولوية
-                    </label>
-                    <select
-                      value={taskPriority}
-                      onChange={(e) => setTaskPriority(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.84rem',
-                        fontFamily: 'inherit',
-                        background: '#ffffff',
-                        outline: 'none'
-                      }}
-                    >
-                      <option value="urgent">🔴 عاجل وفوري</option>
-                      <option value="high">🟠 أولوية عالية</option>
-                      <option value="normal">🟢 متابعة دورية</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                      القطاع / المحطة
-                    </label>
-                    <input
-                      type="text"
-                      value={taskSector}
-                      onChange={(e) => setTaskSector(e.target.value)}
-                      placeholder="مثال: المرحلة الأولى محطة 236"
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.9rem',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.84rem',
-                        fontFamily: 'inherit',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                      تاريخ الإنجاز المطلوب
-                    </label>
-                    <input
-                      type="date"
-                      value={taskDueDate}
-                      onChange={(e) => setTaskDueDate(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.9rem',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.84rem',
-                        fontFamily: 'inherit',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                    تفاصيل التوجيهات الفنية والميدانية
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={taskDetails}
-                    onChange={(e) => setTaskDetails(e.target.value)}
-                    placeholder="اكتب التوجيهات، المعايير المطلوب التحقق منها، أو تعليمات السلامة..."
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.9rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.86rem',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      resize: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  style={{
-                    background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '0.75rem 1.4rem',
-                    fontWeight: 900,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    boxShadow: '0 3px 10px rgba(37,99,235,0.25)',
-                    marginTop: '0.35rem'
-                  }}
-                >
-                  <Send size={16} style={{ transform: 'rotate(180deg)' }} />
-                  <span>إصدار وتكليف المهمة الإشرافية فورياً</span>
-                </button>
-              </form>
-            </div>
-
-            {/* Supervisory Tasks Board */}
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0',
-              padding: '1.4rem',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
-                    سجل المهام الإشرافية الميدانية والتكليفات
-                  </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                    إجمالي المهام: {supervisoryTasks.length} | قيد المتابعة: {pendingCount} | المكتملة: {completedCount}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setTaskFilter('all')}
-                    style={{
-                      background: taskFilter === 'all' ? '#1e3a8a' : '#f1f5f9',
-                      color: taskFilter === 'all' ? '#ffffff' : '#475569',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '4px 10px',
-                      fontSize: '0.76rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    الكل ({supervisoryTasks.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTaskFilter('pending')}
-                    style={{
-                      background: taskFilter === 'pending' ? '#ef4444' : '#f1f5f9',
-                      color: taskFilter === 'pending' ? '#ffffff' : '#475569',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '4px 10px',
-                      fontSize: '0.76rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    قيد المتابعة ({pendingCount})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTaskFilter('completed')}
-                    style={{
-                      background: taskFilter === 'completed' ? '#16a34a' : '#f1f5f9',
-                      color: taskFilter === 'completed' ? '#ffffff' : '#475569',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '4px 10px',
-                      fontSize: '0.76rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    المكتملة ({completedCount})
-                  </button>
-                </div>
-              </div>
-
-              {/* Tasks List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '420px', overflowY: 'auto' }}>
-                {filteredTasks.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b', fontSize: '0.9rem' }}>
-                    لا توجد مهام إشرافية في هذا القسم حالياً.
-                  </div>
-                ) : (
-                  filteredTasks.map((task) => {
-                    const isDone = task.status === 'completed';
-                    return (
-                      <div
-                        key={task.id}
-                        style={{
-                          background: isDone ? '#f8fafc' : '#ffffff',
-                          border: isDone ? '1px solid #e2e8f0' : (task.priority === 'urgent' ? '1.5px solid #fca5a5' : '1px solid #cbd5e1'),
-                          borderRadius: '12px',
-                          padding: '0.9rem 1.1rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '6px',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{
-                            background: task.priority === 'urgent' ? '#fee2e2' : (task.priority === 'normal' ? '#f0fdf4' : '#fef3c7'),
-                            color: task.priority === 'urgent' ? '#b91c1c' : (task.priority === 'normal' ? '#15803d' : '#b45309'),
-                            fontSize: '0.72rem',
-                            fontWeight: 900,
-                            padding: '2px 8px',
-                            borderRadius: '10px'
-                          }}>
-                            {task.priorityLabel}
-                          </span>
-
-                          <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Calendar size={13} />
-                            <span>تاريخ الإنجاز: {task.dueDate}</span>
-                          </span>
-                        </div>
-
-                        <div style={{ fontWeight: 900, fontSize: '0.92rem', color: isDone ? '#64748b' : '#0f172a', textDecoration: isDone ? 'line-through' : 'none' }}>
-                          {task.title}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#475569' }}>
-                          <span style={{ fontWeight: 800, color: '#1e40af' }}>المكلف: {task.assignedToName}</span>
-                          <span>•</span>
-                          <span>الموقع: {task.sector}</span>
-                        </div>
-
-                        {task.details && (
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', background: '#f8fafc', padding: '6px 8px', borderRadius: '6px', marginTop: '2px' }}>
-                            {task.details}
-                          </div>
-                        )}
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleTaskStatus(task.id, task.status)}
-                            style={{
-                              background: isDone ? '#f1f5f9' : '#dcfce7',
-                              color: isDone ? '#475569' : '#15803d',
-                              border: 'none',
-                              borderRadius: '6px',
-                              padding: '4px 10px',
-                              fontSize: '0.76rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <CheckCircle2 size={13} />
-                            <span>{isDone ? 'إعادة فتح المهمة' : 'تعليم كمكتملة ومُنجزة'}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteTask(task.id)}
-                            style={{
-                              background: 'transparent',
-                              color: '#ef4444',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                            title="حذف المهمة"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Rendered Executive Briefing Article for Project Manager */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1.5px solid #bfdbfe',
-            padding: '1.8rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottom: '2px solid #e2e8f0',
-              paddingBottom: '0.85rem',
-              marginBottom: '1.25rem',
-              flexWrap: 'wrap',
-              gap: '8px'
-            }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#1e3a8a' }}>
-                  المقالة التقريرية الشاملة لمدير المشروع (آخر المستجدات الهندسية والتنفيذية)
-                </h2>
-                <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                  وثيقة الموقف المعتمد لمشروع طريق أوباري - غات (360 كم)
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={handleCopyArticle}
-                  style={{
-                    background: '#f8fafc',
-                    border: '1px solid #cbd5e1',
-                    color: articleCopied ? '#16a34a' : '#334155',
-                    borderRadius: '8px',
-                    padding: '0.5rem 1rem',
-                    fontSize: '0.82rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  {articleCopied ? <Check size={15} /> : <Copy size={15} />}
-                  <span>{articleCopied ? 'تم نسخ التقرير' : 'نسخ التقرير'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  style={{
-                    background: '#1e3a8a',
-                    border: 'none',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '0.5rem 1.15rem',
-                    fontSize: '0.82rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  <Printer size={15} />
-                  <span>طباعة المقالة</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Article Content */}
-            <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              {renderFormattedText(executiveArticle)}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* TAB 2: INTERACTIVE CONSULTATION CHAT */}
-      {/* ========================================================= */}
+      {/* 5. TAB 1: Chat & Executive Intelligence */}
       {activeTab === 'chat' && (
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0',
+          border: '1.5px solid #e2e8f0',
           boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          height: '720px',
-          overflow: 'hidden'
+          minHeight: '520px'
         }}>
           {/* Messages Feed */}
           <div style={{
             flex: 1,
+            padding: '1.25rem 1.4rem',
             overflowY: 'auto',
-            padding: '1.5rem',
-            background: '#f8fafc',
+            maxHeight: '680px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1.25rem'
+            gap: '1.15rem',
+            background: '#f8fafc'
           }}>
             {messages.map((msg, idx) => {
               const isUser = msg.sender === 'user';
@@ -1379,37 +796,84 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: isUser ? 'flex-end' : 'flex-start',
-                    maxWidth: '100%'
+                    width: '100%'
                   }}
                 >
                   <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    marginBottom: '4px',
-                    fontSize: '0.74rem',
-                    color: '#64748b'
-                  }}>
-                    <span style={{ fontWeight: 800 }}>{isUser ? 'أنت' : 'مساعد جهاز الإشراف'}</span>
-                    <span>•</span>
-                    <span>{msg.time}</span>
-                  </div>
-
-                  <div style={{
-                    background: isUser ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : '#ffffff',
-                    color: isUser ? '#ffffff' : '#1e293b',
-                    padding: '1.1rem 1.35rem',
+                    maxWidth: isUser ? '85%' : '94%',
+                    background: isUser ? 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)' : '#ffffff',
+                    color: isUser ? '#ffffff' : '#0f172a',
                     borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                    boxShadow: isUser ? '0 3px 10px rgba(37,99,235,0.25)' : '0 2px 10px rgba(0,0,0,0.04)',
-                    border: isUser ? 'none' : '1px solid #e2e8f0',
-                    maxWidth: '88%',
-                    position: 'relative'
+                    padding: '1.1rem 1.35rem',
+                    boxShadow: isUser ? '0 4px 12px rgba(37,99,235,0.2)' : '0 2px 10px rgba(0,0,0,0.05)',
+                    border: isUser ? 'none' : '1.5px solid #e2e8f0',
+                    direction: 'rtl'
                   }}>
-                    {/* Attached file chip on user message */}
-                    {isUser && msg.attachedFile && (
+                    {/* Header line inside bubble */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '0.55rem',
+                      borderBottom: isUser ? '1px solid rgba(255,255,255,0.2)' : '1px solid #f1f5f9',
+                      paddingBottom: '0.45rem',
+                      gap: '1rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {isUser ? (
+                          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#e0f2fe' }}>
+                            مدير المشروع ({currentUser?.name || 'م. عبدالرحمن الأنصاري'})
+                          </span>
+                        ) : (
+                          <>
+                            <div style={{
+                              background: '#eff6ff',
+                              borderRadius: '6px',
+                              width: '24px',
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Bot size={15} color="#2563eb" />
+                            </div>
+                            <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#1e3a8a' }}>
+                              {msg.title || 'مساعد مدير المشروع'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: isUser ? '#cbd5e1' : '#94a3b8' }}>
+                          {msg.time}
+                        </span>
+                        {!isUser && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(msg.text, idx)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#64748b',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '2px',
+                              borderRadius: '4px'
+                            }}
+                            title="نسخ التقرير إلى الحافظة"
+                          >
+                            {copiedIdx === idx ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Attached file tag if user sent file */}
+                    {msg.attachedFile && (
                       <div style={{
-                        background: 'rgba(255, 255, 255, 0.15)',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        background: 'rgba(255,255,255,0.15)',
                         borderRadius: '8px',
                         padding: '6px 10px',
                         marginBottom: '8px',
@@ -1419,235 +883,114 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                         fontSize: '0.78rem'
                       }}>
                         <Paperclip size={14} />
-                        <span style={{ fontWeight: 800 }}>مستند مرفق:</span>
-                        <span>{msg.attachedFile.name}</span>
-                        <span style={{ opacity: 0.8 }}>({msg.attachedFile.size})</span>
+                        <span>مستند مرفق: <strong>{msg.attachedFile.name}</strong> ({msg.attachedFile.size})</span>
                       </div>
                     )}
 
-                    {!isUser && msg.title && (
+                    {/* Content body */}
+                    <div style={{ fontSize: '0.9rem', lineHeight: 1.65 }}>
+                      {isUser ? msg.text : renderFormattedText(msg.text)}
+                    </div>
+
+                    {/* Action buttons footer for Assistant response */}
+                    {!isUser && (
                       <div style={{
-                        fontWeight: 900,
-                        fontSize: '0.96rem',
-                        color: '#1e3a8a',
-                        marginBottom: '0.75rem',
-                        borderBottom: '1px solid #f1f5f9',
-                        paddingBottom: '0.5rem',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between'
+                        justifyContent: 'space-between',
+                        marginTop: '0.9rem',
+                        paddingTop: '0.65rem',
+                        borderTop: '1px solid #f1f5f9',
+                        flexWrap: 'wrap',
+                        gap: '8px'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Bot size={16} color="#2563eb" />
-                          <span>{msg.title}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(msg.text, idx)}
+                            style={{
+                              background: '#f8fafc',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              padding: '4px 10px',
+                              fontSize: '0.76rem',
+                              fontWeight: 800,
+                              color: '#334155',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {copiedIdx === idx ? <Check size={13} color="#16a34a" /> : <Copy size={13} />}
+                            <span>{copiedIdx === idx ? 'تم النسخ!' : 'نسخ التقرير'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => window.print()}
+                            style={{
+                              background: '#f8fafc',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              padding: '4px 10px',
+                              fontSize: '0.76rem',
+                              fontWeight: 800,
+                              color: '#334155',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Printer size={13} />
+                            <span>طباعة رسمية</span>
+                          </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleCopyMessage(msg.text, idx)}
-                          style={{
-                            background: '#f8fafc',
-                            border: '1px solid #cbd5e1',
-                            color: copiedIdx === idx ? '#16a34a' : '#475569',
-                            borderRadius: '6px',
-                            padding: '3px 8px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.72rem',
-                            fontWeight: 800
-                          }}
-                        >
-                          {copiedIdx === idx ? <Check size={14} /> : <Copy size={14} />}
-                          <span>{copiedIdx === idx ? 'تم النسخ' : 'نسخ الإجابة'}</span>
-                        </button>
+                        {/* Navigation pill button if reply references a section */}
+                        {msg.actionTab && onNavigateTab && (
+                          <button
+                            type="button"
+                            onClick={() => onNavigateTab(msg.actionTab)}
+                            style={{
+                              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '4px 12px',
+                              fontSize: '0.78rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 2px 6px rgba(37,99,235,0.25)'
+                            }}
+                          >
+                            <span>{msg.actionLabel || 'فتح القسم في المنظومة'}</span>
+                            <ExternalLink size={13} />
+                          </button>
+                        )}
                       </div>
                     )}
-
-                    <div>
-                      {isUser ? (
-                        <div style={{ fontWeight: 600, fontSize: '0.92rem', lineHeight: 1.6 }}>
-                          {msg.text}
-                        </div>
-                      ) : (
-                        renderFormattedText(msg.text)
-                      )}
-                    </div>
                   </div>
-
-                  {/* Suggestions */}
-                  {!isUser && Array.isArray(msg.suggestions) && msg.suggestions.length > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '6px',
-                      marginTop: '0.65rem',
-                      maxWidth: '90%'
-                    }}>
-                      {msg.suggestions.map((sug, sIdx) => (
-                        <button
-                          key={sIdx}
-                          type="button"
-                          onClick={() => handleSendMessage(sug)}
-                          style={{
-                            background: '#ffffff',
-                            color: '#1d4ed8',
-                            border: '1px solid #bfdbfe',
-                            borderRadius: '20px',
-                            padding: '4px 12px',
-                            fontSize: '0.76rem',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                          }}
-                        >
-                          ⚡ {sug}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}
 
+            {/* Loading Indicator */}
             {isLoading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 0' }}>
-                <div style={{
-                  background: '#2563eb',
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  animation: 'bounce 1s infinite'
-                }} />
-                <span style={{ fontSize: '0.84rem', color: '#475569', fontWeight: 800 }}>
-                  مساعد جهاز الإشراف يقوم بتحليل قواعد البيانات والوثائق وإعداد الرد...
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.75rem 1rem', background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                <div style={{ width: '18px', height: '18px', border: '3px solid #bfdbfe', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
+                <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#1e3a8a' }}>
+                  مساعد مدير المشروع يقوم بفحص قواعد البيانات وإعداد الرد التنفيذي...
                 </span>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
               </div>
             )}
+
             <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Prompts Bar */}
-          <div style={{
-            background: '#ffffff',
-            borderTop: '1px solid #f1f5f9',
-            padding: '0.65rem 1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            overflowX: 'auto',
-            whiteSpace: 'nowrap'
-          }}>
-            <button
-              type="button"
-              onClick={() => handleSendMessage('طلب آخر المستجدات وتقرير الحالة لمدير المشروع')}
-              style={{
-                fontSize: '0.82rem',
-                fontWeight: 900,
-                padding: '7px 14px',
-                borderRadius: '8px',
-                border: '2px solid #0284c7',
-                background: '#e0f2fe',
-                color: '#0369a1',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Newspaper size={15} />
-              <span>طلب آخر المستجدات لمدير المشروع</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('عرض وموقف المهام الإشرافية وتكليفات مدير المشروع')}
-              style={{
-                fontSize: '0.82rem',
-                fontWeight: 900,
-                padding: '7px 14px',
-                borderRadius: '8px',
-                border: '1.5px solid #2563eb',
-                background: '#eff6ff',
-                color: '#1e40af',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <UserCheck size={15} />
-              <span>عرض المهام الإشرافية المفتوحة</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('الموقف التنفيذي والمالي')}
-              style={{
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                color: '#1e293b',
-                cursor: 'pointer'
-              }}
-            >
-              📊 الموقف المالي العام
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('الجاهز لطبقة الأسفلت')}
-              style={{
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                color: '#1e293b',
-                cursor: 'pointer'
-              }}
-            >
-              🛣️ جاهزية طبقات الرصف
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('أرصدة الوقود اليومية')}
-              style={{
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                color: '#1e293b',
-                cursor: 'pointer'
-              }}
-            >
-              ⛽ رصيد الوقود بالمواقع
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSendMessage('عائق المرحلة الأولى')}
-              style={{
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                color: '#1e293b',
-                cursor: 'pointer'
-              }}
-            >
-              ⚠️ العبارة المنهارة (165)
-            </button>
           </div>
 
           {/* Chat File Attachment Chip */}
@@ -1655,18 +998,18 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
             <div style={{
               background: '#f0fdf4',
               borderTop: '1px solid #bbf7d0',
-              padding: '0.55rem 1.25rem',
+              padding: '0.5rem 1.25rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {attachedFile.type === 'excel' ? (
-                  <FileSpreadsheet size={18} color="#16a34a" />
+                  <FileSpreadsheet size={17} color="#16a34a" />
                 ) : attachedFile.isImage ? (
-                  <ImageIcon size={18} color="#0284c7" />
+                  <ImageIcon size={17} color="#0284c7" />
                 ) : (
-                  <FileText size={18} color="#ea580c" />
+                  <FileText size={17} color="#ea580c" />
                 )}
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#166534' }}>
                   {attachedFile.name}
@@ -1707,8 +1050,8 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
           {/* Chat Input Bar */}
           <div style={{
             background: '#ffffff',
-            borderTop: '1px solid #e2e8f0',
-            padding: '0.85rem 1.25rem',
+            borderTop: '1.5px solid #e2e8f0',
+            padding: '0.75rem 1.25rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem'
@@ -1739,7 +1082,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                 fontSize: '0.8rem',
                 whiteSpace: 'nowrap'
               }}
-              title="رفع ملف إكسل، جدول، أو صورة للتحليل"
+              title="إرفاق ملف Excel، PDF، أو صورة"
             >
               <Paperclip size={16} />
               <span>{isParsingFile ? 'جاري الفحص...' : (attachedFile ? 'مرفق' : 'إرفاق ملف')}</span>
@@ -1755,13 +1098,13 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                   handleSendMessage();
                 }
               }}
-              placeholder={attachedFile ? "اكتب تعليمات التحليل لهذا الملف أو اضغط إرسال لتحليله فورياً..." : "اكتب سؤالك، أو اطلب مقالة لمدير المشروع، أو استفسر عن المهام الإشرافية..."}
+              placeholder={attachedFile ? "اكتب تعليمات التحليل لهذا الملف أو اضغط إرسال لتحليله فورياً..." : "اسأل مساعد مدير المشروع عن أرشيف التقارير، المراسلات، موقف الإنجاز، أو الوقود..."}
               style={{
                 flex: 1,
                 border: '1.5px solid #cbd5e1',
                 borderRadius: '12px',
-                padding: '0.7rem 1rem',
-                fontSize: '0.9rem',
+                padding: '0.65rem 1rem',
+                fontSize: '0.88rem',
                 fontFamily: 'inherit',
                 resize: 'none',
                 outline: 'none',
@@ -1774,258 +1117,286 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
               onClick={() => handleSendMessage()}
               disabled={isLoading || (!inputMessage.trim() && !attachedFile)}
               style={{
-                background: (!inputMessage.trim() && !attachedFile) || isLoading ? '#94a3b8' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                background: (!inputMessage.trim() && !attachedFile) || isLoading ? '#94a3b8' : 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '12px',
-                padding: '0.75rem 1.35rem',
+                padding: '0.7rem 1.35rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 fontWeight: 800,
-                fontSize: '0.88rem',
+                fontSize: '0.86rem',
                 cursor: (!inputMessage.trim() && !attachedFile) || isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 2px 8px rgba(37,99,235,0.3)'
+                boxShadow: '0 2px 8px rgba(37,99,235,0.25)'
               }}
             >
               <span>إرسال</span>
-              <Send size={16} style={{ transform: 'rotate(180deg)' }} />
+              <Send size={15} style={{ transform: 'rotate(180deg)' }} />
             </button>
           </div>
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* TAB 3: DEDICATED FILE UPLOAD & ENGINEERING ANALYSIS CENTER */}
-      {/* ========================================================= */}
-      {activeTab === 'files' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* 6. TAB 2: Live Feed & Audit Explorer (الأرشيف + المراسلات المباشرة) */}
+      {activeTab === 'feed' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
           
-          {/* Top Drag & Drop Zone */}
-          <div
-            onClick={() => centerFileInputRef.current?.click()}
-            style={{
-              background: '#f8fafc',
-              border: '2px dashed #93c5fd',
-              borderRadius: '16px',
-              padding: '2.5rem 1.5rem',
-              textAlign: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#eff6ff';
-              e.currentTarget.style.borderColor = '#2563eb';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#f8fafc';
-              e.currentTarget.style.borderColor = '#93c5fd';
-            }}
-          >
-            <input
-              ref={centerFileInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv,.txt,.json,.pdf,image/*"
-              style={{ display: 'none' }}
-              onChange={handleCenterFileSelect}
-            />
+          {/* Reports Archive Live Column */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1.5px solid #e2e8f0',
+            padding: '1.25rem',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '6px' }}>
+                  <FileText size={20} color="#2563eb" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+                    أحدث التقارير المعتمدة بالأرشيف
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    {liveContext.reportsCount} تقرير مؤرشف في قواعد بيانات المنظومة
+                  </span>
+                </div>
+              </div>
 
-            <div style={{
-              background: '#dbeafe',
-              borderRadius: '50%',
-              width: '64px',
-              height: '64px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem auto'
-            }}>
-              <UploadCloud size={32} color="#1d4ed8" />
+              {onNavigateTab && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('reports-archive')}
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '4px 10px',
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>فتح الأرشيف</span>
+                  <ExternalLink size={13} />
+                </button>
+              )}
             </div>
 
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
-              انقر هنا لرفع ملفات ومستندات الفحص لمساعد جهاز الإشراف
-            </h3>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.86rem', color: '#64748b' }}>
-              يدعم مصنفات الإكسل (XLSX, XLS)، الجداول (CSV)، مستندات PDF الهندسية، صور المواقع، وملفات التقارير النصية
-            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '520px', overflowY: 'auto' }}>
+              {liveContext.recentReports && liveContext.recentReports.length > 0 ? (
+                liveContext.recentReports.map((r, rIdx) => {
+                  const repNum = r.reportNumber || r.id || `#${rIdx + 1}`;
+                  const repDate = r.dateFormatted || (r.date ? r.date.split('T')[0] : '—');
+                  const eng = r.engineer || r.supervisor || 'مهندس مشرف';
+                  const sec = r.phase || r.sector || (r.isTwoPhaseProgressReport ? 'المرحلتين' : 'طريق أوباري غات');
+                  const isFuel = r.isFuelReport || r.reportType === 'fuel';
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                Excel (.xlsx, .xls)
-              </span>
-              <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                جداول CSV
-              </span>
-              <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                مستندات PDF
-              </span>
-              <span style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.74rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                صور ومعاينات الموقع
-              </span>
+                  return (
+                    <div
+                      key={r.id || rIdx}
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        padding: '0.85rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{
+                            background: isFuel ? '#fef3c7' : '#dbeafe',
+                            color: isFuel ? '#92400e' : '#1e40af',
+                            fontSize: '0.72rem',
+                            fontWeight: 900,
+                            padding: '2px 7px',
+                            borderRadius: '6px'
+                          }}>
+                            {isFuel ? '⛽ تقرير وقود' : '🛣️ تقرير طريق'}
+                          </span>
+                          <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a' }}>
+                            [{repNum}]
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{repDate}</span>
+                      </div>
+
+                      <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                        <strong>المشرف:</strong> {eng} | <strong>الموقع:</strong> {sec}
+                      </div>
+
+                      {r.summary && (
+                        <div style={{ fontSize: '0.76rem', color: '#64748b', background: '#ffffff', padding: '4px 8px', borderRadius: '6px', border: '1px solid #f1f5f9', marginTop: '2px' }}>
+                          {r.summary}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab('chat');
+                            handleSendMessage(`يرجى استخراج وتلخيص بيانات التقرير رقم (${repNum}) الصادر بتأريخ (${repDate}) بإشراف (${eng}).`);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#2563eb',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Sparkles size={13} />
+                          <span>استعلام المساعد عن هذا التقرير</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                  لا توجد تقارير مسجلة اليوم قيد الأرشفة.
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Analysis View if file selected */}
-          {selectedFileForAnalysis && (
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              border: '1.5px solid #bfdbfe',
-              padding: '1.5rem',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.05)'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1.5px solid #f1f5f9',
-                paddingBottom: '0.85rem',
-                marginBottom: '1rem',
-                flexWrap: 'wrap',
-                gap: '8px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  {selectedFileForAnalysis.type === 'excel' ? (
-                    <FileSpreadsheet size={28} color="#16a34a" />
-                  ) : selectedFileForAnalysis.isImage ? (
-                    <ImageIcon size={28} color="#0284c7" />
-                  ) : (
-                    <FileText size={28} color="#ea580c" />
-                  )}
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
-                      {selectedFileForAnalysis.name}
-                    </h3>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                      الحجم: {selectedFileForAnalysis.size} | النوع: {selectedFileForAnalysis.type} {selectedFileForAnalysis.rowCount ? `| عدد الصفوف: ${selectedFileForAnalysis.rowCount}` : ''}
-                    </span>
-                  </div>
+          {/* Correspondence & Messages Live Column */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1.5px solid #e2e8f0',
+            padding: '1.25rem',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ background: '#f0f9ff', borderRadius: '8px', padding: '6px' }}>
+                  <Mail size={20} color="#0284c7" />
                 </div>
-
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleRunFileAnalysis(selectedFileForAnalysis, 'تحليل كميات الإكسل ومطابقتها تعاقدياً مع وثيقة 29/10/2026')}
-                    style={{
-                      background: '#eff6ff',
-                      color: '#1d4ed8',
-                      border: '1px solid #bfdbfe',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.8rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    📊 مطابقة الكميات والأسعار تعاقدياً
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRunFileAnalysis(selectedFileForAnalysis, 'فحص محطات الرصف والتتابع الإنشائي للطبقات')}
-                    style={{
-                      background: '#f0fdf4',
-                      color: '#166534',
-                      border: '1px solid #bbf7d0',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.8rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🛣️ فحص محطات وتتابع الرصف
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRunFileAnalysis(selectedFileForAnalysis, 'صياغة تقرير إشرافي رسمي معتمد لمدير المشروع')}
-                    style={{
-                      background: '#1e3a8a',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '6px 14px',
-                      fontSize: '0.8rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    📄 إعداد تقرير إشرافي معتمد
-                  </button>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+                    المراسلات والتوجيهات الإدارية
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    {liveContext.messagesCount} مراسلة مسجلة ({liveContext.unreadMessagesCount} وارد غير مقروء)
+                  </span>
                 </div>
               </div>
 
-              {/* Analysis Results Display */}
-              {isAnalyzingFileCenter ? (
-                <div style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
-                  جاري فحص وتحليل المستند واستخراج النتائج الهندسية...
-                </div>
-              ) : analysisResult ? (
-                <div style={{
-                  background: '#f8fafc',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '1.25rem'
-                }}>
-                  <div style={{ fontWeight: 900, fontSize: '1rem', color: '#1e3a8a', marginBottom: '0.75rem' }}>
-                    {analysisResult.title}
-                  </div>
-                  {renderFormattedText(analysisResult.content)}
-                </div>
-              ) : null}
+              {onNavigateTab && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('messages')}
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '4px 10px',
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                    color: '#0284c7',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>صندوق البريد</span>
+                  <ExternalLink size={13} />
+                </button>
+              )}
             </div>
-          )}
 
-          {/* Uploaded Files History */}
-          {uploadedFilesCenter.length > 0 && (
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0',
-              padding: '1.25rem',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-            }}>
-              <h4 style={{ margin: '0 0 0.85rem', fontSize: '0.96rem', fontWeight: 900, color: '#0f172a' }}>
-                المستندات التي تم فحصها في هذه الجلسة ({uploadedFilesCenter.length})
-              </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '520px', overflowY: 'auto' }}>
+              {liveContext.recentMessages && liveContext.recentMessages.length > 0 ? (
+                liveContext.recentMessages.map((m, mIdx) => {
+                  const sender = m.senderName || m.sender || 'مهندس مشرف';
+                  const subj = m.type || m.subject || 'مراسلة إدارية';
+                  const dt = m.date || m.timestamp || 'اليوم';
+                  const isUnread = !m.read;
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
-                {uploadedFilesCenter.map((f, fIdx) => (
-                  <div
-                    key={fIdx}
-                    onClick={() => {
-                      setSelectedFileForAnalysis(f);
-                      const a = processLocalQuery(`فحص مستند ${f.name}`, f);
-                      setAnalysisResult(a);
-                    }}
-                    style={{
-                      background: selectedFileForAnalysis?.name === f.name ? '#eff6ff' : '#f8fafc',
-                      border: selectedFileForAnalysis?.name === f.name ? '1.5px solid #3b82f6' : '1px solid #cbd5e1',
-                      borderRadius: '10px',
-                      padding: '0.85rem 1rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    {f.type === 'excel' ? <FileSpreadsheet size={20} color="#16a34a" /> : <FileText size={20} color="#0284c7" />}
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                        {f.name}
+                  return (
+                    <div
+                      key={m.id || mIdx}
+                      style={{
+                        background: isUnread ? '#f0fdf4' : '#f8fafc',
+                        border: isUnread ? '1.5px solid #86efac' : '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        padding: '0.85rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {isUnread && (
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }}></span>
+                          )}
+                          <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a' }}>
+                            {subj}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{dt}</span>
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                        {f.size}
+
+                      <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                        <strong>من:</strong> {sender}
+                      </div>
+
+                      {(m.body || m.content) && (
+                        <div style={{ fontSize: '0.76rem', color: '#475569', background: '#ffffff', padding: '6px 8px', borderRadius: '6px', border: '1px solid #f1f5f9', marginTop: '2px', lineHeight: 1.5 }}>
+                          {String(m.body || m.content).slice(0, 140)}...
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab('chat');
+                            handleSendMessage(`يرجى استعراض وتلخيص تفاصيل المراسلة الواردة من (${sender}) بخصوص موضوع: (${subj}).`);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#0284c7',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Sparkles size={13} />
+                          <span>استعلام المساعد عن هذه المراسلة</span>
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                  لا توجد مراسلات واردة معلقة.
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
         </div>
       )}
@@ -2033,5 +1404,3 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
     </div>
   );
 };
-
-export default AIAgentView;

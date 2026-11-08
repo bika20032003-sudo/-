@@ -42,18 +42,18 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
       id: 1,
       sender: 'agent',
       time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-      title: 'مرحباً بك! أنا مساعد جهاز الإشراف والمتابعة',
-      text: `أهلاً بك يا باشمهندس **${currentUser?.name || ''}**.
-أنا مساعدك الهندسي الذكي المعتمد لمشروع **طريق أوباري - غات (360 كم)**.
+      title: 'مرحباً بك! أنا مساعد مدير المشروع',
+      text: `أهلاً بك يا باشمهندس **${currentUser?.name || 'عبدالرحمن الأنصاري'}**.
+أنا مساعدك التنفيذي المعتمد لمشروع **طريق أوباري - غات (360 كم)**.
 
-أنا مربوط مباشرة بكافة أقسام المنظومة وممنوح **كافة الصلاحيات التشغيلية والتحليلية الشاملة (عدا صلاحية الحذف لحماية بيانات وسجلات المشروع)**.
-يمكنك الآن طلب **المقالة التقريرية لمدير المشروع** أو **رفع مستندات وجداول إكسل** لتحليلها فورياً!`,
+أنا مربوط مباشرة بكافة تقارير المنظومة، أرشيف المستندات، والمراسلات الإدارية والفنية.
+يمكنك الآن طلب **الموجز التنفيذي لمدير المشروع** أو استعراض الأرشيف والمراسلات فورياً!`,
       suggestions: [
-        '📰 مقالة المستجدات لمدير المشروع',
-        'ما هو الموقف التنفيذي والمالي اليوم؟',
-        'كم المتر الطولي الجاهز لطبقة الأسفلت؟',
-        'ما هي الفئات التعاقدية للبنود؟',
-        'ما هو رصيد الوقود في المواقع؟'
+        '📰 الموجز التنفيذي لمدير المشروع',
+        '📁 فحص أرشيف التقارير المعتمدة',
+        '📬 المراسلات والبريد الوارد لمدير المشروع',
+        '🛣️ موقف أعمال الطريق (المرحلة 1 و 2)',
+        '⛽ موقف أرصدة واستهلاك الوقود بالمواقع'
       ]
     }
   ]);
@@ -140,8 +140,8 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
 
       if (useCloudLLM && apiKey.trim()) {
         agentReplyText = await callGeminiCloudAgent(apiKey.trim(), userMessageObj.text, newMessages, fileToProcess);
-        replyTitle = fileToProcess ? `تحليل المستند: ${fileToProcess.name}` : (query.includes('مقالة') || query.includes('المستجدات') ? 'المقالة التقريرية لمدير المشروع' : 'تحليل مساعد جهاز الإشراف');
-        suggestions = ['📰 مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'الجاهز للأسفلت'];
+        replyTitle = fileToProcess ? `تحليل المستند: ${fileToProcess.name}` : (query.includes('مقالة') || query.includes('المستجدات') || query.includes('موجز') ? 'الموجز التنفيذي لمدير المشروع' : 'تحليل مساعد مدير المشروع');
+        suggestions = ['📰 الموجز التنفيذي لمدير المشروع', '📁 أرشيف التقارير', '📬 المراسلات والبريد الوارد'];
       } else {
         const localResult = processLocalQuery(userMessageObj.text, fileToProcess);
         agentReplyText = localResult.content;
@@ -293,7 +293,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
               e.currentTarget.style.transform = 'none';
               e.currentTarget.style.boxShadow = '0 8px 24px rgba(37, 99, 235, 0.4), 0 2px 6px rgba(0,0,0,0.1)';
             }}
-            title="فتح مساعد جهاز الإشراف والمتابعة"
+            title="فتح مساعد مدير المشروع"
           >
             <div style={{ position: 'relative' }}>
               <Bot size={22} color="#ffffff" />
@@ -311,7 +311,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
 
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.9rem', fontWeight: 900, letterSpacing: '-0.2px' }}>
-                مساعد جهاز الإشراف
+                مساعد مدير المشروع
               </span>
               <span style={{ fontSize: '0.68rem', color: '#bfdbfe', fontWeight: 700 }}>
                 الذكاء الهندسي (AI)
@@ -371,7 +371,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900 }}>
-                    مساعد جهاز الإشراف
+                    مساعد مدير المشروع
                   </h3>
                   <span style={{
                     fontSize: '0.65rem',
@@ -545,7 +545,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                     fontSize: '0.72rem',
                     color: '#64748b'
                   }}>
-                    <span>{isUser ? 'أنت' : 'مساعد جهاز الإشراف'}</span>
+                    <span>{isUser ? 'أنت' : 'مساعد مدير المشروع'}</span>
                     <span>•</span>
                     <span>{msg.time}</span>
                   </div>
@@ -668,7 +668,7 @@ export const AIAgentWidget = ({ currentUser, onNavigateTab }) => {
                   animation: 'bounce 1s infinite'
                 }} />
                 <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>
-                  مساعد جهاز الإشراف يحلل البيانات ويعد الرد...
+                  مساعد مدير المشروع يحلل البيانات ويعد الرد...
                 </span>
               </div>
             )}

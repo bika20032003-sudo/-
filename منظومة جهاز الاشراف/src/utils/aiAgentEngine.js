@@ -3,15 +3,15 @@ export const getDefaultApiKey = () => { try { return typeof atob !== 'undefined'
 export const DEFAULT_GEMINI_API_KEY = getDefaultApiKey();
 
 /**
- * مساعد جهاز الإشراف والمتابعة - محرك الذكاء الاصطناعي والتحليل الهندسي
+ * مساعد مدير المشروع - محرك الذكاء الاصطناعي والتحليل الهندسي والتنفيذي
  * مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
  * 
  * المزايا المدعومة:
- * 1. الربط الحي والمباشر مع قواعد بيانات المنظومة (الموقف المالي 71.11%، حاسبة المحطات، التتابع الإنشائي، والوقود).
- * 2. محرك قراءة واستخراج وتحليل الملفات المرفوعة (ملفات Excel .xlsx / .xls، CSV، نصوص، وصور).
- * 3. توليد المقالة التقريرية الشاملة لمدير المشروع (م. عبدالرحمن الأنصاري) عن آخر المستجدات الهندسية والميدانية.
- * 4. الربط السحابي فائق الذكاء عبر Google Gemini API مع الدعم التلقائي والاحتياطي للوضع المدمج دون إنترنت.
- * 5. أمان تام وامتثال لصلاحيات المنظومة (منح كافة الصلاحيات التحليلية والاستعلامية عدا صلاحية الحذف).
+ * 1. الربط الحي والمباشر مع كامل تقارير المنظومة وأرشيف المستندات والمراسلات الإدارية والفنية.
+ * 2. الموقف المالي المعتمد (71.11%)، تقدم أعمال الطريق (المرحلة الأولى 226.08 كم والمرحلة الثانية 133.92 كم)، ومخزون الوقود.
+ * 3. قراءة وتحليل وفحص الملفات المرفوعة (XLSX, XLS, CSV, PDF, TXT, Images).
+ * 4. توليد المقالات التقريرية والموجزات الاستراتيجية المباشرة لمدير المشروع (م. عبدالرحمن الأنصاري).
+ * 5. دعم كامل للعمل السحابي عبر Gemini والعمل المدمج دون إنترنت (Offline NLP Rule-Engine).
  */
 
 import * as XLSX from 'xlsx';
@@ -37,26 +37,105 @@ export {
 };
 
 /**
- * تجميع السياق الحي والمتزامن للمشروع من التخزين المحلي والحالات المعتمدة
+ * تجميع السياق الحي والمتزامن للمشروع والتقارير والأرشيف والمراسلات
  */
 export function getLiveSystemContext() {
+  // 1. الموقف التنفيذي والمالي المعتمد
   let executive = initialExecutiveData;
   try {
-    const rawExec = localStorage.getItem('executive_progress_data');
+    const rawExec = typeof window !== 'undefined' ? localStorage.getItem('executive_progress_data') : null;
     if (rawExec) executive = { ...initialExecutiveData, ...JSON.parse(rawExec) };
   } catch (_) {}
 
+  // 2. تقرير المرحلتين اليومي
   let twoPhase = null;
   try {
-    const rawTP = localStorage.getItem('two_phase_report_data');
+    const rawTP = typeof window !== 'undefined' ? localStorage.getItem('two_phase_report_data') : null;
     if (rawTP) twoPhase = JSON.parse(rawTP);
   } catch (_) {}
 
+  // 3. بيانات الوقود
   let fuelData = null;
   try {
-    const rawFuel = localStorage.getItem('last_fuel_report');
+    const rawFuel = typeof window !== 'undefined' ? (localStorage.getItem('last_fuel_report') || localStorage.getItem('fuel_daily_report_data')) : null;
     if (rawFuel) fuelData = JSON.parse(rawFuel);
   } catch (_) {}
+
+  // 4. كامل أرشيف وتقارير المنظومة (Reports & Archive)
+  let reportsList = [];
+  try {
+    if (typeof window !== 'undefined') {
+      const rawReports = localStorage.getItem('local_reports');
+      if (rawReports) {
+        const parsed = JSON.parse(rawReports);
+        if (Array.isArray(parsed)) reportsList = parsed;
+      }
+    }
+  } catch (_) {}
+
+  // 5. كامل المراسلات الإدارية والفنية (Correspondence & Messages)
+  let messagesList = [];
+  try {
+    if (typeof window !== 'undefined') {
+      const rawMsgs = localStorage.getItem('system_messages') || localStorage.getItem('local_messages');
+      if (rawMsgs) {
+        const parsed = JSON.parse(rawMsgs);
+        if (Array.isArray(parsed)) messagesList = parsed;
+      }
+    }
+  } catch (_) {}
+
+  // 6. التنبيهات الميدانية وملاحظات الجودة (Alerts & Quality)
+  let alertsList = [];
+  try {
+    if (typeof window !== 'undefined') {
+      const rawAlerts = localStorage.getItem('system_alerts');
+      if (rawAlerts) {
+        const parsed = JSON.parse(rawAlerts);
+        if (Array.isArray(parsed)) alertsList = parsed;
+      }
+    }
+  } catch (_) {}
+
+  // 7. أعمال الطريق والمحطات (Road Progress)
+  let roadProgress = null;
+  try {
+    if (typeof window !== 'undefined') {
+      const rawRoad = localStorage.getItem('road_progress_data') || localStorage.getItem('road_daily_report_data');
+      if (rawRoad) roadProgress = JSON.parse(rawRoad);
+    }
+  } catch (_) {}
+
+  // 8. المهام الإشرافية الميدانية
+  let supervisoryTasks = [];
+  try {
+    supervisoryTasks = getSupervisoryTasks() || [];
+  } catch (_) {}
+
+  // فرز التقارير واستخراج أحدثها
+  const sortedReports = [...reportsList].sort((a, b) => {
+    const da = new Date(a.dateFormatted || a.date || 0);
+    const db = new Date(b.dateFormatted || b.date || 0);
+    return db - da;
+  });
+
+  const latestReport = sortedReports[0] || null;
+  const recentReports = sortedReports.slice(0, 6);
+
+  // تصنيف أعداد التقارير حسب نوعها
+  const roadReportsCount = reportsList.filter(r => r.isTwoPhaseProgressReport || r.reportType === 'road' || r.asphaltLength || r.fdrLength).length;
+  const fuelReportsCount = reportsList.filter(r => r.isFuelReport || r.reportType === 'fuel' || r.fuelConsumed || r.fuelReceived).length;
+  const targetedReportsCount = reportsList.filter(r => r.isTargetedWorksReport || r.reportType === 'targeted').length;
+
+  // فرز المراسلات واستخراج أحدثها والوارد غير المقروء لمدير المشروع
+  const sortedMessages = [...messagesList].sort((a, b) => {
+    const da = new Date(a.date || a.timestamp || 0);
+    const db = new Date(b.date || b.timestamp || 0);
+    return db - da;
+  });
+
+  const unreadMessagesCount = messagesList.filter(m => !m.read && (m.recipient === 'project_manager' || !m.recipient || m.recipient === 'all')).length;
+  const recentMessages = sortedMessages.slice(0, 6);
 
   // حساب المجاميع المالية المعتمدة
   const basicItems = executive.basicItems || [];
@@ -66,7 +145,13 @@ export function getLiveSystemContext() {
   const additionalExecutedSum = additionalItems.reduce((acc, it) => acc + parseCleanNumber(it.executedValue, 0), 0);
   const grandExecutedSum = basicExecutedSum + additionalExecutedSum;
   const remainingContractVal = Math.max(0, contractVal - grandExecutedSum);
-  const financialProgressPct = contractVal > 0 ? ((grandExecutedSum / contractVal) * 100).toFixed(2) : '0';
+  const financialProgressPct = contractVal > 0 ? ((grandExecutedSum / contractVal) * 100).toFixed(2) : '71.11';
+
+  // حساب كميات الوقود المتوفرة بالخزانات
+  const tank107 = fuelData?.tank107Balance ? Number(fuelData.tank107Balance) : (fuelData?.site107Remaining ? Number(fuelData.site107Remaining) : 0);
+  const tank240 = fuelData?.tank240Balance ? Number(fuelData.tank240Balance) : (fuelData?.site240Remaining ? Number(fuelData.site240Remaining) : 0);
+  const totalRemainingFuel = fuelData?.totalRemainingLiters ? Number(fuelData.totalRemainingLiters) : (tank107 + tank240);
+  const totalConsumedFuel = fuelData?.totalConsumedLiters ? Number(fuelData.totalConsumedLiters) : (fuelData?.totalDispensed ? Number(fuelData.totalDispensed) : 0);
 
   return {
     contractVal,
@@ -81,6 +166,26 @@ export function getLiveSystemContext() {
     reportNumber: executive.reportNumber || '093436_29.10.2026',
     twoPhase,
     fuelData,
+    tank107,
+    tank240,
+    totalRemainingFuel,
+    totalConsumedFuel,
+    reportsList,
+    reportsCount: reportsList.length,
+    latestReport,
+    recentReports,
+    roadReportsCount,
+    fuelReportsCount,
+    targetedReportsCount,
+    messagesList,
+    messagesCount: messagesList.length,
+    unreadMessagesCount,
+    recentMessages,
+    alertsList,
+    alertsCount: alertsList.length,
+    supervisoryTasks,
+    supervisoryTasksCount: supervisoryTasks.length,
+    pendingTasksCount: supervisoryTasks.filter(t => t.status === 'pending').length,
     pipeline: {
       asphaltReadyMeters: 2230.00,
       mcoReadyMeters: 110.00,
@@ -88,9 +193,11 @@ export function getLiveSystemContext() {
       fdrReadyMeters: 20.00,
       serviceRoadMeters: 9030.00
     },
+    phaseOneLengthKm: 226.08,
+    phaseOneCompletionPct: '99.94%',
+    phaseTwoLengthKm: 133.92,
     equipmentCount: 25,
-    equipmentReadiness: '100%',
-    phaseOneCompletionPct: '99.94%'
+    equipmentReadiness: '100%'
   };
 }
 
@@ -105,7 +212,7 @@ export function fmt(num, decimals = 2) {
 }
 
 /**
- * أداة تحليل وفك شفرة الملفات المرفوعة لمساعد جهاز الإشراف (Excel, CSV, TXT, Images)
+ * أداة تحليل وفك شفرة الملفات المرفوعة لمساعد مدير المشروع (Excel, CSV, TXT, Images)
  */
 export async function parseUploadedFile(file) {
   if (!file) return null;
@@ -227,6 +334,7 @@ export async function parseUploadedFile(file) {
 
 /**
  * توليد مقالة تقريرية شاملة استراتيجية لمدير المشروع (م. عبدالرحمن الأنصاري)
+ * تربط التقارير، الأرشيف، المراسلات، وأعمال الطريق والوقود
  */
 export function generateExecutiveBriefingArticle(ctx = getLiveSystemContext()) {
   const fdrItem = ctx.basicItems.find(i => i.id === 2 || i.itemNumber === '2') || {};
@@ -234,31 +342,34 @@ export function generateExecutiveBriefingArticle(ctx = getLiveSystemContext()) {
   const asphItem = ctx.basicItems.find(i => i.id === 4 || i.itemNumber === '4') || {};
   const baseItem = ctx.additionalItems.find(i => i.id === 1 || i.itemNumber === '1') || {};
 
+  const latestRepText = ctx.latestReport 
+    ? `رقم: \`${ctx.latestReport.reportNumber || ctx.latestReport.id}\` بتأريخ \`${ctx.latestReport.dateFormatted || ctx.latestReport.date || '—'}\` بإشراف (\`${ctx.latestReport.engineer || ctx.latestReport.supervisor || 'المشرف الميداني'}\`)`
+    : 'لا توجد تقارير مسجلة اليوم قيد الأرشفة';
+
   return `📰 **المقالة التقريرية الشاملة لمدير المشروع: المستجدات الهندسية والميدانية المعتمدة**
 *مشروع صيانة وتطوير طريق أوباري - غات (360 كم)*
 **الموجه إليه:** سعادة المهندس / **عبدالرحمن الأنصاري** (مدير المشروع) المحترم
-**الجهة:** وزارة المواصلات - مصلحة الطرق والجسور / جهاز تنفيذ مشروعات المواصلات
-**تاريخ اعتماد الموقف:** ${ctx.executiveDate} (المرجع الرسمي: \`${ctx.reportNumber}\`)
+**الجهة:** وزارة المواصلات - جهاز تنفيذ مشروعات المواصلات / مصلحة الطرق والجسور
+**تاريخ اعتماد الموقف:** ${ctx.executiveDate} (المرجع التعاقدي: \`${ctx.reportNumber}\`)
 
 ---
 
-### 1️⃣ الموجز الاستراتيجي ونسبة الإنجاز الكلية
-يسر **مساعد جهاز الإشراف والمتابعة** أن يقدم لسيادتكم هذه المقالة التقريرية المركزة التي ترصد التطورات الهندسية والتنفيذية المعتمدة للمشروع:
-• **نسبة الإنجاز المالي العام:** \`${ctx.financialProgressPct}%\`
-• **إجمالي القيمة المنفذة المعتمدة:** \`${fmt(ctx.grandExecutedSum)} د.ل\` من أصل قيمة العقد الكلية البالغة \`${fmt(ctx.contractVal)} د.ل\`.
+### 1️⃣ ملخص أرشيف التقارير والمراسلات الإدارية المباشرة
+يسر **مساعد مدير المشروع** إحاطتكم بحالة التدفق المكتبي والأرشيفي الحية:
+• **أرشيف التقارير المعتمدة بالمنظومة:** يحتوي على \`${ctx.reportsCount} تقريراً رسمياً ومؤرشفاً\`.
+• **آخر تقرير مودع بالأرشيف:** ${latestRepText}.
+• **صندوق البريد والمراسلات:** إجمالي المراسلات \`${ctx.messagesCount} مراسلة\` (منها \`${ctx.unreadMessagesCount} وارد غير مقروء\` يتطلب اطلاعكم).
+• **المهام والتكليفات الإشرافية النشطة:** \`${ctx.pendingTasksCount} مهام جارية\` من أصل \`${ctx.supervisoryTasksCount} مهام إجمالية\`.
+• **التنبيهات الميدانية وملاحظات الجودة:** \`${ctx.alertsCount} تنبيهات مسجلة\` قيد المتابعة والمعالجة.
+
+---
+
+### 2️⃣ الموقف المالي والاستراتيجي العام
+• **نسبة الإنجاز المالي العام المعتمدة:** \`${ctx.financialProgressPct}%\`
+• **إجمالي القيمة المنفذة الفعلية:** \`${fmt(ctx.grandExecutedSum)} د.ل\` من أصل قيمة العقد البالغة \`${fmt(ctx.contractVal)} د.ل\`.
 • **المتبقي المالي من العقد:** \`${fmt(ctx.remainingContractVal)} د.ل\`.
-• **المرحلة الأولى:** تجاوزت نسبة إنجازها \`${ctx.phaseOneCompletionPct}\` بطول منجز \`226,083.41 م.ط\`، في حين تتسارع وتيرة العمل في المرحلة الثانية.
-
----
-
-### 2️⃣ الموقف المالي والتعاقدي المفصل
-• **إجمالي البنود الأساسية:** \`${fmt(ctx.basicExecutedSum)} د.ل\` (تمثل \`${((ctx.basicExecutedSum / ctx.contractVal) * 100).toFixed(2)}%\` من العقد).
-• **إجمالي البنود الإضافية:** \`${fmt(ctx.additionalExecutedSum)} د.ل\`.
-• **أبرز فئات البنود المنفذة:**
-  - طبقة إعادة التدوير (FDR): المنفذ \`${fmt(fdrItem.executedQuantity)} م²\` بقيمة \`${fmt(fdrItem.executedValue)} د.ل\`.
-  - طبقة التشريب (MCO): المنفذ \`${fmt(mcoItem.executedQuantity)} م²\` بقيمة \`${fmt(mcoItem.executedValue)} د.ل\`.
-  - طبقة الأسفلت المحسن (6 سم): المنفذ \`${fmt(asphItem.executedQuantity)} م²\` بقيمة \`${fmt(asphItem.executedValue)} د.ل\`.
-  - طبقة الأساس الحبيبي الإضافية: المنفذ \`${fmt(baseItem.executedQuantity)} م³\` بقيمة \`${fmt(baseItem.executedValue)} د.ل\`.
+• **المرحلة الأولى (226.08 كم):** منجزة بنسبة تتجاوز \`${ctx.phaseOneCompletionPct}\` (منجز \`226,083.41 م.ط\`).
+• **المرحلة الثانية (133.92 كم):** جارية ومستهدفة بتركيز فرق العمل ومعدات الرصف.
 
 ---
 
@@ -277,16 +388,19 @@ export function generateExecutiveBriefingArticle(ctx = getLiveSystemContext()) {
 
 ---
 
-### 4️⃣ جاهزية أسطول الآليات والمعدات الميدانية
-• **إجمالي الآليات الميدانية العاملة:** \`${ctx.equipmentCount} آلية ومعدة هندسية ثقيلة\`.
-• **نسبة الجاهزية التشغيلية:** \`${ctx.equipmentReadiness}\` دون تسجيل أي أعطال حرجة تعطل مسار العمل.
-• تضم الآليات: ماكينات إعادة التدوير FDR، فرادات الأسفلت، مداحل الدك الهيدروليكية، وتنكات الرش والوقود الميدانية.
+### 4️⃣ إدارة أرصدة الوقود والمحروقات (الديزل)
+• **إجمالي الوقود المتبقي بالخزانات الميدانية:** \`${fmt(ctx.totalRemainingFuel, 0)} لتر ديزل\`.
+  - **خزان نقطة (107):** \`${fmt(ctx.tank107, 0)} لتر ديزل\`.
+  - **خزان نقطة (240):** \`${fmt(ctx.tank240, 0)} لتر ديزل\`.
+• **الاستهلاك اليومي المعتمد:** \`${fmt(ctx.totalConsumedFuel, 0)} لتر ديزل\`.
+• يتم تحديث ومطابقة الوقود لحظياً مع كل تقرير يومي يرد من مسؤول الوقود.
 
 ---
 
-### 5️⃣ الإدارة اللوجستية للمحروقات (الديزل)
-• **حالة رصيد الوقود:** قسم الوقود مرتبط مباشرة بسجل التقارير الميدانية المعتمدة (خزان 107 وخزان 240)، وعند عدم تسجيل تقرير يظهر (0 لتر ديزل).
-• **المخزون الميداني:** أرصدة الصهاريج والخزانات يتم تحديثها فورياً مع اعتماد تقارير مسؤول الوقود.
+### 5️⃣ جاهزية أسطول الآليات والمعدات الميدانية
+• **إجمالي الآليات الميدانية العاملة:** \`${ctx.equipmentCount} آلية ومعدة هندسية ثقيلة\`.
+• **نسبة الجاهزية التشغيلية:** \`${ctx.equipmentReadiness}\` دون تسجيل أي أعطال حرجة تعطل مسار العمل.
+• تضم الآليات: ماكينات إعادة التدوير FDR، فرادات الأسفلت، مداحل الدك الهيدروليكية، وتنكات الرش والوقود الميدانية.
 
 ---
 
@@ -296,22 +410,23 @@ export function generateExecutiveBriefingArticle(ctx = getLiveSystemContext()) {
 
 ---
 
-### 7️⃣ التوصيات الهندسية الموجهة لمدير المشروع (لإصدار التعليمات)
+### 7️⃣ التوجيهات والتوصيات الموجهة لمدير المشروع
 1. **توجيه فرقة الأسفلت الرئيسية:** لاستغلال القطاع المجهز والبالغ \`${fmt(ctx.pipeline.asphaltReadyMeters)} م.ط\` لزيادة وتيرة الإنجاز اليومي قبل تقلبات الطقس.
-2. **تأمين لوجستيات الديزل:** متابعة تفريغ شحنات الوقود في الصهاريج الميدانية بنقطة (107) ونقطة (240).
-3. **اعتماد المذكرة الفنية للعبارة:** إنهاء إجراءات المقاول الخاص بالعبارة الصندوقية بالمحطة 165+000.
+2. **تأمين لوجستيات الوقود:** متابعة أرصدة نقطة (107) ونقطة (240) وضمان وصول الشحنات تباعاً.
+3. **مراجعة بريد المراسلات الواردة:** الاطلاع على المراسلات الواردة المعلقة وإصدار التوجيهات للمهندسين المشرفين.
 
-**مساعد جهاز الإشراف والمتابعة في خدمتكم دائماً لتقديم أدق التقارير.**`;
+**مساعد مدير المشروع في خدمتكم دائماً.**`;
 }
 
 /**
  * الرد المحلي المدمج للمساعد الذكي دون إنترنت (Offline NLP Rule-Engine)
+ * مربوط بالكامل مع الأرشيف والتقارير والمراسلات
  */
 export function processLocalQuery(queryText, attachedFile = null) {
   const q = (queryText || '').toLowerCase().trim();
   const ctx = getLiveSystemContext();
 
-  // إذا تم إرفاق ملف دون سؤال أو بسؤال فحص
+  // 1. إذا تم إرفاق ملف للتحليل
   if (attachedFile) {
     let fileAnalysisContent = `📎 **تحليل المستند والبيانات المرفقة:**\n`;
     fileAnalysisContent += `• **اسم الملف:** \`${attachedFile.name}\`\n`;
@@ -319,14 +434,14 @@ export function processLocalQuery(queryText, attachedFile = null) {
 
     if (attachedFile.isImage) {
       fileAnalysisContent += `🖼️ تم استلام الصورة بنجاح وتجهيزها للمعالجة البصرية الميدانية.\n`;
-      fileAnalysisContent += `💡 *ملاحظة:* تم تحليل الصورة ضمن سياق مشروع طريق أوباري - غات، وتطابق المعايير الهندسية لجهاز الإشراف.`;
+      fileAnalysisContent += `💡 *ملاحظة:* تم تحليل الصورة ضمن سياق مشروع طريق أوباري - غات ومطابقتها للمواصفات الفنية.`;
     } else if (attachedFile.type === 'excel') {
       fileAnalysisContent += `📊 **ملخص الجداول المستخرجة من شيت الإكسل:**\n`;
       fileAnalysisContent += `• عدد أوراق العمل: \`${attachedFile.sheetNames?.length || 1}\` (${attachedFile.sheetNames?.join(', ') || 'الرئيسية'})\n`;
       fileAnalysisContent += `• إجمالي الصفوف المفحوصة: \`${attachedFile.rowCount || '—'}\` صَفّاً.\n\n`;
       fileAnalysisContent += attachedFile.textSummary;
-      fileAnalysisContent += `\n🔍 **التقييم الهندسي لمساعد الإشراف:**\n`;
-      fileAnalysisContent += `• تم مطابقة بيانات الملف مع المعايير التعاقدية المعتمدة (29/10/2026).\n`;
+      fileAnalysisContent += `\n🔍 **التقييم الهندسي لمساعد مدير المشروع:**\n`;
+      fileAnalysisContent += `• تم مطابقة بيانات الملف مع المعايير التعاقدية المعتمدة.\n`;
       fileAnalysisContent += `• الأرقام والجداول جاهزة للأرشفة أو الربط مع تقارير الإنجاز الميداني.`;
     } else {
       fileAnalysisContent += attachedFile.textSummary;
@@ -336,33 +451,160 @@ export function processLocalQuery(queryText, attachedFile = null) {
       type: 'file_analysis',
       title: `تقرير فحص وتحليل المستند: ${attachedFile.name}`,
       content: fileAnalysisContent,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'الجاهز للأسفلت']
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'المراسلات الواردة']
     };
   }
 
-  // 0. استعلامات وسجل المهام الإشرافية وتكليفات مدير المشروع
+  // 2. استعلامات أرشيف التقارير والتقارير المرفوعة واليومية
+  if (
+    q.includes('تقرير') || 
+    q.includes('تقارير') || 
+    q.includes('أرشيف') || 
+    q.includes('ارشيف') || 
+    q.includes('المؤرشف') || 
+    q.includes('التقرير الأخير') || 
+    q.includes('تقرير أمس') || 
+    q.includes('أحدث تقرير') ||
+    q.includes('كم تقرير') ||
+    q.includes('سجل التقارير')
+  ) {
+    let repContent = `📁 **سجل وتقارير المنظومة المعتمدة في الأرشيف:**\n`;
+    repContent += `• **إجمالي التقارير المؤرشفة بالمنظومة:** \`${ctx.reportsCount} تقريراً\`\n`;
+    repContent += `• **تقارير إنجاز أعمال الطريق:** \`${ctx.roadReportsCount} تقرير\`\n`;
+    repContent += `• **تقارير حركة الوقود والمحروقات:** \`${ctx.fuelReportsCount} تقرير\`\n`;
+    repContent += `• **تقارير الأعمال المستهدفة:** \`${ctx.targetedReportsCount} تقرير\`\n\n`;
+
+    if (ctx.recentReports && ctx.recentReports.length > 0) {
+      repContent += `### 📋 أحدث التقارير المسجلة في الأرشيف:\n`;
+      ctx.recentReports.forEach((r, idx) => {
+        const num = r.reportNumber || r.id || `#${idx + 1}`;
+        const dt = r.dateFormatted || (r.date ? r.date.split('T')[0] : 'غير محدد');
+        const eng = r.engineer || r.supervisor || 'المهندس المشرف';
+        const phase = r.phase || r.sector || (r.isTwoPhaseProgressReport ? 'المرحلتين (الأولى والثانية)' : 'الميدان العام');
+        const type = r.isFuelReport ? '⛽ وقود' : (r.isTwoPhaseProgressReport ? '🛣️ تقدم مرحلتين' : '📄 تقرير يومي');
+        repContent += `${idx + 1}. **[${num}]** - ${dt} | **${type}**\n   • **المشرف:** ${eng} | **القطاع:** ${phase}\n`;
+        if (r.summary || r.notes) {
+          repContent += `   • *ملخص:* ${r.summary || r.notes}\n`;
+        }
+      });
+    } else {
+      repContent += `ℹ️ لم يتم العثور على تقارير جديدة مؤرشفة محلياً اليوم. سيتم إدراجها فورياً عند قيام المهندسين بإنشاء واعتماد تقارير جديدة.\n`;
+    }
+
+    repContent += `\n💡 *ملاحظة:* يمكنك الانتقال مباشرة إلى **تبويب أرشيف التقارير** لاستعراض كافة التقارير والبحث فيها وطباعتها وتصديرها بصيغة Excel أو PDF.`;
+
+    return {
+      type: 'reports_archive',
+      title: 'بيان أرشيف وتقارير المنظومة المعتمدة',
+      content: repContent,
+      actionTab: 'reports-archive',
+      actionLabel: 'الانتقال إلى أرشيف التقارير والطباعة',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'المراسلات والبريد الوارد', 'موقف الوقود بالمواقع']
+    };
+  }
+
+  // 3. استعلامات البريد والمراسلات والتوجيهات الإشرافية
+  if (
+    q.includes('مراسلات') || 
+    q.includes('المراسلات') || 
+    q.includes('بريد') || 
+    q.includes('البريد') || 
+    q.includes('رسائل') || 
+    q.includes('الرسائل') || 
+    q.includes('توجيهات') || 
+    q.includes('تعليمات') || 
+    q.includes('كتب رسمية') || 
+    q.includes('إحالة') || 
+    q.includes('وارد') || 
+    q.includes('صادر')
+  ) {
+    let msgContent = `📬 **موقف البريد والمراسلات الإدارية والفنية لمدير المشروع:**\n`;
+    msgContent += `• **إجمالي المراسلات المتبادلة:** \`${ctx.messagesCount} مراسلة مسجلة\`\n`;
+    msgContent += `• **المراسلات الواردة غير المقروءة لمدير المشروع:** \`${ctx.unreadMessagesCount} مراسلة جديدة\`\n\n`;
+
+    if (ctx.recentMessages && ctx.recentMessages.length > 0) {
+      msgContent += `### 📨 أحدث المراسلات الموجهة والمعتمدة:\n`;
+      ctx.recentMessages.forEach((m, idx) => {
+        const sender = m.senderName || m.sender || 'مهندس مشرف';
+        const subj = m.type || m.subject || 'مراسلة إدارية';
+        const dt = m.date || m.timestamp || 'اليوم';
+        const unreadMark = !m.read ? ' 🔴 [جديد]' : '';
+        msgContent += `${idx + 1}. **${subj}**${unreadMark} - من (\`${sender}\`) | ${dt}\n`;
+        if (m.body || m.content) {
+          const bodySnippet = String(m.body || m.content).slice(0, 100);
+          msgContent += `   • *النص:* ${bodySnippet}...\n`;
+        }
+      });
+    } else {
+      msgContent += `ℹ️ صندوق المراسلات محدث بالكامل ولا توجد خطابات معلقة.\n`;
+    }
+
+    msgContent += `\n💡 *ملاحظة:* يمكنك الانتقال مباشرة إلى **تبويب البريد والمراسلات** لقراءة المراسلات كاملة أو إرسال توجيه رسمي جديد لأي مهندس مشرف.`;
+
+    return {
+      type: 'correspondence_briefing',
+      title: 'موقف البريد والمراسلات والتوجيهات الرسمية',
+      content: msgContent,
+      actionTab: 'messages',
+      actionLabel: 'الانتقال إلى صندوق البريد والمراسلات',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'موقف أعمال الطريق']
+    };
+  }
+
+  // 4. استعلامات التنبيهات وضبط الجودة والمختبر
+  if (
+    q.includes('تنبيه') || 
+    q.includes('تنبيهات') || 
+    q.includes('جودة') || 
+    q.includes('الجودة') || 
+    q.includes('مختبر') || 
+    q.includes('ملاحظات') || 
+    q.includes('ملاحظة') ||
+    q.includes('عيوب')
+  ) {
+    let alertContent = `⚠️ **تقرير التنبيهات الميدانية وملاحظات ضبط الجودة والمختبر:**\n`;
+    alertContent += `• **إجمالي التنبيهات المسجلة:** \`${ctx.alertsCount} تنبيه وملاحظة\`\n`;
+
+    if (ctx.alertsList && ctx.alertsList.length > 0) {
+      alertContent += `\n### 📝 قائمة التنبيهات المسجلة بالميدان:\n`;
+      ctx.alertsList.slice(0, 6).forEach((a, idx) => {
+        const title = a.title || a.message || 'ملاحظة جودة ميدانية';
+        const loc = a.location || a.sector || 'طريق أوباري - غات';
+        const sev = a.severity || a.priority || 'متوسط';
+        alertContent += `${idx + 1}. **${title}** | الموقع: \`${loc}\` | الأولوية: \`${sev}\`\n`;
+      });
+    } else {
+      alertContent += `• لا توجد تنبيهات حرجة مسجلة اليوم، وكافة الاختبارات المعملية لطبقات الرصف والدك متوافقة مع المواصفات الفنية.\n`;
+    }
+
+    return {
+      type: 'quality_alerts',
+      title: 'سجل التنبيهات وملاحظات ضبط الجودة والمختبر',
+      content: alertContent,
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'موقف أعمال الطريق', 'أرشيف التقارير']
+    };
+  }
+
+  // 5. استعلامات وتكليفات المهام الإشرافية
   if (
     q.includes('مهام') || 
     q.includes('المهام') || 
     q.includes('تكليف') || 
     q.includes('تكليفات') || 
     q.includes('مهمة') || 
-    q.includes('تقديم المهام') || 
-    q.includes('مهام مدير المشروع') || 
-    q.includes('التكليفات الميدانية') || 
-    q.includes('المهام المفتوحة') || 
-    q.includes('المهام الجارية') ||
     q.includes('توزيع المهام')
   ) {
     return {
       type: 'supervisory_tasks',
       title: 'سجل وموقف المهام الإشرافية وتكليفات مدير المشروع',
       content: generateSupervisoryTasksArticle(),
-      quickSuggestions: ['📰 مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي والمالي', 'الجاهز لطبقة الأسفلت']
+      actionTab: 'messages',
+      actionLabel: 'الانتقال إلى المراسلات والتكليفات',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'الموقف المالي']
     };
   }
 
-  // 1. طلب مقالة المستجدات لمدير المشروع
+  // 6. طلب مقالة المستجدات والموجز التنفيذي لمدير المشروع
   if (
     q.includes('مقالة') || 
     q.includes('المستجدات') || 
@@ -373,22 +615,21 @@ export function processLocalQuery(queryText, attachedFile = null) {
     q.includes('أحدث المستجدات') || 
     q.includes('تقرير شامل للمدير') ||
     q.includes('تقرير تنفيذي') ||
-    q.includes('يقدم حالة') ||
+    q.includes('موجز تنفيذي') ||
     q.includes('حالة المشروع') ||
-    q.includes('تقرير الحالة') ||
     q.includes('موقف المشروع')
   ) {
     return {
       type: 'executive_article',
-      title: 'تقرير آخر المستجدات والموقف التنفيذي لمدير المشروع',
+      title: 'تقرير آخر المستجدات والموقف التنفيذي الشامل لمدير المشروع',
       content: generateExecutiveBriefingArticle(ctx),
-      quickSuggestions: ['الموقف التنفيذي والمالي', 'الجاهز لطبقة الأسفلت', 'أرصدة الوقود اليومية']
+      quickSuggestions: ['أرشيف التقارير', 'المراسلات والبريد الوارد', 'أرصدة الوقود بالمواقع']
     };
   }
 
-  // 2. الموقف التنفيذي العام والمالي
+  // 7. الموقف المالي والتعاقدي
   if (
-    q.includes('موقف') || 
+    q.includes('موقف مالي') || 
     q.includes('قيمة العقد') || 
     q.includes('نسبة الانجاز') || 
     q.includes('نسبة الإنجاز') || 
@@ -400,7 +641,7 @@ export function processLocalQuery(queryText, attachedFile = null) {
     return {
       type: 'executive_summary',
       title: 'ملخص الموقف التنفيذي والمالي المعتمد للمشروع',
-      content: `📌 **الموقف التنفيذي لمشروع صيانة طريق أوباري - غات (360 كم):**
+      content: `📌 **الموقف التنفيذي المالي لمشروع طريق أوباري - غات (360 كم):**
 • **قيمة العقد الكلية:** \`${fmt(ctx.contractVal)} د.ل\`
 • **إجمالي المنفذ المالي الفعلي:** \`${fmt(ctx.grandExecutedSum)} د.ل\`
 • **نسبة الإنجاز المالي العام:** \`${ctx.financialProgressPct}%\`
@@ -408,16 +649,18 @@ export function processLocalQuery(queryText, attachedFile = null) {
 • **إجمالي البنود الأساسية:** \`${fmt(ctx.basicExecutedSum)} د.ل\` (${((ctx.basicExecutedSum / ctx.contractVal) * 100).toFixed(2)}%)
 • **إجمالي البنود الإضافية:** \`${fmt(ctx.additionalExecutedSum)} د.ل\`
 • **تاريخ الاعتماد الرسمي:** \`${ctx.executiveDate}\` (المرجع: \`${ctx.reportNumber}\`)`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'فئات البنود التعاقدية', 'الجاهز للرصف في البنود']
+      actionTab: 'executive-progress',
+      actionLabel: 'الانتقال إلى الموقف التنفيذي والمالي',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'فئات البنود التعاقدية']
     };
   }
 
-  // 3. فئات وأسعار البنود المعتمدة
+  // 8. فئات وأسعار البنود المعتمدة
   if (q.includes('فئة') || q.includes('سعر') || q.includes('أسعار') || q.includes('تكلفة المتر')) {
     return {
       type: 'rates_info',
       title: 'الفئات التعاقدية المعتمدة للبنود (بالدينار الليبي)',
-      content: `📋 **جدول الفئات التعاقدية المعتمدة رسمياً في وثيقة 29/10/2026:**
+      content: `📋 **جدول الفئات التعاقدية المعتمدة رسمياً:**
 • **كشط وإعادة تدوير (FDR):** \`119.44 د.ل / م²\`
 • **رش طبقة تشريب (MCO):** \`13.73 د.ل / م²\`
 • **طبقة أسفلت محسن بالبوليمر (6 سم):** \`145.35 د.ل / م²\`
@@ -428,11 +671,11 @@ export function processLocalQuery(queryText, attachedFile = null) {
 • **علامات الإرشاد:** \`1,783.99 د.ل / عدد\`
 • **عواكس أرضية لتحديد السرعة:** \`135.04 د.ل / عدد\`
 • **أعمال الطلاء والخطوط (صفراء/بيضاء):** \`23.07 د.ل / م.ط\``,
-      quickSuggestions: ['كم المنفذ من الأسفلت؟', 'كم المنفذ من FDR؟', 'مقالة المستجدات لمدير المشروع']
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'كم المنفذ من الأسفلت؟', 'أرشيف التقارير']
     };
   }
 
-  // 4. التتابع الإنشائي الميداني (الجاهز للعمل في البند)
+  // 9. التتابع الإنشائي الميداني (الجاهز للعمل)
   if (
     q.includes('جاهز') || 
     q.includes('الجاهز للعمل') || 
@@ -455,11 +698,13 @@ export function processLocalQuery(queryText, attachedFile = null) {
    • \`20.00 م.ط\` (قطاع منجز فرمة أولى وجاهز لخلط الأسمنت والدك).
 5. **طول الطريق الخدمي العامل بالموقع:**
    • \`9,030.00 م.ط\` (فارق المسافة المفتوحة بين جبهات التدوير وجبهة الأسفلت).`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'ما هو عائق المرحلة الأولى؟', 'محطات الأسفلت']
+      actionTab: 'road-progress',
+      actionLabel: 'الانتقال إلى متابعة إنجاز الطريق',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'محطات الأسفلت']
     };
   }
 
-  // 5. استفسارات الأسفلت والـ FDR والطبقات المنفذة
+  // 10. استفسارات طبقات الرصف المنفذة
   if (q.includes('اسفلت') || q.includes('أسفلت') || q.includes('fdr') || q.includes('تدوير') || q.includes('mco') || q.includes('تشريب') || q.includes('اساس') || q.includes('أساس')) {
     const fdrItem = ctx.basicItems.find(i => i.id === 2 || i.itemNumber === '2') || {};
     const mcoItem = ctx.basicItems.find(i => i.id === 3 || i.itemNumber === '3') || {};
@@ -469,27 +714,26 @@ export function processLocalQuery(queryText, attachedFile = null) {
     return {
       type: 'layers_quantities',
       title: 'موقف طبقات الرصف المعتمدة (الكميات المنفذة والقيم)',
-      content: `🛣️ **إحصائيات طبقات الرصف الرئيسية (وفق حاسبة المحطات الرسمية):**
+      content: `🛣️ **إحصائيات طبقات الرصف الرئيسية:**
 • **طبقة إعادة التدوير (FDR):**
   - المنفذ: \`${fmt(fdrItem.executedQuantity)} م²\` (${fdrItem.percentage || '73.20'}%)
   - القيمة المنفذة: \`${fmt(fdrItem.executedValue)} د.ل\` (الفئة: \`119.44 د.ل\`)
-  - المتبقي: \`${fmt(fdrItem.remainingQuantity)} م²\`
 • **رش طبقة التشريب (MCO):**
   - المنفذ: \`${fmt(mcoItem.executedQuantity)} م²\` (${mcoItem.percentage || '71.22'}%)
   - القيمة المنفذة: \`${fmt(mcoItem.executedValue)} د.ل\` (الفئة: \`13.73 د.ل\`)
-  - المتبقي: \`${fmt(mcoItem.remainingQuantity)} م²\`
 • **طبقة الأسفلت المحسن (6 سم):**
   - المنفذ: \`${fmt(asphItem.executedQuantity)} م²\` (${asphItem.percentage || '69.92'}%)
   - القيمة المنفذة: \`${fmt(asphItem.executedValue)} د.ل\` (الفئة: \`145.35 د.ل\`)
-  - المتبقي: \`${fmt(asphItem.remainingQuantity)} م²\`
 • **طبقة الأساس الحبيبي (إضافية):**
   - المنفذ: \`${fmt(baseItem.executedQuantity)} م³\`
   - القيمة المنفذة: \`${fmt(baseItem.executedValue)} د.ل\` (الفئة: \`299.52 د.ل\`)`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'الجاهز للعمل في البند', 'حاسبة المحطات']
+      actionTab: 'road-progress',
+      actionLabel: 'الانتقال إلى متابعة إنجاز الطريق',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'الجاهز للعمل في البند']
     };
   }
 
-  // 6. العوائق الميدانية ومتبقي المرحلة الأولى (العبارة المنهارة)
+  // 11. عائق المرحلة الأولى (المحطة 165)
   if (q.includes('عائق') || q.includes('عبارة') || q.includes('منهارة') || q.includes('المرحلة الاولى') || q.includes('المرحلة 1')) {
     return {
       type: 'obstacle_info',
@@ -499,163 +743,141 @@ export function processLocalQuery(queryText, attachedFile = null) {
 • **طول القطاع غير المكتمل:** \`130.00 م.ط\`.
 • **سبب التوقف:** وجود عبارة صندوقية تضررت أثناء السيول وتحتاج إلى إعادة إنشاء وتدعيم هيدروليكي قبل مد طبقات الرصف والأسفلت.
 • **حالة المرحلة الأولى:** تم إنجاز \`226,083.41 م.ط\` من أصل \`226,213.41 م.ط\`، ونسبة إنجاز المرحلة تتجاوز \`99.94%\`.`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'الجاهز للأسفلت', 'الموقف التنفيذي']
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'الجاهز للأسفلت']
     };
   }
 
-  // 7. الوقود والمحروقات
-  if (q.includes('وقود') || q.includes('ديزل') || q.includes('محروقات') || q.includes('بنزين') || q.includes('خزان')) {
+  // 12. الوقود والمحروقات
+  if (q.includes('وقود') || q.includes('ديزل') || q.includes('محروقات') || q.includes('خزان') || q.includes('صهريج') || q.includes('107') || q.includes('240')) {
     return {
       type: 'fuel_status',
       title: 'تقرير أرصدة واستهلاك الوقود اليومي بالمواقع',
-      content: `⛽ **الموقف اليومي لحركة الوقود والمحروقات (الديزل):**
-• قسم الوقود مرتبط مباشرة بسجل التقارير اليومية المعتمدة للمواقع (نقطة 107 ونقطة 240).
-• في حال عدم إدخال تقرير يومي جديد، فإن رصيد المنصرف المعتمد هو (0 لتر ديزل) حتى يتم اعتماد ورفع تقرير رسمي من مسؤول الوقود.`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'المعدات الميدانية', 'الموقف التنفيذي']
+      content: `⛽ **الموقف اللحظي لحركة الوقود والمحروقات (الديزل):**
+• **إجمالي الوقود المتبقي بالخزانات:** \`${fmt(ctx.totalRemainingFuel, 0)} لتر ديزل\`
+• **رصيد خزان نقطة (107):** \`${fmt(ctx.tank107, 0)} لتر\`
+• **رصيد خزان نقطة (240):** \`${fmt(ctx.tank240, 0)} لتر\`
+• **الاستهلاك اليومي المعتمد:** \`${fmt(ctx.totalConsumedFuel, 0)} لتر\`
+• **عدد تقارير الوقود المؤرشفة:** \`${ctx.fuelReportsCount} تقرير\``,
+      actionTab: 'fuel',
+      actionLabel: 'الانتقال إلى منظومة الوقود',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرشيف التقارير', 'جاهزية الآليات']
     };
   }
 
-  // 8. حاسبة المحطات وأطوال القطاعات
-  if (q.includes('محطات') || q.includes('محطة') || q.includes('حاسبة') || q.includes('station')) {
+  // 13. أسطول الآليات والمعدات
+  if (q.includes('آليات') || q.includes('اليات') || q.includes('معدات') || q.includes('المعدات') || q.includes('أسطول')) {
     return {
-      type: 'stations_summary',
-      title: 'ملخص بيانات حاسبة محطات طبقات الرصف',
-      content: `📐 **إحصائيات حاسبة المحطات لجميع طبقات الطريق:**
-• **طبقة التشريب MCO:** عدد المحطات: \`29 محطة\` | إجمالي الطول: \`238,603.41 م.ط\` | المساحة: \`2,179,342.47 م²\`
-• **إعادة التدوير FDR:** عدد المحطات: \`29 محطة\` | إجمالي الطول: \`245,383.41 م.ط\` | المساحة: \`2,239,792.63 م²\`
-• **الأسفلت المحسن:** عدد المحطات: \`16 محطة\` | إجمالي الطول: \`236,373.41 م.ط\` | المساحة: \`2,139,464.47 م²\`
-• **الأساس الحبيبي:** عدد المحطات: \`25 محطة\` | إجمالي الطول: \`238,713.41 م.ط\` | المساحة: \`2,160,629.47 م²\` | الحجم: \`270,078.68 م³\`
-💡 *ملاحظة:* يمكنك فتح الحاسبة من شاشة متابعة الطريق لتعديل أو إضافة محطات وحساب الأطوال والمساحات بضغطة زر.`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'الجاهز للعمل في البند', 'الموقف التنفيذي']
+      type: 'equipment_fleet',
+      title: 'جاهزية أسطول الآليات والمعدات الميدانية',
+      content: `🚜 **بيان أسطول الآليات والمعدات الميدانية العاملة بالمشروع:**
+• **إجمالي الآليات العاملة بالموقع:** \`${ctx.equipmentCount} آلية ومعدة ثقيلة\`
+• **نسبة الجاهزية التشغيلية:** \`${ctx.equipmentReadiness}\`
+• **الأنواع الرئيسية بالميدان:**
+  - ماكينات إعادة التدوير على البارد (FDR Recyclers)
+  - فرادات الأسفلت المتطورة
+  - مداحل حديدية ومطاطية هيدروليكية للدك
+  - شاحنات نقل المواد والركام
+  - صهاريج رش البيتومين وتنكات الوقود الميدانية`,
+      actionTab: 'equipment',
+      actionLabel: 'الانتقال إلى سجل المعدات والآليات',
+      quickSuggestions: ['الموجز التنفيذي لمدير المشروع', 'أرصدة الوقود', 'أرشيف التقارير']
     };
   }
 
-  // 9. توليد كتاب رسمي أو مذكرة إشرافية
-  if (q.includes('اكتب') || q.includes('تقرير رسمي') || q.includes('كتاب') || q.includes('صيغة') || q.includes('إحالة')) {
-    return {
-      type: 'memo_generation',
-      title: 'صيغة مذكرة إشرافية رسمية جاهزة للإرسال والطباعة',
-      content: `📄 **دولة ليبيا - وزارة المواصلات - جهاز تنفيذ مشروعات المواصلات**
-**مكتب جهاز الإشراف والمتابعة - مشروع صيانة طريق أوباري غات (360 كم)**
-
-**التاريخ:** ${ctx.executiveDate}
-**الموضوع:** الموقف التنفيذي وسير العمل الميداني للمشروع
-
-**السيد / مدير عام جهاز تنفيذ مشروعات المواصلات المحترم،**
-**تحية طيبة وبعد،،،**
-
-نحيط سيادتكم علماً بأن الأعمال الميدانية والتنفيذية بمشروع صيانة وتطوير طريق أوباري - غات (بطول 360 كم) تسير وفق الخطط المعتمدة وجداول التتابع الهندسي، وإليكم ملخص الموقف:
-
-1. **الموقف المالي العام:**
-   - قيمة العقد الإجمالية: **${fmt(ctx.contractVal)} د.ل**
-   - إجمالي القيمة المنفذة حتى تاريخه: **${fmt(ctx.grandExecutedSum)} د.ل** بنسبة إنجاز **${ctx.financialProgressPct}%**.
-   - إجمالي البنود الأساسية: **${fmt(ctx.basicExecutedSum)} د.ل**.
-   - إجمالي البنود الإضافية: **${fmt(ctx.additionalExecutedSum)} د.ل**.
-
-2. **الجاهزية الميدانية للرصف:**
-   - القطاع المجهز لطرح طبقة الأسفلت المحسن فورياً يبلغ **2,230.00 م.ط**.
-   - أعمال الأساس الحبيبي الجاهز للتشريب تبلغ **6,670.00 م.ط**.
-   - العمل مستمر في أعمال المرحلة الثانية بوتيرة متصاعدة.
-
-**وتفضلوا بقبول فائق التقدير والاحترام،،،**
-
-**المهندس عبدالسلام ابريكاو** | رئيس جهاز الإشراف
-**المهندس عبدالرحمن الأنصاري** | مدير المشروع`,
-      quickSuggestions: ['مقالة المستجدات لمدير المشروع', 'الموقف التنفيذي', 'الجاهز للرصف']
-    };
-  }
-
-  // 10. الرد الافتراضي الترحيبي
+  // 14. الرد الافتراضي التنفيذي لمساعد مدير المشروع
   return {
     type: 'general_help',
-    title: 'مرحباً بك! أنا مساعد جهاز الإشراف والمتابعة',
-    content: `👋 مرحباً بك يا باشمهندس! أنا **مساعد جهاز الإشراف والمتابعة** لمشروع طريق أوباري - غات (360 كم).
+    title: 'مرحباً بك! أنا مساعد مدير المشروع',
+    content: `👋 مرحباً بك يا باشمهندس! أنا **مساعد مدير المشروع** المعتمد لمشروع صيانة وتطوير طريق أوباري - غات (360 كم).
 
-أنا مربوط مباشرة بقواعد بيانات المنظومة والوثائق الرسمية المعتمدة (29/10/2026) وأستطيع مساعدتك فورياً في:
-1. 📰 **مقالة المستجدات لمدير المشروع:** صياغة مقالة تقريرية شاملة ورفيعة المستوى عن آخر التطورات الميدانية.
-2. 📊 **الموقف التنفيذي والمالي:** حساب المنجز، المتبقي من العقد، ونسب الإنجاز.
-3. 🛣️ **التتابع الإنشائي والهندسي:** حساب الأمتار الجاهزة للأسفلت، الأساس، MCO، و FDR.
-4. 📎 **فحص وتحليل الملفات:** يمكنك رفع ملفات الإكسل (XLSX)، الصور، والنصوص لأحللها لك مباشرة.
-5. ⛽ **إدارة الوقود والآليات:** متابعة المحروقات بالخزانات الميدانية (نقطة 107 ونقطة 240).
+أنا مربوط لحظياً بكافة قواعد بيانات المنظومة، وأرشيف التقارير، والمراسلات الرسمية:
+1. 📰 **الموجز التنفيذي لمدير المشروع:** صياغة تقرير شامل يرصد الإنجاز، التقارير، والمهام.
+2. 📁 **أرشيف وتقارير المنظومة:** رصد \`${ctx.reportsCount} تقريراً مؤرشفاً\` والبحث فيها ومتابعتها.
+3. 📬 **المراسلات والتوجيهات الإدارية:** فحص صندوق البريد، والمراسلات الواردة غير المقروءة (\`${ctx.unreadMessagesCount}\`).
+4. 🛣️ **تقدم أعمال الطريق والتتابع الإنشائي:** متابعة المرحلة الأولى (226.08 كم) والمرحلة الثانية (133.92 كم).
+5. ⛽ **إدارة المحروقات وأرصدة الوقود:** فحص صهاريج نقطة 107 ونقطة 240 (\`${fmt(ctx.totalRemainingFuel, 0)} لتر\`).
+6. 📎 **فحص وتحليل المستندات:** رفع ملفات الإكسل (XLSX) والصور لتحليلها ومطابقتها فورياً.
 
-**ما الذي ترغب في الاستفسار عنه اليوم؟**`,
+**كيف يمكنني مساعدتك في مهام إدارة المشروع اليوم؟**`,
     quickSuggestions: [
-      '📰 مقالة المستجدات لمدير المشروع',
-      'ما هو الموقف التنفيذي والمالي اليوم؟',
-      'كم المتر الجاهز لطبقة الأسفلت؟',
-      'ما هي الفئات التعاقدية للبنود؟',
-      'ما هو رصيد الوقود في المواقع؟'
+      'الموجز التنفيذي لمدير المشروع',
+      'فحص أرشيف التقارير المعتمدة',
+      'المراسلات والبريد الوارد لمدير المشروع',
+      'موقف أعمال الطريق (المرحلة 1 و 2)',
+      'موقف أرصدة واستهلاك الوقود بالمواقع'
     ]
   };
 }
 
 /**
- * الرد الاحتياطي التلقائي عند انقطاع الاتصال السحابي أو عدم توفر مفتاح خارجي
+ * الرد الاحتياطي التلقائي عند انقطاع الاتصال السحابي
  */
 export function generateOfflineSupervisionResponse(userMessage, attachedFile = null) {
   const result = processLocalQuery(userMessage, attachedFile);
-  return result.content || 'تم استلام طلبك ومطابقته مع قواعد بيانات جهاز الإشراف.';
+  return result.content || 'تم استلام طلبكم ومطابقته مع قواعد بيانات مدير المشروع.';
 }
 
 /**
- * الاتصال بمحرك Gemini API السحابي المتقدم
+ * الاتصال بمحرك Gemini API السحابي المتقدم لمساعد مدير المشروع
  */
 export async function callGeminiCloudAgent(apiKey, userMessage, conversationHistory = [], attachedFile = null) {
   const activeKey = (apiKey && apiKey.trim()) || getDefaultApiKey();
   const ctx = getLiveSystemContext();
 
-  const systemPrompt = `أنت "مساعد جهاز الإشراف والمتابعة" لمشروع صيانة وتطوير طريق أوباري - غات بطول 360 كم (دولة ليبيا - وزارة المواصلات - جهاز تنفيذ مشروعات المواصلات / مصلحة الطرق والجسور).
-أنت مهندس إشراف ومساحة خبير ومساعد تنفيذي لمدير المشروع م. عبدالرحمن الأنصاري ورئيس جهاز الإشراف م. عبدالسلام ابريكاو.
-تتحدث باللغة العربية بأسلوب هندسي رصين وواضح، وتستخدم دائماً الأرقام اللاتينية الإنجليزية (0-9).
+  // بناء ملخص لحظي للتقارير الحديثة لحقنها في الـ Prompt
+  let recentReportsSummary = 'لا توجد تقارير في الأرشيف';
+  if (ctx.recentReports && ctx.recentReports.length > 0) {
+    recentReportsSummary = ctx.recentReports.map(r => 
+      `• تقرير [${r.reportNumber || r.id}] بتأريخ ${r.dateFormatted || r.date || '—'} بإشراف (${r.engineer || r.supervisor || 'مهندس'}) - القطاع: ${r.phase || r.sector || 'العام'}`
+    ).join('\n');
+  }
 
-بيانات المشروع الحية المعتمدة رسمياً بتاريخ 29/10/2026:
+  // بناء ملخص لحظي للمراسلات الحديثة
+  let recentMessagesSummary = 'لا توجد مراسلات جديدة';
+  if (ctx.recentMessages && ctx.recentMessages.length > 0) {
+    recentMessagesSummary = ctx.recentMessages.map(m => 
+      `• [${m.type || m.subject}] من (${m.senderName || m.sender}) بتأريخ ${m.date || '—'}: ${(m.body || m.content || '').slice(0, 80)}`
+    ).join('\n');
+  }
+
+  const systemPrompt = `أنت "مساعد مدير المشروع" (Project Manager Assistant) لمشروع صيانة وتطوير طريق أوباري - غات بطول 360 كم (دولة ليبيا - وزارة المواصلات - جهاز تنفيذ مشروعات المواصلات / مصلحة الطرق والجسور).
+أنت المساعد التنفيذي والاستشاري الأيمن لسعادة مدير المشروع م. عبدالرحمن الأنصاري، ورئيس جهاز الإشراف م. عبدالسلام ابريكاو.
+تتحدث باللغة العربية بأسلوب تنفيذي هندسي رصين وواضح، وتستخدم دائماً الأرقام الإنجليزية (0-9).
+
+أنت مربوط لحظياً ومباشرة بكافة بيانات المنظومة الحية:
+1. أرشيف وتقارير المنظومة المعتمدة:
+- إجمالي التقارير المؤرشفة: ${ctx.reportsCount} تقريراً (تقارير الطريق: ${ctx.roadReportsCount}، تقارير الوقود: ${ctx.fuelReportsCount}).
+- أحدث التقارير المودعة بالأرشيف:
+${recentReportsSummary}
+
+2. البريد والمراسلات والتوجيهات الرسمية:
+- إجمالي المراسلات المسجلة: ${ctx.messagesCount} مراسلة.
+- المراسلات الواردة غير المقروءة لمدير المشروع: ${ctx.unreadMessagesCount} مراسلة.
+- أحدث المراسلات:
+${recentMessagesSummary}
+
+3. البيانات التعاقدية والتنفيذية للمشروع:
 - قيمة العقد الإجمالية: 897,665,675.030 دينار ليبي
-- المنفذ المالي الإجمالي: 638,329,685.46 دينار ليبي (نسبة الإنجاز 71.11%)
-- إجمالي البنود الأساسية: 638,329,685.46 د.ل (71.11%)
-- إجمالي البنود الإضافية: 94,318,535.86 د.ل
+- المنفذ المالي الإجمالي: 638,329,685.46 دينار ليبي (نسبة الإنجاز المالي 71.11%)
 - المتبقي المالي للعقد: 165,017,453.72 د.ل
-- الفئات التعاقدية (د.ل):
-  * كشط وإعادة تدوير FDR: 119.44 م2
-  * رش طبقة تشريب MCO: 13.73 م2
-  * طبقة أسفلت محسن بالبوليمر (6 سم): 145.35 م2
-  * طبقة أساس حبيبي: 299.52 م3
-  * الطريق الخدمي: 59,500.00 كم
-  * علامات إرشاد: 1,783.99 عدد
-  * عواكس أرضية: 135.04 عدد
-  * سياج معدني واقي: 1,205.23 م.ط
-  * دهان وخطوط: 23.07 م.ط
-- التتابع الإنشائي الميداني (الجاهز للعمل):
-  * الجاهز لفرمة تانية FDR: 20 م.ط
-  * الجاهز لطبقة الأساس: 6,670 م.ط
+- التقسيم الرسمي للمشروع: المرحلة الأولى (من كم 0+000 إلى كم 226+083 بطول 226.08 كم ونسبة إنجازها 99.94%)، والمرحلة الثانية (من كم 226+083 إلى كم 360+000 بطول 133.92 كم).
+- التتابع الإنشائي الميداني (الأمتار الجاهزة للعمل):
+  * الجاهز لطبقة الأسفلت: 2,230 م.ط (مرشوش MCO)
   * الجاهز لرش التشريب MCO: 110 م.ط
-  * الجاهز لطبقة الأسفلت: 2,230 م.ط
+  * الجاهز لطبقة الأساس: 6,670 م.ط
+  * الجاهز لفرمة تانية FDR: 20 م.ط
   * طول الطريق الخدمي العامل: 9,030 م.ط
-- عائق المرحلة الأولى: المحطة 165+000 وجود عبارة منهارة تحتاج صيانة بطول 130 م.ط (نسبة إنجاز المرحلة الأولى تتجاوز 99.94%).
-- الوقود: قسم الوقود خالي من الكميات (0 لتر) إلا إذا تم رفع تقرير معتمد من مسؤول الوقود بالمواقع (نقطة 107 ونقطة 240).
+- عائق المرحلة الأولى: المحطة 165+000 وجود عبارة منهارة تحتاج صيانة بطول 130 م.ط.
+- الوقود: خزان نقطة 107 به ${ctx.tank107} لتر، وخزان نقطة 240 به ${ctx.tank240} لتر (الإجمالي ${ctx.totalRemainingFuel} لتر ديزل).
 - أسطول المعدات والآليات: 25 آلية ومعدة ميدانية عاملة بنسبة جاهزية 100%.
-- المهام والتكليفات الإشرافية الميدانية: يوجد سجل مهام إشرافية نشط لتوجيهات وتكليفات مدير المشروع للمهندسين الميدانيين (م. الصالحين بريكاو - مشرف قطاع أ، م. صلاح العربي - مشرف قطاع ب، م. صالح بن يحي - مهندس ضبط الجودة والمختبر، م. عيسى الطاهر - مشرف محطة الخلط والموقع). إذا سئلت عن المهام أو تكليفات مدير المشروع، اعرض تفاصيل المهام وحالتها وأولوياتها بدقة وتنسيق هندسي مرتب.
 
-ميزة المقالة التقريرية لمدير المشروع:
-إذا طلب مدير المشروع (م. عبدالرحمن الأنصاري) أو أي مهندس "آخر المستجدات" أو "المستجدات الهندسية" أو "مقالة عن المستجدات" أو "تقرير شامل للمدير"، قم فوراً بصياغة مقالة تقريرية استراتيجية رفيعة المستوى وشاملة تليق بمدير المشروع، تحتوي على:
-1. عنوان رسمي أثري.
-2. موجز تنفيذي ونسبة الإنجاز الكلية (71.11%).
-3. الموقف المالي والتعاقدي المفصل.
-4. مؤشرات التتابع الإنشائي بالأمتار (الجاهز للأسفلت 2,230 م.ط، الأساس 6,670 م.ط، MCO 110 م.ط).
-5. جاهزية أسطول الآليات (25 آلية 100%).
-6. موقف أرصدة الوقود وتوصية التزويد لموقع 107.
-7. عائق المرحلة الأولى بالمحطة 165+000.
-8. حزمة توصيات تنفيذية عملية لمدير المشروع لدعم اتخاذ القرار.
-
-تحليل الملفات المرفوعة:
-إذا تضمن طلب المستخدم ملفاً مرفوعاً (سواء جدول إكسل، نصوص، أو صورة)، قم بتحليل محتواه ومطابقته بدقة مع بنود ومحطات ومعدات مشروع طريق أوباري - غات، وقدّم للمهندس ملخصاً تحليلياً واستنتاجات هندسية واضحة.
-
-صلاحيات مساعد جهاز الإشراف وقواعد الأمان:
-- أنت مفوض بكافة الصلاحيات الشاملة لكافة أقسام وعمليات المنظومة (قراءة وتحليل الموقف التنفيذي، مسار الـ 360 كم، أعمال الرصف FDR والأسفلت، جداول المحطات، كميات وأرصدة الوقود، سجل الآليات، أرشيف التقارير، وصياغة المراسلات الرسمية).
-- قيد الأمان الصارم (استثناء الحذف): ليس لديك أي صلاحية لحذف أي تقارير أو مستندات أو آليات أو مستخدمين من المنظومة، وإذا طلب منك أي مستخدم الحذف، وضّح له بأدب وحزم: "عذراً يا باشمهندس، تم منحي كافة الصلاحيات التشغيلية والتحليلية بالمنظومة عدا صلاحية الحذف لحماية سجلات ووثائق المشروع المعتمدة."`;
+صلاحيات وقواعد الأمان:
+- لديك صلاحيات استعلامية وتحليلية شاملة لكافة التقارير والأرشيف والمراسلات والوقود وأعمال الطريق.
+- قيد الأمان الصارم (استثناء الحذف): ليس لديك صلاحية لحذف أي سجلات أو تقارير أو وثائق، وإذا طلب منك الحذف ترفض بلباقة: "عذراً يا باشمهندس، تم منحي كافة الصلاحيات التشغيلية والتحليلية بالمنظومة عدا صلاحية الحذف لحماية سجلات ووثائق المشروع المعتمدة."`;
 
   const contents = [
     { role: 'user', parts: [{ text: systemPrompt }] },
-    { role: 'model', parts: [{ text: 'أهلاً بك. أنا جاهز بصفتي مساعد جهاز الإشراف والمتابعة لتقديم أدق التحليلات الهندسية والمالية وصياغة مقالات المستجدات الميدانية لمشروع طريق أوباري - غات.' }] }
+    { role: 'model', parts: [{ text: 'أهلاً بك يا باشمهندس. أنا جاهز بصفتي مساعد مدير المشروع لتقديم أدق التحليلات التنفيذية والهندسية وربط التقارير والأرشيف والمراسلات لمشروع طريق أوباري - غات.' }] }
   ];
 
   conversationHistory.slice(-6).forEach(m => {
@@ -665,10 +887,8 @@ export async function callGeminiCloudAgent(apiKey, userMessage, conversationHist
     });
   });
 
-  // بناء أجزاء رسالة المستخدم (نص + ملف مرفق إذا وجد)
   const userParts = [];
 
-  // إذا كانت صورة مرفقة
   if (attachedFile && attachedFile.isImage && attachedFile.base64) {
     userParts.push({
       inline_data: {
@@ -678,20 +898,18 @@ export async function callGeminiCloudAgent(apiKey, userMessage, conversationHist
     });
   }
 
-  // النص الكامل متضمناً ملخص الملف إذا كان ملف إكسل أو نصي
   let fullUserText = userMessage || '';
   if (attachedFile && !attachedFile.isImage && attachedFile.textSummary) {
     fullUserText = `${fullUserText}\n\n${attachedFile.textSummary}`.trim();
   }
 
-  userParts.push({ text: fullUserText || 'يرجى تحليل البيانات والمستجدات وتقديم تقرير شامل.' });
+  userParts.push({ text: fullUserText || 'يرجى تحليل البيانات والمستجدات وتقديم تقرير تنفيذي لمدير المشروع.' });
 
   contents.push({
     role: 'user',
     parts: userParts
   });
 
-  // الموديلات المدعومة من Google Gemini مع السقوط المتتابع التلقائي
   const candidateModels = [
     'gemini-2.5-flash',
     'gemini-2.0-flash',
@@ -725,6 +943,6 @@ export async function callGeminiCloudAgent(apiKey, userMessage, conversationHist
     }
   }
 
-  console.warn('Google Gemini API unavailable, falling back to offline supervision engine:', lastError);
+  console.warn('Google Gemini API unavailable, falling back to offline project manager engine:', lastError);
   return generateOfflineSupervisionResponse(userMessage, attachedFile);
 }

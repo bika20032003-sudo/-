@@ -354,9 +354,9 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           ['المعد / المشرف', report.uploadedBy || (isSectorA ? 'مدير المرحلة الأولى' : 'مدير المرحلة الثانية'), 'حالة الاعتماد', report.status === 'approved' ? 'معتمد رسمياً' : 'قيد المراجعة'],
           [],
           ['م', 'البند التشغيلي / الفني', 'الموقع / الآلية المحددة', 'الكمية المنجزة اليوم', 'الوحدة', 'الملاحظات'],
-          [1, 'إنتاج وتشغيل الكسارة', report.crusherName || (isSectorA ? 'كسارة المرحلة الأولى' : 'كسارة المرحلة الثانية'), Number(report.productionAmount || 0), 'طن', 'ركام طبقة أساس / شرشور'],
+          [1, 'أعمال طبقة الأساس الحبيبي', `مسار ${sectorTitle}`, Number(report.roadMeters || report.todayMeters || 0), 'م.ط', 'تنفيذ طبقة الأساس الحبيبي'],
           [2, 'أعمال الرصف المنفذة اليوم', `مسار ${sectorTitle}`, Number(report.roadMeters || report.salesAmount || 0), 'م.ط', 'تنفيذ طبقات الطريق'],
-          [3, 'الوقود المستهلك (ديزل)', 'خزان المرحلة والآليات', Number(report.fuelAmount || 0), 'لتر', 'تزويد المعدات والكسارة'],
+          [3, 'الوقود المستهلك (ديزل)', 'خزان المرحلة والآليات', Number(report.fuelAmount || 0), 'لتر', 'تزويد أسطول المعدات والآليات بالوقود'],
           [4, 'الآليات العاملة بالمرحلة', 'المعدات الميدانية', Number(report.workingEquipmentCount || (isSectorA ? 12 : 14)), 'آلية عاملة', 'جاهزية تشغيلية مستقرة'],
           [5, 'الآليات المتوقفة / الصيانة', 'ورشة الصيانة', Number(report.stoppedEquipmentCount || 2), 'آلية متوقفة', 'صيانة دورية'],
           [],
@@ -2339,11 +2339,11 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                 <tbody>
                   <tr>
                     <td className="center">1</td>
-                    <td className="bold">إنتاج وتشغيل الكسارة</td>
-                    <td>{report.crusherName || (isSectorA ? 'كسارة المرحلة الأولى' : 'كسارة المرحلة الثانية')}</td>
-                    <td className="center bold highlight-blue">{Number(report.productionAmount || 0).toLocaleString()}</td>
-                    <td className="center">طن</td>
-                    <td>ركام طبقة أساس / شرشور معتمد</td>
+                    <td className="bold">أعمال طبقة الأساس الحبيبي</td>
+                    <td>مسار {sectorTitle}</td>
+                    <td className="center bold highlight-blue">{Number(report.roadMeters || report.todayMeters || report.productionAmount || 0).toLocaleString()}</td>
+                    <td className="center">متر طولي (م.ط)</td>
+                    <td>تنفيذ طبقة الأساس الحبيبي المعتمد</td>
                   </tr>
                   <tr>
                     <td className="center">2</td>
@@ -2361,7 +2361,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
                     <td>خزان المرحلة والآليات الميدانية</td>
                     <td className="center bold highlight-amber">{Number(report.fuelAmount || 0).toLocaleString()}</td>
                     <td className="center">لتر</td>
-                    <td>تزويد الكسارة وأسطول الشاحنات والمعدات</td>
+                    <td>تزويد أسطول الشاحنات والمعدات والآليات</td>
                   </tr>
                   <tr>
                     <td className="center">4</td>
@@ -2461,7 +2461,7 @@ export const OfficialPrintModal = ({ report, onClose }) => {
           {/* 7. Footer Meta (Only for legacy operational reports) */}
           {!isStandardNewForm && (
             <div className="official-report-footer">
-              <span>منظومة متابعة الكسارات والوقود والمعدات - جهاز تنفيذ مشروعات المواصلات</span>
+              <span>منظومة متابعة أعمال الطريق والوقود والآليات - جهاز تنفيذ مشروعات المواصلات</span>
               <span>طُبع بتاريخ ووقت: {printTimeStr}</span>
               <span>صفحة 1 من 1</span>
             </div>

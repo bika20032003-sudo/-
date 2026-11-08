@@ -123,7 +123,7 @@ export function saveSupervisoryTask(taskData, currentUser) {
         subject: `تكليف بمهمة إشرافية: ${newTask.title}`,
         category: 'instruction',
         priority: newTask.priority === 'urgent' ? 'urgent' : 'high',
-        body: `سعادة المهندس / ${newTask.assignedToName} المحترم،\n\nنود إحاطتكم بتكليفكم رسمياً بالمهمة الإشرافية الميدانية التالية:\n\n• عنوان المهمة: ${newTask.title}\n• الموقع / المحطة: ${newTask.sector}\n• مستوى الأولوية: ${newTask.priorityLabel}\n• تاريخ الإنجاز المستهدف: ${newTask.dueDate}\n\nنص التوجيهات والتفاصيل الفنية:\n${newTask.details || 'يرجى المتابعة الميدانية الدقيقة وموافاتنا بتقرير الإنجاز.'}\n\nمع فائق الاحترام والتقدير،\nمدير المشروع ومساعد جهاز الإشراف والمتابعة.`,
+        body: `سعادة المهندس / ${newTask.assignedToName} المحترم،\n\nنود إحاطتكم بتكليفكم رسمياً بالمهمة الإشرافية الميدانية التالية:\n\n• عنوان المهمة: ${newTask.title}\n• الموقع / المحطة: ${newTask.sector}\n• مستوى الأولوية: ${newTask.priorityLabel}\n• تاريخ الإنجاز المستهدف: ${newTask.dueDate}\n\nنص التوجيهات والتفاصيل الفنية:\n${newTask.details || 'يرجى المتابعة الميدانية الدقيقة وموافاتنا بتقرير الإنجاز.'}\n\nمع فائق الاحترام والتقدير،\nمدير المشروع ومساعد مدير المشروع.`,
         timestamp: new Date().toISOString(),
         date: new Date().toLocaleDateString('ar-LY', { year: 'numeric', month: '2-digit', day: '2-digit' }),
         time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
@@ -216,7 +216,7 @@ export function generateSupervisoryTasksArticle() {
     });
   }
 
-  report += `\n💡 *ملاحظة:* يمكن لمدير المشروع تقديم وتكليف مهام جديدة مباشرة عبر **تبويب مكتب مدير المشروع** في واجهة مساعد جهاز الإشراف.`;
+  report += `\n💡 *ملاحظة:* يمكن لمدير المشروع تقديم وتكليف مهام جديدة ومتابعتها عبر **واجهة مساعد مدير المشروع** ومراسلات المنظومة.`;
   return report;
 }
 

@@ -111,7 +111,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'messages': 'البريد والمراسلات الرسمية وإحالة التقارير',
         'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات (360 كم)',
         'executive-progress': 'الموقف التنفيذي (360 كم) - المالي والفني المعتمد',
-        'ai-agent': 'مساعد جهاز الإشراف (AI Supervision Assistant)',
+        'ai-agent': 'مساعد مدير المشروع (Project Manager Assistant)',
         'upload-reports': 'رفع ومعالجة ملفات التقارير الميدانية',
         'fuel': 'إدارة الوقود',
         'equipment': 'إدارة وسجل المعدات والآليات الميدانية',

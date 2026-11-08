@@ -375,12 +375,7 @@ export function getFallbackData(url) {
     const repProdSum = matchingReports.reduce((acc, r) => acc + (Number(r.productionAmount) || 0), 0);
     const repFuelSum = matchingReports.reduce((acc, r) => acc + (Number(r.fuelAmount) || 0), 0);
     const repRoadSum = matchingReports.reduce((acc, r) => acc + (Number(r.roadMeters || r.salesAmount) || 0), 0);
-    const repSharshoorSum = matchingReports.reduce((acc, r) => {
-      if (String(r.reportType || '').includes('شرشور') || String(r.materialName || '').includes('شرشور')) {
-        return acc + (Number(r.productionAmount || r.salesAmount) || 0);
-      }
-      return acc + Math.round((Number(r.productionAmount) || 0) * 0.32);
-    }, 0);
+    const repSharshoorSum = 0;
 
     // Real reported numbers (no fake baseline injected)
     const totalProd = repProdSum;
@@ -482,10 +477,9 @@ export function getFallbackData(url) {
         id: r.id,
         reportNumber: r.reportNumber || `REP-${r.id}`,
         date: r.date,
-        sector: r.sector || 'القطعة A',
+        sector: r.sector || 'المرحلة الأولى',
         reportType: r.reportType || 'تقرير يومي شامل',
-        crusherName: r.crusherName || 'الكسارة المركزية',
-        materialName: r.materialName || 'ركام وطبقات رصف',
+        materialName: r.materialName || 'طبقات رصف الطريق',
         productionAmount: Number(r.productionAmount) || 0,
         fuelAmount: Number(r.fuelAmount) || 0,
         roadMeters: Number(r.roadMeters || r.salesAmount) || 0,
@@ -518,14 +512,14 @@ export function getFallbackData(url) {
       },
       layers: [
         { name: 'إعادة التدوير على البارد (FDR)', meters: Math.round(totalRoadMeters * 0.35), unit: 'م.ط', status: 'منجز بالكامل تقريباً' },
-        { name: 'طبقة الأساس الحبيبي والشرشور', meters: Math.round(totalRoadMeters * 0.30), unit: 'م.ط', status: 'مستمر ومتقدم' },
+        { name: 'طبقة الأساس الحبيبي', meters: Math.round(totalRoadMeters * 0.30), unit: 'م.ط', status: 'مستمر ومتقدم' },
         { name: 'رش طبقة التشريب الأسفلتي (MCO)', meters: Math.round(totalRoadMeters * 0.20), unit: 'م.ط', status: 'مستمر' },
         { name: 'الطبقة الإسفلتية السطحية المحسنة', meters: Math.round(totalRoadMeters * 0.15), unit: 'م.ط', status: 'مراحل نهائية' }
       ],
       timeSeries,
       materialsBreakdown: [
         { name: 'ركام متدرج طبقة أساس (0-37.5 مم)', amount: Math.round(totalProd * 0.48), unit: 'طن', percentage: 48 },
-        { name: 'شرشور ناعم خلطات رصف (0-5 مم)', amount: Math.round(totalProd * 0.32), unit: 'طن', percentage: 32 },
+        { name: 'مواد ناعمة للخلطات الإسفلتية (0-5 مم)', amount: Math.round(totalProd * 0.32), unit: 'طن', percentage: 32 },
         { name: 'سن وركام خشن خرساني (5-20 مم)', amount: Math.round(totalProd * 0.20), unit: 'طن', percentage: 20 }
       ],
       sectorComparison: {
@@ -555,7 +549,7 @@ export function getFallbackData(url) {
         `تحقيق استقرار إنتاجي بمعدل إنجاز بلغ ${prodAchievementRate}% من المستهدف المعتمد للفترة.`,
         `كفاءة استهلاك الوقود بلغت ${fuelPerTon} لتر/طن من الركام المنتج، وهو ضمن الحدود المعيارية المعتمدة للجهاز.`,
         `معدل الجاهزية التشغيلية للأسطول سجل 88.5% مع انتظام أعمال الصيانة الميدانية.`,
-        `التوصية: تعزيز وتيرة توريد مادة الشرشور الناعم للمحطة الإسفلتية لتسريع وتيرة الطبقة السطحية المتبقية.`
+        `التوصية: تعزيز وتيرة توريد المواد والوقود لتسريع وتيرة الطبقة السطحية المتبقية.`
       ],
       signatories: {
         siteEngineer: 'م. محمد المهدي (مدير القطاع الميداني)',
@@ -644,14 +638,14 @@ export function getFallbackData(url) {
       success: true,
       plan: {
         id: 1,
-        title: 'خطة تشغيل الكسارات والمعدات المعتمدة - الغد',
+        title: 'خطة تشغيل المعدات والآليات المعتمدة - الغد',
         status: 'approved',
-        approvedBy: 'م. حسام الدين (مدير المشروع)',
+        approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
         approvedAt: new Date().toISOString(),
         items: initialTomorrowPlan || []
       },
       suggestedPlan: {
-        title: 'خطة مقترحة ذكياً لتوزيع المعدات والكسارات',
+        title: 'خطة مقترحة ذكياً لتوزيع المعدات والآليات',
         items: initialTomorrowPlan || []
       },
       items: initialTomorrowPlan || [],
@@ -716,13 +710,13 @@ export function getFallbackData(url) {
       warnings.push({
         type: 'warning',
         title: `لا توجد عمليات مسجلة بتاريخ (${targetDateStr})`,
-        message: `لم يتم رصد أي إنتاج أو صرف وقود للقطاع (${sectorFilter ? (sectorFilter.includes('A') ? 'القطعة A' : 'القطعة B') : 'كافة القطاعات'}) في هذا اليوم.`,
+        message: `لم يتم رصد أي أعمال رصف أو صرف وقود في (${sectorFilter ? (sectorFilter.includes('الثانية') ? 'المرحلة الثانية' : 'المرحلة الأولى') : 'المرحلتين الأولى والثانية'}) في هذا اليوم.`,
         suggestedAction: 'اختر تاريخاً آخر من القائمة أو قم برفع تقرير تشغيل جديد.'
       });
     } else if (fuelToday > 0) {
       warnings.push({
         type: fuelVariance > 10 ? 'danger' : fuelVariance > 0 ? 'warning' : 'info',
-        title: fuelVariance > 0 ? `استهلاك السولار أعلى من المتوسط بـ ${fuelVariance}%` : 'استهلاك السولار مستقر وضمن الخطة',
+        title: fuelVariance > 0 ? `استهلاك الوقود أعلى من المتوسط بـ ${fuelVariance}%` : 'استهلاك الوقود مستقر وضمن الخطة',
         message: `تم صرف ${fuelToday.toLocaleString()} لتر في (${targetDateStr}) مقارنة بمتوسط ${avg7DaysFuel.toLocaleString()} لتر.`,
         suggestedAction: 'متابعة تقارير كميات الوقود وجداول التزويد للصهاريج الميدانية.'
       });
@@ -764,8 +758,8 @@ export function getFallbackData(url) {
       },
       warnings,
       issues: [
-        { id: 1, title: 'تذبذب ضغط مضخة وقود الكسارة الشمالية', status: 'pending', severity: 'medium', sector: 'القطعة B' },
-        { id: 2, title: 'تأخر توريد طبقة الأساس الحبيبي بالمحطة 78', status: 'resolved', severity: 'high', sector: 'القطعة A' }
+        { id: 1, title: 'تذبذب ضغط مضخة وقود ماكينة FDR بالمرحلة الثانية', status: 'pending', severity: 'medium', sector: 'المرحلة الثانية' },
+        { id: 2, title: 'تأخر توريد طبقة الأساس الحبيبي بالمحطة 78', status: 'resolved', severity: 'high', sector: 'المرحلة الأولى' }
       ],
       reportsCount: targetDateReports.length
     };
@@ -809,7 +803,7 @@ export async function fastFetch(rawUrl, options = {}) {
     }
   }
 
-  // Intercept and handle /api/messages natively for 100% reliable messaging
+  // Intercept and handle /api/messages with Dual Cloud & Local Persistence
   if (typeof url === 'string' && url.includes('/api/messages')) {
     const method = (options.method || 'GET').toUpperCase();
     if (method === 'POST') {
@@ -821,6 +815,7 @@ export async function fastFetch(rawUrl, options = {}) {
           isRead: false,
           ...bodyObj
         };
+        // 1. Optimistic Local Update
         if (typeof window !== 'undefined' && window.localStorage) {
           const sys = JSON.parse(localStorage.getItem('system_messages') || '[]');
           localStorage.setItem('system_messages', JSON.stringify([newMsg, ...sys]));
@@ -828,6 +823,12 @@ export async function fastFetch(rawUrl, options = {}) {
           localStorage.setItem('local_messages', JSON.stringify([newMsg, ...loc]));
           window.dispatchEvent(new CustomEvent('messages-updated'));
         }
+        // 2. Forward to Cloud Server in Background
+        nativeFetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newMsg)
+        }).catch(() => {});
         return { success: true, message: newMsg };
       } catch (err) {
         console.error('Error saving message in fastFetch:', err);
@@ -844,6 +845,8 @@ export async function fastFetch(rawUrl, options = {}) {
         updateRead('system_messages');
         updateRead('local_messages');
         window.dispatchEvent(new CustomEvent('messages-updated'));
+        // Forward read state to server
+        nativeFetch(url, { method: 'PUT' }).catch(() => {});
       }
       return { success: true, message: 'Marked read' };
     } else if (method === 'DELETE') {
@@ -853,6 +856,7 @@ export async function fastFetch(rawUrl, options = {}) {
         localStorage.setItem('local_messages', JSON.stringify([]));
         localStorage.setItem('system_messages_initialized', 'true');
         window.dispatchEvent(new CustomEvent('messages-updated'));
+        nativeFetch('/api/messages/clear-all', { method: 'DELETE' }).catch(() => {});
         return { success: true, message: 'All messages cleared' };
       }
       const msgId = url.split('/api/messages/')[1]?.split('?')[0];
@@ -865,9 +869,20 @@ export async function fastFetch(rawUrl, options = {}) {
         deleteItem('system_messages');
         deleteItem('local_messages');
         window.dispatchEvent(new CustomEvent('messages-updated'));
+        nativeFetch(url, { method: 'DELETE' }).catch(() => {});
       }
       return { success: true, message: 'Deleted message' };
     } else if (method === 'GET') {
+      // First try live server with short timeout
+      const liveData = await fetchWithTimeout(url, options, 1200);
+      if (liveData && liveData.success && Array.isArray(liveData.messages)) {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem('system_messages', JSON.stringify(liveData.messages));
+          } catch (_) {}
+        }
+        return liveData;
+      }
       return getFallbackData(url);
     }
   }

@@ -173,7 +173,7 @@ export const Sidebar = ({
     mainItems.push(
       { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
       { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-      { id: 'ai-agent', label: 'مساعد جهاز الإشراف', icon: Bot, badge: 'AI' }
+      { id: 'ai-agent', label: 'مساعد مدير المشروع', icon: Bot, badge: 'تنفيذي' }
     );
 
     const reportItems = [

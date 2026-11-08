@@ -13,7 +13,7 @@ export const ALL_SYSTEM_SECTIONS = [
   { id: 'fuel', label: 'إدارة الوقود', desc: 'وارد ومنصرف المحروقات والخزانات الميدانية' },
   { id: 'equipment', label: 'سجل المعدات والآليات', desc: 'سجل حصر الآليات الميدانية والتقرير الرسمي' },
   { id: 'messages', label: 'البريد والمراسلات الرسمية', desc: 'صندوق الوارد والبريد والإحالات الرسمية' },
-  { id: 'ai-agent', label: 'مساعد جهاز الإشراف', desc: 'المساعد الهندسي الذكي للاستعلام والتحليلات الاستراتيجية والميدانية' },
+  { id: 'ai-agent', label: 'مساعد مدير المشروع', desc: 'المساعد التنفيذي الذكي لمدير المشروع لمتابعة التقارير والأرشيف والمراسلات' },
   { id: 'users', label: 'إدارة المستخدمين والصلاحيات', desc: 'إدارة حسابات الفريق وكلمات المرور والصلاحيات' }
 ];
 
@@ -178,17 +178,17 @@ export const UsersView = ({ currentUser }) => {
     { 
       role: 'مسؤول الجودة', 
       sector: 'all',
-      description: 'فحوصات FDR والكثافة الحقلية، ضبط جودة الكسارات والمختبر والمطابقة الفنية'
+      description: 'فحوصات FDR والكثافة الحقلية، ضبط جودة المواد والمختبر والمطابقة الفنية للمسار'
     },
     { 
       role: 'مهندس مشرف (المرحلة الأولى)', 
       sector: 'المرحلة الأولى',
-      description: 'الإشراف الميداني اليومي، تقارير قطاع 115.36 كم، مراقبة الوقود والآليات'
+      description: 'الإشراف الميداني اليومي، تقارير المرحلة الأولى (226 كم)، مراقبة الوقود والآليات'
     },
     { 
       role: 'مهندس مشرف (المرحلة الثانية)', 
       sector: 'المرحلة الثانية',
-      description: 'الإشراف الميداني اليومي، تقارير قطاع 110.92 كم، تشغيل الكسارة والمعدات'
+      description: 'الإشراف الميداني اليومي، تقارير المرحلة الثانية (134 كم)، متابعة أعمال الطريق والمعدات والوقود'
     },
   ];
 
@@ -630,7 +630,7 @@ export const UsersView = ({ currentUser }) => {
               </div>
             </div>
             <p style={{ margin: '0 0 0.65rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.4 }}>
-              فحوصات FDR والكثافة الحقلية، ومطابقة الركام بمختبر الكسارات وضبط الجودة.
+              فحوصات FDR والكثافة الحقلية، ومطابقة الركام بمختبر الجودة والاعتماد الفني.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
               <span style={{ color: '#64748b' }}>مواقع الفحص والمختبر</span>
@@ -659,10 +659,10 @@ export const UsersView = ({ currentUser }) => {
               </div>
             </div>
             <p style={{ margin: '0 0 0.65rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.4 }}>
-              الإشراف الميداني اليومي، تقارير قطاع 115.36 كم، ومتابعة الوقود والآليات.
+              الإشراف الميداني اليومي، تقارير المرحلة الأولى (226 كم)، ومتابعة الوقود والآليات.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
-              <span style={{ color: '#64748b' }}>المرحلة الأولى (115 كم)</span>
+              <span style={{ color: '#64748b' }}>المرحلة الأولى (226 كم)</span>
               <span style={{ color: '#ea580c', fontWeight: 800 }}>✓ إشراف المرحلة</span>
             </div>
           </div>
@@ -688,10 +688,10 @@ export const UsersView = ({ currentUser }) => {
               </div>
             </div>
             <p style={{ margin: '0 0 0.65rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.4 }}>
-              الإشراف الميداني اليومي، تقارير قطاع 110.92 كم، وتشغيل الكسارة والآليات.
+              الإشراف الميداني اليومي، تقارير المرحلة الثانية (134 كم)، ومتابعة الوقود والآليات.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem', fontSize: '0.74rem' }}>
-              <span style={{ color: '#64748b' }}>المرحلة الثانية (110 كم)</span>
+              <span style={{ color: '#64748b' }}>المرحلة الثانية (134 كم)</span>
               <span style={{ color: '#0d9488', fontWeight: 800 }}>✓ إشراف المرحلة</span>
             </div>
           </div>
