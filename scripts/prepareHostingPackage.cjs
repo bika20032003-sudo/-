@@ -142,33 +142,16 @@ fs.writeFileSync(path.join(rootPublicHtml, 'web.config'), webConfigContent, 'utf
 // 5. Add .cpanel.yml for cPanel "Deploy HEAD Commit"
 const cpanelYmlContent = `---
 # ==============================================================================
-# ملف النشر والتحديث التلقائي لـ cPanel Git™ Version Control
-# خيار: Deploy HEAD Commit / النشر التلقائي للالتزام الأخير
+# تكوين النشر التلقائي المعتمد لـ cPanel Git™ Version Control
 # ==============================================================================
 deployment:
   tasks:
-    # 1. تحديد مسار النشر بمرونة ودقة عالية
-    - export CP_USER=$(whoami 2>/dev/null || id -un 2>/dev/null || echo $USER)
-    - export DEPLOYPATH=/home/$CP_USER/public_html/
-    - if [ ! -d "$DEPLOYPATH" ]; then export DEPLOYPATH=../public_html/; fi
-    - if [ ! -d "$DEPLOYPATH" ]; then export DEPLOYPATH=./; fi
+    - export DEPLOYPATH=$HOME/public_html/
     - /bin/mkdir -p $DEPLOYPATH
-
-    # 2. نسخ ملفات الواجهة الأمامية الجاهزة إلى مجلد public_html
-    - if [ -d "public_html" ]; then /bin/cp -a public_html/. $DEPLOYPATH/; elif [ -d "dist" ]; then /bin/cp -a dist/. $DEPLOYPATH/; fi
-
-    # 3. التأكد من نقل ملف تكوين الروابط والـ SPA Routing (.htaccess)
-    - if [ -f "public_html/.htaccess" ]; then /bin/cp -f public_html/.htaccess $DEPLOYPATH/; elif [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
-
-    # 4. نسخ ملف index.htm لضمان التوافق مع كافة مزودات الاستضافة
-    - if [ -f "$DEPLOYPATH/index.html" ]; then /bin/cp -f $DEPLOYPATH/index.html $DEPLOYPATH/index.htm; fi
-
-    # 5. تثبيت حزم خادم Node.js وتحديثها إذا كان مستخدماً في cPanel
-    - if [ -d "server" ] && [ -f "server/package.json" ]; then cd server && npm install --omit=dev && cd ..; fi
-
-    # 6. إرسال إشارة إعادة تشغيل لتطبيق Node.js تلقائياً عبر Phusion Passenger في cPanel
-    - /bin/mkdir -p tmp
-    - /bin/touch tmp/restart.txt
+    - /bin/cp -rf public_html/* $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp -f public_html/.htaccess $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp -f public_html/index.html $DEPLOYPATH/index.htm 2>/dev/null || true
+    - /bin/bash cpanel_deploy.sh 2>/dev/null || true
 `;
 fs.writeFileSync(path.join(outDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
 fs.writeFileSync(path.join(rootDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
