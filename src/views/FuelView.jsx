@@ -36,7 +36,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
     try {
       let remoteReports = [];
       try {
-        const response = await fetch('http://localhost:5000/api/reports');
+        const response = await fetch('/api/reports');
         const data = await response.json();
         remoteReports = data?.reports || (Array.isArray(data) ? data : []);
       } catch (err) {
@@ -163,7 +163,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
 
     // Call backend API
     try {
-      await fetch(`http://localhost:5000/api/reports/${targetId}`, { method: 'DELETE' });
+      await fetch(`/api/reports/${targetId}`, { method: 'DELETE' });
     } catch (error) {
       console.error('Failed to delete fuel report from backend', error);
     }

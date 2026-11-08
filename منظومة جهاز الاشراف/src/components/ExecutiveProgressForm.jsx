@@ -264,7 +264,7 @@ export const ExecutiveProgressForm = ({
       };
       setIsLoading(true);
       try {
-        const res = await fastFetch('http://localhost:5000/api/executive-progress');
+        const res = await fastFetch('/api/executive-progress');
         if (res && res.data && res.data.basicItems) {
           const cleanData = {
             ...res.data,
@@ -599,7 +599,7 @@ export const ExecutiveProgressForm = ({
     };
 
     try {
-      const res = await fastFetch('http://localhost:5000/api/executive-progress', {
+      const res = await fastFetch('/api/executive-progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

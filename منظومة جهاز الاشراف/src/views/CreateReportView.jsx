@@ -599,7 +599,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
     try {
       let saved = null;
       try {
-        const res = await fastFetch('http://localhost:5000/api/reports/create', {
+        const res = await fastFetch('/api/reports/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -683,7 +683,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
             createdAt: new Date().toISOString()
           };
           try {
-            fastFetch('http://localhost:5000/api/messages', {
+            fastFetch('/api/messages', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(autoMsg)

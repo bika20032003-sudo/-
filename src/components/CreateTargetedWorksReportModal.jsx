@@ -594,7 +594,7 @@ export const CreateTargetedWorksReportModal = ({
 
       // 3. Fire-and-forget sync to backend
       try {
-        fetch('http://localhost:5000/api/reports/create', {
+        fetch('/api/reports/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(saved)

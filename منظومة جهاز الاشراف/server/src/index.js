@@ -94,10 +94,23 @@ import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distPath = path.resolve(__dirname, '../../dist');
+
+// Potential frontend distribution paths for different hosting environments (cPanel, VPS, Docker, Root)
+const candidateDistPaths = [
+  path.resolve(__dirname, '../../dist'),
+  path.resolve(__dirname, '../dist'),
+  path.resolve(__dirname, '../../public_html'),
+  path.resolve(__dirname, '../public_html'),
+  path.resolve(__dirname, '../public'),
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(process.cwd(), 'public_html'),
+  path.resolve(process.cwd(), 'public')
+];
+const distPath = candidateDistPaths.find(p => fs.existsSync(p));
 
 // Serve static frontend in cloud / production when dist is built
-if (fs.existsSync(distPath)) {
+if (distPath) {
+  console.log(`[Server] Serving production frontend from: ${distPath}`);
   app.use(express.static(distPath));
   app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api/')) {

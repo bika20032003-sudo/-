@@ -180,7 +180,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
     try {
       let saved = null;
       try {
-        const res = await fastFetch('http://localhost:5000/api/reports/create', {
+        const res = await fastFetch('/api/reports/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)

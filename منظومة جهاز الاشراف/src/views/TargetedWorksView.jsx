@@ -35,7 +35,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
 
       let remoteReports = [];
       try {
-        const data = await fastFetch('http://localhost:5000/api/reports');
+        const data = await fastFetch('/api/reports');
         remoteReports = data?.reports || (Array.isArray(data) ? data : []);
       } catch (e) {}
 
@@ -175,7 +175,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
     try {
       if (targetId) {
         await fetch(`/api/reports/${targetId}`, { method: 'DELETE' }).catch(() => {});
-        await fetch(`http://localhost:5000/api/reports/${targetId}`, { method: 'DELETE' }).catch(() => {});
+        await fetch(`/api/reports/${targetId}`, { method: 'DELETE' }).catch(() => {});
       }
     } catch (fetchErr) {}
 

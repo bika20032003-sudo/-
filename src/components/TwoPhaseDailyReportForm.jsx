@@ -494,7 +494,7 @@ export const TwoPhaseDailyReportForm = ({
 
       // 2. Notify backend if active (single endpoint sync - avoids saving twice in archive)
       try {
-        await fastFetch('http://localhost:5000/api/two-phase-report', {
+        await fastFetch('/api/two-phase-report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(saved)

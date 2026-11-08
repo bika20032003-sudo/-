@@ -80,7 +80,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       const targetNum = editingReport.reportNumber;
 
       try {
-        await fetch(`http://localhost:5000/api/reports/${targetId}`, {
+        await fetch(`/api/reports/${targetId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(editFormData)
@@ -111,7 +111,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const fetchReports = async () => {
     try {
       setIsLoading(true);
-      const url = 'http://localhost:5000/api/reports';
+      const url = '/api/reports';
       
       const res = await fastFetch(url);
       let list = [];
@@ -286,7 +286,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       // 1. Invalidate via API/Mock
       const deleteIdentifier = targetId || targetNum;
       if (deleteIdentifier) {
-        await fastFetch(`http://localhost:5000/api/reports/${deleteIdentifier}`, { method: 'DELETE' }).catch(() => {});
+        await fastFetch(`/api/reports/${deleteIdentifier}`, { method: 'DELETE' }).catch(() => {});
       }
 
       // 1.1 Physically purge from IndexedDB

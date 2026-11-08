@@ -27,7 +27,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
         try {
             let remoteReports = [];
             try {
-              const data = await fastFetch('http://localhost:5000/api/reports');
+              const data = await fastFetch('/api/reports');
               remoteReports = data?.reports || (Array.isArray(data) ? data : []);
             } catch (err) {}
 
@@ -62,7 +62,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
 
     const fetchRoadProgress = async () => {
         try {
-            const data = await fastFetch('http://localhost:5000/api/road-progress');
+            const data = await fastFetch('/api/road-progress');
             if (data && data.success) {
                 setProjectData(data);
             }
@@ -96,7 +96,7 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
 
     const handleSaveEdit = async (id) => {
         try {
-            const data = await fastFetch('http://localhost:5000/api/road-progress/update-daily', {
+            const data = await fastFetch('/api/road-progress/update-daily', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

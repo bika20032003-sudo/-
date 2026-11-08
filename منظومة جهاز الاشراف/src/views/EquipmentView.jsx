@@ -109,7 +109,7 @@ export const EquipmentView = ({ currentUser }) => {
     } catch (_) {}
 
     try {
-      const res = await fetch('http://localhost:5000/api/equipment');
+      const res = await fetch('/api/equipment');
       const data = await res.json();
       if (data && data.success && Array.isArray(data.equipment) && data.equipment.length > 0) {
         // Check if list is individual machines or counted equipment
@@ -211,7 +211,7 @@ export const EquipmentView = ({ currentUser }) => {
     try {
       const target = updatedList.find(i => i.id === id);
       if (target) {
-        await fetch(`http://localhost:5000/api/equipment/${id}`, {
+        await fetch(`/api/equipment/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(target)
@@ -289,7 +289,7 @@ export const EquipmentView = ({ currentUser }) => {
       setIsModalOpen(false);
 
       try {
-        await fetch(`http://localhost:5000/api/equipment/${editingItem.id}`, {
+        await fetch(`/api/equipment/${editingItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedItem)
@@ -319,7 +319,7 @@ export const EquipmentView = ({ currentUser }) => {
       setIsModalOpen(false);
 
       try {
-        await fetch('http://localhost:5000/api/equipment', {
+        await fetch('/api/equipment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newItem)
@@ -338,7 +338,7 @@ export const EquipmentView = ({ currentUser }) => {
     setEquipmentList(updatedList);
     syncEquipmentStorage(updatedList);
     try {
-      await fetch(`http://localhost:5000/api/equipment/${id}`, { method: 'DELETE' });
+      await fetch(`/api/equipment/${id}`, { method: 'DELETE' });
       clearApiCache();
     } catch (e) {}
   };

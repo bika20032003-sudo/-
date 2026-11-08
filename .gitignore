@@ -58,3 +58,8 @@ server/.env.*
 Thumbs.db
 
 .temp-edge-profile/
+
+# Hosting package
+نسخة_المشروع_للاستضافة/
+نسخة_الاستضافة_المتكاملة.zip
+

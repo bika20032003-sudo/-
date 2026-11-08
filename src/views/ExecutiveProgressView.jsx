@@ -20,7 +20,7 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
     const loadData = async () => {
       try {
         setLoading(true);
-        const res = await fastFetch('http://localhost:5000/api/executive-progress');
+        const res = await fastFetch('/api/executive-progress');
         if (res && res.success && res.data && isMounted) {
           setExecutiveData(res.data);
         }

@@ -1,0 +1,353 @@
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const rootDir = path.resolve(__dirname, '..');
+const outDir = path.join(rootDir, 'نسخة_المشروع_للاستضافة');
+
+console.log('[Hosting Package] Preparing hosting release directory at:', outDir);
+
+// 1. Clean or create output directory
+if (fs.existsSync(outDir)) {
+  fs.rmSync(outDir, { recursive: true, force: true });
+}
+fs.mkdirSync(outDir, { recursive: true });
+
+// 2. Prepare public_html (Frontend production build)
+const publicHtmlDir = path.join(outDir, 'public_html');
+fs.mkdirSync(publicHtmlDir, { recursive: true });
+
+const distDir = path.join(rootDir, 'dist');
+if (!fs.existsSync(distDir)) {
+  console.log('[Hosting Package] Building frontend first...');
+  execSync('npm run build', { cwd: rootDir, stdio: 'inherit' });
+}
+
+// Copy dist files to public_html
+function copyRecursiveSync(src, dest) {
+  const exists = fs.existsSync(src);
+  const stats = exists && fs.statSync(src);
+  const isDirectory = exists && stats.isDirectory();
+  if (isDirectory) {
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    fs.readdirSync(src).forEach(childItemName => {
+      copyRecursiveSync(path.join(src, childItemName), path.join(dest, childItemName));
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+}
+
+copyRecursiveSync(distDir, publicHtmlDir);
+
+// Also copy dist to server/public so if running node server/src/index.js directly it finds it
+const serverDest = path.join(outDir, 'server');
+fs.mkdirSync(serverDest, { recursive: true });
+copyRecursiveSync(distDir, path.join(serverDest, 'public'));
+
+// 3. Add .htaccess for Apache / cPanel / LiteSpeed to public_html
+const htaccessContent = `# ==============================================================================
+# تكوين خادم أباتشي وسي بانل (cPanel / Apache / LiteSpeed)
+# لمنظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
+# ==============================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. توجيه طلبات واجهة البرمجة (API) إلى خادم الباك إند (إذا كان Node.js يعمل على المنفذ 5000)
+  # RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
+
+  # 2. السماح بالوصول المباشر للملفات والمجلدات الحقيقية (CSS, JS, صور, خطوط)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 3. توجيه كافة المسارات الأخرى إلى index.html لضمان عمل واجهة التطبيق التفاعلية (SPA Routing)
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# تحسين كفاءة التخزين المؤقت وضغط الملفات لسرعة استجابة فائقة
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+`;
+fs.writeFileSync(path.join(publicHtmlDir, '.htaccess'), htaccessContent, 'utf8');
+
+// 4. Add web.config for Windows Server / IIS
+const webConfigContent = `<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="React SPA Routing" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/(api)" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/" />
+        </rule>
+      </rules>
+    </rewrite>
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <mimeMap fileExtension=".webp" mimeType="image/webp" />
+    </staticContent>
+  </system.webServer>
+</configuration>
+`;
+fs.writeFileSync(path.join(publicHtmlDir, 'web.config'), webConfigContent, 'utf8');
+
+// 5. Copy backend server source files
+const srcServerDir = path.join(rootDir, 'server');
+const serverItems = fs.readdirSync(srcServerDir);
+serverItems.forEach(item => {
+  if (item === 'node_modules') return; // exclude heavy node_modules
+  copyRecursiveSync(path.join(srcServerDir, item), path.join(serverDest, item));
+});
+
+// Ensure server/.env exists and is configured for production
+const serverEnvContent = `PORT=5000
+NODE_ENV=production
+# إعدادات قاعدة البيانات (اختياري - في حال عدم توفر MySQL يعمل السيرفر تلقائياً بأقصى سرعة عبر التخزين المستمر data/db.json)
+DATABASE_URL="mysql://root:@localhost:3306/crusher_db"
+`;
+fs.writeFileSync(path.join(serverDest, '.env'), serverEnvContent, 'utf8');
+
+// 6. Root package.json for one-click hosting startup
+const rootPkg = {
+  name: "crusher-supervision-system-hosting",
+  version: "2.0.0",
+  description: "نسخة الاستضافة المعتمدة لمنظومة جهاز الإشراف والمتابعة - طريق أوباري غات (360 كم)",
+  main: "server/src/index.js",
+  type: "module",
+  scripts: {
+    "start": "node server/src/index.js",
+    "install:all": "cd server && npm install",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs"
+  },
+  dependencies: {
+    "express": "^5.2.1",
+    "cors": "^2.8.6",
+    "helmet": "^8.3.0",
+    "dotenv": "^17.4.2",
+    "mysql2": "^3.12.0"
+  }
+};
+fs.writeFileSync(path.join(outDir, 'package.json'), JSON.stringify(rootPkg, null, 2), 'utf8');
+
+// 7. ecosystem.config.cjs for PM2
+const pm2Content = `module.exports = {
+  apps: [
+    {
+      name: 'supervision-system-api',
+      script: 'server/src/index.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: process.env.PORT || 5000
+      }
+    }
+  ]
+};
+`;
+fs.writeFileSync(path.join(outDir, 'ecosystem.config.cjs'), pm2Content, 'utf8');
+
+// 8. Dockerfile
+const dockerfileContent = `# ==============================================================================
+# Dockerfile لمنظومة جهاز الإشراف والمتابعة
+# ==============================================================================
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# نسخ تعريفات الحزم وتثبيتها
+COPY server/package*.json ./server/
+RUN cd server && npm install --omit=dev
+
+# نسخ كود الخادم والواجهة الأمامية الجاهزة
+COPY server ./server
+COPY public_html ./public_html
+
+ENV PORT=5000
+ENV NODE_ENV=production
+
+EXPOSE 5000
+
+CMD ["node", "server/src/index.js"]
+`;
+fs.writeFileSync(path.join(outDir, 'Dockerfile'), dockerfileContent, 'utf8');
+
+// 9. docker-compose.yml
+const dockerComposeContent = `version: '3.8'
+
+services:
+  supervision-app:
+    build: .
+    container_name: supervision_portal
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+    volumes:
+      - ./server/data:/app/server/data
+`;
+fs.writeFileSync(path.join(outDir, 'docker-compose.yml'), dockerComposeContent, 'utf8');
+
+// 10. Startup scripts (Windows & Linux)
+const batContent = `@echo off
+chcp 65001 > nul
+echo ============================================================================
+echo   تشغيل منظومة جهاز الإشراف والمتابعة - نسخة الاستضافة والخادم الموحد
+echo ============================================================================
+echo.
+cd server
+if not exist node_modules (
+  echo [1/2] جاري تثبيت حزم الخادم...
+  call npm install
+)
+echo [2/2] جاري إطلاق خادم المنظومة المتكامل على المنفذ 5000...
+echo.
+echo رابط الدخول للمنظومة: http://localhost:5000
+echo.
+call node src/index.js
+pause
+`;
+fs.writeFileSync(path.join(outDir, 'تشغيل_الخادم_محليا.bat'), batContent, 'utf8');
+
+const shContent = `#!/bin/bash
+echo "============================================================================"
+echo "  إطلاق منظومة جهاز الإشراف والمتابعة - خادم الإنتاج والاستضافة"
+echo "============================================================================"
+cd server
+if [ ! -d "node_modules" ]; then
+  echo "جاري تثبيت الحزم المطلوبة..."
+  npm install
+fi
+echo "تشغيل الخادم على المنفذ 5000..."
+node src/index.js
+`;
+fs.writeFileSync(path.join(outDir, 'start_server.sh'), shContent, 'utf8');
+
+// 11. Comprehensive Documentation Guide in Arabic
+const guideContent = `# دليل تشغيل ورفع نسخة المشروع على الاستضافة (Hosting Deployment Guide)
+### منظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
+
+تم إعداد هذه الحزمة خصيصاً لتكون جاهزة للتشغيل والنشر على أي نوع من الاستضافات (مشتركة، سحابية، سيرفرات خاصة VPS، أو شبكة داخلية).
+
+---
+
+## محتويات حزمة الاستضافة:
+1. **\`public_html/\`**: مجلد الواجهة الأمامية للمنظومة المترجمة والمبنية بأحدث التقنيات مع ملفات \`.htaccess\` لـ cPanel/Apache و \`web.config\` لـ IIS.
+2. **\`server/\`**: خادم الباك إند المتكامل المبني بـ Express.js، ومزود بقاعدة بيانات هجينة فائقة السرعة مع إمكانية الربط بـ MySQL.
+3. **\`ecosystem.config.cjs\`**: إعدادات التشغيل التلقائي وإدارة العمليات عبر **PM2** للسيرفرات السحابية.
+4. **\`Dockerfile\` & \`docker-compose.yml\`**: للتشغيل المباشر عبر الحاويات (Docker) في السيرفرات أو المنصات الحديثة (Render / Railway / DigitalOcean).
+5. **\`تشغيل_الخادم_محليا.bat\` / \`start_server.sh\`**: إطلاق المنظومة بالكامل بنقرة زر واحدة.
+
+---
+
+## 🚀 طرق الرفع والتشغيل بحسب نوع الاستضافة:
+
+### الطريقة الأولى: استضافة مشتركة أو cPanel (الخيار الأكثر شيوعاً)
+
+#### أ) إذا كان لديك Node.js مدعوم في cPanel (Node.js Selector):
+1. قم بضغط محتويات هذا المجلد ورفعه عبر **File Manager** إلى الاستضافة.
+2. ادخل إلى **Setup Node.js App** في cPanel:
+   - **Node.js version**: اختر 18 أو 20 أو أحدث.
+   - **Application mode**: اختر \`Production\`.
+   - **Application root**: اكتب اسم المجلد الذي رفعت فيه ملفات السيرفر.
+   - **Application startup file**: اكتب \`server/src/index.js\`.
+3. اضغط **Create** ثم اضغط **Run NPM Install**.
+4. اضغط **Restart** ومبارك، ستعمل المنظومة مباشرة بكامل ميزاتها على رابط موقعك!
+
+#### ب) إذا كانت الاستضافة عادية بدون Node.js (واجهة ويب ثابتة فقط):
+1. افتح مجلد **\`public_html/\`**.
+2. ارفع كافة الملفات الموجودة بداخله مباشرة إلى مجلد \`public_html\` على الاستضافة لديك عبر File Manager أو FTP.
+3. المنظومة مزودة بتقنية **Offline/Local Resilience**؛ حيث ستعمل كافة أقسامها، ولوحات التحكم، وإدخال التقارير، والطباعة الرسمية، وحسابات الإكسل مباشرة وبأعلى سرعة من متصفحك!
+
+---
+
+### الطريقة الثانية: سيرفر سحابي أو افتراضي (VPS / Cloud Server / Ubuntu)
+1. انسخ محتويات هذا المجلد إلى السيرفر في أي مسار (مثلاً: \`/var/www/supervision-system\`).
+2. داخل السيرفر نفّذ الأوامر التالية:
+   \`\`\`bash
+   cd /var/www/supervision-system/server
+   npm install
+   \`\`\`
+3. تشغيل النظام في الخلفية دائماً عبر PM2 مع إعادة التشغيل التلقائي عند انقطاع الكهرباء أو إعادة إقلاع السيرفر:
+   \`\`\`bash
+   npm install -g pm2
+   cd /var/www/supervision-system
+   pm2 start ecosystem.config.cjs
+   pm2 save
+   pm2 startup
+   \`\`\`
+4. (اختياري) تكوين **Nginx Reverse Proxy**:
+   \`\`\`nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+
+       location / {
+           proxy_pass http://127.0.0.1:5000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   \`\`\`
+
+---
+
+### الطريقة الثالثة: التشغيل عبر Docker
+إذا كان لديك Docker مثبت على الخادم:
+\`\`\`bash
+docker-compose up -d --build
+\`\`\`
+سيتم بناء المنظومة وتشغيلها فوراً على المنفذ \`5000\`.
+
+---
+
+### الطريقة الرابعة: تشغيل المنظومة على سيرفر محلي أو شبكة داخلية (Intranet)
+* في بيئة ويندوز: انقر مرتين على ملف **\`تشغيل_الخادم_محليا.bat\`**.
+* سيعمل السيرفر مباشرة، ويمكن لأي جهاز متصل بالشبكة المحلية الدخول عبر:
+  \`http://[IP_ADDRESS]:5000\`
+
+---
+
+## 🗄️ إعدادات قاعدة البيانات (Database):
+* النظام يعمل افتراضياً عبر نظام **قاعدة البيانات الهجينة الذكية** (\`server/data/db.json\`) والذي يحفظ كل تقرير وكل معاملة لحظياً على القرص مع نسخ احتياطية تلقائية متجددة دون الحاجة لأي تكوين خارجي.
+* إذا رغبت بربطه بقاعدة بيانات **MySQL** رسمية على الاستضافة:
+  1. افتح ملف \`server/.env\`.
+  2. عدّل السطر:
+     \`\`\`env
+     DATABASE_URL="mysql://اسم_المستخدم:كلمة_المرور@localhost:3306/اسم_قاعدة_البيانات"
+     \`\`\`
+  3. سيقوم السيرفر بالاتصال بـ MySQL تلقائياً بمجرد توفر البيانات.
+
+---
+**تم إعداد هذه النسخة بنجاح وهي جاهزة 100% للاستخدام والرفع.**
+`;
+fs.writeFileSync(path.join(outDir, 'دليل_الرفع_والتشغيل_على_الاستضافة.md'), guideContent, 'utf8');
+
+console.log('[Hosting Package] ✅ Package directory created successfully at:', outDir);

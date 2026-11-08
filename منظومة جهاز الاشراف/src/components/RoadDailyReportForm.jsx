@@ -191,7 +191,7 @@ export const RoadDailyReportForm = ({
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const res = await fastFetch('http://localhost:5000/api/road-daily-report');
+        const res = await fastFetch('/api/road-daily-report');
         if (res && res.success && res.data && typeof res.data === 'object' && Array.isArray(res.data.items) && res.data.items.length > 0 && isMounted) {
           setReportData(res.data);
           return;
@@ -602,13 +602,13 @@ export const RoadDailyReportForm = ({
 
       // 4. Fire-and-forget sync to backend without blocking
       try {
-        fetch('http://localhost:5000/api/road-daily-report', {
+        fetch('/api/road-daily-report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).catch(() => {});
 
-        fetch('http://localhost:5000/api/reports/create', {
+        fetch('/api/reports/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(printableObj)
