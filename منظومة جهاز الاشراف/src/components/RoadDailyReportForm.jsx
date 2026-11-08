@@ -583,6 +583,10 @@ export const RoadDailyReportForm = ({
         salesAmount: calculatedTotals.totalLength,
         totalLength: calculatedTotals.totalLength,
         totalArea: calculatedTotals.totalArea,
+        createdByUsername: currentUser?.username,
+        createdByName: currentUser?.name || reportData.sectorDirector,
+        uploadedBy: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
+        engineer: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
         notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - عدد البنود: ${reportData.items?.length || 0} بنود منفذة`,
         createdAt: new Date().toISOString()
       };

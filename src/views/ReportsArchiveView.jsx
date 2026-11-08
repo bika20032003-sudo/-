@@ -2,17 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, Search, Printer, Plus, RefreshCw, FileSpreadsheet, 
   CheckCircle2, Clock, AlertTriangle, Eye, Edit2, Trash2, 
-  Building2, Milestone, Factory, Fuel, Truck, Layers, Filter, Calendar, Download, CalendarRange
+  Building2, Milestone, Factory, Fuel, Truck, Layers, Filter, Calendar, Download, CalendarRange,
+  FolderArchive, User, Users, ShieldCheck, Lock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { deleteReportFromIndexedDB } from '../utils/secureDatabase.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
-import { canAccessTwoPhaseReport, isDevUser } from '../utils/permissionUtils';
+import { canAccessTwoPhaseReport, canAccessGeneralArchive, isReportOwnedByEngineer, isDevUser } from '../utils/permissionUtils';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
 
-export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
+const OFFICIAL_ENGINEERS_FILTER_LIST = [
+  { id: 'all', name: 'كافة المهندسين والمشرفين (عرض شامل)', role: 'الكل' },
+  { id: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مشرف المرحلة الأولى' },
+  { id: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مشرف المرحلة الثانية' },
+  { id: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+  { id: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+  { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+  { id: 'fuel_officer', name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و240' },
+  { id: 'honi', name: 'م. مروان الهوني', role: 'إشراف ميداني' }
+];
+
+export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = 'personal' }) => {
+  // Check authorization for General Archive (مدير المشروع + م. صالح فقط)
+  const canAccessGeneral = canAccessGeneralArchive(currentUser);
+
+  // Archive Mode: 'general' (الأرشيف العام لكافة التقارير) | 'personal' (أرشيف تقاريري الخاصة)
+  const [archiveMode, setArchiveMode] = useState(() => {
+    if (canAccessGeneral) {
+      return initialMode === 'general' ? 'general' : 'personal';
+    }
+    return 'personal';
+  });
+
+  // Filter states
+  const [filterEngineer, setFilterEngineer] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,6 +73,15 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     notes: ''
   });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Sync mode if initialMode prop or permissions change
+  useEffect(() => {
+    if (!canAccessGeneral && archiveMode !== 'personal') {
+      setArchiveMode('personal');
+    } else if (canAccessGeneral && initialMode) {
+      setArchiveMode(initialMode);
+    }
+  }, [canAccessGeneral, initialMode]);
 
   const handleOpenEdit = (r) => {
     if (r.isTargetedWorksReport || r.reportType === 'تقرير الأعمال المستهدفة') {
@@ -126,7 +160,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
 
-        // 1. Deduplicate local_reports array itself
         const getReportKey = (r) => {
           if (!r) return '';
           const num = r.reportNumber ? String(r.reportNumber).trim() : '';
@@ -158,7 +191,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         list = [...newOnes, ...list];
         list = list.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
 
-        // 2. Strict final deduplication on all reports - guarantees no report appears twice
         const finalSeen = new Set();
         list = list.filter(r => {
           if (!r) return false;
@@ -200,23 +232,46 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       window.removeEventListener('report-deleted', handleGlobalDelete);
       window.removeEventListener('report-saved', handleGlobalSaved);
       window.removeEventListener('report-updated', handleGlobalSaved);
+      clearInterval(autoInterval);
     };
   }, []);
 
   // Filtering Logic
   const filteredReports = reports.filter((r) => {
+    // 1. Personal Archive Filter (Each engineer sees ONLY their own reports)
+    if (archiveMode === 'personal') {
+      if (!isReportOwnedByEngineer(r, currentUser)) {
+        return false;
+      }
+    } else {
+      // General Archive: STRICT ACCESS CONTROL (مدير المشروع وم. صالح فقط)
+      if (!canAccessGeneral) return false;
 
-    // Status filter
+      // Engineer filter in General Archive
+      if (filterEngineer !== 'all') {
+        const engObj = OFFICIAL_ENGINEERS_FILTER_LIST.find(e => e.id === filterEngineer);
+        const dummyEngineer = {
+          username: filterEngineer,
+          name: engObj?.name || filterEngineer,
+          role: filterEngineer === 'fuel_officer' ? 'مسؤول الوقود' : ''
+        };
+        if (!isReportOwnedByEngineer(r, dummyEngineer)) {
+          return false;
+        }
+      }
+    }
+
+    // 2. Status filter
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
 
-    // Two-Phase report visibility restriction: Only Project Manager and M. Saleh
+    // 3. Two-Phase report visibility restriction: Only Project Manager and M. Saleh
     if (!canAccessTwoPhaseReport(currentUser)) {
       if (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين' || r.reportCategory === 'two_phase' || r.title?.includes('المرحلتين')) {
         return false;
       }
     }
 
-    // Type filter
+    // 4. Type filter
     if (typeFilter !== 'all') {
       if (typeFilter === 'تقرير إنجاز المرحلتين') {
         if (!r.isTwoPhaseProgressReport && r.reportType !== 'تقرير إنجاز المرحلتين' && !r.title?.includes('المرحلتين')) return false;
@@ -229,14 +284,14 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       }
     }
 
-    // Date range filter
+    // 5. Date range filter
     if (startDate && r.date && r.date.split('T')[0] < startDate) return false;
     if (endDate && r.date && r.date.split('T')[0] > endDate) return false;
 
-    // Search term
+    // 6. Search term
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
-      const combined = `${r.reportNumber || ''} ${r.materialName || ''} ${r.reportType || ''} ${r.uploadedBy || ''} ${r.notes || ''} ${r.sector || ''}`.toLowerCase();
+      const combined = `${r.reportNumber || ''} ${r.materialName || ''} ${r.reportType || ''} ${r.uploadedBy || ''} ${r.engineer || ''} ${r.sectorDirector || ''} ${r.notes || ''} ${r.sector || ''}`.toLowerCase();
       if (!combined.includes(q)) return false;
     }
 
@@ -248,12 +303,12 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
   const approvedCount = filteredReports.filter(r => r.status === 'approved').length;
   const pendingCount = filteredReports.filter(r => r.status === 'pending_review').length;
   
-  const totalCrusherProduction = filteredReports.reduce((acc, r) => acc + (Number(r.productionAmount) || 0), 0);
   const totalRoadMeters = filteredReports.reduce((acc, r) => acc + (Number(r.roadMeters) || Number(r.salesAmount) || 0), 0);
-  const totalFuelDispensed = filteredReports.reduce((acc, r) => acc + (Number(r.fuelAmount) || 0), 0);
+  const totalFuelDispensed = filteredReports.reduce((acc, r) => acc + (Number(r.fuelAmount) || Number(r.totalDispatchedLiters) || 0), 0);
 
   // Export to Excel
   const handleExportExcel = () => {
+    const isGen = archiveMode === 'general';
     const data = filteredReports.map((r, idx) => ({
       'م': idx + 1,
       'رقم التقرير': r.reportNumber || `#REP-${r.id}`,
@@ -261,8 +316,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
       'المرحلة': (r.sector || '').includes('الثانية') ? 'المرحلة الثانية' : 'المرحلة الأولى',
       'نوع التقرير': r.reportType || 'شامل',
       'أعمال الرصف (م.ط)': Number(r.roadMeters || r.salesAmount) || 0,
-      'الوقود المنصرف (لتر)': Number(r.fuelAmount) || 0,
-      'المشرف المعد': r.uploadedBy || '',
+      'الوقود المنصرف (لتر)': Number(r.fuelAmount || r.totalDispatchedLiters) || 0,
+      'المشرف / المهندس المُعد': r.uploadedBy || r.engineer || r.sectorDirector || '',
       'حالة الاعتماد': r.status === 'approved' ? 'معتمد رسمياً' : r.status === 'rejected' ? 'مطلوب تعديل' : 'قيد المراجعة',
       'المعتمد بواسطة': r.approvedBy || '',
       'الملاحظات': r.notes || ''
@@ -270,8 +325,13 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'أرشيف تقارير المشروع');
-    XLSX.writeFile(wb, `أرشيف_تقارير_المشروع_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const sheetTitle = isGen ? 'الأرشيف العام للمشروع' : `أرشيف تقارير ${currentUser?.name || 'المهندس'}`;
+    const fileTitle = isGen 
+      ? `الأرشيف_العام_لتقارير_المشروع_${new Date().toISOString().split('T')[0]}.xlsx`
+      : `أرشيف_تقارير_${currentUser?.name || 'المهندس'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetTitle);
+    XLSX.writeFile(wb, fileTitle);
   };
 
   // Delete Report confirmation handler
@@ -282,17 +342,14 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     const targetNum = String(reportToDelete.reportNumber || '');
 
     try {
-      // 1. Invalidate via API/Mock
       const deleteIdentifier = targetId || targetNum;
       if (deleteIdentifier) {
         await fastFetch(`/api/reports/${deleteIdentifier}`, { method: 'DELETE' }).catch(() => {});
       }
 
-      // 1.1 Physically purge from IndexedDB
       if (targetId) await deleteReportFromIndexedDB(targetId);
       if (targetNum) await deleteReportFromIndexedDB(targetNum);
 
-      // 2. Remove from localStorage 'local_reports'
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
         const updatedLocal = local.filter(r => {
@@ -305,7 +362,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         console.error('LocalStorage error updating local_reports:', storageErr);
       }
 
-      // 3. Mark in localStorage 'deleted_report_ids'
       try {
         const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
         if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
@@ -315,7 +371,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         console.error('LocalStorage error updating deleted_report_ids:', delErr);
       }
 
-      // 4. Update React state immediately
       setReports(prev => prev.filter(r => {
         const rId = String(r.id || '');
         const rNum = String(r.reportNumber || '');
@@ -326,9 +381,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         return true;
       }));
 
-      // 5. Global sync event across all views
       window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
-
       setReportToDelete(null);
     } catch (e) {
       console.error('Error during report deletion:', e);
@@ -338,16 +391,97 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
     }
   };
 
+  const myPersonalReportsCount = reports.filter(r => isReportOwnedByEngineer(r, currentUser)).length;
+
   return (
     <div className="view-content" style={{ maxWidth: '1380px', margin: '0 auto', paddingBottom: '3.5rem' }}>
       
-      {/* 1. Header Card */}
+      {/* 1. Mode Switcher (Visible ONLY to Project Manager and Eng. Saleh) */}
+      {canAccessGeneral && (
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          background: '#f1f5f9',
+          padding: '6px',
+          borderRadius: '12px',
+          marginBottom: '1rem',
+          width: 'fit-content',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+        }}>
+          <button
+            type="button"
+            onClick={() => setArchiveMode('general')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontWeight: 900,
+              fontSize: '0.86rem',
+              cursor: 'pointer',
+              background: archiveMode === 'general' ? '#1e3a8a' : 'transparent',
+              color: archiveMode === 'general' ? '#ffffff' : '#475569',
+              border: 'none',
+              boxShadow: archiveMode === 'general' ? '0 2px 8px rgba(30,58,138,0.25)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <FolderArchive size={16} />
+            <span>الأرشيف العام لكافة تقارير المشروع</span>
+            <span style={{
+              background: archiveMode === 'general' ? '#2563eb' : '#cbd5e1',
+              color: '#ffffff',
+              fontSize: '0.72rem',
+              padding: '1px 7px',
+              borderRadius: '10px'
+            }}>
+              {reports.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setArchiveMode('personal')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontWeight: 900,
+              fontSize: '0.86rem',
+              cursor: 'pointer',
+              background: archiveMode === 'personal' ? '#1e3a8a' : 'transparent',
+              color: archiveMode === 'personal' ? '#ffffff' : '#475569',
+              border: 'none',
+              boxShadow: archiveMode === 'personal' ? '0 2px 8px rgba(30,58,138,0.25)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <User size={16} />
+            <span>أرشيف تقاريري الشخصية</span>
+            <span style={{
+              background: archiveMode === 'personal' ? '#2563eb' : '#cbd5e1',
+              color: '#ffffff',
+              fontSize: '0.72rem',
+              padding: '1px 7px',
+              borderRadius: '10px'
+            }}>
+              {myPersonalReportsCount}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* 2. Header Card */}
       <div style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: '16px',
         padding: '1.35rem 1.85rem',
-        marginBottom: '1.5rem',
+        marginBottom: '1.25rem',
         boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
         display: 'flex',
         justifyContent: 'space-between',
@@ -358,23 +492,51 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              width: '46px',
-              height: '46px',
+              width: '48px',
+              height: '48px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #1e3a8a, #2563eb)',
+              background: archiveMode === 'general' ? 'linear-gradient(135deg, #1e3a8a, #2563eb)' : 'linear-gradient(135deg, #059669, #10b981)',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              boxShadow: archiveMode === 'general' ? '0 4px 12px rgba(37,99,235,0.3)' : '0 4px 12px rgba(16,185,129,0.3)'
             }}>
-              <FileText size={24} />
+              {archiveMode === 'general' ? <FolderArchive size={26} /> : <FileText size={26} />}
             </div>
             <div>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                الأرشيف المركزي لتقارير المشروع ونظام الطباعة المعتمد
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                  {archiveMode === 'general' 
+                    ? 'الأرشيف العام لكافة تقارير المشروع (الإشراف العام)' 
+                    : `أرشيف تقاريري الميدانية — ${currentUser?.name || 'المهندس المشرف'}`
+                  }
+                </h2>
+                <span style={{
+                  background: archiveMode === 'general' ? '#dbeafe' : '#dcfce7',
+                  color: archiveMode === 'general' ? '#1e40af' : '#15803d',
+                  fontSize: '0.72rem',
+                  fontWeight: 900,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  {archiveMode === 'general' ? <ShieldCheck size={13} /> : <User size={13} />}
+                  <span>
+                    {archiveMode === 'general' 
+                      ? 'صلاحية خاصة: مدير المشروع ومسؤول الجودة م. صالح' 
+                      : 'أرشيف مستقل مخصص لك فقط'
+                    }
+                  </span>
+                </span>
+              </div>
               <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>
-                السجل المركزي الموثق لكافة التقارير الميدانية واليومية لطريق أوباري - غات مع إمكانية الطباعة الرسمية
+                {archiveMode === 'general'
+                  ? 'السجل الشامل الموحد لجميع التقارير الميدانية واليومية المعتمدة الصادرة عن كافة المهندسين بالمشروع'
+                  : 'السجل المستقل والخاص بالتقارير الميدانية المعتمدة الصادرة عنكم والمحفوظة في المنظومة'
+                }
               </p>
             </div>
           </div>
@@ -391,17 +553,17 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
               background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
               color: '#ffffff',
               border: 'none',
-              padding: '0.7rem 1.5rem',
+              padding: '0.65rem 1.4rem',
               borderRadius: '10px',
               fontWeight: 900,
-              fontSize: '0.92rem',
+              fontSize: '0.88rem',
               cursor: 'pointer',
               boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
               transition: 'all 0.2s ease'
             }}
           >
-            <Plus size={18} />
-            <span>إنشاء تقرير ميداني جديد ✍️</span>
+            <Plus size={17} />
+            <span>إنشاء تقرير جديد ✍️</span>
           </button>
 
           <button
@@ -413,88 +575,117 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
               background: '#f8fafc',
               color: '#166534',
               border: '1px solid #bbf7d0',
-              padding: '0.7rem 1.25rem',
+              padding: '0.65rem 1.25rem',
               borderRadius: '10px',
               fontWeight: 800,
-              fontSize: '0.88rem',
+              fontSize: '0.86rem',
               cursor: 'pointer'
             }}
           >
-            <FileSpreadsheet size={18} color="#16a34a" />
+            <FileSpreadsheet size={17} color="#16a34a" />
             <span>تصدير Excel</span>
           </button>
-
-          
         </div>
       </div>
 
-      {/* 2. KPI Summary Badges for Archive */}
+      {/* 3. KPI Summary Badges for Archive */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
+        gap: '0.85rem',
+        marginBottom: '1.25rem'
       }}>
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800 }}>إجمالي التقارير بالأرشيف</div>
-          <div style={{ fontSize: '1.7rem', fontWeight: 900, color: '#0f172a', marginTop: '0.2rem' }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.9rem 1.15rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 800 }}>
+            {archiveMode === 'general' ? 'إجمالي التقارير بالأرشيف العام' : 'تقاريري المسجلة بالأرشيف'}
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', marginTop: '0.2rem' }}>
             {totalReportsCount} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>تقرير</span>
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 800 }}>تقارير معتمدة رسمياً</div>
-          <div style={{ fontSize: '1.7rem', fontWeight: 900, color: '#16a34a', marginTop: '0.2rem' }}>
+        <div style={{ background: '#ffffff', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '0.9rem 1.15rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: '0.76rem', color: '#166534', fontWeight: 800 }}>تقارير معتمدة رسمياً</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '0.2rem' }}>
             {approvedCount} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#15803d' }}>معتمد</span>
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', border: '1px solid #fde68a', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.78rem', color: '#b45309', fontWeight: 800 }}>قيد مراجعة الاعتماد</div>
-          <div style={{ fontSize: '1.7rem', fontWeight: 900, color: '#d97706', marginTop: '0.2rem' }}>
+        <div style={{ background: '#ffffff', border: '1px solid #fde68a', borderRadius: '12px', padding: '0.9rem 1.15rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: '0.76rem', color: '#b45309', fontWeight: 800 }}>قيد مراجعة الاعتماد</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '0.2rem' }}>
             {pendingCount} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400e' }}>بالانتظار</span>
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.78rem', color: '#9a3412', fontWeight: 800 }}>الرصف المنجز بالأرشيف</div>
-          <div style={{ fontSize: '1.7rem', fontWeight: 900, color: '#ea580c', marginTop: '0.2rem' }}>
+        <div style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: '12px', padding: '0.9rem 1.15rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: '0.76rem', color: '#9a3412', fontWeight: 800 }}>أعمال الرصف المنفذة</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '0.2rem' }}>
             {totalRoadMeters.toLocaleString()} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#c2410c' }}>م.ط</span>
           </div>
         </div>
       </div>
 
-      {/* 3. Filters & Search Control Bar */}
+      {/* 4. Filters & Search Control Bar */}
       <div style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: '14px',
-        padding: '1.1rem 1.5rem',
+        padding: '1rem 1.35rem',
         marginBottom: '1.25rem',
         display: 'flex',
         flexWrap: 'wrap',
-        gap: '1rem',
+        gap: '0.85rem',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
         {/* Search Input */}
-        <div style={{ position: 'relative', flex: '1 1 260px' }}>
-          <Search size={18} color="#94a3b8" style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
+        <div style={{ position: 'relative', flex: '1 1 240px' }}>
+          <Search size={17} color="#94a3b8" style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="بحث برقم التقرير، المشرف، أو الملاحظات..."
+            placeholder={archiveMode === 'general' ? "بحث برقم التقرير، المشرف، أو الملاحظات..." : "بحث في تقاريرك الشخصية..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
-              padding: '0.65rem 2.5rem 0.65rem 0.85rem',
+              padding: '0.6rem 2.4rem 0.6rem 0.85rem',
               borderRadius: '8px',
               border: '1px solid #cbd5e1',
-              fontSize: '0.86rem',
+              fontSize: '0.85rem',
               boxSizing: 'border-box'
             }}
           />
         </div>
+
+        {/* Engineer Filter (Available ONLY in General Archive) */}
+        {archiveMode === 'general' && canAccessGeneral && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <Users size={14} />
+              <span>المهندس:</span>
+            </span>
+            <select
+              value={filterEngineer}
+              onChange={(e) => setFilterEngineer(e.target.value)}
+              style={{
+                padding: '0.55rem 0.75rem',
+                borderRadius: '8px',
+                border: '1.5px solid #bfdbfe',
+                fontSize: '0.84rem',
+                fontWeight: 800,
+                color: '#1e3a8a',
+                background: '#eff6ff'
+              }}
+            >
+              {OFFICIAL_ENGINEERS_FILTER_LIST.map(eng => (
+                <option key={eng.id} value={eng.id}>
+                  {eng.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Type Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -502,7 +693,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
+            style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">كافة التقارير</option>
             {canAccessTwoPhaseReport(currentUser) && (
@@ -513,9 +704,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
             <option value="تقرير أعمال الطريق اليومي">تقرير أعمال الطريق اليومي 🛣️</option>
             <option value="تقرير يومي شامل">تقرير يومي شامل</option>
             <option value="تقرير تقدم أعمال الرصف">تقرير أعمال الرصف</option>
-            
             <option value="تقرير تزويد واستهلاك الوقود">تقرير الوقود الميداني</option>
-            <option value="تقرير حركة وتشغيل المعدات">تقرير المعدات والآليات</option>
           </select>
         </div>
 
@@ -525,7 +714,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            style={{ padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
+            style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">جميع الحالات</option>
             <option value="approved">معتمد رسمياً</option>
@@ -535,34 +724,33 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         </div>
 
         {/* Dates */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>من:</span>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            style={{ padding: '0.55rem 0.7rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+            style={{ padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
           />
           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>إلى:</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            style={{ padding: '0.55rem 0.7rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+            style={{ padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
           />
-          {(startDate || endDate || searchTerm || statusFilter !== 'all') && (
+          {(startDate || endDate || searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || (archiveMode === 'general' && filterEngineer !== 'all')) && (
             <button
-              onClick={() => { setStartDate(''); setEndDate(''); setSearchTerm(''); setStatusFilter('all'); }}
-              style={{ background: '#fee2e2', border: 'none', color: '#b91c1c', padding: '0.55rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}
+              onClick={() => { setStartDate(''); setEndDate(''); setSearchTerm(''); setStatusFilter('all'); setTypeFilter('all'); setFilterEngineer('all'); }}
+              style={{ background: '#fee2e2', border: 'none', color: '#b91c1c', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}
             >
               إلغاء الفلترة
             </button>
           )}
         </div>
-
       </div>
 
-      {/* 4. Reports Table */}
+      {/* 5. Reports Table */}
       <div style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -573,13 +761,42 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         {isLoading ? (
           <div style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
             <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 0.75rem auto', color: '#2563eb' }} />
-            <div>جاري تحميل أرشيف تقارير القطاعات...</div>
+            <div>جاري تحميل الأرشيف المعتمد...</div>
           </div>
         ) : filteredReports.length === 0 ? (
-          <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
-            <FileText size={48} style={{ margin: '0 auto 0.75rem auto', opacity: 0.35 }} />
-            <h3 style={{ margin: '0 0 0.5rem 0', color: '#475569', fontSize: '1.1rem' }}>لا توجد تقارير مطابقة في الأرشيف</h3>
-            <p style={{ margin: 0, fontSize: '0.88rem' }}>يمكنك تغيير خيارات البحث أو النقر على "إنشاء تقرير ميداني جديد".</p>
+          <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#94a3b8' }}>
+            <FileText size={48} style={{ margin: '0 auto 0.75rem auto', opacity: 0.35, color: archiveMode === 'general' ? '#2563eb' : '#059669' }} />
+            <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '1.15rem', fontWeight: 900 }}>
+              {archiveMode === 'general' 
+                ? 'لا توجد تقارير مطابقة لخيارات البحث في الأرشيف العام' 
+                : `أرشيف تقاريرك الشخصية (${currentUser?.name || ''}) خالٍ حالياً`
+              }
+            </h3>
+            <p style={{ margin: '0 auto 1.25rem', fontSize: '0.88rem', color: '#64748b', maxWidth: '440px', lineHeight: 1.6 }}>
+              {archiveMode === 'general'
+                ? 'يمكنك تغيير شروط الفلترة أو المهندس المحدد لاستعراض التقارير المطلوبة.'
+                : 'لم يتم العثور على تقارير مسجلة خاصة بك حتى الآن. يمكنك النقر أدناه لإنشاء تقرير جديد وسيتم ربطه بأرشيفك الشخصي فورياً.'
+              }
+            </p>
+            {archiveMode === 'personal' && (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37,99,235,0.3)'
+                }}
+              >
+                إنشاء تقرير ميداني جديد الآن ✍️
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -588,8 +805,11 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>رقم التقرير</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>التاريخ</th>
-                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الموقع والجهة المنفذة</th>
+                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الموقع / القطاع</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>بيان ونوع التقرير</th>
+                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                    {archiveMode === 'general' ? 'المشرف / المهندس المُعد' : 'إعداد المهندس'}
+                  </th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الوقود (لتر)</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>أعمال الرصف</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>حالة الاعتماد</th>
@@ -598,10 +818,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
               </thead>
               <tbody>
                 {filteredReports.map((r) => {
-                  const isA = (r.sector || '').includes('A') || (r.crusherName || '').includes('A');
-                  const isApproved = r.status === 'approved';
                   const isPending = r.status === 'pending_review';
-                  const isRejected = r.status === 'rejected';
+                  const author = r.uploadedBy || r.engineer || r.sectorDirector || r.author || 'المشرف الميداني';
 
                   return (
                     <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9', background: isPending ? '#fffdf7' : '#ffffff' }}>
@@ -623,13 +841,13 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
 
                       {/* Date */}
                       <td style={{ padding: '0.9rem 1.1rem', fontSize: '0.84rem', color: '#475569' }}>
-                        {r.date ? new Date(r.date).toLocaleDateString('ar-LY') : '—'}
+                        {r.date ? new Date(r.date).toLocaleDateString('ar-LY') : (r.dateFormatted || '—')}
                       </td>
 
-                      {/* Location & Entity */}
+                      {/* Location & Sector */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
                         <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#1e40af' }}>
-                          {r.sector || 'مشروع طريق أوباري - غات'}
+                          {r.sector || (r.isTwoPhaseProgressReport ? 'المرحلتين (الأولى والثانية)' : 'مشروع طريق أوباري - غات')}
                         </div>
                         <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
                           {r.companyName || 'جهاز تنفيذ مشروعات المواصلات'}
@@ -641,133 +859,198 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
                         <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#0f172a' }}>
                           {r.materialName || r.reportType || 'تقرير يومي شامل'}
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                          المشرف: {r.uploadedBy || 'المشرف الميداني'}
-                        </div>
+                        {r.notes && (
+                          <div style={{ fontSize: '0.74rem', color: '#64748b', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {r.notes}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Author / Engineer */}
+                      <td style={{ padding: '0.9rem 1.1rem' }}>
+                        <span style={{
+                          background: archiveMode === 'general' ? '#eff6ff' : '#f0fdf4',
+                          color: archiveMode === 'general' ? '#1e40af' : '#166534',
+                          border: archiveMode === 'general' ? '1px solid #bfdbfe' : '1px solid #bbf7d0',
+                          fontSize: '0.76rem',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <User size={12} />
+                          <span>{author}</span>
+                        </span>
                       </td>
 
                       {/* Fuel Amount (Liters) */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.84rem', color: '#16a34a' }}>
-                          {r.fuelAmount ? `${Number(r.fuelAmount).toLocaleString()} لتر` : '—'}
-                        </span>
+                        <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#b45309' }}>
+                          {Number(r.fuelAmount || r.totalDispatchedLiters || 0) > 0 ? (
+                            <span>{Number(r.fuelAmount || r.totalDispatchedLiters).toLocaleString()} لتر</span>
+                          ) : (
+                            <span style={{ color: '#94a3b8' }}>—</span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Road Meters */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.84rem', color: '#ea580c' }}>
-                          {(r.roadMeters || r.salesAmount) ? `${Number(r.roadMeters || r.salesAmount).toLocaleString()} م.ط` : '—'}
-                        </span>
+                        <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#16a34a' }}>
+                          {Number(r.roadMeters || r.salesAmount || 0) > 0 ? (
+                            <span>{Number(r.roadMeters || r.salesAmount).toLocaleString()} م.ط</span>
+                          ) : (
+                            <span style={{ color: '#94a3b8' }}>—</span>
+                          )}
+                        </div>
                       </td>
 
-                      {/* Status */}
+                      {/* Approval Status */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.3rem 0.75rem',
-                          borderRadius: '20px',
-                          fontSize: '0.76rem',
-                          fontWeight: 800,
-                          background: isApproved ? '#dcfce7' : isPending ? '#fef3c7' : '#fee2e2',
-                          color: isApproved ? '#166534' : isPending ? '#92400e' : '#991b1b',
-                          border: isApproved ? '1px solid #bbf7d0' : isPending ? '1px solid #fde68a' : '1px solid #fecaca'
-                        }}>
-                          {isApproved ? <CheckCircle2 size={13} /> : isPending ? <Clock size={13} /> : <AlertTriangle size={13} />}
-                          <span>
-                            {isApproved ? 'معتمد رسمياً' : isPending ? 'قيد المراجعة' : 'مطلوب تعديل'}
+                        {r.status === 'approved' ? (
+                          <span style={{
+                            background: '#dcfce7',
+                            color: '#15803d',
+                            padding: '3px 9px',
+                            borderRadius: '12px',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <CheckCircle2 size={13} />
+                            <span>معتمد</span>
                           </span>
-                        </span>
+                        ) : r.status === 'rejected' ? (
+                          <span style={{
+                            background: '#fee2e2',
+                            color: '#b91c1c',
+                            padding: '3px 9px',
+                            borderRadius: '12px',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <AlertTriangle size={13} />
+                            <span>مطلوب تعديل</span>
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: '#fef3c7',
+                            color: '#b45309',
+                            padding: '3px 9px',
+                            borderRadius: '12px',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <Clock size={13} />
+                            <span>قيد المراجعة</span>
+                          </span>
+                        )}
                       </td>
 
-                      {/* Actions with Official Print */}
+                      {/* Actions */}
                       <td style={{ padding: '0.9rem 1.1rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                           {/* Print Button */}
                           <button
                             type="button"
                             onClick={() => setSelectedReportForPrint(r)}
-                            title="طباعة التقرير الرسمي (Print / PDF)"
                             style={{
+                              background: '#eff6ff',
+                              border: '1px solid #bfdbfe',
+                              color: '#1d4ed8',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.35rem',
-                              background: '#2563eb',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '0.4rem 0.8rem',
-                              borderRadius: '7px',
-                              fontSize: '0.78rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                              gap: '4px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800
                             }}
+                            title="طباعة تقرير رسمي معتمد"
                           >
                             <Printer size={14} />
                             <span>طباعة</span>
                           </button>
 
-                          {/* Details Button */}
+                          {/* View Details */}
                           <button
                             type="button"
                             onClick={() => setViewDetailsReport(r)}
-                            title="عرض التفاصيل"
                             style={{
                               background: '#f8fafc',
-                              color: '#334155',
                               border: '1px solid #cbd5e1',
-                              padding: '0.4rem 0.65rem',
-                              borderRadius: '7px',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer'
+                              color: '#475569',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800
                             }}
+                            title="عرض تفاصيل التقرير"
                           >
                             <Eye size={14} />
+                            <span>عرض</span>
                           </button>
 
-                          {/* Edit Button */}
+                          {/* Edit Report */}
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(r)}
-                            title="تعديل التقرير"
                             style={{
-                              background: '#eff6ff',
-                              color: '#2563eb',
-                              border: '1px solid #bfdbfe',
-                              padding: '0.4rem 0.65rem',
-                              borderRadius: '7px',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer'
+                              background: '#f8fafc',
+                              border: '1px solid #cbd5e1',
+                              color: '#d97706',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800
                             }}
+                            title="تعديل بيانات التقرير"
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={13} />
                           </button>
 
-                          {/* Delete (صلاحية خاصة بحساب التطوير والإدارة) */}
-                          {isDevUser(currentUser) && (
-                            <button
-                              type="button"
-                              onClick={() => setReportToDelete(r)}
-                              title="حذف التقرير (صلاحية حساب التطوير)"
-                              style={{
-                                background: '#fef2f2',
-                                color: '#dc2626',
-                                border: '1px solid #fecaca',
-                                padding: '0.4rem 0.65rem',
-                                borderRadius: '7px',
-                                fontSize: '0.78rem',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
+                          {/* Delete Report */}
+                          <button
+                            type="button"
+                            onClick={() => setReportToDelete(r)}
+                            style={{
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              color: '#dc2626',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800
+                            }}
+                            title="حذف التقرير"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       </td>
-
                     </tr>
                   );
                 })}
@@ -777,458 +1060,256 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         )}
       </div>
 
-      {/* Details View Modal */}
+      {/* 6. View Details Modal */}
       {viewDetailsReport && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.65)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem'
-        }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '580px', padding: '1.75rem', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
-                  تفاصيل التقرير ({viewDetailsReport.reportNumber})
-                </h3>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>المرسل: {viewDetailsReport.uploadedBy}</span>
-              </div>
-              <button onClick={() => setViewDetailsReport(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
-                ✕
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.86rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>القطاع الميداني:</span>
-                <span style={{ fontWeight: 800 }}>{viewDetailsReport.sector}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>تاريخ التقرير:</span>
-                <span style={{ fontWeight: 800 }}>{new Date(viewDetailsReport.date).toLocaleDateString('ar-LY')}</span>
-              </div>
-              {(viewDetailsReport.isFuelReport || viewDetailsReport.reportType === 'تقرير كميات الوقود اليومية') ? (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>إجمالي المنصرف:</span>
-                    <span style={{ fontWeight: 800, color: '#dc2626' }}>{Number(viewDetailsReport.totalDispatchedLiters || viewDetailsReport.fuelAmount || 0).toLocaleString()} لتر</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>إجمالي الوارد:</span>
-                    <span style={{ fontWeight: 800, color: '#16a34a' }}>{Number(viewDetailsReport.totalReceivedLiters || 0).toLocaleString()} لتر</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>إجمالي المتبقي بالخزانات:</span>
-                    <span style={{ fontWeight: 800, color: '#2563eb' }}>{Number(viewDetailsReport.totalRemainingLiters || 0).toLocaleString()} لتر</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>عدد الخزانات / المواقع:</span>
-                    <span style={{ fontWeight: 800, color: '#475569' }}>{(viewDetailsReport.fuelItems || []).length} مواقع</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>أعمال الرصف المنجزة:</span>
-                    <span style={{ fontWeight: 800, color: '#ea580c' }}>{viewDetailsReport.roadMeters || viewDetailsReport.salesAmount || 0} م.ط</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#64748b' }}>الوقود المستهلك:</span>
-                    <span style={{ fontWeight: 800, color: '#16a34a' }}>{viewDetailsReport.fuelAmount || 0} لتر</span>
-                  </div>
-                </>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>حالة الاعتماد:</span>
-                <span style={{ fontWeight: 800 }}>{viewDetailsReport.status === 'approved' ? 'معتمد رسمياً ✅' : 'قيد المراجعة ⏳'}</span>
-              </div>
-              {viewDetailsReport.notes && (
-                <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '0.5rem' }}>
-                  <div style={{ fontWeight: 800, color: '#475569', marginBottom: '0.2rem' }}>البيان والملاحظات:</div>
-                  <div style={{ color: '#334155' }}>{viewDetailsReport.notes}</div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button
-                onClick={() => {
-                  const rep = viewDetailsReport;
-                  setViewDetailsReport(null);
-                  setSelectedReportForPrint(rep);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: '#2563eb',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '0.6rem 1.4rem',
-                  borderRadius: '8px',
-                  fontWeight: 800,
-                  fontSize: '0.86rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <Printer size={16} />
-                <span>طباعة هذا التقرير رسمياً</span>
-              </button>
-
-              <button
-                onClick={() => setViewDetailsReport(null)}
-                style={{ background: '#f1f5f9', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 800, cursor: 'pointer', color: '#475569' }}
-              >
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Official Print Modal */}
-      {selectedReportForPrint && (
-        <OfficialPrintModal
-          report={selectedReportForPrint}
-          onClose={() => setSelectedReportForPrint(null)}
-        />
-      )}
-
-      {/* Create Report Modal */}
-      {isCreateModalOpen && (
-        <CreateReportModal
-          isOpen={isCreateModalOpen}
-          currentUser={currentUser}
-          onClose={() => setIsCreateModalOpen(false)}
-          onNavigateTab={onNavigateTab}
-          onReportCreated={(newRep) => {
-            fetchReports();
-          }}
-          onPrintReport={(newRep) => {
-            setSelectedReportForPrint(newRep);
-          }}
-        />
-      )}
-
-      {/* In-App Delete Confirmation Modal */}
-      {reportToDelete && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
+          right: 0,
+          bottom: 0,
           background: 'rgba(15, 23, 42, 0.65)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 99999,
-          padding: '1rem',
-          direction: 'rtl'
+          zIndex: 9999,
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '18px',
+            width: '100%',
+            maxWidth: '640px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '1.75rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            direction: 'rtl'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={22} color="#2563eb" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+                  تفاصيل التقرير رقم: [{viewDetailsReport.reportNumber || viewDetailsReport.id}]
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewDetailsReport(null)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 800 }}
+              >
+                إغلاق
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>تاريخ التقرير:</div>
+                  <div style={{ fontWeight: 900, color: '#0f172a' }}>{viewDetailsReport.date ? new Date(viewDetailsReport.date).toLocaleDateString('ar-LY') : (viewDetailsReport.dateFormatted || '—')}</div>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>القطاع والموقع:</div>
+                  <div style={{ fontWeight: 900, color: '#1e40af' }}>{viewDetailsReport.sector || 'طريق أوباري - غات'}</div>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>المشرف المعد:</div>
+                  <div style={{ fontWeight: 900, color: '#0f172a' }}>{viewDetailsReport.uploadedBy || viewDetailsReport.engineer || 'المشرف الميداني'}</div>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>نوع التقرير:</div>
+                  <div style={{ fontWeight: 900, color: '#0f172a' }}>{viewDetailsReport.materialName || viewDetailsReport.reportType || 'تقرير يومي'}</div>
+                </div>
+              </div>
+
+              {viewDetailsReport.notes && (
+                <div style={{ background: '#eff6ff', padding: '0.85rem', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                  <div style={{ fontSize: '0.76rem', color: '#1e40af', fontWeight: 800, marginBottom: '3px' }}>الملاحظات والتوجيهات:</div>
+                  <div style={{ color: '#1e293b', lineHeight: 1.5 }}>{viewDetailsReport.notes}</div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const r = viewDetailsReport;
+                    setViewDetailsReport(null);
+                    setSelectedReportForPrint(r);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Printer size={16} />
+                  <span>طباعة رسمية الآن</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Delete Confirmation Modal */}
+      {reportToDelete && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.25rem'
         }}>
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '460px',
-            padding: '2rem 1.75rem',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            padding: '1.6rem',
             textAlign: 'center',
-            border: '1px solid #fee2e2'
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            direction: 'rtl'
           }}>
-            <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              background: '#fef2f2',
-              color: '#dc2626',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1.25rem',
-              border: '2px solid #fecaca'
-            }}>
-              <Trash2 size={26} />
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
+              <Trash2 size={24} />
             </div>
-
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
-              تأكيد حذف التقرير نهائياً
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+              تأكيد حذف التقرير من الأرشيف
             </h3>
-            
-            <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-              هل أنت متأكد من رغبتك في حذف هذا التقرير من أرشيف المشروع؟
+            <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
+              هل أنت متأكد من حذف التقرير رقم <strong>[{reportToDelete.reportNumber || reportToDelete.id}]</strong> نهائياً من الأرشيف؟ لا يمكن التراجع عن هذه العملية.
             </p>
-
-            <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '10px',
-              padding: '0.85rem 1.1rem',
-              marginBottom: '1.5rem',
-              textAlign: 'right',
-              fontSize: '0.82rem'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                <span style={{ color: '#64748b' }}>رقم التقرير:</span>
-                <span style={{ fontWeight: 800, color: '#1e293b' }}>{reportToDelete.reportNumber || `#REP-${reportToDelete.id}`}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                <span style={{ color: '#64748b' }}>بيان التقرير:</span>
-                <span style={{ fontWeight: 700, color: '#2563eb' }}>{reportToDelete.materialName || reportToDelete.reportType || 'تقرير يومي'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>الموقع / التاريخ:</span>
-                <span style={{ color: '#475569' }}>{reportToDelete.sector || 'الموقع العام'} • {reportToDelete.date ? reportToDelete.date.split('T')[0] : ''}</span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
               <button
                 type="button"
-                id="confirm-delete-report-btn"
                 disabled={isDeleting}
                 onClick={confirmDeleteReport}
                 style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.45rem',
                   background: '#dc2626',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '9px',
-                  padding: '0.7rem 1.25rem',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  cursor: isDeleting ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-                }}
-              >
-                <Trash2 size={16} />
-                <span>{isDeleting ? 'جاري الحذف...' : 'نعم، حذف التقرير'}</span>
-              </button>
-
-              <button
-                type="button"
-                id="cancel-delete-report-btn"
-                disabled={isDeleting}
-                onClick={() => setReportToDelete(null)}
-                style={{
-                  flex: 1,
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '9px',
-                  padding: '0.7rem 1.25rem',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '8px',
+                  fontWeight: 900,
                   cursor: isDeleting ? 'not-allowed' : 'pointer'
                 }}
               >
-                إلغاء التراجع
+                {isDeleting ? 'جاري الحذف...' : 'نعم، تأكيد الحذف'}
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setReportToDelete(null)}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                إلغاء
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Report Modal */}
+      {/* 8. Edit Report Modal */}
       {editingReport && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(15, 23, 42, 0.75)',
-          zIndex: 9999,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '1rem'
+          zIndex: 9999,
+          padding: '1.25rem'
         }}>
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
             width: '100%',
-            maxWidth: '680px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '1.75rem',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            maxWidth: '560px',
+            padding: '1.6rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            direction: 'rtl'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Edit2 size={20} color="#2563eb" />
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  تعديل بيانات التقرير: {editingReport.reportNumber}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingReport(null)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: '0 0 1rem 0' }}>
+              تعديل بيانات التقرير: [{editingReport.reportNumber || editingReport.id}]
+            </h3>
+            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    رقم التقرير
-                  </label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '3px' }}>رقم التقرير:</label>
                   <input
                     type="text"
-                    className="form-input"
                     value={editFormData.reportNumber}
                     onChange={(e) => setEditFormData({ ...editFormData, reportNumber: e.target.value })}
-                    required
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.84rem' }}
                   />
                 </div>
-
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    التاريخ
-                  </label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '3px' }}>التاريخ:</label>
                   <input
                     type="date"
-                    className="form-input"
                     value={editFormData.date}
                     onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
-                    required
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.84rem' }}
                   />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    المرحلة الميدانية
-                  </label>
-                  <select
-                    className="form-input"
-                    value={editFormData.sector}
-                    onChange={(e) => setEditFormData({ ...editFormData, sector: e.target.value })}
-                  >
-                    <option value="المرحلة الأولى">المرحلة الأولى</option>
-                    <option value="المرحلة الثانية">المرحلة الثانية</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    نوع التقرير
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={editFormData.reportType}
-                    onChange={(e) => setEditFormData({ ...editFormData, reportType: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    الكمية / الإنتاج (طن أو لتر)
-                  </label>
-                  <input
-                    type="text" inputMode="decimal" dir="ltr" lang="en"
-                    className="form-input"
-                    value={editFormData.productionAmount}
-                    onChange={(e) => setEditFormData({ ...editFormData, productionAmount: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    إنجاز الرصف اليومي (م.ط)
-                  </label>
-                  <input
-                    type="text" inputMode="decimal" dir="ltr" lang="en"
-                    className="form-input"
-                    value={editFormData.roadMeters}
-                    onChange={(e) => setEditFormData({ ...editFormData, roadMeters: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    الوقود المستهلك (لتر)
-                  </label>
-                  <input
-                    type="text" inputMode="decimal" dir="ltr" lang="en"
-                    className="form-input"
-                    value={editFormData.fuelAmount}
-                    onChange={(e) => setEditFormData({ ...editFormData, fuelAmount: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                    حالة الاعتماد
-                  </label>
-                  <select
-                    className="form-input"
-                    value={editFormData.status}
-                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                  >
-                    <option value="approved">معتمد رسمياً ✅</option>
-                    <option value="pending_review">قيد المراجعة والاعتماد ⏳</option>
-                    <option value="rejected">مطلوب تعديل ✏️</option>
-                  </select>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
-                  ملاحظات وتفاصيل التقرير
-                </label>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '3px' }}>الملاحظات:</label>
                 <textarea
-                  className="form-input"
                   rows={3}
                   value={editFormData.notes}
                   onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                  placeholder="أدخل أي ملاحظات فنية أو تشغيلية..."
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.84rem', resize: 'vertical' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setEditingReport(null)}
-                  style={{
-                    padding: '0.65rem 1.25rem',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
-                    color: '#475569',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  إلغاء
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="submit"
                   disabled={isSavingEdit}
-                  className="primary-action-btn"
-                  style={{
-                    padding: '0.65rem 1.5rem',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    fontWeight: 800
-                  }}
+                  style={{ background: '#2563eb', color: '#ffffff', border: 'none', padding: '0.6rem 1.4rem', borderRadius: '8px', fontWeight: 900, cursor: isSavingEdit ? 'not-allowed' : 'pointer' }}
                 >
-                  <CheckCircle2 size={16} />
-                  <span>{isSavingEdit ? 'جاري الحفظ...' : 'حفظ التعديلات'}</span>
+                  {isSavingEdit ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingReport(null)}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  إلغاء
                 </button>
               </div>
             </form>
@@ -1236,24 +1317,28 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab }) => {
         </div>
       )}
 
-      {/* Targeted Works Edit Modal */}
-      {editingTargetedReport && (
-        <CreateTargetedWorksReportModal
+      {/* 9. Standalone Create Report Modal */}
+      {isCreateModalOpen && (
+        <CreateReportModal
+          isOpen={isCreateModalOpen}
           currentUser={currentUser}
-          reportToEdit={editingTargetedReport}
-          onClose={() => {
-            setEditingTargetedReport(null);
-            fetchReports();
-          }}
-          onReportSaved={() => {
-            setEditingTargetedReport(null);
-            fetchReports();
-          }}
+          onClose={() => setIsCreateModalOpen(false)}
+          onNavigateTab={onNavigateTab}
+          onReportCreated={() => fetchReports()}
+          onPrintReport={(rep) => setSelectedReportForPrint(rep)}
+        />
+      )}
+
+      {/* 10. Official Print Modal */}
+      {selectedReportForPrint && (
+        <OfficialPrintModal
+          isOpen={!!selectedReportForPrint}
+          report={selectedReportForPrint}
+          currentUser={currentUser}
+          onClose={() => setSelectedReportForPrint(null)}
         />
       )}
 
     </div>
   );
 };
-
-export default ReportsArchiveView;

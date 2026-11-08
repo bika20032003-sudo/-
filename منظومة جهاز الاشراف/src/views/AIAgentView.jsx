@@ -16,6 +16,7 @@ import {
   fmt,
   generateExecutiveBriefingArticle
 } from '../utils/aiAgentEngine.js';
+import { canAccessGeneralArchive } from '../utils/permissionUtils.js';
 
 export const AIAgentView = ({ currentUser, onNavigateTab }) => {
   // Navigation tabs: 'chat' (المحادثة والاستعلام التنفيذي) | 'feed' (سجل المنظومة والأرشيف الحي)
@@ -164,8 +165,8 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
         
         // Auto-assign navigation quick action if relevant
         if (query.includes('أرشيف') || query.includes('تقرير') || query.includes('تقارير')) {
-          actionTab = 'reports-archive';
-          actionLabel = 'الانتقال إلى أرشيف التقارير والطباعة';
+          actionTab = canAccessGeneralArchive(currentUser) ? 'general-archive' : 'reports-archive';
+          actionLabel = canAccessGeneralArchive(currentUser) ? 'الانتقال إلى الأرشيف العام للمشروع' : 'الانتقال إلى أرشيف تقاريري الميدانية';
         } else if (query.includes('مراسلات') || query.includes('بريد') || query.includes('رسائل') || query.includes('وارد')) {
           actionTab = 'messages';
           actionLabel = 'الانتقال إلى صندوق البريد والمراسلات';
@@ -1168,7 +1169,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
               {onNavigateTab && (
                 <button
                   type="button"
-                  onClick={() => onNavigateTab('reports-archive')}
+                  onClick={() => onNavigateTab(canAccessGeneralArchive(currentUser) ? 'general-archive' : 'reports-archive')}
                   style={{
                     background: '#f8fafc',
                     border: '1px solid #cbd5e1',
@@ -1183,7 +1184,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                     gap: '4px'
                   }}
                 >
-                  <span>فتح الأرشيف</span>
+                  <span>{canAccessGeneralArchive(currentUser) ? 'الأرشيف العام' : 'أرشيفي الشخصي'}</span>
                   <ExternalLink size={13} />
                 </button>
               )}

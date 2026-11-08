@@ -7,6 +7,7 @@ const filesToSync = [
   'src/components/RoadDailyReportForm.jsx',
   'src/components/FuelDailyReportForm.jsx',
   'src/components/OfficialPrintModal.jsx',
+  'src/components/CreateReportModal.jsx',
   'src/components/CreateFuelReportModal.jsx',
   'src/components/CreateTargetedWorksReportModal.jsx',
   'src/components/TwoPhaseDailyReportForm.jsx',
@@ -21,6 +22,7 @@ const filesToSync = [
   'src/views/UsersView.jsx',
   'src/views/EquipmentView.jsx',
   'src/views/CreateReportView.jsx',
+  'src/views/UploadReportsView.jsx',
   'src/views/MainSystem.jsx',
   'src/views/AIAgentView.jsx',
   'src/views/ReportsArchiveView.jsx',
@@ -36,6 +38,7 @@ const filesToSync = [
   'src/utils/twoPhaseSync.js',
   'src/utils/secureDatabase.js',
   'src/utils/apiCache.js',
+  'src/utils/permissionUtils.js',
   'src/index.css',
   'src/premium-ui.css'
 ];

@@ -537,6 +537,8 @@ export const CreateTargetedWorksReportModal = ({
             totalTargetEquipment,
             sectorDirector,
       ownerRepresentative,
+      createdByUsername: currentUser?.username,
+      createdByName: currentUser?.name || sectorDirector,
       uploadedBy: currentUser?.name || sectorDirector,
       status: 'approved',
       approvedBy: ownerRepresentative,

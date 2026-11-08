@@ -528,7 +528,17 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         saved = {
           id: Date.now(),
           ...payload,
+          createdByUsername: currentUser?.username,
+          createdByName: currentUser?.name || uploaderName,
+          uploadedBy: currentUser?.name || uploaderName,
           createdAt: new Date().toISOString()
+        };
+      } else {
+        saved = {
+          ...saved,
+          createdByUsername: currentUser?.username || saved.createdByUsername,
+          createdByName: currentUser?.name || saved.createdByName || uploaderName,
+          uploadedBy: currentUser?.name || saved.uploadedBy || uploaderName
         };
       }
 

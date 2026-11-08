@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
+import { calculateStationLength } from '../utils/engineeringFormulas.js';
 
 // Safe number parsing
 const cleanNum = (val) => {
@@ -56,7 +57,7 @@ export const CreateReportModal = ({
   // -------------------------------------------------------------
   const [roadItems, setRoadItems] = useState([
     { id: 1, item: 'طبقة إعادة التدوير (FDR)', stationFrom: '000+00', stationTo: '000+01', length: '1000', area: '7500', notes: 'تنفيذ ودمك' },
-    { id: 2, item: 'طبقة الأساس الحبيبي والشرشور', stationFrom: '000+01', stationTo: '000+02', length: '1000', area: '7500', notes: 'تشغيل وتسوية' },
+    { id: 2, item: 'طبقة الأساس الحبيبي', stationFrom: '000+01', stationTo: '000+02', length: '1000', area: '7500', notes: 'تشغيل وتسوية' },
     { id: 3, item: 'رش طبقة التشريب (MCO)', stationFrom: '000+02', stationTo: '000+03', length: '800', area: '6000', notes: 'رش حراري معتمد' },
     { id: 4, item: 'الطبقة الإسفلتية السطحية 6 سم', stationFrom: '000+03', stationTo: '000+04', length: '800', area: '6000', notes: 'فرش ودك نهائي' }
   ]);
@@ -108,14 +109,14 @@ export const CreateReportModal = ({
     },
     {
       id: 'base',
-      title: 'أعمال طبقة الأساس الحبيبي والشرشور',
+      title: 'أعمال طبقة الأساس الحبيبي',
       startTimeNote: 'بدء أعمال طبقة الأساس الساعة 06:00 صباحاً',
       workItems: [
         { id: 1, item: 'تسليم وتشغيل طبقة الأساس', stationFrom: '000+01', stationTo: '000+02', length: '600', notes: 'دمك وتسوية' }
       ],
       equipmentTitle: 'المعدات المطلوبة لطبقة الأساس',
       equipmentItems: [
-        { id: 1, name: 'شاحنات نقل وتوريد شرشور', count: '8', notes: 'توريد مستمر' },
+        { id: 1, name: 'شاحنات نقل وتوريد مواد الأساس الحبيبي', count: '8', notes: 'توريد مستمر' },
         { id: 2, name: 'تانك مياه', count: '2', notes: 'معالجة رطوبة' }
       ]
     },
@@ -401,7 +402,19 @@ export const CreateReportModal = ({
         saved = {
           id: Date.now(),
           ...payload,
+          createdByUsername: currentUser?.username || payload.createdByUsername,
+          createdByName: currentUser?.name || payload.createdByName || payload.uploadedBy,
+          uploadedBy: currentUser?.name || payload.uploadedBy || 'المهندس المشرف',
+          engineer: currentUser?.name || payload.engineer || 'المهندس المشرف',
           createdAt: new Date().toISOString()
+        };
+      } else {
+        saved = {
+          ...saved,
+          createdByUsername: currentUser?.username || saved.createdByUsername,
+          createdByName: currentUser?.name || saved.createdByName || saved.uploadedBy,
+          uploadedBy: currentUser?.name || saved.uploadedBy || 'المهندس المشرف',
+          engineer: currentUser?.name || saved.engineer || 'المهندس المشرف'
         };
       }
 

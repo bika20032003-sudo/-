@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Home, Milestone, UploadCloud, FileText, 
+  Home, Milestone, UploadCloud, FileText, FolderArchive,
   CalendarRange, Truck, 
   Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin,
   Camera, Mail, Bot, Sparkles, FilePlus, Target, Award
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
+import { canAccessGeneralArchive } from '../utils/permissionUtils.js';
 
 /**
  * Role-aware sidebar with customized menus:
@@ -176,13 +177,29 @@ export const Sidebar = ({
       { id: 'ai-agent', label: 'مساعد مدير المشروع', icon: Bot, badge: 'تنفيذي' }
     );
 
+    const canAccessGeneral = canAccessGeneralArchive(currentUser);
+
     const reportItems = [
       { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
       { id: 'periodic-reports', label: 'التقارير الأسبوعية والشهرية', icon: CalendarRange, badge: 'تجميع آلي' },
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
-      { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud },
-      { id: 'reports-archive', label: 'أرشيف التقارير والطباعة', icon: FileText }
+      { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud }
     ];
+
+    if (canAccessGeneral) {
+      reportItems.push({ 
+        id: 'general-archive', 
+        label: 'الأرشيف العام للتقارير', 
+        icon: FolderArchive, 
+        badge: 'شامل' 
+      });
+    }
+
+    reportItems.push({ 
+      id: 'reports-archive', 
+      label: canAccessGeneral ? 'أرشيف تقاريري الخاصة' : 'أرشيف تقاريري الميدانية', 
+      icon: FileText 
+    });
 
     const resourceItems = [
       { id: 'fuel', label: 'إدارة الوقود', icon: Fuel },

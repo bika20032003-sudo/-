@@ -33,7 +33,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
       bgLight: '#f0fdf4',
       borderColor: '#16a34a',
       badgeText: 'يوجه تلقائياً إلى: قسم مسار الطريق وسجل الإنجاز 🛣️',
-      description: 'رفع تقرير طبقات الرصف اليومية (FDR، الأساس الحبيبي والشرشور، MCO، الأسفلت) والمحطات بالمتر الطولي والمربع',
+      description: 'رفع تقرير طبقات الرصف اليومية (FDR، الأساس الحبيبي، MCO، الأسفلت) والمحطات بالمتر الطولي والمربع',
       defaultLocation: 'مسار المرحلة الأولى'
     },
     {
@@ -185,7 +185,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         // Smart fill based on selectedCategory
         if (selectedCategory === 'fuel') {
           const maxNum = Math.max(...extractedNums, 2500);
-          setFuelDispatched(prev => prev || String(maxNum > 100 ? maxNum : 2850));
+          setFuelDispatched(prev => prev || (maxNum > 0 ? String(maxNum) : ""));
           setFuelReceived(prev => prev || '0');
           setFuelRemaining(prev => prev || String(Math.max(1000, maxNum * 1.5)));
         } else if (selectedCategory === 'targeted') {
@@ -206,8 +206,8 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
             setRoadArea(prev => prev || String(Math.round(maxNum * 7.5)));
           }
         } else {
-          setCrusherProduction(prev => prev || '1250');
-          setSharshoorAmount(prev => prev || '750');
+          setCrusherProduction(prev => prev || "");
+          setSharshoorAmount(prev => prev || "");
         }
 
         setDetectedIssues(issues.length > 0 ? issues : ['فحص دوري ومطابقة بيانات التقرير']);
@@ -221,9 +221,9 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
     // Default Smart Parsing for Images / PDFs / Text
     setTimeout(() => {
       if (selectedCategory === 'fuel') {
-        setFuelDispatched(prev => prev || '2850');
+        setFuelDispatched(prev => prev || "");
         setFuelReceived(prev => prev || '0');
-        setFuelRemaining(prev => prev || '4200');
+        setFuelRemaining(prev => prev || "");
       } else if (selectedCategory === 'targeted') {
         setTargetLength(prev => prev || '1400');
         setTargetEquipment(prev => prev || '12');
@@ -239,8 +239,8 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         setRoadMeters(prev => prev || '850');
         setRoadArea(prev => prev || '6375');
       } else {
-        setCrusherProduction(prev => prev || '1150');
-        setSharshoorAmount(prev => prev || '690');
+        setCrusherProduction(prev => prev || "");
+        setSharshoorAmount(prev => prev || "");
       }
 
       setDetectedIssues(['تم فحص المستند واستخراج البيانات الرقمية بنجاح']);
@@ -528,7 +528,17 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         saved = {
           id: Date.now(),
           ...payload,
+          createdByUsername: currentUser?.username,
+          createdByName: currentUser?.name || uploaderName,
+          uploadedBy: currentUser?.name || uploaderName,
           createdAt: new Date().toISOString()
+        };
+      } else {
+        saved = {
+          ...saved,
+          createdByUsername: currentUser?.username || saved.createdByUsername,
+          createdByName: currentUser?.name || saved.createdByName || uploaderName,
+          uploadedBy: currentUser?.name || saved.uploadedBy || uploaderName
         };
       }
 

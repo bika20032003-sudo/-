@@ -104,7 +104,8 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
     const tabTitles = {
         'dashboard': 'لوحة القيادة الموحدة - جهاز الإشراف والمتابعة',
         'sector-dashboard': `لوحة العمليات الميدانية - ${currentUser?.title || currentUser?.role || 'القطاع'}`,
-        'reports-archive': 'أرشيف تقارير المشروع ونظام الاعتماد والطباعة',
+        'reports-archive': 'أرشيف تقاريري الميدانية',
+        'general-archive': 'الأرشيف العام لكافة تقارير المشروع (الإشراف العام)',
         'periodic-reports': 'التقارير الأسبوعية والشهرية التجميعية لأعمال الطريق',
         'create-report': 'إنشاء وإدخال تقرير ميداني جديد',
         'targeted-works': 'إدارة ومتابعة الأعمال المستهدفة',
@@ -194,7 +195,13 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
               />
             )}
 
-            {activeTab === 'reports-archive' && <ReportsArchiveView currentUser={currentUser} onNavigateTab={handleTabChange} />}
+            {(activeTab === 'reports-archive' || activeTab === 'general-archive') && (
+              <ReportsArchiveView 
+                currentUser={currentUser} 
+                onNavigateTab={handleTabChange}
+                initialMode={activeTab === 'general-archive' ? 'general' : 'personal'}
+              />
+            )}
             {activeTab === 'road-progress' && <RoadProgressView onNavigateTab={handleTabChange} currentUser={currentUser} />}
             {activeTab === 'executive-progress' && (
               <ExecutiveProgressView 
