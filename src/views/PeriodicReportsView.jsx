@@ -733,6 +733,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
           <button
             type="button"
             onClick={() => setShowForwardModal(true)}
+            title="إحالة التقرير للبريد والمراسلات فقط"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -749,7 +750,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
             }}
           >
             <Send size={18} />
-            <span>حفظ وإحالة للمراسلات</span>
+            <span>إحالة للمراسلات (بريد)</span>
           </button>
 
           <button

@@ -344,6 +344,46 @@ export const CreateReportModal = ({
     }
 
     try {
+      if (sendAfter) {
+        // Mail only: do NOT save into local_reports or dispatch report-saved
+        const forwardDraft = {
+          id: Date.now(),
+          ...payload,
+          status: 'معتمد للمراسلات',
+          createdAt: new Date().toISOString()
+        };
+        try {
+          const autoMsg = {
+            id: Date.now(),
+            fromUsername: currentUser?.username || 'user',
+            fromName: currentUser?.name || sectorDirector,
+            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+            toUsername: 'all',
+            toName: 'كافة أعضاء جهاز الإشراف',
+            toRole: 'جهاز الإشراف والقيادة',
+            type: 'إحالة تقرير عبر البريد والمراسلات',
+            subject: `إحالة ${forwardDraft.title || forwardDraft.reportType} - رقم (${forwardDraft.reportNumber})`,
+            content: `نحيل إليكم عبر البريد نسخة من ${forwardDraft.title || forwardDraft.reportType} برقم (${forwardDraft.reportNumber}) للإحاطة والمتابعة الهندسية.`,
+            reportId: forwardDraft.id,
+            reportNumber: forwardDraft.reportNumber,
+            reportData: forwardDraft,
+            createdAt: new Date().toISOString()
+          };
+          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+          locMsgs.unshift(autoMsg);
+          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
+          window.dispatchEvent(new CustomEvent('messages-updated'));
+        } catch (_) {}
+
+        setCreatedReportData({
+          report: forwardDraft,
+          destTab: 'messages',
+          destName: 'صندوق البريد والمراسلات',
+          sentToMessages: true
+        });
+        return;
+      }
+
       let saved = null;
       try {
         const res = await fastFetch('http://localhost:5000/api/reports/create', {
@@ -386,31 +426,6 @@ export const CreateReportModal = ({
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
         window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
       } catch (evErr) {}
-
-      if (sendAfter) {
-        try {
-          const autoMsg = {
-            id: Date.now(),
-            fromUsername: currentUser?.username || 'user',
-            fromName: currentUser?.name || sectorDirector,
-            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
-            toUsername: 'all',
-            toName: 'كافة أعضاء جهاز الإشراف',
-            toRole: 'جهاز الإشراف والقيادة',
-            type: 'إحالة تقرير رسمي فوري',
-            subject: `إحالة ${saved.title || saved.reportType} - رقم (${saved.reportNumber})`,
-            content: `تم حفظ وإحالة التقرير رسمياً برقم (${saved.reportNumber}) للمتابعة والاعتماد.`,
-            reportId: saved.id,
-            reportNumber: saved.reportNumber,
-            reportData: saved,
-            createdAt: new Date().toISOString()
-          };
-          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
-          locMsgs.unshift(autoMsg);
-          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
-          window.dispatchEvent(new CustomEvent('messages-updated'));
-        } catch (_) {}
-      }
 
       setCreatedReportData({
         report: saved,
@@ -1146,6 +1161,7 @@ export const CreateReportModal = ({
                 type="button"
                 disabled={isSubmitting}
                 onClick={(e) => handleSubmit(e, true)}
+                title="إحالة التقرير للبريد والمراسلات فقط"
                 style={{
                   background: '#0284c7',
                   border: 'none',
@@ -1163,7 +1179,7 @@ export const CreateReportModal = ({
                 }}
               >
                 <Send size={16} />
-                <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+                <span>{isSubmitting ? 'جاري المعالجة...' : 'إحالة للمراسلات (بريد)'}</span>
               </button>
 
               <button

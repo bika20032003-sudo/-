@@ -414,8 +414,43 @@ export const TwoPhaseDailyReportForm = ({
     XLSX.writeFile(wb, `تقرير_الاعمال_المنجزة_للمرحلتين_${reportDate}.xlsx`);
   };
 
-  // Submit / Save Report
-  const handleSubmitReport = async (sendAfter = false) => {
+  // Forward to correspondence (mail only - without saving approved report)
+  const handleOpenForwardModal = () => {
+    const totalTodayMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0);
+    const totalCumulativeMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0);
+
+    const rep = createdReport || {
+      id: Date.now(),
+      reportNumber,
+      date: new Date(reportDate).toISOString(),
+      dateFormatted: reportDate,
+      dayName,
+      title: `بيان أعمال إنجاز المرحلتين يوم ${dayName} ${reportDate}`,
+      projectName,
+      reportType: 'تقرير إنجاز المرحلتين',
+      shiftType: 'دوام كامل',
+      sector: 'القطاع المشترك (المرحلتين الأولى والثانية)',
+      companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
+      uploadedBy: currentUser?.name || sectorDirector,
+      sectorDirector,
+      ownerRepresentative,
+      status: 'معتمد للمراسلات',
+      notes: `تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: ${totalTodayMeters} م.ط - الإجمالي التراكمي: ${totalCumulativeMeters} م.ط`,
+      roadMeters: totalTodayMeters,
+      totalLength: totalTodayMeters,
+      isTwoPhaseProgressReport: true,
+      phase1Items,
+      phase2Items,
+      combinedItems,
+      remainingItems,
+      twoPhaseTotals: { todayMeters: totalTodayMeters, totalCumulativeMeters }
+    };
+    setCreatedReport(rep);
+    setShowForwardModal(true);
+  };
+
+  // Submit / Save Approved Report (saves to section and archive)
+  const handleSubmitReport = async () => {
     setIsSubmitting(true);
     setStatusMessage(null);
 
@@ -483,18 +518,10 @@ export const TwoPhaseDailyReportForm = ({
         console.warn('Event dispatch error:', evtErr);
       }
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ تقرير الأعمال المنجزة للمرحلتين برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
-        });
-      } else {
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسم إنجاز المرحلتين والأرشيف!` 
-        });
-      }
+      setStatusMessage({ 
+        type: 'success', 
+        text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسم إنجاز المرحلتين والأرشيف!` 
+      });
     } catch (err) {
       console.error('Failed to save two-phase report:', err);
       setStatusMessage({ 
@@ -1284,8 +1311,8 @@ export const TwoPhaseDailyReportForm = ({
 
           <button
             type="button"
-            disabled={isSubmitting}
-            onClick={() => handleSubmitReport(true)}
+            onClick={handleOpenForwardModal}
+            title="إحالة التقرير للبريد والمراسلات فقط"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1297,18 +1324,19 @@ export const TwoPhaseDailyReportForm = ({
               color: '#ffffff',
               fontSize: '0.85rem',
               fontWeight: 800,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
               boxShadow: '0 3px 10px rgba(2, 132, 199, 0.3)'
             }}
           >
             <Send size={16} />
-            <span>حفظ وإحالة للمراسلات</span>
+            <span>إحالة للمراسلات (بريد)</span>
           </button>
 
           <button
             type="button"
             disabled={isSubmitting}
-            onClick={() => handleSubmitReport(false)}
+            onClick={handleSubmitReport}
+            title="حفظ التقرير المعتمد في قسمه والأرشيف"
             style={{
               display: 'flex',
               alignItems: 'center',

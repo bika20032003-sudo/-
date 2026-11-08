@@ -192,6 +192,23 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
         console.warn('Backend unavailable, saving locally:', err);
       }
 
+      if (sendAfter) {
+        // Mail only: do NOT save into local_reports or dispatch report-saved
+        const forwardDraft = {
+          id: Date.now(),
+          ...payload,
+          status: 'معتمد للمراسلات',
+          createdAt: new Date().toISOString()
+        };
+        setCreatedReport(forwardDraft);
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم تجهيز تقرير كميات الوقود برقم (${forwardDraft.reportNumber}) للإحالة إلى البريد والمراسلات...` 
+        });
+        return;
+      }
+
       if (!saved) {
         saved = {
           id: Date.now(),
@@ -217,18 +234,10 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
       setCreatedReport(saved);
       if (onReportCreated) onReportCreated(saved);
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ تقرير كميات الوقود برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
-        });
-      } else {
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!` 
-        });
-      }
+      setStatusMessage({ 
+        type: 'success', 
+        text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!` 
+      });
     } catch (error) {
       console.error('Error saving fuel report:', error);
       setStatusMessage({ type: 'danger', text: 'حدث خطأ أثناء حفظ التقرير.' });
@@ -742,6 +751,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
               type="button"
               disabled={isSubmitting}
               onClick={() => handleSaveReport(true)}
+              title="إحالة التقرير للبريد والمراسلات فقط"
               style={{
                 flex: 1.2,
                 padding: '0.75rem 1.25rem',
@@ -760,7 +770,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
               }}
             >
               <Send size={16} />
-              <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+              <span>{isSubmitting ? 'جاري المعالجة...' : 'إحالة للمراسلات (بريد)'}</span>
             </button>
 
             <button

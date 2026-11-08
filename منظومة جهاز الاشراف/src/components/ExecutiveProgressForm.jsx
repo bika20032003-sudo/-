@@ -575,8 +575,8 @@ export const ExecutiveProgressForm = ({
     }
   };
 
-  // Save to API & LocalStorage
-  const handleSave = async (sendAfter = false) => {
+  // Save to API & LocalStorage (approved - saves to section and archive)
+  const handleSave = async () => {
     setIsSaving(true);
     setStatusMessage(null);
 
@@ -612,12 +612,7 @@ export const ExecutiveProgressForm = ({
         window.dispatchEvent(new CustomEvent('report-saved', { detail: payload }));
       } catch (_) {}
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-        setStatusMessage({ type: 'success', text: 'تم حفظ بيانات الموقف التنفيذي وجاري إحالتها للمراسلات...' });
-      } else {
-        setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت الموقف التنفيذي المعتمد بنجاح في قسمه وأرشيف المنظومة!' });
-      }
+      setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت الموقف التنفيذي المعتمد بنجاح في قسمه وأرشيف المنظومة!' });
       if (onSaved) onSaved(payload);
     } catch (e) {
       console.error(e);
@@ -790,8 +785,8 @@ export const ExecutiveProgressForm = ({
             <>
               <button
                 type="button"
-                onClick={() => handleSave(true)}
-                disabled={isSaving}
+                onClick={() => setShowForwardModal(true)}
+                title="إحالة التقرير للبريد والمراسلات فقط"
                 style={{
                   background: '#0284c7',
                   color: '#ffffff',
@@ -803,19 +798,19 @@ export const ExecutiveProgressForm = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)',
-                  opacity: isSaving ? 0.7 : 1
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
                 }}
               >
                 <Send size={16} />
-                <span>حفظ وإحالة للمراسلات</span>
+                <span>إحالة للمراسلات (بريد)</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleSave(false)}
+                onClick={handleSave}
                 disabled={isSaving}
+                title="حفظ التقرير المعتمد في قسمه والأرشيف"
                 style={{
                   background: '#16a34a',
                   color: '#ffffff',

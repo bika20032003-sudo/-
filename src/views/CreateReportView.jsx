@@ -611,6 +611,23 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         console.warn('Backend unavailable, saving locally:', err);
       }
 
+      if (sendAfter) {
+        // Mail only: do NOT save into local_reports or dispatch report-saved
+        const forwardDraft = {
+          id: Date.now(),
+          ...payload,
+          status: 'معتمد للمراسلات',
+          createdAt: new Date().toISOString()
+        };
+        setCreatedReport(forwardDraft);
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم تجهيز التقرير برقم (${forwardDraft.reportNumber}) للإحالة إلى البريد والمراسلات...` 
+        });
+        return;
+      }
+
       if (!saved) {
         saved = {
           id: Date.now(),
@@ -640,18 +657,10 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       } catch (evtErr) {}
 
       setCreatedReport(saved);
-      if (sendAfter) {
-        setShowForwardModal(true);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ ${saved.title || saved.reportType} برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
-        });
-      } else {
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسمه والأرشيف!` 
-        });
-      }
+      setStatusMessage({ 
+        type: 'success', 
+        text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسمه والأرشيف!` 
+      });
 
       if (sendAfter) {
         // Automatically broadcast to all supervision users from Project Manager down, excluding dev account
@@ -2306,6 +2315,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           type="button"
           disabled={isSubmitting}
           onClick={() => handleSaveReport(true)}
+          title="إحالة التقرير للبريد والمراسلات فقط"
           style={{
             flex: 1.2,
             padding: '0.85rem 1.5rem',
@@ -2324,7 +2334,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           }}
         >
           <Send size={18} />
-          <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+          <span>{isSubmitting ? 'جاري المعالجة...' : 'إحالة للمراسلات (بريد)'}</span>
         </button>
 
         <button

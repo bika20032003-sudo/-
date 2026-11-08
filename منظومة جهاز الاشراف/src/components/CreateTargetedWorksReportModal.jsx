@@ -548,6 +548,23 @@ export const CreateTargetedWorksReportModal = ({
         ? { ...reportPayload, id: reportToEdit.id, updatedAt: new Date().toISOString() }
         : { ...reportPayload, id: 'target-rep-' + Date.now(), createdAt: new Date().toISOString() };
 
+      if (sendAfter) {
+        // Mail only: do NOT save into local_reports or dispatch report-saved
+        const forwardDraft = {
+          id: Date.now(),
+          ...saved,
+          status: 'معتمد للمراسلات',
+          createdAt: new Date().toISOString()
+        };
+        setCreatedReport(forwardDraft);
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم تجهيز البيان برقم (${forwardDraft.reportNumber}) للإحالة إلى البريد والمراسلات...` 
+        });
+        return;
+      }
+
       // 1. Direct save into localStorage under local_reports
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
@@ -588,18 +605,10 @@ export const CreateTargetedWorksReportModal = ({
 
       if (onReportCreated) onReportCreated(saved);
 
-      if (sendAfter) {
-        setShowForwardModal(true);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ البيان برقم (${saved.reportNumber}) وجاري إحالته للمراسلات...` 
-        });
-      } else {
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم حفظ البيان المعتمد برقم (${saved.reportNumber}) بنجاح في قسم الأعمال المستهدفة والأرشيف!` 
-        });
-      }
+      setStatusMessage({ 
+        type: 'success', 
+        text: `تم حفظ البيان المعتمد برقم (${saved.reportNumber}) بنجاح في قسم الأعمال المستهدفة والأرشيف!` 
+      });
     } catch (err) {
       console.error('Error saving targeted works report:', err);
       setStatusMessage({ type: 'danger', text: 'حدث خطأ أثناء حفظ تقرير الأعمال المستهدفة.' });
@@ -1540,6 +1549,7 @@ export const CreateTargetedWorksReportModal = ({
               type="button"
               disabled={isSubmitting}
               onClick={() => handleSaveReport(true)}
+              title="إحالة التقرير للبريد والمراسلات فقط"
               style={{
                 flex: 1.2,
                 padding: '0.75rem 1.25rem',
@@ -1558,7 +1568,7 @@ export const CreateTargetedWorksReportModal = ({
               }}
             >
               <Send size={18} />
-              <span>{isSubmitting ? 'جاري المعالجة...' : 'حفظ وإحالة للمراسلات'}</span>
+              <span>{isSubmitting ? 'جاري المعالجة...' : 'إحالة للمراسلات (بريد)'}</span>
             </button>
 
             <button

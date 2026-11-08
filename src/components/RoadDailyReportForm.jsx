@@ -547,8 +547,24 @@ export const RoadDailyReportForm = ({
     }
   };
 
-  // Save report
-  const handleSave = async (sendAfter = false) => {
+  // Forward to correspondence (mail only)
+  const handleOpenForwardModal = () => {
+    const printableObj = createdReportForForward || {
+      ...getFullPrintableReport(),
+      id: Date.now(),
+      roadMeters: calculatedTotals.totalLength,
+      salesAmount: calculatedTotals.totalLength,
+      totalLength: calculatedTotals.totalLength,
+      totalArea: calculatedTotals.totalArea,
+      notes: `تقرير أعمال الطريق اليومي - ${reportData.dayName} ${reportData.reportDate}`,
+      createdAt: new Date().toISOString()
+    };
+    setCreatedReportForForward(printableObj);
+    setShowForwardModal(true);
+  };
+
+  // Save report (approved - saves to section and archive)
+  const handleSave = async () => {
     setIsSaving(true);
     setStatusMessage(null);
     try {
@@ -607,18 +623,10 @@ export const RoadDailyReportForm = ({
       } catch (e) {}
 
       setCreatedReportForForward(printableObj);
-      if (sendAfter) {
-        setShowForwardModal(true);
-        setStatusMessage({
-          type: 'success',
-          text: `تم حفظ تقرير أعمال الطريق برقم (${printableObj.reportNumber}) وجاري إحالته للمراسلات...`
-        });
-      } else {
-        setStatusMessage({
-          type: 'success',
-          text: `تم حفظ التقرير المعتمد برقم (${printableObj.reportNumber}) بنجاح في قسم أعمال الطريق والأرشيف!`
-        });
-      }
+      setStatusMessage({
+        type: 'success',
+        text: `تم حفظ التقرير المعتمد برقم (${printableObj.reportNumber}) بنجاح في قسم أعمال الطريق والأرشيف!`
+      });
 
       if (onSaved) onSaved(printableObj);
     } catch (e) {
@@ -953,8 +961,8 @@ export const RoadDailyReportForm = ({
 
           <button
             type="button"
-            onClick={() => handleSave(true)}
-            disabled={isSaving}
+            onClick={handleOpenForwardModal}
+            title="إحالة التقرير للبريد والمراسلات فقط"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -966,19 +974,19 @@ export const RoadDailyReportForm = ({
               color: '#ffffff',
               fontWeight: 800,
               fontSize: '0.88rem',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
-              opacity: isSaving ? 0.7 : 1
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
             }}
           >
             <Send size={16} />
-            <span>حفظ وإحالة للمراسلات</span>
+            <span>إحالة للمراسلات (بريد)</span>
           </button>
 
           <button
             type="button"
-            onClick={() => handleSave(false)}
+            onClick={handleSave}
             disabled={isSaving}
+            title="حفظ التقرير المعتمد في قسمه والأرشيف"
             style={{
               display: 'flex',
               alignItems: 'center',
