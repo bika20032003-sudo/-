@@ -38,7 +38,12 @@ function copyRecursiveSync(src, dest) {
   }
 }
 
+const rootPublicHtml = path.join(rootDir, 'public_html');
+if (fs.existsSync(path.join(rootPublicHtml, 'assets'))) {
+  fs.rmSync(path.join(rootPublicHtml, 'assets'), { recursive: true, force: true });
+}
 copyRecursiveSync(distDir, publicHtmlDir);
+copyRecursiveSync(distDir, rootPublicHtml);
 
 // Also copy dist to server/public so if running node server/src/index.js directly it finds it
 const serverDest = path.join(outDir, 'server');
@@ -51,9 +56,25 @@ const htaccessContent = `# =====================================================
 # لمنظومة جهاز الإشراف والمتابعة - مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
 # ==============================================================================
 
+# 1. تحديد أولوية الملفات الافتراضية لمنع الشاشة البيضاء نهائياً
+DirectoryIndex index.html index.htm index.php
+
+# 2. إجبار الخادم على إرسال نوع المحتوى الصحيح (MIME Types) لكافة ملفات النظام
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType text/javascript .js
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType image/jpeg .jpg .jpeg
+  AddType image/png .png
+  AddType application/json .json
+  AddType font/woff2 .woff2
+  AddType font/woff .woff
+</IfModule>
+
+# 3. توجيه المسارات لتطبيقات الصفحة الواحدة (SPA Routing)
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /
 
   # 1. توجيه طلبات واجهة البرمجة (API) إلى خادم الباك إند (إذا كان Node.js يعمل على المنفذ 5000)
   # RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
@@ -63,8 +84,8 @@ const htaccessContent = `# =====================================================
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 3. توجيه كافة المسارات الأخرى إلى index.html لضمان عمل واجهة التطبيق التفاعلية (SPA Routing)
-  RewriteRule . /index.html [L]
+  # 3. توجيه كافة المسارات الأخرى إلى index.html لضمان عمل واجهة التطبيق
+  RewriteRule ^ index.html [L]
 </IfModule>
 
 # تحسين كفاءة التخزين المؤقت وضغط الملفات لسرعة استجابة فائقة
@@ -82,6 +103,14 @@ const htaccessContent = `# =====================================================
 </IfModule>
 `;
 fs.writeFileSync(path.join(publicHtmlDir, '.htaccess'), htaccessContent, 'utf8');
+fs.writeFileSync(path.join(rootPublicHtml, '.htaccess'), htaccessContent, 'utf8');
+
+// Copy index.html to index.htm as well to prevent any server mismatch
+if (fs.existsSync(path.join(publicHtmlDir, 'index.html'))) {
+  fs.copyFileSync(path.join(publicHtmlDir, 'index.html'), path.join(publicHtmlDir, 'index.htm'));
+  fs.copyFileSync(path.join(rootPublicHtml, 'index.html'), path.join(rootPublicHtml, 'index.htm'));
+  fs.copyFileSync(path.join(distDir, 'index.html'), path.join(distDir, 'index.htm'));
+}
 
 // 4. Add web.config for Windows Server / IIS
 const webConfigContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -108,6 +137,7 @@ const webConfigContent = `<?xml version="1.0" encoding="UTF-8"?>
 </configuration>
 `;
 fs.writeFileSync(path.join(publicHtmlDir, 'web.config'), webConfigContent, 'utf8');
+fs.writeFileSync(path.join(rootPublicHtml, 'web.config'), webConfigContent, 'utf8');
 
 // 5. Add .cpanel.yml for cPanel "Deploy HEAD Commit"
 const cpanelYmlContent = `---
@@ -117,9 +147,11 @@ const cpanelYmlContent = `---
 # ==============================================================================
 deployment:
   tasks:
-    # 1. تحديد مسار النشر (مجلد public_html لحسابك في cPanel)
-    # ملاحظة: يمكنك ترك $(whoami) أو استبدالها باسم مستخدم cPanel الخاص بك مباشرة
-    - export DEPLOYPATH=/home/$(whoami)/public_html/
+    # 1. تحديد مسار النشر بمرونة ودقة عالية
+    - export CP_USER=$(whoami 2>/dev/null || id -un 2>/dev/null || echo $USER)
+    - export DEPLOYPATH=/home/$CP_USER/public_html/
+    - if [ ! -d "$DEPLOYPATH" ]; then export DEPLOYPATH=../public_html/; fi
+    - if [ ! -d "$DEPLOYPATH" ]; then export DEPLOYPATH=./; fi
     - /bin/mkdir -p $DEPLOYPATH
 
     # 2. نسخ ملفات الواجهة الأمامية الجاهزة إلى مجلد public_html
@@ -128,10 +160,13 @@ deployment:
     # 3. التأكد من نقل ملف تكوين الروابط والـ SPA Routing (.htaccess)
     - if [ -f "public_html/.htaccess" ]; then /bin/cp -f public_html/.htaccess $DEPLOYPATH/; elif [ -f "dist/.htaccess" ]; then /bin/cp -f dist/.htaccess $DEPLOYPATH/; fi
 
-    # 4. تثبيت حزم خادم Node.js وتحديثها إذا كان مستخدماً في cPanel
+    # 4. نسخ ملف index.htm لضمان التوافق مع كافة مزودات الاستضافة
+    - if [ -f "$DEPLOYPATH/index.html" ]; then /bin/cp -f $DEPLOYPATH/index.html $DEPLOYPATH/index.htm; fi
+
+    # 5. تثبيت حزم خادم Node.js وتحديثها إذا كان مستخدماً في cPanel
     - if [ -d "server" ] && [ -f "server/package.json" ]; then cd server && npm install --omit=dev && cd ..; fi
 
-    # 5. إرسال إشارة إعادة تشغيل لتطبيق Node.js تلقائياً عبر Phusion Passenger في cPanel
+    # 6. إرسال إشارة إعادة تشغيل لتطبيق Node.js تلقائياً عبر Phusion Passenger في cPanel
     - /bin/mkdir -p tmp
     - /bin/touch tmp/restart.txt
 `;
@@ -182,6 +217,7 @@ echo json_encode([
 ]);
 `;
 fs.writeFileSync(path.join(publicHtmlDir, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
+fs.writeFileSync(path.join(rootPublicHtml, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
 
 // 7. Copy backend server source files
 const srcServerDir = path.join(rootDir, 'server');
@@ -437,13 +473,21 @@ docker-compose up -d --build
 `;
 fs.writeFileSync(path.join(outDir, 'دليل_الرفع_والتشغيل_على_الاستضافة.md'), guideContent, 'utf8');
 
-// 14. Generate single zip archive automatically
+// 14. Generate zip archives automatically
 console.log('[Hosting Package] Compressing into: نسخة_الاستضافة_المتكاملة.zip...');
 try {
   execSync('powershell -Command "Compress-Archive -Path \'نسخة_المشروع_للاستضافة\\*\' -DestinationPath \'نسخة_الاستضافة_المتكاملة.zip\' -Force"', { cwd: rootDir });
-  console.log('[Hosting Package] ✅ Zip archive created successfully!');
+  console.log('[Hosting Package] ✅ Full hosting zip archive created successfully!');
 } catch (zipErr) {
   console.warn('[Hosting Package] Zip command warning:', zipErr.message);
+}
+
+console.log('[Hosting Package] Compressing frontend only into: ملفات_الرفع_المباشر_public_html.zip...');
+try {
+  execSync('powershell -Command "Compress-Archive -Path \'نسخة_المشروع_للاستضافة\\public_html\\*\' -DestinationPath \'ملفات_الرفع_المباشر_public_html.zip\' -Force"', { cwd: rootDir });
+  console.log('[Hosting Package] ✅ Frontend direct zip created successfully!');
+} catch (zipErr2) {
+  console.warn('[Hosting Package] Direct zip command warning:', zipErr2.message);
 }
 
 console.log('[Hosting Package] ✅ All hosting assets prepared successfully at:', outDir);

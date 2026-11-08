@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   build: {
-    target: 'esnext',
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
     minify: 'esbuild',
     cssMinify: true,
     emptyOutDir: true,
