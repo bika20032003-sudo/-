@@ -1899,61 +1899,6 @@ export const TwoPhaseDailyReportForm = ({
         </div>
       </div>
 
-      {/* BOTTOM ACTION BAR */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: '0.75rem',
-        paddingBottom: '2rem'
-      }}>
-        <button
-          type="button"
-          onClick={() => handleSubmitReport(true)}
-          disabled={isSubmitting}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.7rem 1.4rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: '#0284c7',
-            color: '#ffffff',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
-          }}
-        >
-          <Send size={17} />
-          <span>حفظ وإحالة للمراسلات</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSubmitReport(false)}
-          disabled={isSubmitting}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.7rem 1.6rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: '#16a34a',
-            color: '#ffffff',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
-          }}
-        >
-          <CheckCircle2 size={18} />
-          <span>حفظ التقرير المعتمد</span>
-        </button>
-      </div>
-
       {/* FORWARD MODAL */}
       {showForwardModal && (
         <div style={{

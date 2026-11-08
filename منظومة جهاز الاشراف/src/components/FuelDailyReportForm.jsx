@@ -1229,61 +1229,7 @@ export const FuelDailyReportForm = ({
 
       </div>
 
-      {/* Bottom Standardized Action Bar */}
-      <div style={{
-        marginTop: '1.5rem',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        gap: '0.75rem',
-        paddingBottom: '2rem'
-      }}>
-        <button
-          type="button"
-          onClick={() => handleSave(true)}
-          disabled={isSaving}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.7rem 1.4rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: '#0284c7',
-            color: '#ffffff',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
-          }}
-        >
-          <Send size={17} />
-          <span>حفظ وإحالة للمراسلات</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSave(false)}
-          disabled={isSaving}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.7rem 1.6rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: '#16a34a',
-            color: '#ffffff',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
-          }}
-        >
-          <CheckCircle2 size={18} />
-          <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
-        </button>
-      </div>
+      {/* Forward Modal Portal */}
       {showForwardModal && (
         <div style={{
           position: 'fixed',
