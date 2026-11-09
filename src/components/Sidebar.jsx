@@ -6,7 +6,7 @@ import {
   Camera, Mail, Bot, Sparkles, FilePlus, Target, Award
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
-import { canAccessGeneralArchive } from '../utils/permissionUtils.js';
+import { canAccessGeneralArchive, canAccessPeriodicReports } from '../utils/permissionUtils.js';
 
 /**
  * Role-aware sidebar with customized menus:
@@ -178,13 +178,25 @@ export const Sidebar = ({
     );
 
     const canAccessGeneral = canAccessGeneralArchive(currentUser);
+    const canAccessPeriodic = canAccessPeriodicReports(currentUser);
 
     const reportItems = [
-      { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
-      { id: 'periodic-reports', label: 'التقارير الأسبوعية والشهرية', icon: CalendarRange, badge: 'تجميع آلي' },
+      { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus }
+    ];
+
+    if (canAccessPeriodic) {
+      reportItems.push({ 
+        id: 'periodic-reports', 
+        label: 'التقارير الأسبوعية والشهرية', 
+        icon: CalendarRange, 
+        badge: 'تجميع آلي' 
+      });
+    }
+
+    reportItems.push(
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
       { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud }
-    ];
+    );
 
     if (canAccessGeneral) {
       reportItems.push({ 

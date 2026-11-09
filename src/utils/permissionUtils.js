@@ -59,6 +59,40 @@ export const canAccessGeneralArchive = (currentUser) => {
 };
 
 /**
+ * صلاحية الاطلاع على قسم التقارير الأسبوعية والشهرية التجميعية (قسم عام):
+ * يتم تحديدها وتعديلها من قسم الصلاحيات (UsersView).
+ * في الحالة الافتراضية تكون مفعلة للإدارة العليا (مدير المشروع، مسؤول الجودة، رئيس الجهاز، وحساب التطوير)،
+ * وتُدار وتُمنح لباقي المهندسين من قسم الصلاحيات مباشرة.
+ */
+export const canAccessPeriodicReports = (currentUser) => {
+  if (!currentUser) return false;
+  const username = (currentUser.username || '').toLowerCase().trim();
+  const userName = (currentUser.name || '').trim();
+
+  // 1. فحص الصلاحيات المخصصة المحفوظة من قسم الصلاحيات أولاً
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+      const userPerms = all[username] || all[currentUser.username] || (userName ? all[userName] : null);
+      if (Array.isArray(userPerms)) {
+        return userPerms.includes('periodic-reports');
+      }
+    } catch (_) {}
+  }
+
+  // 2. إذا لم تُعدل مسبقاً: افتراضياً مفعلة لمدير المشروع، مسؤول الجودة، رئيس الجهاز، وحساب التطوير
+  if (isDevUser(currentUser) || isProjectManagerUser(currentUser) || isSalehUser(currentUser)) {
+    return true;
+  }
+  const role = (currentUser.role || '').toLowerCase();
+  if (username === 'abrikaw' || role.includes('رئيس جهاز الإشراف')) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
  * التحقق مما إذا كان التقرير يخص المهندس الحالي (للأرشيف الشخصي المستقل):
  * يفحص اسم المستخدم، اسم المهندس، المشرف الميداني، والجهة المسؤولة عن التقرير.
  */

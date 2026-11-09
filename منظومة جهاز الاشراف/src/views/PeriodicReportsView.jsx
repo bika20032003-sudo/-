@@ -3,11 +3,24 @@ import {
   CalendarRange, Calendar, FileText, Printer, FileSpreadsheet, 
   Save, Share2, Layers, Milestone, CheckCircle2, AlertCircle, 
   TrendingUp, Clock, Filter, ArrowRight, Eye, ChevronDown, 
-  Send, RefreshCw, Sparkles, Building2, UserCheck, ShieldCheck
+  Send, RefreshCw, Sparkles, Building2, UserCheck, ShieldCheck, User
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
 import { CERTIFIED_RATES, CERTIFIED_PROJECT_META } from '../utils/engineeringFormulas.js';
+import { canAccessPeriodicReports, isReportOwnedByEngineer } from '../utils/permissionUtils.js';
+import { getSystemUsers } from '../components/LoginPage.jsx';
+
+export const OFFICIAL_ENGINEERS_FILTER_LIST = [
+  { id: 'all', name: 'كافة مهندسي المشروع (تقرير عام شامل)' },
+  { id: 'salah_alarabi', name: 'م. صلاح العربي (المرحلة الأولى)' },
+  { id: 'issa_altahir', name: 'م. عيسى الطاهر (المرحلة الثانية)' },
+  { id: 'abrikaw', name: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)' },
+  { id: 'saleh_quality', name: 'م. صالح حماد (مسؤول الجودة)' },
+  { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري (مدير المشروع)' },
+  { id: 'fuel_officer', name: 'مسؤول الوقود والمحروقات' },
+  { id: 'honi', name: 'م. مروان الهوني' }
+];
 
 // Clean text and force standard Latin digits (0-9)
 const toCleanLatin = (val) => {
@@ -50,6 +63,12 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
   // Sector filter: 'all' | 'phase1' | 'phase2'
   const [sectorFilter, setSectorFilter] = useState('all');
 
+  // Engineer filter: 'all' or specific engineer id
+  const [filterEngineer, setFilterEngineer] = useState('all');
+
+  // Permission access check
+  const hasAccess = canAccessPeriodicReports(currentUser);
+
   // Reports data
   const [allReports, setAllReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,13 +82,28 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
-  const officialSupervisors = [
-    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
-  ];
+  // Dynamically load active supervisors
+  const officialSupervisors = useMemo(() => {
+    const list = [
+      { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+      { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+      { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+      { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
+    ];
+    const systemUsers = typeof getSystemUsers === 'function' ? getSystemUsers() : [];
+    systemUsers.forEach(su => {
+      const suName = su.username?.toLowerCase().trim();
+      if (suName && !list.some(item => item.username.toLowerCase().trim() === suName)) {
+        list.push({
+          username: su.username,
+          name: su.name,
+          role: su.role || su.title || 'عضو جهاز الإشراف'
+        });
+      }
+    });
+    return list;
+  }, []);
 
   // Load all daily reports from localStorage & backend
   const loadReports = async () => {
@@ -129,12 +163,26 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
     const sDate = startDate;
     const eDate = endDate;
 
-    // Filter reports within date range
+    // Filter reports within date range & engineer filter
     const inRangeReports = allReports.filter(rep => {
       if (!rep) return false;
       const repDate = rep.dateFormatted || (rep.date ? rep.date.split('T')[0] : '') || rep.reportDate;
       if (!repDate) return false;
-      return repDate >= sDate && repDate <= eDate;
+      if (repDate < sDate || repDate > eDate) return false;
+
+      // Filter by engineer if selected
+      if (filterEngineer !== 'all') {
+        const targetEng = OFFICIAL_ENGINEERS_FILTER_LIST.find(e => e.id === filterEngineer);
+        const dummyUser = { 
+          username: filterEngineer, 
+          name: targetEng?.name || '' 
+        };
+        if (!isReportOwnedByEngineer(rep, dummyUser)) {
+          return false;
+        }
+      }
+
+      return true;
     });
 
     // Layer definitions with certified engineering rates
@@ -430,7 +478,7 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
       generatedAt: new Date().toISOString(),
       generatedBy: currentUser?.name || 'مكتب جهاز الإشراف والمتابعة'
     };
-  }, [allReports, periodType, startDate, endDate, selectedYear, selectedMonth, sectorFilter, currentUser]);
+  }, [allReports, periodType, startDate, endDate, selectedYear, selectedMonth, sectorFilter, filterEngineer, currentUser]);
 
   // Handle Save Periodic Report to Archive
   const handleSavePeriodicReport = () => {
@@ -607,7 +655,9 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
           reportNumber: aggregatedReport.reportCode,
           reportData: aggregatedReport,
           createdAt: new Date().toISOString(),
-          isRead: false
+          isRead: false,
+          readBy: [],
+          deletedBy: []
         };
         await fastFetch('/api/messages', {
           method: 'POST',
@@ -626,6 +676,38 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
       setTimeout(() => setStatusMessage(null), 4000);
     }
   };
+
+  // Permission Access Restriction Gate
+  if (!hasAccess) {
+    return (
+      <div style={{ padding: '2.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', margin: '2rem auto', maxWidth: '650px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', direction: 'rtl' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+          <ShieldCheck size={32} />
+        </div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.5rem' }}>
+          قسم عام خاضع لتحديد الصلاحيات
+        </h2>
+        <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
+          عفواً، يتطلب الاطلاع على قسم التقارير الأسبوعية والشهرية التجميعية منح صلاحية الوصول من قبل مدير المشروع عبر <b>قسم المستخدمين والصلاحيات</b>.
+        </p>
+        <button
+          type="button"
+          onClick={() => onNavigateTab && onNavigateTab('dashboard')}
+          style={{
+            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+            color: '#fff',
+            border: 'none',
+            padding: '0.65rem 1.5rem',
+            borderRadius: '8px',
+            fontWeight: 800,
+            cursor: 'pointer'
+          }}
+        >
+          العودة إلى لوحة القيادة
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '1.25rem', maxWidth: '1400px', margin: '0 auto', direction: 'rtl' }}>
@@ -679,11 +761,27 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
             <CalendarRange size={32} color="#60a5fa" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.45rem', fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>
-              التقارير الأسبوعية والشهرية التجميعية لأعمال الطريق
-            </h1>
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.86rem', color: '#cbd5e1' }}>
-              تجميع آلي فوري لبيانات تقارير أعمال الطريق اليومية المنفذة بمسار الـ 360 كم واحتساب الأطوال والمساحات والموقف المالي
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>
+                التقارير الأسبوعية والشهرية التجميعية لأعمال الطريق
+              </h1>
+              <span style={{
+                background: 'rgba(59, 130, 246, 0.25)',
+                color: '#93c5fd',
+                border: '1px solid rgba(147, 197, 253, 0.35)',
+                padding: '2px 10px',
+                borderRadius: '999px',
+                fontSize: '0.74rem',
+                fontWeight: 800
+              }}>
+                قسم عام للمشروع (خاضع للصلاحيات)
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.86rem', color: '#cbd5e1' }}>
+              {filterEngineer !== 'all' 
+                ? `تجميع دوري مخصص لتقارير المهندس: (${OFFICIAL_ENGINEERS_FILTER_LIST.find(e => e.id === filterEngineer)?.name || ''})` 
+                : 'تجميع آلي فوري لبيانات تقارير أعمال الطريق اليومية المنفذة بمسار الـ 360 كم واحتساب الأطوال والمساحات والموقف المالي'
+              }
             </p>
           </div>
         </div>
@@ -933,6 +1031,28 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
                 <option value="all">كافة المسار والمرحلتين (360 كم)</option>
                 <option value="phase1">المرحلة الأولى (226.08 كم)</option>
                 <option value="phase2">المرحلة الثانية (133.92 كم)</option>
+              </select>
+            </div>
+
+            {/* Engineer Filter Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>المهندس المشرف:</span>
+              <select
+                value={filterEngineer}
+                onChange={(e) => setFilterEngineer(e.target.value)}
+                style={{
+                  padding: '7px 14px',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '8px',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  color: filterEngineer !== 'all' ? '#1d4ed8' : '#0f172a',
+                  background: filterEngineer !== 'all' ? '#eff6ff' : '#fff'
+                }}
+              >
+                {OFFICIAL_ENGINEERS_FILTER_LIST.map(eng => (
+                  <option key={eng.id} value={eng.id}>{eng.name}</option>
+                ))}
               </select>
             </div>
 
@@ -1434,6 +1554,28 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
                 <option value="all">كافة أعضاء ومسؤولي جهاز الإشراف (تعميم)</option>
                 {officialSupervisors.map(u => (
                   <option key={u.username} value={u.username}>{u.name} - {u.role}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Engineer Filter Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>المهندس المشرف:</span>
+              <select
+                value={filterEngineer}
+                onChange={(e) => setFilterEngineer(e.target.value)}
+                style={{
+                  padding: '7px 14px',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '8px',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  color: filterEngineer !== 'all' ? '#1d4ed8' : '#0f172a',
+                  background: filterEngineer !== 'all' ? '#eff6ff' : '#fff'
+                }}
+              >
+                {OFFICIAL_ENGINEERS_FILTER_LIST.map(eng => (
+                  <option key={eng.id} value={eng.id}>{eng.name}</option>
                 ))}
               </select>
             </div>

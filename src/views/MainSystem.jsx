@@ -22,6 +22,7 @@ import { ExecutiveProgressView } from './ExecutiveProgressView';
 import { PeriodicReportsView } from './PeriodicReportsView';
 import { AIAgentView } from './AIAgentView';
 import { AIAgentWidget } from '../components/AIAgentWidget';
+import { canAccessGeneralArchive, canAccessPeriodicReports } from '../utils/permissionUtils.js';
 
 /**
  * Determine default dashboard based on supervision role
@@ -84,6 +85,14 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
       const checkAndEnforcePermissions = () => {
         const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
         if (!isDev && typeof window !== 'undefined') {
+          if (activeTab === 'periodic-reports' && !canAccessPeriodicReports(currentUser)) {
+            setActiveTab('dashboard');
+            return;
+          }
+          if (activeTab === 'general-archive' && !canAccessGeneralArchive(currentUser)) {
+            setActiveTab('reports-archive');
+            return;
+          }
           try {
             const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
             const u = currentUser?.username;
