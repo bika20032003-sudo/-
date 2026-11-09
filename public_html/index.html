@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" type="image/jpeg" href="./logo-agency.jpg" />
+  <title>جهاز الإشراف والمتابعة | منظومة متابعة أعمال الطريق والوقود والآليات - مشروع طريق أوباري - غات (360 كم)</title>
+  <!-- Security, Privacy & Bot Protection -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <!-- Cache-Control to prevent stale browser cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <!-- Google Fonts: Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <script>
+    // Normalize trailing slash for GitHub Pages & bust stale version query
+    if (window.location.pathname === '/-') {
+      window.location.replace('/-/');
+    }
+
+    // Bust stale version query parameter (e.g. 20261028) and enforce current release
+    (function () {
+      try {
+        var CURRENT_VERSION = '20261109_v13';
+        var params = new URLSearchParams(window.location.search);
+        var v = params.get('v');
+        if (!v || v !== CURRENT_VERSION) {
+          params.set('v', CURRENT_VERSION);
+          var newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', newUrl);
+          }
+        }
+      } catch (e) { }
+    })();
+
+    // Clean old caches and unregister stale service workers
+    if ('caches' in window) {
+      try {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+      } catch (e) { }
+    }
+    if ('serviceWorker' in navigator) {
+      try {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+        });
+      } catch (e) { }
+    }
+
+    // Active sweeper to completely eliminate any stray floating AI widget
+    (function () {
+      function purgeFloatingWidget() {
+        try {
+          var nodes = document.querySelectorAll('div, button');
+          nodes.forEach(function (node) {
+            // NEVER touch sidebar elements
+            if (node.closest && (node.closest('.custom-app-sidebar') || node.closest('aside'))) return;
+            var st = node.getAttribute('style') || '';
+            var txt = node.textContent || '';
+            if (
+              (st.indexOf('fixed') !== -1 && (st.indexOf('left: 24px') !== -1 || st.indexOf('left: 20px') !== -1)) &&
+              (txt.indexOf('الذكاء الهندسي') !== -1 || txt.indexOf('مساعد') !== -1 || (node.title && node.title.indexOf('مساعد') !== -1))
+            ) {
+              node.remove();
+            }
+          });
+        } catch (_) { }
+      }
+      var t = setInterval(purgeFloatingWidget, 100);
+      setTimeout(function () { clearInterval(t); }, 8000);
+      window.addEventListener('DOMContentLoaded', purgeFloatingWidget);
+    })();
+  </script>
+  <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
+  <style id="print-orientation-head-style">
+    @page {
+      size: A4 landscape;
+      margin: 4mm 5mm;
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-CfVmiwNK-1794260462879.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794260462879.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-PCBBvDnR-1794260462879.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794260462879.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-DsNncK5b-1794260462879.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-D0zOw6vZ-1794260462879.css">
+</head>
+
+<body>
+  <div id="root">
+    <!-- شاشة التحميل الأولية الذكية لمنع ظهور الشاشة البيضاء نهائياً -->
+    <div id="system-preloader"
+      style="min-height: 100vh; background: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Cairo', system-ui, sans-serif; color: #f8fafc; text-align: center; padding: 24px; box-sizing: border-box;">
+      <div
+        style="width: 52px; height: 52px; border: 4px solid #1e293b; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px;">
+      </div>
+      <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 8px 0; color: #ffffff;">منظومة جهاز الإشراف والمتابعة
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.95rem; margin: 0 0 14px 0; max-width: 440px; line-height: 1.6;">
+        مشروع صيانة وتطوير طريق أوباري - غات (360 كم)
+      </p>
+      <div
+        style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); padding: 6px 14px; border-radius: 9999px; font-size: 0.82rem; color: #60a5fa;">
+        <span>جاري تهيئة وتحميل بيانات المنظومة...</span>
+      </div>
+      <style>
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
+    </div>
+  </div>
+
+  <script>
+    // الحماية من الشاشة البيضاء - التقاط أخطاء التهيئة وعرضها فوراً
+    window.addEventListener('error', function (e) {
+      var p = document.getElementById('system-preloader');
+      if (p) {
+        p.innerHTML = '<div style="background:#1e293b; border:1px solid #ef4444; border-radius:12px; padding:24px; max-width:520px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">' +
+          '<div style="font-size:2.5rem; margin-bottom:12px;">⚠️</div>' +
+          '<h3 style="color:#f87171; font-size:1.15rem; margin:0 0 10px 0; font-weight:700;">تعذر قراءة أو تحميل ملفات المنظومة</h3>' +
+          '<p style="color:#cbd5e1; font-size:0.85rem; line-height:1.6; margin:0 0 16px 0;">' +
+          'يبدو أن ملفات التشغيل تحتاج إلى تحديث أو أن الذاكرة المؤقتة للمتصفح تحتفظ بنسخة سابقة.<br>' +
+          '<span style="color:#fca5a5; font-size:0.78rem; word-break:break-all;">' + (e.message || 'خطأ في استجابة المتصفح') + '</span>' +
+          '</p>' +
+          '<button onclick="localStorage.clear(); sessionStorage.clear(); window.location.reload(true);" style="background:#2563eb; color:#ffffff; border:none; padding:10px 22px; border-radius:8px; cursor:pointer; font-family:inherit; font-weight:700; font-size:0.9rem;">إعادة التحميل وتفريغ الذاكرة المؤقتة</button>' +
+          '</div>';
+      }
+    });
+  </script>
+
+</body>
+
+</html>
