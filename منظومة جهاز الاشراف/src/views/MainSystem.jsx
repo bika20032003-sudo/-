@@ -21,7 +21,6 @@ import { TargetedWorksView } from './TargetedWorksView';
 import { ExecutiveProgressView } from './ExecutiveProgressView';
 import { PeriodicReportsView } from './PeriodicReportsView';
 import { AIAgentView } from './AIAgentView';
-import { AIAgentWidget } from '../components/AIAgentWidget';
 import { canAccessGeneralArchive, canAccessPeriodicReports, migrateLegacyPermissions } from '../utils/permissionUtils.js';
 
 /**
@@ -258,9 +257,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             onClose={() => setSelectedReportForPrint(null)}
           />
         )}
-
-        {/* Global AI Agent Floating Assistant */}
-        <AIAgentWidget currentUser={currentUser} onNavigateTab={handleTabChange} />
 
         {/* User Profile Modal with Photo Upload & Credentials */}
         {isProfileModalOpen && (

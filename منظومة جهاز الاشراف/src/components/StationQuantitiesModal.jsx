@@ -549,7 +549,7 @@ export const StationQuantitiesModal = ({ isOpen, onClose, onApplyTotals }) => {
               <tfoot>
                 <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #cbd5e1' }}>
                   <td colSpan={3} style={{ textAlign: 'center', padding: '0.75rem', fontSize: '0.9rem' }}>
-                    الإجمالي العام التراكمي للطبقة
+                    إجمالي أطوال محطات هذه الطبقة (حساب مستقل للبند)
                   </td>
                   <td style={{ color: '#16a34a', fontSize: '0.95rem' }} dir="ltr">
                     {totalLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} م.ط

@@ -38,10 +38,8 @@ export const initialRecentReports = [
     ownerRepresentative: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
     status: 'approved',
     approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
-    notes: 'تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: 3820 م.ط - الإجمالي التراكمي: 1433293 م.ط',
+    notes: 'تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
     items: [],
-    totalLength: 3820,
-    totalArea: 0,
     isTwoPhaseProgressReport: true
   },
   {

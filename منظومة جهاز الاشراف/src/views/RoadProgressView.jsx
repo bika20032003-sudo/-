@@ -558,40 +558,8 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
             </tbody>
             <tfoot>
               <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
-                <td colSpan={3} style={{ textAlign: 'center', color: '#1e293b', fontSize: '0.85rem', padding: '0.85rem' }}>
-                  الإجمالي العام للبنود المعروضة
-                </td>
-                <td style={{ textAlign: 'center', color: totalToday > 0 ? '#15803d' : '#475569', fontSize: '0.9rem' }}>
-                  {totalToday > 0 ? `+${totalToday.toLocaleString()}` : totalToday.toLocaleString()}
-                </td>
-                <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.88rem' }}>
-                  {totalPrevious.toLocaleString()}
-                </td>
-                <td style={{ textAlign: 'center', color: '#0f172a', fontSize: '0.92rem' }}>
-                  {totalCumulative.toLocaleString()}
-                </td>
-                <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.88rem' }}>
-                  {totalTarget.toLocaleString()}
-                </td>
-                <td style={{ textAlign: 'center', fontSize: '0.88rem' }}>
-                  <span style={{
-                    display: 'inline-block',
-                    padding: '0.2rem 0.55rem',
-                    borderRadius: '6px',
-                    fontWeight: 800,
-                    background: totalVariance >= 0 ? '#ecfdf5' : '#fef2f2',
-                    color: totalVariance >= 0 ? '#059669' : '#dc2626',
-                    border: `1px solid ${totalVariance >= 0 ? '#a7f3d0' : '#fecaca'}`,
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {totalVariance >= 0 ? `+${totalVariance.toLocaleString()}` : totalVariance.toLocaleString()}
-                  </span>
-                </td>
-                <td style={{ textAlign: 'center', color: '#334155', fontSize: '0.85rem' }}>
-                  {totalReady.toLocaleString()} م
-                </td>
-                <td colSpan={2} style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                  —
+                <td colSpan={10} style={{ textAlign: 'center', color: '#475569', fontSize: '0.88rem', padding: '0.9rem' }}>
+                  📌 بيان تقدم بنود الطريق — كل بند يُحسب وتُتابع أطواله مستقلاً طبقاً للمواصفات دون جمع تراكمي بين الطبقات المختلفة
                 </td>
               </tr>
             </tfoot>
@@ -678,9 +646,8 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
                 progressReports.map(rep => {
                   const repDate = rep.dateFormatted || (rep.date ? rep.date.split('T')[0] : 'اليوم');
                   const isTwoPhase = Boolean(rep.isTwoPhaseProgressReport || rep.reportType === 'تقرير إنجاز المرحلتين');
-                  const todayM = isTwoPhase 
-                    ? (rep.twoPhaseTotals?.todayMeters || (rep.combinedItems || []).reduce((acc, c) => acc + (parseFloat(c.todayMeters) || 0), 0))
-                    : (rep.totalLength || rep.roadMeters || 0);
+                  const hasItems = Array.isArray(rep.items) && rep.items.length > 0;
+                  const hasCombined = Array.isArray(rep.combinedItems) && rep.combinedItems.length > 0;
 
                   return (
                     <tr key={rep.id}>
@@ -712,9 +679,30 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
                         <span className="sector-tag">{(rep.sector || '').includes('B') || (rep.sector || '').includes('الثانية') ? 'المرحلة الثانية' : ((rep.sector || '').includes('أوباري') ? 'طريق أوباري - غات' : 'المرحلة الأولى')}</span>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 900, color: '#0f172a' }}>
-                          {Number(todayM).toLocaleString()} م.ط
-                        </span>
+                        {hasItems ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.78rem' }}>
+                            {rep.items.slice(0, 3).map((it, idx) => (
+                              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
+                                <span style={{ color: '#475569', fontWeight: 700 }}>{it.item || it.name}: </span>
+                                <strong style={{ color: '#15803d' }}>{Number(it.length || 0).toLocaleString()} م.ط</strong>
+                              </div>
+                            ))}
+                            {rep.items.length > 3 && (
+                              <span style={{ color: '#64748b', fontSize: '0.72rem' }}>+{rep.items.length - 3} بنود أخرى</span>
+                            )}
+                          </div>
+                        ) : hasCombined ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.78rem' }}>
+                            {rep.combinedItems.filter(c => Number(c.todayMeters) > 0).slice(0, 3).map((c, idx) => (
+                              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
+                                <span style={{ color: '#475569', fontWeight: 700 }}>{c.name}: </span>
+                                <strong style={{ color: '#15803d' }}>{Number(c.todayMeters).toLocaleString()} م.ط</strong>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ color: '#64748b', fontSize: '0.8rem' }}>كل بند يحسب مستقلاً</span>
+                        )}
                       </td>
                       <td>{rep.uploadedBy || 'المشرف الميداني'}</td>
                       <td>

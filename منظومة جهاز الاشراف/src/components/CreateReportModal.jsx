@@ -206,9 +206,7 @@ export const CreateReportModal = ({
         title: `تقرير أعمال الطريق اليومي - ${day} ${reportDate}`,
         reportType: 'تقرير أعمال الطريق اليومي',
         sector: 'طريق أوباري - غات',
-        totalLength: totalRoadLength,
-        totalArea: totalRoadArea,
-        roadMeters: totalRoadLength,
+        // كل بند يحسب وحده دون جمع تراكمي للأطوال
         items: roadItems.map((r, idx) => ({
           index: idx + 1,
           item: r.item.trim(),
@@ -327,17 +325,12 @@ export const CreateReportModal = ({
           { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '150.00', phase2: '125625.00', total: '125775.00', notes: '' },
           { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '8080.00', notes: 'كيلومتر' }
         ],
-        twoPhaseTotals: {
-          todayMeters: twoPhaseTodayTotal,
-          totalCumulativeMeters: twoPhaseCumulativeTotal
-        },
-        roadMeters: twoPhaseTodayTotal,
         uploadedBy: currentUser?.name || sectorDirector,
         sectorDirector,
         ownerRepresentative,
         status: 'approved',
         approvedBy: ownerRepresentative,
-        notes: notes || `تقرير إنجاز المرحلتين المعتمد - إنجاز اليوم: ${twoPhaseTodayTotal.toLocaleString()} م.ط`,
+        notes: notes || 'تقرير إنجاز المرحلتين المعتمد — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
         imageUrl: attachedFile,
         fileName
       };

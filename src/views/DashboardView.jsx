@@ -375,15 +375,15 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           {/* Daily Productivity & Readiness Card */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.2rem 1.35rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>⚡ معدل الإنتاج والجاهزية</span>
-              <strong style={{ fontSize: '1.15rem', color: '#16a34a' }}>+{metrics.roadProgress.totalTodayMeters} م.ط</strong>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>⚡ الإنتاجية والجاهزية اليومية</span>
+              <strong style={{ fontSize: '1.05rem', color: '#16a34a' }}>جاهزية ميدانية تامة</strong>
             </div>
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
               <div style={{ width: `${Math.min(100, Math.round(((metrics.activeEquipment || 25) / (metrics.totalEquipment || 25)) * 100))}%`, height: '100%', background: '#16a34a', borderRadius: '4px' }}/>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>إنجاز رصف اليوم بالمرحلتين</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>{metrics.activeEquipment || 25} معدة وآلية عاملة بالميدان</span>
+              <span>حساب كل بند على حِدَة دون جمع تراكمي</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>{metrics.activeEquipment || 25} معدة وآلية عاملة</span>
             </div>
           </div>
         </div>
@@ -664,11 +664,11 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             </div>
 
             <div style={{ background: '#fff', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '0.76rem', color: '#166534', fontWeight: 800 }}>إنجاز اليوم بالمرحلتين</div>
-              <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#16a34a', marginTop: '0.2rem' }}>
-                +{metrics.roadProgress.totalTodayMeters.toLocaleString()} <span style={{ fontSize: '0.85rem' }}>م.ط</span>
+              <div style={{ fontSize: '0.76rem', color: '#166534', fontWeight: 800 }}>حالة بنود العمل بالمرحلتين</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a', marginTop: '0.2rem' }}>
+                حساب كل بند وحده
               </div>
-              <span style={{ fontSize: '0.74rem', color: '#15803d' }}>معدل تقدم الرصف اليومي</span>
+              <span style={{ fontSize: '0.74rem', color: '#15803d' }}>لا يوجد جمع تراكمي بين الطبقات</span>
             </div>
           </div>
 

@@ -416,9 +416,6 @@ export const TwoPhaseDailyReportForm = ({
 
   // Forward to correspondence (mail only - without saving approved report)
   const handleOpenForwardModal = () => {
-    const totalTodayMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0);
-    const totalCumulativeMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0);
-
     const rep = createdReport || {
       id: Date.now(),
       reportNumber,
@@ -439,15 +436,12 @@ export const TwoPhaseDailyReportForm = ({
       sectorDirector,
       ownerRepresentative,
       status: 'معتمد للمراسلات',
-      notes: `تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: ${totalTodayMeters} م.ط - الإجمالي التراكمي: ${totalCumulativeMeters} م.ط`,
-      roadMeters: totalTodayMeters,
-      totalLength: totalTodayMeters,
+      notes: 'تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
       isTwoPhaseProgressReport: true,
       phase1Items,
       phase2Items,
       combinedItems,
-      remainingItems,
-      twoPhaseTotals: { todayMeters: totalTodayMeters, totalCumulativeMeters }
+      remainingItems
     };
     setCreatedReport(rep);
     setShowForwardModal(true);
@@ -457,9 +451,6 @@ export const TwoPhaseDailyReportForm = ({
   const handleSubmitReport = async () => {
     setIsSubmitting(true);
     setStatusMessage(null);
-
-    const totalTodayMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0);
-    const totalCumulativeMeters = (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0);
 
     const reportPayload = {
       reportNumber,
@@ -481,19 +472,13 @@ export const TwoPhaseDailyReportForm = ({
       ownerRepresentative,
       status: 'approved',
       approvedBy: 'مدير عام المشروع',
-      notes: `تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: ${totalTodayMeters} م.ط - الإجمالي التراكمي: ${totalCumulativeMeters} م.ط`,
-      roadMeters: totalTodayMeters,
-      totalLength: totalTodayMeters,
+      notes: 'تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
       // Two Phase Specific Flag & Data
       isTwoPhaseProgressReport: true,
       phase1Items,
       phase2Items,
       combinedItems,
-      remainingItems,
-      twoPhaseTotals: {
-        todayMeters: totalTodayMeters,
-        totalCumulativeMeters
-      }
+      remainingItems
     };
 
     try {

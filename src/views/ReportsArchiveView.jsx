@@ -315,7 +315,11 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       'التاريخ': r.date ? r.date.split('T')[0] : '',
       'المرحلة': (r.sector || '').includes('الثانية') ? 'المرحلة الثانية' : 'المرحلة الأولى',
       'نوع التقرير': r.reportType || 'شامل',
-      'أعمال الرصف (م.ط)': Number(r.roadMeters || r.salesAmount) || 0,
+      'بيان الأعمال المنفذة (كل بند وحده)': Array.isArray(r.items) && r.items.length > 0
+        ? r.items.map(it => `${it.item || it.name}: ${it.length || 0} م.ط`).join(' | ')
+        : Array.isArray(r.combinedItems) && r.combinedItems.length > 0
+        ? r.combinedItems.filter(c => Number(c.todayMeters) > 0).map(c => `${c.name}: ${c.todayMeters} م.ط`).join(' | ')
+        : (r.roadMeters ? `${r.roadMeters} م.ط` : '—'),
       'الوقود المنصرف (لتر)': Number(r.fuelAmount || r.totalDispatchedLiters) || 0,
       'المشرف / المهندس المُعد': r.uploadedBy || r.engineer || r.sectorDirector || '',
       'حالة الاعتماد': r.status === 'approved' ? 'معتمد رسمياً' : r.status === 'rejected' ? 'مطلوب تعديل' : 'قيد المراجعة',
@@ -619,9 +623,9 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         </div>
 
         <div style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: '12px', padding: '0.9rem 1.15rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.76rem', color: '#9a3412', fontWeight: 800 }}>أعمال الرصف المنفذة</div>
+          <div style={{ fontSize: '0.76rem', color: '#9a3412', fontWeight: 800 }}>تقارير الأعمال والمسار</div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '0.2rem' }}>
-            {totalRoadMeters.toLocaleString()} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#c2410c' }}>م.ط</span>
+            {filteredReports.filter(r => !r.isFuelReport).length} <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#c2410c' }}>تقرير ميداني</span>
           </div>
         </div>
       </div>
@@ -811,7 +815,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                     {archiveMode === 'general' ? 'المشرف / المهندس المُعد' : 'إعداد المهندس'}
                   </th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>الوقود (لتر)</th>
-                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>أعمال الرصف</th>
+                  <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>بيان الأعمال المنفذة (كل بند مستقلاً)</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>حالة الاعتماد</th>
                   <th style={{ padding: '0.9rem 1.1rem', fontSize: '0.82rem', fontWeight: 800, color: '#475569', textAlign: 'center' }}>الإجراءات والطباعة</th>
                 </tr>
@@ -896,15 +900,31 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                         </div>
                       </td>
 
-                      {/* Road Meters */}
+                      {/* Executed Items (Each item calculated independently - no combined sum) */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#16a34a' }}>
-                          {Number(r.roadMeters || r.salesAmount || 0) > 0 ? (
-                            <span>{Number(r.roadMeters || r.salesAmount).toLocaleString()} م.ط</span>
-                          ) : (
-                            <span style={{ color: '#94a3b8' }}>—</span>
-                          )}
-                        </div>
+                        {Array.isArray(r.items) && r.items.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.78rem' }}>
+                            {r.items.map((it, idx) => (
+                              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
+                                <span style={{ color: '#475569', fontWeight: 700 }}>{it.item || it.name}: </span>
+                                <strong style={{ color: '#16a34a' }}>{Number(it.length || 0).toLocaleString()} م.ط</strong>
+                              </div>
+                            ))}
+                          </div>
+                        ) : Array.isArray(r.combinedItems) && r.combinedItems.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.78rem' }}>
+                            {r.combinedItems.filter(c => Number(c.todayMeters) > 0).map((c, idx) => (
+                              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
+                                <span style={{ color: '#475569', fontWeight: 700 }}>{c.name}: </span>
+                                <strong style={{ color: '#16a34a' }}>{Number(c.todayMeters).toLocaleString()} م.ط</strong>
+                              </div>
+                            ))}
+                          </div>
+                        ) : Number(r.roadMeters || r.salesAmount || 0) > 0 ? (
+                          <span style={{ fontWeight: 800, color: '#16a34a' }}>{Number(r.roadMeters || r.salesAmount).toLocaleString()} م.ط</span>
+                        ) : (
+                          <span style={{ color: '#94a3b8' }}>—</span>
+                        )}
                       </td>
 
                       {/* Approval Status */}

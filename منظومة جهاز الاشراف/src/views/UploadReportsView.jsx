@@ -454,17 +454,12 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
             { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '150.00', phase2: '125625.00', total: '125775.00', notes: '' },
             { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '0.00', phase2: '0.00', total: '8080.00', notes: 'كيلومتر' }
           ],
-          twoPhaseTotals: {
-            todayMeters: tpToday,
-            totalCumulativeMeters: 233568 + tpToday
-          },
-          roadMeters: tpToday,
           uploadedBy: uploaderName,
           status: reportStatus,
           approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
           sectorDirector: uploaderName,
           ownerRepresentative: 'م. عبدالرحمن الأنصاري',
-          notes: notes || `تقرير إنجاز المرحلتين اليومي المعتمد لطريق أوباري غات (360 كم) - إنجاز اليوم: ${tpToday.toLocaleString()} م.ط`,
+          notes: notes || 'تقرير إنجاز المرحلتين اليومي المعتمد لطريق أوباري غات (360 كم) — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
           imageUrl: attachedFile,
           fileName,
           fileType

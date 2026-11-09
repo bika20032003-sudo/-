@@ -589,7 +589,7 @@
       "shiftType": "دوام كامل",
       "materialName": "تقرير إنجاز المرحلتين - القطاع المشترك (المرحلتين الأولى والثانية)",
       "salesAmount": 0,
-      "roadMeters": 3820,
+      "roadMeters": null,
       "fuelAmount": 0,
       "workingEquipmentCount": 0,
       "stoppedEquipmentCount": 0,
@@ -597,12 +597,11 @@
       "uploadedBy": "م. عبدالرحمن الأنصاري",
       "status": "approved",
       "approvedBy": "مدير عام المشروع",
-      "notes": "تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: 3820 م.ط - الإجمالي التراكمي: 1433293 م.ط",
+      "notes": "تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات",
       "items": [],
       "dayName": "الثلاثاء",
       "sectorDirector": "م. صلاح العربي",
       "ownerRepresentative": "م. عبدالرحمن الأنصاري",
-      "totalLength": 3820,
       "totalArea": 0,
       "imageUrl": null,
       "fileName": null,
@@ -1732,10 +1731,6 @@
         "notes": "كيلومتر"
       }
     ],
-    "twoPhaseTotals": {
-      "todayMeters": 3820,
-      "totalCumulativeMeters": 1433293
-    },
     "uploadedBy": "م. عبدالرحمن الأنصاري",
     "status": "approved"
   },

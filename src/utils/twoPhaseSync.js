@@ -58,9 +58,7 @@ export function getCertifiedBaselineTwoPhaseReport() {
     ownerRepresentative: 'م. عبدالرحمن الأنصاري',
     status: 'approved',
     approvedBy: 'مدير عام المشروع',
-    notes: 'تقرير الأعمال المنجزة للمرحلتين - إنجاز اليوم: 3,820 م.ط - الإجمالي التراكمي: 237,390 م.ط',
-    roadMeters: 3820,
-    totalLength: 3820,
+    notes: 'تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
     isTwoPhaseProgressReport: true,
     phase1Items: initialPhase1ReportItems.map(i => ({ ...i })),
     phase2Items: initialPhase2ReportItems.map(i => ({ ...i })),
@@ -83,11 +81,7 @@ export function getCertifiedBaselineTwoPhaseReport() {
         notes: custom.notes || ''
       };
     }),
-    remainingItems: initialRemainingReportItems.map(i => ({ ...i })),
-    twoPhaseTotals: {
-      todayMeters: 3820,
-      totalCumulativeMeters: 237390
-    }
+    remainingItems: initialRemainingReportItems.map(i => ({ ...i }))
   };
 }
 

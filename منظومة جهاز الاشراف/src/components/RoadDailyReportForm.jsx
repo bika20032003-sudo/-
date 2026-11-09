@@ -274,8 +274,7 @@ export const RoadDailyReportForm = ({
     });
 
     return {
-      totalLength: totalLen,
-      totalArea: totalAr,
+      // تم إلغاء الإجمالي العام لجميع الأطوال: كل بند يُحسب مستقلاً
       asphaltLen,
       asphaltAr,
       fdrLen,
@@ -452,8 +451,7 @@ export const RoadDailyReportForm = ({
     companyName: 'طريق أوباري - غات',
     sectorDirector: reportData.sectorDirector || 'مروان الهوني',
     ownerRepresentative: reportData.ownerRepresentative || '................................',
-    totalLength: calculatedTotals.totalLength,
-    totalArea: calculatedTotals.totalArea,
+    itemSummaries: calculatedTotals.itemSummaries,
     items: (currentData.items || []).map((it, idx) => ({
       index: idx + 1,
       itemNumber: it.itemNumber || String(idx + 1),
@@ -552,10 +550,7 @@ export const RoadDailyReportForm = ({
     const printableObj = createdReportForForward || {
       ...getFullPrintableReport(),
       id: Date.now(),
-      roadMeters: calculatedTotals.totalLength,
-      salesAmount: calculatedTotals.totalLength,
-      totalLength: calculatedTotals.totalLength,
-      totalArea: calculatedTotals.totalArea,
+      itemSummaries: calculatedTotals.itemSummaries,
       notes: `تقرير أعمال الطريق اليومي - ${reportData.dayName} ${reportData.reportDate}`,
       createdAt: new Date().toISOString()
     };
@@ -570,8 +565,7 @@ export const RoadDailyReportForm = ({
     try {
       const payload = {
         ...reportData,
-        totalLength: calculatedTotals.totalLength,
-        totalArea: calculatedTotals.totalArea,
+        itemSummaries: calculatedTotals.itemSummaries,
         updatedAt: new Date().toISOString()
       };
 
@@ -579,10 +573,7 @@ export const RoadDailyReportForm = ({
       const printableObj = {
         ...getFullPrintableReport(),
         id: Date.now(),
-        roadMeters: calculatedTotals.totalLength,
-        salesAmount: calculatedTotals.totalLength,
-        totalLength: calculatedTotals.totalLength,
-        totalArea: calculatedTotals.totalArea,
+        itemSummaries: calculatedTotals.itemSummaries,
         createdByUsername: currentUser?.username,
         authorUsername: currentUser?.username,
         createdByName: currentUser?.name || reportData.sectorDirector,

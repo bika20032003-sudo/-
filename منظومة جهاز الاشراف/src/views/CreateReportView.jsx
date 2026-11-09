@@ -590,8 +590,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         approvedBy: ownerRepresentative,
         sectorDirector: sectorDirector,
         ownerRepresentative: ownerRepresentative,
-        totalLength: totalRoadLength,
-        totalArea: totalRoadArea,
+        itemSummaries: roadItemSummaries,
         items: validRoad.map((r, idx) => ({
           index: idx + 1,
           item: r.item.trim(),
@@ -2418,8 +2417,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
                 reportNumber,
                 sectorDirector,
                 ownerRepresentative,
-                totalLength: totalRoadLength,
-                totalArea: totalRoadArea,
+                itemSummaries: roadItemSummaries,
                 items: roadItems.filter(r => r.item || r.stationFrom || r.stationTo || r.length || r.area)
               };
             }
