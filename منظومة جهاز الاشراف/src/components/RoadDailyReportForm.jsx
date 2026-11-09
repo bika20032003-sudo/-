@@ -584,6 +584,7 @@ export const RoadDailyReportForm = ({
         totalLength: calculatedTotals.totalLength,
         totalArea: calculatedTotals.totalArea,
         createdByUsername: currentUser?.username,
+        authorUsername: currentUser?.username,
         createdByName: currentUser?.name || reportData.sectorDirector,
         uploadedBy: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
         engineer: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',

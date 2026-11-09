@@ -145,28 +145,64 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
   // Confirm delete of fuel report
   const confirmDeleteFuelReport = async () => {
     if (!reportToDelete) return;
-    const targetId = reportToDelete.id;
+    const targetId = String(reportToDelete.id || '');
+    const targetNum = String(reportToDelete.reportNumber || '');
 
     // Optimistic UI update
-    setFuelReports(prev => prev.filter(r => r.id !== targetId && String(r.id) !== String(targetId)));
+    setFuelReports(prev => prev.filter(r => {
+      const rId = String(r.id || '');
+      const rNum = String(r.reportNumber || '');
+      return rId !== targetId && rNum !== targetNum && (targetNum ? rId !== targetNum : true) && (targetId ? rNum !== targetId : true);
+    }));
     
-    // Update local storage
+    // 1. Add to deleted_report_ids to permanently prevent reappearance
+    try {
+      const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+      if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
+      if (targetNum && !deleted.includes(targetNum)) deleted.push(targetNum);
+      localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+    } catch (e) {
+      console.error(e);
+    }
+
+    // 2. Update local_reports
     try {
       const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-      const updatedLocal = local.filter(r => r.id !== targetId && String(r.id) !== String(targetId));
+      const updatedLocal = local.filter(r => {
+        const rId = String(r.id || '');
+        const rNum = String(r.reportNumber || '');
+        return rId !== targetId && rNum !== targetNum && (targetNum ? rId !== targetNum : true) && (targetId ? rNum !== targetId : true);
+      });
       localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
     } catch (e) {
       console.error(e);
     }
 
+    // 3. Delete from IndexedDB
+    try {
+      if (targetId) await deleteReportFromIndexedDB(targetId);
+      if (targetNum) await deleteReportFromIndexedDB(targetNum);
+    } catch (_) {}
+
     setReportToDelete(null);
 
-    // Call backend API
+    // 4. Invalidate API cache and call backend
     try {
-      await fetch(`/api/reports/${targetId}`, { method: 'DELETE' });
+      clearApiCache();
+      const deleteIdentifier = targetId || targetNum;
+      if (deleteIdentifier) {
+        await fetch(`/api/reports/${deleteIdentifier}`, { method: 'DELETE' }).catch(() => {});
+      }
     } catch (error) {
       console.error('Failed to delete fuel report from backend', error);
     }
+
+    // 5. Notify all views globally
+    try {
+      window.dispatchEvent(new CustomEvent('report-deleted', { detail: { id: targetId, reportNumber: targetNum } }));
+      window.dispatchEvent(new CustomEvent('fuel-updated'));
+    } catch (_) {}
+
     fetchFuelReports();
   };
 

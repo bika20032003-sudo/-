@@ -466,7 +466,7 @@
       "category": "شاحنات صهريج",
       "status": "operational",
       "driver": "سعد الحاسي",
-      "location": "قطاع الكسارات والخلط",
+      "location": "محطة الخلط والموقع",
       "dailyHours": 8,
       "fuelConsumptionRate": 14,
       "notes": "تزويد ورش المياه بالموقع"
@@ -576,36 +576,18 @@
       "notes": "طاقم مساحة متكامل (شخصين) للتأكيد والتدقيق"
     }
   ],
-  "crushers": [],
   "fuel": [],
-  "sharshoor": [],
-  "alerts": [
-    {
-      "id": 105,
-      "type": "info",
-      "category": "production",
-      "priority": "normal",
-      "sector": "المرحلة الأولى",
-      "title": "إنتاج كسارة المرحلة الأولى",
-      "message": "بلغ إنتاج كسارة المرحلة الأولى اليومي من ركام طبقة الأساس الحبيبي والشرشور 1,420 طن بجاهزية تشغيلية 100%.",
-      "isRead": true,
-      "author": "مكتب المتابعة الميداني",
-      "actionLink": "dashboard",
-      "timestamp": "أمس - 16:45 م"
-    }
-  ],
+  "alerts": [],
   "reports": [
     {
       "id": 1793172128709,
       "reportNumber": "PHASE-REP-4228",
       "date": "2026-10-27T00:00:00.000Z",
-      "sector": "القطاع المشترك (المرحلتين الأولى والثانية)",
+      "sector": "المرحلة الثانية",
       "companyName": "ائتلاف الشركات المنفذة لطريق أوباري غات",
       "reportType": "تقرير إنجاز المرحلتين",
       "shiftType": "دوام كامل",
-      "crusherName": "كسارة المرحلة الثانية",
       "materialName": "تقرير إنجاز المرحلتين - القطاع المشترك (المرحلتين الأولى والثانية)",
-      "productionAmount": 0,
       "salesAmount": 0,
       "roadMeters": 3820,
       "fuelAmount": 0,
@@ -918,13 +900,11 @@
       "id": "fuel-daily-2026-10-24",
       "reportNumber": "FUEL-094834_24.10.2026",
       "date": "2026-10-24T00:00:00.000Z",
-      "sector": "مشروع أوباري - غات",
+      "sector": "المرحلة الأولى",
       "companyName": "المرحلة الأولى",
       "reportType": "تقرير كميات الوقود اليومية",
       "shiftType": "وردية صباحية",
-      "crusherName": "كسارة المرحلة الأولى",
       "materialName": "تقرير كميات الوقود اليومية - مشروع أوباري - غات",
-      "productionAmount": 0,
       "salesAmount": 0,
       "roadMeters": 0,
       "fuelAmount": 22738,
@@ -971,7 +951,7 @@
         {
           "index": 3,
           "seq": "3",
-          "location": "الكسارات",
+          "location": "محطة الموقع والمعدات",
           "dispatchedLiters": 4638,
           "receivedLiters": 0,
           "remainingLiters": 19073
@@ -994,7 +974,7 @@
       "dayName": "السبت",
       "dateFormatted": "2026-10-24",
       "title": "تقرير أعمال يوم السبت 24 - 10 - 2026",
-      "sector": "طريق أوباري - غات",
+      "sector": "المرحلة الأولى",
       "companyName": "طريق أوباري - غات",
       "reportType": "تقرير أعمال الطريق اليومي",
       "salesAmount": 24490,
@@ -1110,15 +1090,13 @@
     },
     {
       "id": 1793116985370,
-      "reportNumber": "REP-SEC-A-7445",
+      "reportNumber": "REP-P1-7445",
       "date": "2026-10-27T00:00:00.000Z",
       "sector": "المرحلة الأولى",
       "companyName": "المرحلة الأولى",
       "reportType": "تقرير أعمال الطريق اليومي",
       "shiftType": "وردية صباحية",
-      "crusherName": "كسارة المرحلة الأولى",
       "materialName": "بيان أعمال يوم الثلاثاء 27 - 10 - 2026",
-      "productionAmount": 0,
       "salesAmount": 0,
       "roadMeters": 0,
       "fuelAmount": 0,
@@ -1412,7 +1390,68 @@
   "plans": [],
   "issues": [],
   "savedPeriodicReports": [],
-  "messages": [],
+  "messages": [
+    {
+      "id": "msg-seed-1",
+      "fromUsername": "project_manager",
+      "fromName": "م. عبدالرحمن الأنصاري",
+      "fromRole": "مدير المشروع",
+      "toUsername": "all",
+      "toName": "كافة أعضاء جهاز الإشراف (تعميم)",
+      "toRole": "جهاز الإشراف والمتابعة",
+      "type": "توجيه فني وملاحظات ميدانية",
+      "subject": "تعميم إداري وفني بشأن التوثيق اليومي للأعمال المنجزة وتتبع الوقود",
+      "content": "السادة مهندسي ومسؤولي جهاز الإشراف الميداني، يُرجى التأكيد على دقة تسجيل قياسات المحطات الميدانية بالكيلومترات، وتدقيق استهلاك الوقود للآليات العاملة بالمرحلتين الأولى والثانية أولاً بأول لضمان المطابقة الفنية والمحاسبية.",
+      "reportNumber": null,
+      "isRead": false,
+      "createdAt": "2026-11-08T13:40:21.789Z"
+    },
+    {
+      "id": "msg-seed-2",
+      "fromUsername": "salah_alarabi",
+      "fromName": "م. صلاح العربي",
+      "fromRole": "مهندس مشرف (المرحلة الأولى)",
+      "toUsername": "project_manager",
+      "toName": "م. عبدالرحمن الأنصاري",
+      "toRole": "مدير المشروع",
+      "type": "إحالة تقرير يومي",
+      "subject": "إحالة التقرير اليومي لمحطة المرحلة الأولى (كم 241 إلى كم 242)",
+      "content": "تم بحمد الله إنجاز أعمال طبقة الأساس الحبيبي بمعدل طول 300 م.ط ورش مادة التشريب MCO بنجاح وفق الاشتراطات الهندسية. مرفق التقرير الميداني للاعتماد.",
+      "reportNumber": "TARGET-P1-5310",
+      "isRead": false,
+      "createdAt": "2026-11-08T11:40:21.791Z"
+    },
+    {
+      "id": "msg-seed-3",
+      "fromUsername": "saleh_quality",
+      "fromName": "م. صالح حماد",
+      "fromRole": "مسؤول الجودة",
+      "toUsername": "project_manager",
+      "toName": "م. عبدالرحمن الأنصاري",
+      "toRole": "مدير المشروع",
+      "type": "طلب فحص أو اختبار جودة",
+      "subject": "الموقف الفني لنتائج فحوصات الكثافة الحقلية وعينات FDR",
+      "content": "أفيدكم بأن كافة نتائج اختبارات الكثافة الحقلية لمقاطع FDR بمحطات المرحلة الأولى أظهرت نسبة دمك أعلى من 98% ومطابقة كاملة للمواصفات الفنية المعتمدة للمشروع.",
+      "reportNumber": null,
+      "isRead": false,
+      "createdAt": "2026-11-08T07:40:21.791Z"
+    },
+    {
+      "id": "msg-seed-4",
+      "fromUsername": "issa_altahir",
+      "fromName": "م. عيسى الطاهر",
+      "fromRole": "مهندس مشرف (المرحلة الثانية)",
+      "toUsername": "project_manager",
+      "toName": "م. عبدالرحمن الأنصاري",
+      "toRole": "مدير المشروع",
+      "type": "إحالة تقرير يومي",
+      "subject": "متابعة أعمال طبقة إعادة التدوير FDR بالمرحلة الثانية",
+      "content": "تتواصل أعمال فرم وتأهيل طبقة إعادة التدوير (FDR) بالمرحلة الثانية بمعدل يومي متقدم مع انتظام عمل الآليات ومداحل الدك الميدانية وفق المخطط الزمني المعتمد للمشروع.",
+      "reportNumber": null,
+      "isRead": true,
+      "createdAt": "2026-11-07T15:40:21.791Z"
+    }
+  ],
   "latestTwoPhaseReport": {
     "id": 1793172128709,
     "reportNumber": "PHASE-REP-4228",
@@ -2046,7 +2085,7 @@
       {
         "id": 3,
         "seq": "3",
-        "location": "الكسارات",
+        "location": "محطة الموقع والمعدات",
         "dispatchedLiters": "4,638.00",
         "receivedLiters": "0.00",
         "remainingLiters": "19,073.00",
@@ -2055,5 +2094,5 @@
     ],
     "updatedAt": "2026-10-27T18:05:03.714Z"
   },
-  "lastUpdated": "2026-11-09T14:21:56.182Z"
+  "lastUpdated": "2026-11-09T14:21:56.170Z"
 }

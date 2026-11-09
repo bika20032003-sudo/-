@@ -344,46 +344,6 @@ export const CreateReportModal = ({
     }
 
     try {
-      if (sendAfter) {
-        // Mail only: do NOT save into local_reports or dispatch report-saved
-        const forwardDraft = {
-          id: Date.now(),
-          ...payload,
-          status: 'معتمد للمراسلات',
-          createdAt: new Date().toISOString()
-        };
-        try {
-          const autoMsg = {
-            id: Date.now(),
-            fromUsername: currentUser?.username || 'user',
-            fromName: currentUser?.name || sectorDirector,
-            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
-            toUsername: 'all',
-            toName: 'كافة أعضاء جهاز الإشراف',
-            toRole: 'جهاز الإشراف والقيادة',
-            type: 'إحالة تقرير عبر البريد والمراسلات',
-            subject: `إحالة ${forwardDraft.title || forwardDraft.reportType} - رقم (${forwardDraft.reportNumber})`,
-            content: `نحيل إليكم عبر البريد نسخة من ${forwardDraft.title || forwardDraft.reportType} برقم (${forwardDraft.reportNumber}) للإحاطة والمتابعة الهندسية.`,
-            reportId: forwardDraft.id,
-            reportNumber: forwardDraft.reportNumber,
-            reportData: forwardDraft,
-            createdAt: new Date().toISOString()
-          };
-          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
-          locMsgs.unshift(autoMsg);
-          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
-          window.dispatchEvent(new CustomEvent('messages-updated'));
-        } catch (_) {}
-
-        setCreatedReportData({
-          report: forwardDraft,
-          destTab: 'messages',
-          destName: 'صندوق البريد والمراسلات',
-          sentToMessages: true
-        });
-        return;
-      }
-
       let saved = null;
       try {
         const res = await fastFetch('/api/reports/create', {
@@ -420,26 +380,66 @@ export const CreateReportModal = ({
         };
       }
 
-      // Persist to local storage
+      // 1. Direct save into localStorage under local_reports
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        local.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(local));
+        const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
+        filtered.unshift(saved);
+        localStorage.setItem('local_reports', JSON.stringify(filtered));
+
+        // Ensure newly saved report is unblocked if previously marked deleted
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
+        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
       } catch (e) {
         console.error(e);
       }
 
-      // Clear client API cache
+      // 2. Clear client API cache
       try {
         clearApiCache();
       } catch (cErr) {}
 
-      // Notify other views
+      // 3. Notify other views & archives
       try {
         window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
         window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
       } catch (evErr) {}
+
+      // 4. If sendAfter (Forward to mail), create and dispatch message too
+      if (sendAfter) {
+        try {
+          const autoMsg = {
+            id: Date.now(),
+            fromUsername: currentUser?.username || 'user',
+            fromName: currentUser?.name || sectorDirector,
+            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+            toUsername: 'all',
+            toName: 'كافة أعضاء جهاز الإشراف',
+            toRole: 'جهاز الإشراف والقيادة',
+            type: 'إحالة تقرير عبر البريد والمراسلات',
+            subject: `إحالة ${saved.title || saved.reportType} - رقم (${saved.reportNumber})`,
+            content: `نحيل إليكم عبر البريد نسخة معتمدة من ${saved.title || saved.reportType} برقم (${saved.reportNumber}) للإحاطة والمتابعة الهندسية.`,
+            reportId: saved.id,
+            reportNumber: saved.reportNumber,
+            reportData: saved,
+            createdAt: new Date().toISOString()
+          };
+          const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+          locMsgs.unshift(autoMsg);
+          localStorage.setItem('system_messages', JSON.stringify(locMsgs));
+          window.dispatchEvent(new CustomEvent('messages-updated'));
+        } catch (_) {}
+
+        setCreatedReportData({
+          report: saved,
+          destTab: 'messages',
+          destName: 'صندوق البريد والمراسلات',
+          sentToMessages: true
+        });
+        return;
+      }
 
       setCreatedReportData({
         report: saved,

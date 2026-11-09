@@ -196,23 +196,6 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
         console.warn('Backend unavailable, saving locally:', err);
       }
 
-      if (sendAfter) {
-        // Mail only: do NOT save into local_reports or dispatch report-saved
-        const forwardDraft = {
-          id: Date.now(),
-          ...payload,
-          status: 'معتمد للمراسلات',
-          createdAt: new Date().toISOString()
-        };
-        setCreatedReport(forwardDraft);
-        setShowForwardModal(true);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم تجهيز تقرير كميات الوقود برقم (${forwardDraft.reportNumber}) للإحالة إلى البريد والمراسلات...` 
-        });
-        return;
-      }
-
       if (!saved) {
         saved = {
           id: Date.now(),
@@ -221,14 +204,25 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
         };
       }
 
-      // Persist in localStorage
+      // 1. Persist in localStorage under local_reports
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        local.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(local));
+        const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
+        filtered.unshift(saved);
+        localStorage.setItem('local_reports', JSON.stringify(filtered));
+
+        // Ensure unblocked from deleted_report_ids
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
+        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
       } catch (e) {
         console.error(e);
       }
+
+      // 2. Clear API Cache and notify other views
+      try {
+        clearApiCache();
+      } catch (cErr) {}
 
       try {
         window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
@@ -237,6 +231,15 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
 
       setCreatedReport(saved);
       if (onReportCreated) onReportCreated(saved);
+
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ تقرير كميات الوقود برقم (${saved.reportNumber}) في الأرشيف بنجاح، وجاري إحالته إلى البريد والمراسلات...` 
+        });
+        return;
+      }
 
       setStatusMessage({ 
         type: 'success', 

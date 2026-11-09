@@ -912,6 +912,27 @@ export async function fastFetch(rawUrl, options = {}) {
     }
   }
 
+  // Intercept and handle DELETE /api/reports/:id with Guaranteed Local + Cloud Resilience
+  const currentMethod = (options.method || 'GET').toUpperCase();
+  if (currentMethod === 'DELETE' && typeof url === 'string' && url.includes('/api/reports/')) {
+    const reportId = url.split('/api/reports/')[1]?.split('?')[0];
+    if (reportId && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        if (!deleted.includes(String(reportId))) deleted.push(String(reportId));
+        localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const updatedLocal = local.filter(r => String(r.id) !== String(reportId) && String(r.reportNumber) !== String(reportId));
+        localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+
+        deleteReportFromIndexedDB(reportId);
+      } catch (e) {
+        console.error('Error syncing report deletion in fastFetch:', e);
+      }
+    }
+  }
+
   const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
   const apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
 

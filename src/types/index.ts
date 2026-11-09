@@ -5,11 +5,11 @@ export interface Equipment {
   code: string;
   name: string;
   type: string;
-  category: 'heavy' | 'transport' | 'earthwork' | 'paving' | 'service' | 'crusher' | 'excavator' | 'truck' | 'loader' | 'generator' | 'other';
+  category: 'heavy' | 'transport' | 'earthwork' | 'paving' | 'service' | 'excavator' | 'truck' | 'loader' | 'generator' | 'other';
   status: EquipmentStatus;
   driver: string;
   location: string;
-  sector?: 'القطعة A' | 'القطعة B' | string;
+  sector?: 'المرحلة الأولى' | 'المرحلة الثانية' | string;
   dailyHours: number;
   fuelConsumption?: number;
   fuelConsumptionRate?: number;
@@ -35,24 +35,6 @@ export interface FuelDispatch {
 
 export interface FuelLog extends FuelDispatch {}
 
-export interface CrusherStock {
-  id: string;
-  crusherName: string;
-  name?: string;
-  location: string;
-  dailyProductionM3?: number;
-  dailyProductionTons?: number;
-  totalStockM3?: number;
-  totalStockTons?: number;
-  sharshoorTons?: number;
-  aggregateType?: string;
-  sector?: string;
-  status: 'active' | 'maintenance' | 'stopped' | 'idle';
-  lastUpdated?: string;
-}
-
-export interface CrusherData extends CrusherStock {}
-
 export interface ConstructionProgress {
   id: string;
   sectorName: string;
@@ -70,8 +52,8 @@ export interface ConstructionProgress {
 export interface ReportItem {
   id: string;
   date: string;
-  sector: 'A' | 'B';
-  reportType: 'حركة المعدات' | 'السولار' | 'الكسارات' | 'الشرشور' | 'الوقود' | 'تقرير مجمع';
+  sector: 'المرحلة الأولى' | 'المرحلة الثانية' | string;
+  reportType: 'تقرير يومي شامل' | 'تقرير الأعمال المستهدفة' | 'تقرير كميات الوقود اليومية' | 'تقرير إنجاز المرحلتين' | 'تقرير دوري مجمع' | string;
   status: 'معتمد' | 'قيد المراجعة' | 'مرفوض';
   author: string;
   fileSize?: string;
@@ -90,7 +72,7 @@ export interface TomorrowPlanItem {
   id: string;
   title: string;
   target: string;
-  category: 'crusher' | 'truck' | 'excavator' | 'fuel' | 'other';
+  category: 'truck' | 'excavator' | 'fuel' | 'paving' | 'other';
   iconType: string;
   color: string;
 }

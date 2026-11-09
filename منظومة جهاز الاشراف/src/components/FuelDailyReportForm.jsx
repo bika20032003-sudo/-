@@ -396,8 +396,10 @@ export const FuelDailyReportForm = ({
         totalReceivedLiters: calculatedTotals.totalReceived,
         totalRemainingLiters: calculatedTotals.totalRemaining,
         createdByUsername: currentUser?.username || 'fuel_officer',
+        authorUsername: currentUser?.username || 'fuel_officer',
         createdByName: currentUser?.name || reportData.supervisorName,
         uploadedBy: currentUser?.name || reportData.supervisorName || 'مسؤول الوقود بالموقع',
+        engineer: currentUser?.name || reportData.supervisorName || 'مسؤول الوقود بالموقع',
         supervisor: currentUser?.name || reportData.supervisorName,
         notes: `تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: ${fmtNum(calculatedTotals.totalDispatched)} لتر - الوارد: ${fmtNum(calculatedTotals.totalReceived)} لتر - المتبقي: ${fmtNum(calculatedTotals.totalRemaining)} لتر`,
         createdAt: new Date().toISOString()

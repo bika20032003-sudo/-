@@ -622,23 +622,6 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         console.warn('Backend unavailable, saving locally:', err);
       }
 
-      if (sendAfter) {
-        // Mail only: do NOT save into local_reports or dispatch report-saved
-        const forwardDraft = {
-          id: Date.now(),
-          ...payload,
-          status: 'معتمد للمراسلات',
-          createdAt: new Date().toISOString()
-        };
-        setCreatedReport(forwardDraft);
-        setShowForwardModal(true);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `تم تجهيز التقرير برقم (${forwardDraft.reportNumber}) للإحالة إلى البريد والمراسلات...` 
-        });
-        return;
-      }
-
       if (!saved) {
         saved = {
           id: Date.now(),
@@ -647,20 +630,27 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         };
       }
 
+      // 1. Direct save into localStorage under local_reports
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        local.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(local));
+        const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
+        filtered.unshift(saved);
+        localStorage.setItem('local_reports', JSON.stringify(filtered));
+
+        // Ensure newly saved report is unblocked if previously marked deleted
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
+        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
       } catch (e) {
         console.error(e);
       }
 
-      // Clear client API cache completely so Dashboard and sections immediately get fresh data
+      // 2. Clear client API cache completely so Dashboard and sections immediately get fresh data
       try {
         clearApiCache();
       } catch (cacheErr) {}
 
-      // Instantly notify Dashboard and other views
+      // 3. Instantly notify Dashboard, Archive, and all views
       try {
         window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
@@ -668,6 +658,16 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       } catch (evtErr) {}
 
       setCreatedReport(saved);
+
+      if (sendAfter) {
+        setShowForwardModal(true);
+        setStatusMessage({ 
+          type: 'success', 
+          text: `تم حفظ التقرير برقم (${saved.reportNumber}) في الأرشيف بنجاح، وجاري إحالته إلى البريد والمراسلات...` 
+        });
+        return;
+      }
+
       setStatusMessage({ 
         type: 'success', 
         text: `تم حفظ التقرير المعتمد برقم (${saved.reportNumber}) بنجاح في قسمه والأرشيف!` 

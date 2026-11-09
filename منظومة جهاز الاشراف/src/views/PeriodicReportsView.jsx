@@ -505,6 +505,10 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
         avgDailyMeters: aggregatedReport.avgDailyMeters,
         layers: aggregatedReport.layers,
         dailyBreakdown: aggregatedReport.dailyBreakdown,
+        createdByUsername: currentUser?.username,
+        authorUsername: currentUser?.username,
+        createdByName: currentUser?.name || 'مهندس جهاز الإشراف',
+        engineer: currentUser?.name || 'مهندس جهاز الإشراف',
         uploadedBy: currentUser?.name || 'مهندس جهاز الإشراف',
         approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
         headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
@@ -520,6 +524,11 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
       const localReps = JSON.parse(localStorage.getItem('local_reports') || '[]');
       const filteredLocal = localReps.filter(r => r.reportNumber !== reportPayload.reportNumber);
       localStorage.setItem('local_reports', JSON.stringify([reportPayload, ...filteredLocal]));
+
+      clearApiCache();
+      try {
+        window.dispatchEvent(new CustomEvent('report-saved', { detail: reportPayload }));
+      } catch (_) {}
 
       setStatusMessage({ type: 'success', text: `تم حفظ وأرشفة ${aggregatedReport.title} بنجاح برقم: ${reportPayload.reportNumber}` });
     } catch (e) {

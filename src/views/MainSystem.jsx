@@ -76,8 +76,12 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
           const n = currentUser?.name;
           const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
           if (Array.isArray(userPerms) && !userPerms.includes(tabId) && tabId !== 'periodic-reports' && tabId !== 'reports-archive') {
-            console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
-            return;
+            if (tabId === 'general-archive' && canAccessGeneralArchive(currentUser)) {
+              // مسموح لمدير المشروع وم. صالح
+            } else {
+              console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
+              return;
+            }
           }
         } catch (e) {}
       }
@@ -100,7 +104,11 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             const n = currentUser?.name;
             const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
             if (Array.isArray(userPerms) && !userPerms.includes(activeTab) && activeTab !== 'periodic-reports' && activeTab !== 'reports-archive') {
-              setActiveTab(userPerms[0] || 'dashboard');
+              if (activeTab === 'general-archive' && canAccessGeneralArchive(currentUser)) {
+                // مسموح
+              } else {
+                setActiveTab(userPerms[0] || 'dashboard');
+              }
             }
           } catch (e) {}
         }

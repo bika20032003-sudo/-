@@ -645,6 +645,15 @@ if ($resource === 'equipment') {
         echo json_encode(['success' => true, 'message' => 'تم حفظ بيانات الآليات']);
         exit;
     }
+    if ($method === 'DELETE' && !empty($subId)) {
+        if (!isset($db['equipment'])) $db['equipment'] = [];
+        $db['equipment'] = array_values(array_filter($db['equipment'], function($i) use ($subId) {
+            return (string)($i['id'] ?? '') !== (string)$subId;
+        }));
+        save_db($db);
+        echo json_encode(['success' => true, 'message' => 'تم حذف المعدة من السجل']);
+        exit;
+    }
 }
 
 if ($resource === 'alerts') {

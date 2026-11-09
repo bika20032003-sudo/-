@@ -529,16 +529,20 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
           id: Date.now(),
           ...payload,
           createdByUsername: currentUser?.username,
+          authorUsername: currentUser?.username,
           createdByName: currentUser?.name || uploaderName,
           uploadedBy: currentUser?.name || uploaderName,
+          engineer: currentUser?.name || uploaderName,
           createdAt: new Date().toISOString()
         };
       } else {
         saved = {
           ...saved,
           createdByUsername: currentUser?.username || saved.createdByUsername,
+          authorUsername: currentUser?.username || saved.authorUsername || saved.createdByUsername,
           createdByName: currentUser?.name || saved.createdByName || uploaderName,
-          uploadedBy: currentUser?.name || saved.uploadedBy || uploaderName
+          uploadedBy: currentUser?.name || saved.uploadedBy || uploaderName,
+          engineer: currentUser?.name || saved.engineer || uploaderName
         };
       }
 

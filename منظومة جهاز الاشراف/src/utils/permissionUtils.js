@@ -89,7 +89,7 @@ export const canAccessPeriodicReports = (currentUser) => {
 };
 
 /**
- * ترقية الصلاحيات القديمة لضمان عدم حجب قسم التقارير الدورية أو الأرشيف الخاص عن أي مستخدم قديم
+ * ترقية الصلاحيات القديمة لضمان عدم حجب قسم التقارير الدورية أو الأرشيف الخاص أو الأرشيف العام عن أي مستخدم
  */
 export const migrateLegacyPermissions = () => {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -107,6 +107,13 @@ export const migrateLegacyPermissions = () => {
         if (!all[key].includes('reports-archive')) {
           all[key].push('reports-archive');
           changed = true;
+        }
+        const lowKey = String(key).toLowerCase();
+        if (lowKey.includes('saleh') || lowKey.includes('quality') || lowKey.includes('manager') || lowKey.includes('ansari') || lowKey.includes('admin') || lowKey.includes('dev')) {
+          if (!all[key].includes('general-archive')) {
+            all[key].push('general-archive');
+            changed = true;
+          }
         }
       }
     }
