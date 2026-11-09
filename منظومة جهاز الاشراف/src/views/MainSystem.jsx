@@ -22,7 +22,7 @@ import { ExecutiveProgressView } from './ExecutiveProgressView';
 import { PeriodicReportsView } from './PeriodicReportsView';
 import { AIAgentView } from './AIAgentView';
 import { AIAgentWidget } from '../components/AIAgentWidget';
-import { canAccessGeneralArchive, canAccessPeriodicReports } from '../utils/permissionUtils.js';
+import { canAccessGeneralArchive, canAccessPeriodicReports, migrateLegacyPermissions } from '../utils/permissionUtils.js';
 
 /**
  * Determine default dashboard based on supervision role
@@ -61,6 +61,10 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [selectedReportForPrint, setSelectedReportForPrint] = useState(null);
 
+    useEffect(() => {
+      migrateLegacyPermissions();
+    }, []);
+
     const handleTabChange = (tabId) => {
       setIsMobileSidebarOpen(false);
       const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
@@ -71,7 +75,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
           const lowU = (u || '').toLowerCase();
           const n = currentUser?.name;
           const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-          if (Array.isArray(userPerms) && !userPerms.includes(tabId)) {
+          if (Array.isArray(userPerms) && !userPerms.includes(tabId) && tabId !== 'periodic-reports') {
             console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
             return;
           }
@@ -85,10 +89,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
       const checkAndEnforcePermissions = () => {
         const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
         if (!isDev && typeof window !== 'undefined') {
-          if (activeTab === 'periodic-reports' && !canAccessPeriodicReports(currentUser)) {
-            setActiveTab('dashboard');
-            return;
-          }
           if (activeTab === 'general-archive' && !canAccessGeneralArchive(currentUser)) {
             setActiveTab('reports-archive');
             return;
@@ -99,7 +99,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             const lowU = (u || '').toLowerCase();
             const n = currentUser?.name;
             const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-            if (Array.isArray(userPerms) && !userPerms.includes(activeTab)) {
+            if (Array.isArray(userPerms) && !userPerms.includes(activeTab) && activeTab !== 'periodic-reports') {
               setActiveTab(userPerms[0] || 'dashboard');
             }
           } catch (e) {}

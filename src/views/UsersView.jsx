@@ -94,18 +94,20 @@ export const UsersView = ({ currentUser }) => {
     setTargetUserForPermissions(user);
     const existing = getUserSectionPermissions(user.username);
     if (existing && Array.isArray(existing)) {
-      setSelectedUserSections(existing);
+      // إذا كان للمستخدم سجل صلاحيات قديم لا يتضمن التقارير الدورية (كونه قسماً عاماً)، يُفعل افتراضياً
+      const withPeriodic = existing.includes('periodic-reports') ? existing : [...existing, 'periodic-reports'];
+      setSelectedUserSections(withPeriodic);
     } else {
       // Role default presets
       const uRole = (user.role || '').toLowerCase();
       if (uRole.includes('مدير المشروع')) {
         setSelectedUserSections(ALL_SYSTEM_SECTIONS.map(s => s.id));
       } else if (uRole.includes('مشرف') || uRole.includes('المرحلة')) {
-        setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+        setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
       } else if (uRole.includes('جودة')) {
         setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'periodic-reports', 'targeted-works', 'upload-reports', 'general-archive', 'reports-archive', 'messages']);
       } else {
-        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
       }
     }
     setIsPermissionsModalOpen(true);

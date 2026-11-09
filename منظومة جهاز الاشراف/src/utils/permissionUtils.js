@@ -60,16 +60,20 @@ export const canAccessGeneralArchive = (currentUser) => {
 
 /**
  * صلاحية الاطلاع على قسم التقارير الأسبوعية والشهرية التجميعية (قسم عام):
- * يتم تحديدها وتعديلها من قسم الصلاحيات (UsersView).
- * في الحالة الافتراضية تكون مفعلة للإدارة العليا (مدير المشروع، مسؤول الجودة، رئيس الجهاز، وحساب التطوير)،
- * وتُدار وتُمنح لباقي المهندسين من قسم الصلاحيات مباشرة.
+ * قسم عام لمشروع الـ 360 كم متاح افتراضياً لكافة أعضاء جهاز الإشراف،
+ * ويتم تخصيص وتعديل صلاحية ظهوره من قسم الصلاحيات (UsersView).
  */
 export const canAccessPeriodicReports = (currentUser) => {
   if (!currentUser) return false;
   const username = (currentUser.username || '').toLowerCase().trim();
   const userName = (currentUser.name || '').trim();
 
-  // 1. فحص الصلاحيات المخصصة المحفوظة من قسم الصلاحيات أولاً
+  // 1. حساب التطوير ومدير المشروع لديهم صلاحية كاملة دائماً
+  if (isDevUser(currentUser) || isProjectManagerUser(currentUser)) {
+    return true;
+  }
+
+  // 2. فحص الصلاحيات المخصصة المحفوظة من قسم الصلاحيات أولاً (إذا تم تقييده صراحة)
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
@@ -80,17 +84,41 @@ export const canAccessPeriodicReports = (currentUser) => {
     } catch (_) {}
   }
 
-  // 2. إذا لم تُعدل مسبقاً: افتراضياً مفعلة لمدير المشروع، مسؤول الجودة، رئيس الجهاز، وحساب التطوير
-  if (isDevUser(currentUser) || isProjectManagerUser(currentUser) || isSalehUser(currentUser)) {
-    return true;
-  }
-  const role = (currentUser.role || '').toLowerCase();
-  if (username === 'abrikaw' || role.includes('رئيس جهاز الإشراف')) {
-    return true;
-  }
-
-  return false;
+  // 3. قسم عام: متاح افتراضياً لكافة مهندسي وأعضاء جهاز الإشراف الميداني
+  return true;
 };
+
+/**
+ * ترقية الصلاحيات القديمة لضمان عدم حجب قسم التقارير الدورية عن أي مستخدم قديم
+ */
+export const migrateLegacyPermissions = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const raw = localStorage.getItem('system_user_section_permissions');
+    if (!raw) return;
+    const all = JSON.parse(raw);
+    let changed = false;
+    for (const key of Object.keys(all)) {
+      if (Array.isArray(all[key]) && !all[key].includes('periodic-reports')) {
+        all[key].push('periodic-reports');
+        changed = true;
+      }
+    }
+    if (changed) {
+      localStorage.setItem('system_user_section_permissions', JSON.stringify(all));
+      window.dispatchEvent(new CustomEvent('permissions-updated'));
+    }
+  } catch (e) {
+    console.warn('Error migrating legacy permissions:', e);
+  }
+};
+
+// تشغيل الترقية تلقائياً عند تحميل الملف
+if (typeof window !== 'undefined') {
+  try {
+    migrateLegacyPermissions();
+  } catch (_) {}
+}
 
 /**
  * التحقق مما إذا كان التقرير يخص المهندس الحالي (للأرشيف الشخصي المستقل):

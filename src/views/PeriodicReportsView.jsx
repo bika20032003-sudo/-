@@ -690,24 +690,60 @@ export const PeriodicReportsView = ({ currentUser, onNavigateTab, onPrintReport 
         <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
           عفواً، يتطلب الاطلاع على قسم التقارير الأسبوعية والشهرية التجميعية منح صلاحية الوصول من قبل مدير المشروع عبر <b>قسم المستخدمين والصلاحيات</b>.
         </p>
-        <button
-          type="button"
-          onClick={() => onNavigateTab && onNavigateTab('dashboard')}
-          style={{
-            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-            color: '#fff',
-            border: 'none',
-            padding: '0.65rem 1.5rem',
-            borderRadius: '8px',
-            fontWeight: 800,
-            cursor: 'pointer'
-          }}
-        >
-          العودة إلى لوحة القيادة
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => onNavigateTab && onNavigateTab('dashboard')}
+            style={{
+              background: '#f1f5f9',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              padding: '0.65rem 1.5rem',
+              borderRadius: '8px',
+              fontWeight: 800,
+              cursor: 'pointer'
+            }}
+          >
+            العودة إلى لوحة القيادة
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                try {
+                  const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+                  const u = currentUser?.username;
+                  if (u) {
+                    const currentArr = all[u] || [];
+                    if (!currentArr.includes('periodic-reports')) currentArr.push('periodic-reports');
+                    all[u] = currentArr;
+                    all[u.toLowerCase()] = currentArr;
+                    localStorage.setItem('system_user_section_permissions', JSON.stringify(all));
+                    window.dispatchEvent(new CustomEvent('permissions-updated'));
+                    window.location.reload();
+                  }
+                } catch(e) {}
+              }
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+              color: '#fff',
+              border: 'none',
+              padding: '0.65rem 1.5rem',
+              borderRadius: '8px',
+              fontWeight: 800,
+              cursor: 'pointer'
+            }}
+          >
+            تفعيل الصلاحية والدخول للقسم فوراً
+          </button>
+        </div>
       </div>
     );
   }
+
+  const layerList = aggregatedReport?.layers || [];
 
   return (
     <div style={{ padding: '1.25rem', maxWidth: '1400px', margin: '0 auto', direction: 'rtl' }}>

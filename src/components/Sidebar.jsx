@@ -181,22 +181,16 @@ export const Sidebar = ({
     const canAccessPeriodic = canAccessPeriodicReports(currentUser);
 
     const reportItems = [
-      { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus }
-    ];
-
-    if (canAccessPeriodic) {
-      reportItems.push({ 
+      { id: 'create-report', label: 'إنشاء تقرير جديد', icon: FilePlus },
+      { 
         id: 'periodic-reports', 
         label: 'التقارير الأسبوعية والشهرية', 
         icon: CalendarRange, 
         badge: 'تجميع آلي' 
-      });
-    }
-
-    reportItems.push(
+      },
       { id: 'targeted-works', label: 'الأعمال المستهدفة', icon: Target },
       { id: 'upload-reports', label: 'رفع ومعالجة التقارير', icon: UploadCloud }
-    );
+    ];
 
     if (canAccessGeneral) {
       reportItems.push({ 
@@ -314,6 +308,9 @@ export const Sidebar = ({
             const visibleItems = group.items.filter(item => {
               if (isDev) return true;
               if (Array.isArray(userAllowedSections)) {
+                if (item.id === 'periodic-reports') {
+                  return userAllowedSections.includes('periodic-reports') || canAccessPeriodicReports(currentUser);
+                }
                 return userAllowedSections.includes(item.id);
               }
               return true;
