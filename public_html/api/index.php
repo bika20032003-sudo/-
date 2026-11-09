@@ -493,16 +493,61 @@ if ($resource === 'messages') {
     $db = get_db();
     if (!isset($db['messages'])) $db['messages'] = [];
 
-    // Clear all messages
+    // Clear messages for a specific user or globally
     if ($method === 'DELETE' && ($subId === 'clear-all' || $subId === 'all' || empty($subId))) {
+        $username = strtolower(trim($_GET['username'] ?? ''));
+        $box = $_GET['box'] ?? 'all';
+
+        if (!empty($username)) {
+            // Per-user clear: only mark as deleted for this specific user
+            foreach ($db['messages'] as &$m) {
+                $to = strtolower(trim($m['toUsername'] ?? ''));
+                $from = strtolower(trim($m['fromUsername'] ?? ''));
+                $isTarget = false;
+                if ($box === 'inbox' && ($to === $username || $to === 'all') && $from !== $username) {
+                    $isTarget = true;
+                } else if ($box === 'sent' && $from === $username) {
+                    $isTarget = true;
+                } else if ($box === 'all' && ($to === $username || $to === 'all' || $from === $username)) {
+                    $isTarget = true;
+                }
+                if ($isTarget) {
+                    if (!isset($m['deletedBy']) || !is_array($m['deletedBy'])) $m['deletedBy'] = [];
+                    if (!in_array($username, array_map('strtolower', $m['deletedBy']))) {
+                        $m['deletedBy'][] = $username;
+                    }
+                }
+            }
+            save_db($db);
+            echo json_encode(['success' => true, 'message' => 'تم تفريغ البريد للمستخدم بنجاح']);
+            exit;
+        }
+
+        // Global purge only if no username provided (e.g. dev clean)
         $db['messages'] = [];
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم مسح كافة المراسلات']);
         exit;
     }
 
-    // Delete single message
+    // Delete single message (Independent per-user soft delete)
     if ($method === 'DELETE' && !empty($subId)) {
+        $username = strtolower(trim($_GET['username'] ?? ''));
+        if (!empty($username)) {
+            foreach ($db['messages'] as &$m) {
+                if ((string)($m['id'] ?? '') === (string)$subId) {
+                    if (!isset($m['deletedBy']) || !is_array($m['deletedBy'])) $m['deletedBy'] = [];
+                    if (!in_array($username, array_map('strtolower', $m['deletedBy']))) {
+                        $m['deletedBy'][] = $username;
+                    }
+                    break;
+                }
+            }
+            save_db($db);
+            echo json_encode(['success' => true, 'message' => 'تم حذف الرسالة من صندوقك بنجاح']);
+            exit;
+        }
+
         $db['messages'] = array_values(array_filter($db['messages'], function($m) use ($subId) {
             return (string)($m['id'] ?? '') !== (string)$subId;
         }));
@@ -513,9 +558,16 @@ if ($resource === 'messages') {
 
     // Mark as read
     if ($method === 'PUT' && !empty($subId) && $subAction === 'read') {
+        $username = strtolower(trim($_GET['username'] ?? ''));
         foreach ($db['messages'] as &$m) {
             if ((string)($m['id'] ?? '') === (string)$subId) {
                 $m['isRead'] = true;
+                if (!empty($username)) {
+                    if (!isset($m['readBy']) || !is_array($m['readBy'])) $m['readBy'] = [];
+                    if (!in_array($username, array_map('strtolower', $m['readBy']))) {
+                        $m['readBy'][] = $username;
+                    }
+                }
                 break;
             }
         }
@@ -530,7 +582,9 @@ if ($resource === 'messages') {
         $newMsg = array_merge([
             'id' => 'msg-' . round(microtime(true) * 1000) . '-' . substr(md5(uniqid()), 0, 5),
             'createdAt' => gmdate('Y-m-d\TH:i:s\Z'),
-            'isRead' => false
+            'isRead' => false,
+            'readBy' => [],
+            'deletedBy' => []
         ], $body);
 
         array_unshift($db['messages'], $newMsg);
@@ -539,19 +593,32 @@ if ($resource === 'messages') {
         exit;
     }
 
-    // List messages (GET /api/messages)
+    // List messages (GET /api/messages) - Strictly isolated per user
     if ($method === 'GET') {
-        $username = $_GET['username'] ?? '';
+        $username = strtolower(trim($_GET['username'] ?? ''));
         $list = $db['messages'];
         if (!empty($username)) {
-            $isAdmin = in_array($username, ['admin', 'project_manager', 'alansari']);
-            $list = array_values(array_filter($list, function($m) use ($username, $isAdmin) {
-                $to = $m['toUsername'] ?? '';
-                $from = $m['fromUsername'] ?? '';
-                return $to === $username || $to === 'all' || $from === $username ||
-                       ($isAdmin && ($to === 'admin' || $to === 'project_manager')) ||
-                       (!$to && ($from !== $username || $isAdmin));
-            }));
+            $filtered = [];
+            foreach ($list as $m) {
+                $deletedBy = array_map('strtolower', $m['deletedBy'] ?? []);
+                if (in_array($username, $deletedBy)) {
+                    continue; // Hidden from this user because they deleted it
+                }
+                $to = strtolower(trim($m['toUsername'] ?? ''));
+                $from = strtolower(trim($m['fromUsername'] ?? ''));
+
+                // Must be either addressed to user, broadcast to all, or sent by user
+                if ($to === $username || $to === 'all' || $from === $username) {
+                    $mCopy = $m;
+                    // Compute user-specific read status for broadcasts
+                    if ($to === 'all') {
+                        $readBy = array_map('strtolower', $m['readBy'] ?? []);
+                        $mCopy['isRead'] = in_array($username, $readBy);
+                    }
+                    $filtered[] = $mCopy;
+                }
+            }
+            $list = $filtered;
         }
         echo json_encode(['success' => true, 'messages' => $list]);
         exit;

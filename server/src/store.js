@@ -1139,7 +1139,21 @@ class Store {
   getMessages(username) {
     const list = this.data.messages || [];
     if (!username) return list;
-    return list.filter(m => m.toUsername === username || m.fromUsername === username || m.toUsername === 'all');
+    const u = String(username).toLowerCase().trim();
+    return list.filter(m => {
+      const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
+      if (deletedBy.includes(u)) return false;
+      const to = String(m.toUsername || '').toLowerCase().trim();
+      const from = String(m.fromUsername || '').toLowerCase().trim();
+      return to === u || to === 'all' || from === u;
+    }).map(m => {
+      const to = String(m.toUsername || '').toLowerCase().trim();
+      if (to === 'all') {
+        const readBy = (m.readBy || []).map(r => String(r).toLowerCase().trim());
+        return { ...m, isRead: readBy.includes(u) };
+      }
+      return m;
+    });
   }
 
   addMessage(msg) {
@@ -1159,6 +1173,8 @@ class Store {
       reportNumber: msg.reportNumber || null,
       reportData: msg.reportData || null,
       isRead: false,
+      readBy: [],
+      deletedBy: [],
       createdAt: new Date().toISOString()
     };
     this.data.messages.unshift(newMsg);
@@ -1166,25 +1182,58 @@ class Store {
     return newMsg;
   }
 
-  markMessageRead(id) {
-    const msg = (this.data.messages || []).find(m => m.id === Number(id));
+  markMessageRead(id, username) {
+    const msg = (this.data.messages || []).find(m => String(m.id) === String(id));
     if (msg) {
       msg.isRead = true;
+      if (username) {
+        msg.readBy = msg.readBy || [];
+        const u = String(username).toLowerCase().trim();
+        if (!msg.readBy.map(r => String(r).toLowerCase().trim()).includes(u)) {
+          msg.readBy.push(username);
+        }
+      }
       this.scheduleSave();
       return msg;
     }
     return null;
   }
 
-  deleteMessage(id) {
+  deleteMessage(id, username) {
+    if (username) {
+      const u = String(username).toLowerCase().trim();
+      const msg = (this.data.messages || []).find(m => String(m.id) === String(id));
+      if (msg) {
+        msg.deletedBy = msg.deletedBy || [];
+        if (!msg.deletedBy.map(d => String(d).toLowerCase().trim()).includes(u)) {
+          msg.deletedBy.push(username);
+        }
+        this.scheduleSave();
+        return true;
+      }
+    }
     this.data.messages = (this.data.messages || []).filter(m => m.id !== Number(id) && String(m.id) !== String(id));
     this.scheduleSave();
     return true;
   }
 
-  clearAllMessages(username) {
+  clearAllMessages(username, box = 'all') {
     if (username) {
-      this.data.messages = (this.data.messages || []).filter(m => m.toUsername !== username && m.fromUsername !== username);
+      const u = String(username).toLowerCase().trim();
+      (this.data.messages || []).forEach(m => {
+        const to = String(m.toUsername || '').toLowerCase().trim();
+        const from = String(m.fromUsername || '').toLowerCase().trim();
+        let target = false;
+        if (box === 'inbox' && (to === u || to === 'all') && from !== u) target = true;
+        else if (box === 'sent' && from === u) target = true;
+        else if (box === 'all' && (to === u || to === 'all' || from === u)) target = true;
+        if (target) {
+          m.deletedBy = m.deletedBy || [];
+          if (!m.deletedBy.map(d => String(d).toLowerCase().trim()).includes(u)) {
+            m.deletedBy.push(username);
+          }
+        }
+      });
     } else {
       this.data.messages = [];
     }

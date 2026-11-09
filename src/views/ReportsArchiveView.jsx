@@ -509,7 +509,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                 <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
                   {archiveMode === 'general' 
                     ? 'الأرشيف العام لكافة تقارير المشروع (الإشراف العام)' 
-                    : `أرشيف تقاريري الميدانية — ${currentUser?.name || 'المهندس المشرف'}`
+                    : `الأرشيف الخاص بي — ${currentUser?.name || 'المهندس المشرف'}`
                   }
                 </h2>
                 <span style={{
@@ -527,7 +527,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                   <span>
                     {archiveMode === 'general' 
                       ? 'صلاحية خاصة: مدير المشروع ومسؤول الجودة م. صالح' 
-                      : 'أرشيف مستقل مخصص لك فقط'
+                      : `أرشيف مستقل وخاص بك (${currentUser?.name || ''})`
                     }
                   </span>
                 </span>
@@ -535,7 +535,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
               <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>
                 {archiveMode === 'general'
                   ? 'السجل الشامل الموحد لجميع التقارير الميدانية واليومية المعتمدة الصادرة عن كافة المهندسين بالمشروع'
-                  : 'السجل المستقل والخاص بالتقارير الميدانية المعتمدة الصادرة عنكم والمحفوظة في المنظومة'
+                  : `السجل المستقل والخاص بالتقارير المعتمدة الصادرة عنك شخصياً (${currentUser?.name || ''}) والمحفوظة باسمك`
                 }
               </p>
             </div>

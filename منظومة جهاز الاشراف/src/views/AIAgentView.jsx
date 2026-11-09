@@ -166,7 +166,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
         // Auto-assign navigation quick action if relevant
         if (query.includes('أرشيف') || query.includes('تقرير') || query.includes('تقارير')) {
           actionTab = canAccessGeneralArchive(currentUser) ? 'general-archive' : 'reports-archive';
-          actionLabel = canAccessGeneralArchive(currentUser) ? 'الانتقال إلى الأرشيف العام للمشروع' : 'الانتقال إلى أرشيف تقاريري الميدانية';
+          actionLabel = canAccessGeneralArchive(currentUser) ? 'الانتقال إلى الأرشيف العام للمشروع' : 'الانتقال إلى الأرشيف الخاص بي';
         } else if (query.includes('مراسلات') || query.includes('بريد') || query.includes('رسائل') || query.includes('وارد')) {
           actionTab = 'messages';
           actionLabel = 'الانتقال إلى صندوق البريد والمراسلات';

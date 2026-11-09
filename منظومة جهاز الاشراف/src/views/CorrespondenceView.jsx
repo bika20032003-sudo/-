@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Mail, Send, Inbox, ArrowUpRight, CheckCheck, Trash2, 
   FileText, Printer, PlusCircle, Search, Filter, RefreshCw, 
@@ -6,6 +6,15 @@ import {
   Paperclip, ArrowRight, CornerDownLeft, MessageSquare, Sparkles
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
+import { getSystemUsers } from '../components/LoginPage.jsx';
+import { 
+  isReportOwnedByEngineer, 
+  canAccessGeneralArchive, 
+  getUserDeletedMessageIds, 
+  markMessageDeletedForUser, 
+  getUserReadMessageIds, 
+  markMessageReadForUser 
+} from '../utils/permissionUtils.js';
 
 export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }) => {
   const [activeSubTab, setActiveSubTab] = useState('inbox'); // 'inbox' | 'sent' | 'compose'
@@ -17,7 +26,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const [statusNotification, setStatusNotification] = useState(null);
 
   // Compose Form State
-  const [composeRecipient, setComposeRecipient] = useState('project_manager');
+  const [composeRecipient, setComposeRecipient] = useState('');
   const [composeType, setComposeType] = useState('إحالة تقرير يومي');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
@@ -28,14 +37,44 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const [selectedMessage, setSelectedMessage] = useState(null);
 
   const username = currentUser?.username || 'project_manager';
+  const u = (username || '').toLowerCase().trim();
 
-  const officialSupervisors = [
-    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', badge: 'إشراف عام' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف', badge: 'رئاسة الجهاز' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة', badge: 'ضبط الجودة' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)', badge: 'المرحلة الأولى' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)', badge: 'المرحلة الثانية' },
-  ];
+  // Dynamic system supervisors & active team members
+  const officialSupervisors = useMemo(() => {
+    const list = [
+      { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', badge: 'إشراف عام' },
+      { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف', badge: 'رئاسة الجهاز' },
+      { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة', badge: 'ضبط الجودة' },
+      { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)', badge: 'المرحلة الأولى' },
+      { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)', badge: 'المرحلة الثانية' },
+    ];
+
+    const systemUsers = typeof getSystemUsers === 'function' ? getSystemUsers() : [];
+    systemUsers.forEach(su => {
+      const suName = su.username?.toLowerCase().trim();
+      if (suName && !list.some(item => item.username.toLowerCase().trim() === suName)) {
+        list.push({
+          username: su.username,
+          name: su.name,
+          role: su.role || su.title || 'عضو جهاز الإشراف',
+          badge: su.sector === 'المرحلة الأولى' ? 'المرحلة الأولى' : su.sector === 'المرحلة الثانية' ? 'المرحلة الثانية' : 'إشراف'
+        });
+      }
+    });
+
+    return list;
+  }, []);
+
+  // Filter out the current user so they don't send messages to themselves
+  const selectableRecipients = useMemo(() => {
+    return officialSupervisors.filter(sup => sup.username.toLowerCase().trim() !== u);
+  }, [officialSupervisors, u]);
+
+  useEffect(() => {
+    if (selectableRecipients.length > 0 && (!composeRecipient || composeRecipient === username)) {
+      setComposeRecipient(selectableRecipients[0].username);
+    }
+  }, [selectableRecipients, composeRecipient, username]);
 
   // Fetch messages from backend & local storage
   const fetchMessages = async () => {
@@ -104,33 +143,46 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     };
   }, [username]);
 
-  // Filter messages for Inbox vs Sent
-  const isManagerOrAdmin = username === 'admin' || username === 'project_manager' || username === 'alansari';
-  
+  // Filter messages strictly for current user's isolated mailbox
+  const userDeletedIds = getUserDeletedMessageIds(u);
+  const userReadIds = getUserReadMessageIds(u);
+
+  // 1. صندوق الوارد المستقل للمستخدم الحالي (لا يرى رسائل غيره ولا الرسائل المحذوفة من طرفه)
   const inboxMessages = messages.filter(m => {
-    // If current user is sender, it belongs strictly in Sent
-    if (m.fromUsername === username) return false;
-    
-    // Broadcast message to everyone
-    if (m.toUsername === 'all') return true;
-    
-    // Specifically targeted to user
-    if (m.toUsername === username) return true;
-    
-    // Management accounts share access to administration mail
-    if (isManagerOrAdmin && (m.toUsername === 'admin' || m.toUsername === 'project_manager')) {
-      return true;
+    if (!m || !m.id) return false;
+    const msgId = String(m.id);
+    if (userDeletedIds.has(msgId)) return false;
+    const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
+    if (deletedBy.includes(u)) return false;
+
+    // الرسائل الصادرة من هذا المستخدم تذهب لصندوق الصادر فقط
+    const from = String(m.fromUsername || '').toLowerCase().trim();
+    if (from === u) return false;
+
+    // المراسلات الموجهة لهذا المستخدم حصرياً أو تعميم لكافة الفريق
+    const to = String(m.toUsername || '').toLowerCase().trim();
+    return to === u || to === 'all';
+  }).map(m => {
+    const to = String(m.toUsername || '').toLowerCase().trim();
+    if (to === 'all') {
+      const readBy = (m.readBy || []).map(r => String(r).toLowerCase().trim());
+      const isRead = userReadIds.has(String(m.id)) || readBy.includes(u) || Boolean(m.isRead);
+      return { ...m, isRead };
     }
-    
-    // Legacy or unaddressed messages go to admin/manager
-    if (!m.toUsername && isManagerOrAdmin) return true;
-    
-    return false;
+    return m;
   });
 
-  const sentMessages = messages.filter(m => 
-    m.fromUsername === username || (isManagerOrAdmin && (m.fromUsername === 'admin' || m.fromUsername === 'project_manager'))
-  );
+  // 2. صندوق الصادر المستقل للمستخدم الحالي (فقط المراسلات التي أرسلها هو)
+  const sentMessages = messages.filter(m => {
+    if (!m || !m.id) return false;
+    const msgId = String(m.id);
+    if (userDeletedIds.has(msgId)) return false;
+    const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
+    if (deletedBy.includes(u)) return false;
+
+    const from = String(m.fromUsername || '').toLowerCase().trim();
+    return from === u;
+  });
 
   const unreadCount = inboxMessages.filter(m => !m.isRead).length;
 
@@ -163,116 +215,106 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
   // Handle Mark as Read
   const handleMarkAsRead = async (msgId) => {
+    markMessageReadForUser(msgId, username);
     try {
-      await fastFetch(`/api/messages/${msgId}/read`, { method: 'PUT' });
-      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isRead: true } : m));
+      await fastFetch(`/api/messages/${msgId}/read?username=${encodeURIComponent(username)}`, { method: 'PUT' });
     } catch (err) {
       console.warn('Failed to mark read on server, updating local state:', err);
-      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isRead: true } : m));
     }
+    setMessages(prev => prev.map(m => String(m.id) === String(msgId) ? { ...m, isRead: true } : m));
+    window.dispatchEvent(new CustomEvent('messages-updated'));
   };
 
-  // Handle Delete Message
+  // Handle Delete Single Message (Independent per-user soft delete)
   const handleDeleteMessage = async (msgId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه المراسلة؟')) return;
+    if (!window.confirm('هل أنت متأكد من حذف هذه المراسلة من صندوق بريدك؟\n\nلن يؤثر الحذف على الطرف الآخر.')) return;
+    markMessageDeletedForUser(msgId, username);
+
     try {
-      await fastFetch(`/api/messages/${msgId}`, { method: 'DELETE' });
-      setMessages(prev => prev.filter(m => m.id !== msgId));
-      if (selectedMessage?.id === msgId) setSelectedMessage(null);
-      setStatusNotification({ type: 'success', text: 'تم حذف المراسلة بنجاح.' });
-    } catch {
-      setMessages(prev => prev.filter(m => m.id !== msgId));
-      setStatusNotification({ type: 'success', text: 'تم حذف المراسلة بنجاح.' });
+      await fastFetch(`/api/messages/${msgId}?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('Backend delete error, preserved local mark:', err);
     }
+
+    setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)));
+    if (String(selectedMessage?.id) === String(msgId)) setSelectedMessage(null);
+    setStatusNotification({ type: 'success', text: 'تم حذف المراسلة من صندوق بريدك بنجاح.' });
+    window.dispatchEvent(new CustomEvent('messages-updated'));
   };
 
-  // Handle Delete All Messages in Mailbox
+  // Handle Delete All Messages in User's Personal Mailbox
   const handleDeleteAllMessages = async () => {
-    if (messages.length === 0) {
-      alert('صندوق البريد فارغ بالفعل.');
+    const totalCount = inboxMessages.length + sentMessages.length;
+    if (totalCount === 0) {
+      alert('صندوق بريدك فارغ بالفعل.');
       return;
     }
     const confirmed = window.confirm(
-      'تحذير: هل أنت متأكد من حذف وتفريغ كافة المراسلات (الوارد والصادر) نهائياً من المنظومة؟\n\nلن يمكن استعادة هذه الرسائل بعد الحذف.'
+      `تحذير: هل أنت متأكد من تفريغ كافة المراسلات الخاصة بك (${totalCount} مراسلة) من صندوقي الوارد والصادر؟\n\nملاحظة: هذا الإجراء مستقل وخاص بحسابك فقط، ولن يؤثر على بريد باقي المهندسين.`
     );
     if (!confirmed) return;
 
+    [...inboxMessages, ...sentMessages].forEach(m => markMessageDeletedForUser(m.id, username));
     try {
-      await fastFetch('/api/messages/clear-all', { method: 'DELETE' });
+      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(username)}&box=all`, { method: 'DELETE' });
     } catch (e) {
       console.warn('Backend clear failed:', e);
     }
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('system_messages', JSON.stringify([]));
-      localStorage.setItem('local_messages', JSON.stringify([]));
-      localStorage.setItem('system_messages_initialized', 'true');
-      window.dispatchEvent(new CustomEvent('messages-updated'));
-    }
-
-    setMessages([]);
+    const myIds = new Set([...inboxMessages, ...sentMessages].map(m => String(m.id)));
+    setMessages(prev => prev.filter(m => !myIds.has(String(m.id))));
     setSelectedMessage(null);
-    setStatusNotification({ type: 'success', text: 'تم تفريغ وحذف كافة المراسلات نهائياً بنجاح.' });
+    setStatusNotification({ type: 'success', text: 'تم تفريغ صندوق بريدك بالكامل بنجاح.' });
+    window.dispatchEvent(new CustomEvent('messages-updated'));
   };
 
-  // Handle Clear All Inbox Messages
+  // Handle Clear All Inbox Messages (User-isolated)
   const handleClearAllInbox = async () => {
     if (inboxMessages.length === 0) return;
     const confirmed = window.confirm(
-      `هل أنت متأكد من حذف كافة الرسائل الواردة (${inboxMessages.length} رسالة) نهائياً؟`
+      `هل أنت متأكد من تفريغ كافة الرسائل الواردة الخاصة بك (${inboxMessages.length} رسالة)؟\n\nلن تتأثر المراسلات لدى المرسلين.`
     );
     if (!confirmed) return;
 
-    const inboxIds = new Set(inboxMessages.map(m => String(m.id)));
-    const remaining = messages.filter(m => !inboxIds.has(String(m.id)));
-
+    inboxMessages.forEach(m => markMessageDeletedForUser(m.id, username));
     try {
-      for (const m of inboxMessages) {
-        fastFetch(`/api/messages/${m.id}`, { method: 'DELETE' }).catch(() => {});
-      }
-    } catch {}
+      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(username)}&box=inbox`, { method: 'DELETE' });
+    } catch (e) {}
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('system_messages', JSON.stringify(remaining));
-      localStorage.setItem('local_messages', JSON.stringify(remaining));
-      localStorage.setItem('system_messages_initialized', 'true');
-      window.dispatchEvent(new CustomEvent('messages-updated'));
-    }
-
-    setMessages(remaining);
-    setSelectedMessage(null);
-    setStatusNotification({ type: 'success', text: 'تم حذف كافة رسائل صندوق الوارد بنجاح.' });
+    const inboxIds = new Set(inboxMessages.map(m => String(m.id)));
+    setMessages(prev => prev.filter(m => !inboxIds.has(String(m.id))));
+    if (selectedMessage && inboxIds.has(String(selectedMessage.id))) setSelectedMessage(null);
+    setStatusNotification({ type: 'success', text: 'تم تفريغ صندوق الوارد الخاص بك بنجاح.' });
+    window.dispatchEvent(new CustomEvent('messages-updated'));
   };
 
-  // Handle Clear All Sent Messages
+  // Handle Clear All Sent Messages (User-isolated)
   const handleClearAllSent = async () => {
     if (sentMessages.length === 0) return;
     const confirmed = window.confirm(
-      `هل أنت متأكد من حذف كافة الرسائل الصادرة (${sentMessages.length} رسالة) نهائياً؟`
+      `هل أنت متأكد من تفريغ كافة الرسائل الصادرة منك (${sentMessages.length} رسالة)؟\n\nستظل المراسلات محفوظة في صناديق الوارد لدى المستلمين.`
     );
     if (!confirmed) return;
 
-    const sentIds = new Set(sentMessages.map(m => String(m.id)));
-    const remaining = messages.filter(m => !sentIds.has(String(m.id)));
-
+    sentMessages.forEach(m => markMessageDeletedForUser(m.id, username));
     try {
-      for (const m of sentMessages) {
-        fastFetch(`/api/messages/${m.id}`, { method: 'DELETE' }).catch(() => {});
-      }
-    } catch {}
+      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(username)}&box=sent`, { method: 'DELETE' });
+    } catch (e) {}
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('system_messages', JSON.stringify(remaining));
-      localStorage.setItem('local_messages', JSON.stringify(remaining));
-      localStorage.setItem('system_messages_initialized', 'true');
-      window.dispatchEvent(new CustomEvent('messages-updated'));
-    }
-
-    setMessages(remaining);
-    setSelectedMessage(null);
-    setStatusNotification({ type: 'success', text: 'تم حذف كافة الرسائل الصادرة بنجاح.' });
+    const sentIds = new Set(sentMessages.map(m => String(m.id)));
+    setMessages(prev => prev.filter(m => !sentIds.has(String(m.id))));
+    if (selectedMessage && sentIds.has(String(selectedMessage.id))) setSelectedMessage(null);
+    setStatusNotification({ type: 'success', text: 'تم تفريغ صندوق الصادر الخاص بك بنجاح.' });
+    window.dispatchEvent(new CustomEvent('messages-updated'));
   };
 
+  // Reports accessible for attachment in correspondence
+  const attachableReports = useMemo(() => {
+    if (canAccessGeneralArchive(currentUser)) {
+      return reportsList;
+    }
+    return reportsList.filter(r => isReportOwnedByEngineer(r, currentUser));
+  }, [reportsList, currentUser]);
 
   // Handle Send Compose
   const handleSendMessage = async (e) => {
@@ -297,7 +339,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     let repData = null;
     let repNumber = null;
     if (attachedReportId) {
-      const rep = reportsList.find(r => String(r.id) === String(attachedReportId) || r.reportNumber === attachedReportId);
+      const rep = attachableReports.find(r => String(r.id) === String(attachedReportId) || r.reportNumber === attachedReportId);
       if (rep) {
         repNumber = rep.reportNumber;
         repData = rep;
@@ -319,7 +361,9 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       reportNumber: repNumber,
       reportData: repData,
       createdAt: new Date().toISOString(),
-      isRead: false
+      isRead: false,
+      readBy: [],
+      deletedBy: []
     };
 
     try {
@@ -417,11 +461,24 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
             <Mail size={28} color="#fff" />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>
-              البريد والمراسلات الرسمية
-            </h1>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.86rem', color: '#94a3b8' }}>
-              إرسال واستقبال التقارير الميدانية والتوجيهات الفنية المباشرة بين مدير المشروع، رئيس الجهاز، ومهندسي الإشراف الميداني
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
+              <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#f8fafc' }}>
+                البريد والمراسلات الرسمية
+              </h1>
+              <span style={{
+                background: 'rgba(59, 130, 246, 0.25)',
+                color: '#93c5fd',
+                border: '1px solid rgba(147, 197, 253, 0.3)',
+                padding: '2px 10px',
+                borderRadius: '999px',
+                fontSize: '0.74rem',
+                fontWeight: 800
+              }}>
+                صندوق خاص: {currentUser?.name || 'المهندس المشرف'}
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.84rem', color: '#94a3b8' }}>
+              صندوق بريد ومراسلات مستقل وخاص بك ({currentUser?.name || ''}) - إرسال واستقبال التقارير والتوجيهات الفنية مع كافة أعضاء جهاز الإشراف
             </p>
           </div>
         </div>
@@ -469,10 +526,10 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
               boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)',
               transition: 'all 0.15s ease'
             }}
-            title="حذف وتفريغ كافة المراسلات من الصندوقين (الوارد والصادر)"
+            title="تفريغ كافة المراسلات الخاصة بك فقط من الصندوقين (الوارد والصادر)"
           >
             <Trash2 size={16} />
-            <span>حذف الكل</span>
+            <span>تفريغ بريدي</span>
           </button>
 
           
@@ -1313,12 +1370,12 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                       color: '#0f172a'
                     }}
                   >
-                    <option value="project_manager">م. عبدالرحمن الأنصاري - (مدير المشروع)</option>
-                    <option value="abrikaw">م. عبدالسلام ابريكاو - (رئيس جهاز الإشراف)</option>
-                    <option value="saleh_quality">م. صالح حماد - (مسؤول الجودة)</option>
-                    <option value="salah_alarabi">م. صلاح العربي - (مهندس مشرف المرحلة الأولى)</option>
-                    <option value="issa_altahir">م. عيسى الطاهر - (مهندس مشرف المرحلة الثانية)</option>
                     <option value="all">📢 تعميم رسمي لكافة أعضاء جهاز الإشراف</option>
+                    {selectableRecipients.map((sup) => (
+                      <option key={sup.username} value={sup.username}>
+                        {sup.name} - ({sup.role})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1375,7 +1432,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
               {/* Report Attachment Dropdown */}
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.35rem' }}>
-                  إرفاق تقرير من سجل المشروع (اختياري):
+                  إرفاق تقرير من سجل تقاريرك المعتمدة (اختياري):
                 </label>
                 <select
                   value={attachedReportId}
@@ -1391,7 +1448,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                   }}
                 >
                   <option value="">-- بدون إرفاق تقرير (مراسلة نصية فقط) --</option>
-                  {reportsList.map((r, idx) => (
+                  {attachableReports.map((r, idx) => (
                     <option key={r.id || idx} value={r.id || r.reportNumber}>
                       {r.reportNumber ? `[${r.reportNumber}] ` : ''}
                       {r.title || r.reportType || 'تقرير ميداني'} 

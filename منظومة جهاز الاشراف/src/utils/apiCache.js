@@ -135,18 +135,36 @@ export function getFallbackData(url) {
       }
     } catch {}
     
-    // Filter by username if specified
+    // Filter strictly by username (independent personal mailbox)
     const match = url.match(/username=([^&]+)/);
     if (match && match[1]) {
-      const u = decodeURIComponent(match[1]);
-      const isManagerOrAdmin = u === 'admin' || u === 'project_manager' || u === 'alansari';
-      const filtered = allMsgs.filter(m => 
-        m.toUsername === u || 
-        m.toUsername === 'all' || 
-        m.fromUsername === u ||
-        (isManagerOrAdmin && (m.toUsername === 'admin' || m.toUsername === 'project_manager')) ||
-        (!m.toUsername && (m.fromUsername !== u || isManagerOrAdmin))
-      );
+      const u = decodeURIComponent(match[1]).toLowerCase().trim();
+      let userDeletedIds = new Set();
+      let userReadIds = new Set();
+      try {
+        const rawDel = localStorage.getItem(`user_deleted_messages_${u}`);
+        if (rawDel) userDeletedIds = new Set(JSON.parse(rawDel).map(String));
+        const rawRead = localStorage.getItem(`user_read_messages_${u}`);
+        if (rawRead) userReadIds = new Set(JSON.parse(rawRead).map(String));
+      } catch (_) {}
+
+      const filtered = allMsgs.filter(m => {
+        if (!m || !m.id) return false;
+        if (userDeletedIds.has(String(m.id))) return false;
+        const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
+        if (deletedBy.includes(u)) return false;
+
+        const to = String(m.toUsername || '').toLowerCase().trim();
+        const from = String(m.fromUsername || '').toLowerCase().trim();
+        return to === u || to === 'all' || from === u;
+      }).map(m => {
+        const to = String(m.toUsername || '').toLowerCase().trim();
+        if (to === 'all') {
+          const isRead = userReadIds.has(String(m.id)) || (m.readBy || []).map(r => String(r).toLowerCase().trim()).includes(u);
+          return { ...m, isRead };
+        }
+        return m;
+      });
       return { success: true, messages: filtered };
     }
     return { success: true, messages: allMsgs };

@@ -189,7 +189,7 @@ export const Sidebar = ({
     if (canAccessGeneral) {
       reportItems.push({ 
         id: 'general-archive', 
-        label: 'الأرشيف العام للتقارير', 
+        label: 'الأرشيف العام للمشروع', 
         icon: FolderArchive, 
         badge: 'شامل' 
       });
@@ -197,7 +197,7 @@ export const Sidebar = ({
 
     reportItems.push({ 
       id: 'reports-archive', 
-      label: canAccessGeneral ? 'أرشيف تقاريري الخاصة' : 'أرشيف تقاريري الميدانية', 
+      label: 'الأرشيف الخاص بي', 
       icon: FileText 
     });
 

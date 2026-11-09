@@ -29,7 +29,8 @@ router.post('/', (req, res) => {
 // PUT /api/messages/:id/read
 router.put('/:id/read', (req, res) => {
   try {
-    const message = store.markMessageRead(req.params.id);
+    const { username } = req.query;
+    const message = store.markMessageRead(req.params.id, username);
     if (message) {
       res.json({ success: true, message });
     } else {
@@ -43,8 +44,9 @@ router.put('/:id/read', (req, res) => {
 // DELETE /api/messages/clear-all or DELETE /api/messages
 router.delete('/clear-all', (req, res) => {
   try {
-    store.clearAllMessages(req.query.username);
-    res.json({ success: true, message: 'تم تفريغ كافة المراسلات بنجاح' });
+    const { username, box } = req.query;
+    store.clearAllMessages(username, box);
+    res.json({ success: true, message: 'تم تفريغ المراسلات بنجاح' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'خطأ في تفريغ المراسلات' });
   }
@@ -53,7 +55,8 @@ router.delete('/clear-all', (req, res) => {
 // DELETE /api/messages/:id
 router.delete('/:id', (req, res) => {
   try {
-    store.deleteMessage(req.params.id);
+    const { username } = req.query;
+    store.deleteMessage(req.params.id, username);
     res.json({ success: true, message: 'تم حذف المراسلة بنجاح' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'خطأ في حذف الرسالة' });

@@ -126,9 +126,9 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
     if (combinedReportAuthors.includes('صالح') || combinedReportAuthors.includes('حماد') || combinedReportAuthors.includes('الجودة')) return true;
   }
 
-  // م. عبدالرحمن الأنصاري (مدير المشروع)
+  // م. عبدالرحمن الأنصاري (مدير المشروع) - في أرشيفه الخاص يرى فقط التقارير الصادرة عنه شخصياً
   if (username === 'project_manager' || userName.includes('الأنصاري') || userName.includes('عبدالرحمن')) {
-    if (combinedReportAuthors.includes('الأنصاري') || combinedReportAuthors.includes('عبدالرحمن') || repApprovedBy.includes('الأنصاري')) return true;
+    if (combinedReportAuthors.includes('الأنصاري') || combinedReportAuthors.includes('عبدالرحمن') || report.createdByUsername === 'project_manager') return true;
   }
 
   // مسؤول الوقود والمحروقات
@@ -143,3 +143,70 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
 
   return false;
 };
+
+/**
+ * معرفات المراسلات المحذوفة لمستخدم معين (حذف مستقل لكل طرف)
+ */
+export const getUserDeletedMessageIds = (username) => {
+  if (typeof window === 'undefined' || !username) return new Set();
+  try {
+    const key = `user_deleted_messages_${String(username).toLowerCase().trim()}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr.map(String) : []);
+  } catch {
+    return new Set();
+  }
+};
+
+/**
+ * تسجيل حذف مراسلة لمستخدم معين فقط دون التأثير على باقي المستخدمين
+ */
+export const markMessageDeletedForUser = (msgId, username) => {
+  if (typeof window === 'undefined' || !username || !msgId) return;
+  try {
+    const key = `user_deleted_messages_${String(username).toLowerCase().trim()}`;
+    const raw = localStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    const set = new Set(Array.isArray(arr) ? arr.map(String) : []);
+    set.add(String(msgId));
+    localStorage.setItem(key, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.warn('Error saving user deleted message:', e);
+  }
+};
+
+/**
+ * معرفات المراسلات المقروءة لمستخدم معين (قراءة مستقلة للتعاميم)
+ */
+export const getUserReadMessageIds = (username) => {
+  if (typeof window === 'undefined' || !username) return new Set();
+  try {
+    const key = `user_read_messages_${String(username).toLowerCase().trim()}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr.map(String) : []);
+  } catch {
+    return new Set();
+  }
+};
+
+/**
+ * تسجيل قراءة مراسلة لمستخدم معين
+ */
+export const markMessageReadForUser = (msgId, username) => {
+  if (typeof window === 'undefined' || !username || !msgId) return;
+  try {
+    const key = `user_read_messages_${String(username).toLowerCase().trim()}`;
+    const raw = localStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    const set = new Set(Array.isArray(arr) ? arr.map(String) : []);
+    set.add(String(msgId));
+    localStorage.setItem(key, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.warn('Error saving user read message:', e);
+  }
+};
+
