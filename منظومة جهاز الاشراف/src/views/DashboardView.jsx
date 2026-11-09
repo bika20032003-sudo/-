@@ -312,9 +312,6 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
               <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
                 مشروع صيانة وتطوير طريق أوباري - غات (نسبة الإنجاز من الموقف التنفيذي)
               </h3>
-              <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0.2rem 0 0' }}>
-                نسبة الإنجاز المالي العام المعتمدة: <strong>%{metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage}</strong> • إجمالي المنفذ: <strong>{(metrics.executiveProgress?.totalExecutedValue || 638329685.46).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</strong> من <strong>{(metrics.executiveProgress?.contractValue || 897665675.03).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} د.ل</strong> • المسار المنجز: <strong>{(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</strong> من <strong>360.00 كم</strong>
-              </p>
             </div>
           </div>
 

@@ -1514,18 +1514,6 @@ export const ExecutiveProgressForm = ({
               (أعمال منفذة خارج نطاق العقد الأصلي - لا تُضاف لإجمالي العقد ولا تؤثر على نسبة الإنجاز التعاقدية)
             </span>
           </div>
-
-          <span style={{
-            background: '#fef3c7',
-            color: '#b45309',
-            padding: '0.25rem 0.65rem',
-            borderRadius: '6px',
-            fontSize: '0.76rem',
-            fontWeight: 800,
-            border: '1px solid #fde68a'
-          }}>
-            🔒 منفصلة تماماً عن حسابات العقد
-          </span>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -1600,8 +1588,8 @@ export const ExecutiveProgressForm = ({
                 <td style={{ textAlign: 'center', color: '#0369a1', fontSize: '0.95rem', direction: 'ltr' }}>
                   {fmt(calculations.additionalExecutedSum)} د.ل
                 </td>
-                <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.78rem', color: '#b45309' }}>
-                  ⚠️ لا تُجمع مع البنود الأساسية
+                <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.78rem' }}>
+                  —
                 </td>
               </tr>
             </tbody>
