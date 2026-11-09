@@ -13,8 +13,6 @@
    ============================================================== */
 div[style*="bottom: 24px"][style*="left: 24px"],
 div[style*="bottom: 20px"][style*="left: 20px"],
-button[title*="مساعد جهاز الإشراف"],
-button[title*="مساعد مدير المشروع"],
 .ai-agent-floating,
 .ai-floating-widget {
   display: none !important;
@@ -25,6 +23,18 @@ button[title*="مساعد مدير المشروع"],
   width: 0 !important;
   height: 0 !important;
   overflow: hidden !important;
+}
+
+/* Ensure the sidebar button for Project Manager Assistant is always explicitly visible */
+.custom-app-sidebar .nav-btn-link[data-section="ai-agent"],
+.custom-app-sidebar button.nav-btn-ai-agent {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
 }
 
 /* Metrics Grid for Top Cards */

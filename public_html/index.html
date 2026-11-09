@@ -64,6 +64,8 @@
         try {
           var nodes = document.querySelectorAll('div, button');
           nodes.forEach(function(node) {
+            // NEVER touch sidebar elements
+            if (node.closest && (node.closest('.custom-app-sidebar') || node.closest('aside'))) return;
             var st = node.getAttribute('style') || '';
             var txt = node.textContent || '';
             if (
@@ -87,12 +89,12 @@
       margin: 4mm 5mm;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-OxF3bK43-1794244356872.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794244356872.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-UxICdBYS-1794244356872.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794244356872.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-Btiua6pG-1794244356872.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-60IvGK6w-1794244356872.css">
+  <script type="module" crossorigin src="./assets/index-DvujJuYH-1794245327228.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794245327228.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-Pv8fY8ar-1794245327228.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794245327228.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-DDKrpKbP-1794245327228.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-D0zOw6vZ-1794245327228.css">
 </head>
 
 <body>

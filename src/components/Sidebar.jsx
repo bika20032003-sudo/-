@@ -341,7 +341,8 @@ export const Sidebar = ({
                   return (
                     <button 
                       key={item.id} 
-                      className={`nav-btn-link ${isActive ? 'active' : ''} ${isAction ? 'nav-action-link' : ''}`} 
+                      className={`nav-btn-link ${isActive ? 'active' : ''} ${isAction ? 'nav-action-link' : ''} ${item.id === 'ai-agent' ? 'nav-btn-ai-agent' : ''}`} 
+                      data-section={item.id}
                       onClick={() => {
                         setActiveTab(item.id);
                         if (onCloseMobile) onCloseMobile();

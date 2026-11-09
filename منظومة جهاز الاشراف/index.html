@@ -64,6 +64,8 @@
         try {
           var nodes = document.querySelectorAll('div, button');
           nodes.forEach(function(node) {
+            // NEVER touch sidebar elements
+            if (node.closest && (node.closest('.custom-app-sidebar') || node.closest('aside'))) return;
             var st = node.getAttribute('style') || '';
             var txt = node.textContent || '';
             if (
