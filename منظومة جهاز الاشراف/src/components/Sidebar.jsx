@@ -317,6 +317,9 @@ export const Sidebar = ({
                 if (item.id === 'reports-archive') {
                   return true; // الأرشيف الخاص بالمهندس متاح ومفعل دائماً لكافة المستخدمين
                 }
+                if (item.id === 'ai-agent') {
+                  return true; // مساعد مدير المشروع متاح دائماً في القائمة الجانبية بجانب الأقسام
+                }
                 return userAllowedSections.includes(item.id);
               }
               return true;

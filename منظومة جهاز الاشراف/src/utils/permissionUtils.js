@@ -108,6 +108,10 @@ export const migrateLegacyPermissions = () => {
           all[key].push('reports-archive');
           changed = true;
         }
+        if (!all[key].includes('ai-agent')) {
+          all[key].push('ai-agent');
+          changed = true;
+        }
         const lowKey = String(key).toLowerCase();
         if (lowKey.includes('saleh') || lowKey.includes('quality') || lowKey.includes('manager') || lowKey.includes('ansari') || lowKey.includes('admin') || lowKey.includes('dev')) {
           if (!all[key].includes('general-archive')) {

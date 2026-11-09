@@ -74,7 +74,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
           const lowU = (u || '').toLowerCase();
           const n = currentUser?.name;
           const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-          if (Array.isArray(userPerms) && !userPerms.includes(tabId) && tabId !== 'periodic-reports' && tabId !== 'reports-archive') {
+          if (Array.isArray(userPerms) && !userPerms.includes(tabId) && tabId !== 'periodic-reports' && tabId !== 'reports-archive' && tabId !== 'ai-agent') {
             if (tabId === 'general-archive' && canAccessGeneralArchive(currentUser)) {
               // مسموح لمدير المشروع وم. صالح
             } else {
@@ -102,7 +102,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             const lowU = (u || '').toLowerCase();
             const n = currentUser?.name;
             const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-            if (Array.isArray(userPerms) && !userPerms.includes(activeTab) && activeTab !== 'periodic-reports' && activeTab !== 'reports-archive') {
+            if (Array.isArray(userPerms) && !userPerms.includes(activeTab) && activeTab !== 'periodic-reports' && activeTab !== 'reports-archive' && activeTab !== 'ai-agent') {
               if (activeTab === 'general-archive' && canAccessGeneralArchive(currentUser)) {
                 // مسموح
               } else {
