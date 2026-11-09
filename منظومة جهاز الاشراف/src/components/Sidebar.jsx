@@ -163,19 +163,13 @@ export const Sidebar = ({
 
     const roleDisplay = getRoleDisplay();
 
-    // Categorized navigation groups: comprehensive access to all sections for all engineers
+    // Unified navigation for ALL engineers without differentiation:
     const mainItems = [
-      { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home }
-    ];
-    if (isSectorSupervisor) {
-      const sectorLabel = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
-      mainItems.push({ id: 'sector-dashboard', label: `لوحة عمليات (${sectorLabel})`, icon: MapPin });
-    }
-    mainItems.push(
+      { id: 'dashboard', label: 'لوحة القيادة الموحدة', icon: Home },
       { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
       { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
       { id: 'ai-agent', label: 'مساعد مدير المشروع', icon: Briefcase, badge: 'تنفيذي' }
-    );
+    ];
 
     const canAccessGeneral = canAccessGeneralArchive(currentUser);
     const canAccessPeriodic = canAccessPeriodicReports(currentUser);
@@ -307,19 +301,20 @@ export const Sidebar = ({
           {menuGroups.map((group, gIdx) => {
             const visibleItems = group.items.filter(item => {
               if (isDev) return true;
+              // Core unified sections are unconditionally visible to ALL engineers
+              if (item.id === 'dashboard' || item.id === 'road-progress' || item.id === 'executive-progress' || item.id === 'ai-agent') {
+                return true;
+              }
+              if (item.id === 'reports-archive') {
+                return true; // الأرشيف الخاص بالمهندس متاح ومفعل دائماً لكافة المستخدمين
+              }
+              if (item.id === 'periodic-reports') {
+                return Array.isArray(userAllowedSections) ? (userAllowedSections.includes('periodic-reports') || canAccessPeriodicReports(currentUser)) : true;
+              }
+              if (item.id === 'general-archive') {
+                return canAccessGeneralArchive(currentUser);
+              }
               if (Array.isArray(userAllowedSections)) {
-                if (item.id === 'periodic-reports') {
-                  return userAllowedSections.includes('periodic-reports') || canAccessPeriodicReports(currentUser);
-                }
-                if (item.id === 'general-archive') {
-                  return canAccessGeneralArchive(currentUser);
-                }
-                if (item.id === 'reports-archive') {
-                  return true; // الأرشيف الخاص بالمهندس متاح ومفعل دائماً لكافة المستخدمين
-                }
-                if (item.id === 'ai-agent') {
-                  return true; // مساعد مدير المشروع متاح دائماً في القائمة الجانبية بجانب الأقسام
-                }
                 return userAllowedSections.includes(item.id);
               }
               return true;

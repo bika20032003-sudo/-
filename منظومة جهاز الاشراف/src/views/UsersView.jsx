@@ -1,8 +1,7 @@
 
 // System Sections Definition for Permission Control
 export const ALL_SYSTEM_SECTIONS = [
-  { id: 'dashboard', label: 'لوحة القيادة الموحدة', desc: 'مؤشرات الإنجاز التنفيذي العام والمخططات البيانية' },
-  { id: 'sector-dashboard', label: 'لوحة متابعة القطاع الميداني', desc: 'متابعة القطاع الفعلي والإنتاج والوقود الميداني' },
+  { id: 'dashboard', label: 'لوحة القيادة الموحدة (الافتراضية الموحدة لكافة المهندسين)', desc: 'مؤشرات الإنجاز التنفيذي العام والمخططات البيانية' },
   { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', desc: 'تفاصيل طبقات الرصف ومسافات المحطات الميدانية' },
   { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', desc: 'الموقف المالي وجداول الكميات والأسعار المعتمدة' },
   { id: 'create-report', label: 'إنشاء تقرير جديد', desc: 'إدخال التقارير اليومية ومحاضر الميدان' },
@@ -106,11 +105,11 @@ export const UsersView = ({ currentUser }) => {
       if (uRole.includes('مدير المشروع')) {
         setSelectedUserSections(ALL_SYSTEM_SECTIONS.map(s => s.id));
       } else if (uRole.includes('مشرف') || uRole.includes('المرحلة')) {
-        setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages', 'ai-agent']);
       } else if (uRole.includes('جودة')) {
-        setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'periodic-reports', 'targeted-works', 'upload-reports', 'general-archive', 'reports-archive', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'upload-reports', 'general-archive', 'reports-archive', 'messages', 'ai-agent']);
       } else {
-        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages']);
+        setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages', 'ai-agent']);
       }
     }
     setIsPermissionsModalOpen(true);
@@ -1475,7 +1474,7 @@ export const UsersView = ({ currentUser }) => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedUserSections(['dashboard', 'sector-dashboard', 'road-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages'])}
+                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages', 'ai-agent'])}
                     style={{
                       background: '#f0fdf4',
                       color: '#16a34a',

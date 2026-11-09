@@ -3,7 +3,6 @@ import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
 
 import { DashboardView } from './DashboardView';
-import { SectorDashboardView } from './SectorDashboardView';
 import { UploadReportsView } from './UploadReportsView';
 import { RoadProgressView } from './RoadProgressView';
 import { EquipmentView } from './EquipmentView';
@@ -24,28 +23,14 @@ import { AIAgentView } from './AIAgentView';
 import { canAccessGeneralArchive, canAccessPeriodicReports, migrateLegacyPermissions } from '../utils/permissionUtils.js';
 
 /**
- * Determine default dashboard based on supervision role
+ * Unified landing dashboard for ALL engineers without differentiation
  */
-function getDefaultTabForUser(user) {
-    if (!user) return 'dashboard';
-    const role = user.role || '';
-    const username = user.username || '';
-
-    // Sector supervisors default to their dedicated sector dashboard
-    const isSectorSupervisor = (role.includes('مشرف') || role.includes('القطاع') || username === 'salah_alarabi' || username === 'issa_altahir') && 
-                               !role.includes('مدير المشروع') && 
-                               !role.includes('رئيس جهاز الإشراف') && 
-                               !role.includes('الجودة');
-
-    if (isSectorSupervisor) {
-        return 'sector-dashboard';
-    }
+function getDefaultTabForUser() {
     return 'dashboard';
 }
 
 export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
-    const defaultTab = getDefaultTabForUser(currentUser);
-    const [activeTab, setActiveTab] = useState(defaultTab);
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     useEffect(() => {
       const handleResetTab = () => {
@@ -64,36 +49,47 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
       migrateLegacyPermissions();
     }, []);
 
+    const coreAlwaysAllowedTabs = ['dashboard', 'road-progress', 'executive-progress', 'ai-agent', 'reports-archive', 'periodic-reports'];
+
     const handleTabChange = (tabId) => {
       setIsMobileSidebarOpen(false);
+      const targetTab = tabId === 'sector-dashboard' ? 'dashboard' : tabId;
       const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
-      if (!isDev && typeof window !== 'undefined') {
+      
+      if (!isDev && typeof window !== 'undefined' && !coreAlwaysAllowedTabs.includes(targetTab)) {
         try {
           const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
           const u = currentUser?.username;
           const lowU = (u || '').toLowerCase();
           const n = currentUser?.name;
           const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-          if (Array.isArray(userPerms) && !userPerms.includes(tabId) && tabId !== 'periodic-reports' && tabId !== 'reports-archive' && tabId !== 'ai-agent') {
-            if (tabId === 'general-archive' && canAccessGeneralArchive(currentUser)) {
+          if (Array.isArray(userPerms) && !userPerms.includes(targetTab)) {
+            if (targetTab === 'general-archive' && canAccessGeneralArchive(currentUser)) {
               // مسموح لمدير المشروع وم. صالح
             } else {
-              console.warn(`User ${currentUser?.username} is not permitted to access section: ${tabId}`);
+              console.warn(`User ${currentUser?.username} is not permitted to access section: ${targetTab}`);
               return;
             }
           }
         } catch (e) {}
       }
-      setActiveTab(tabId);
+      setActiveTab(targetTab);
     };
 
     // Auto redirect if currently loaded tab is not allowed
     useEffect(() => {
       const checkAndEnforcePermissions = () => {
+        if (activeTab === 'sector-dashboard') {
+          setActiveTab('dashboard');
+          return;
+        }
         const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
         if (!isDev && typeof window !== 'undefined') {
           if (activeTab === 'general-archive' && !canAccessGeneralArchive(currentUser)) {
             setActiveTab('reports-archive');
+            return;
+          }
+          if (coreAlwaysAllowedTabs.includes(activeTab)) {
             return;
           }
           try {
@@ -102,12 +98,8 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             const lowU = (u || '').toLowerCase();
             const n = currentUser?.name;
             const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
-            if (Array.isArray(userPerms) && !userPerms.includes(activeTab) && activeTab !== 'periodic-reports' && activeTab !== 'reports-archive' && activeTab !== 'ai-agent') {
-              if (activeTab === 'general-archive' && canAccessGeneralArchive(currentUser)) {
-                // مسموح
-              } else {
-                setActiveTab(userPerms[0] || 'dashboard');
-              }
+            if (Array.isArray(userPerms) && !userPerms.includes(activeTab)) {
+              setActiveTab('dashboard');
             }
           } catch (e) {}
         }
@@ -168,13 +160,8 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
           />
 
           <main className="custom-page-container">
-            {/* 1. General Dashboard */}
-            {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange} currentUser={currentUser} />}
-
-            {/* 2. Sector-Specific Dashboard (مهندس مشرف: م. صلاح العربي أو م. عيسى الطاهر) */}
-            {activeTab === 'sector-dashboard' && (
-              <SectorDashboardView currentUser={currentUser} />
-            )}
+            {/* 1. General Unified Dashboard for ALL Engineers */}
+            {(activeTab === 'dashboard' || activeTab === 'sector-dashboard') && <DashboardView onNavigateTab={handleTabChange} currentUser={currentUser} />}
 
             {/* 3. Dedicated Create Report Section */}
             {activeTab === 'create-report' && (

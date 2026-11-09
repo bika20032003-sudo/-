@@ -100,17 +100,18 @@ export const migrateLegacyPermissions = () => {
     let changed = false;
     for (const key of Object.keys(all)) {
       if (Array.isArray(all[key])) {
-        if (!all[key].includes('periodic-reports')) {
-          all[key].push('periodic-reports');
+        // Remove sector-dashboard completely
+        if (all[key].includes('sector-dashboard')) {
+          all[key] = all[key].filter(s => s !== 'sector-dashboard');
           changed = true;
         }
-        if (!all[key].includes('reports-archive')) {
-          all[key].push('reports-archive');
-          changed = true;
-        }
-        if (!all[key].includes('ai-agent')) {
-          all[key].push('ai-agent');
-          changed = true;
+        // Ensure all core sections are unconditionally present for EVERY engineer
+        const core = ['dashboard', 'road-progress', 'executive-progress', 'ai-agent', 'periodic-reports', 'reports-archive'];
+        for (const c of core) {
+          if (!all[key].includes(c)) {
+            all[key].push(c);
+            changed = true;
+          }
         }
         const lowKey = String(key).toLowerCase();
         if (lowKey.includes('saleh') || lowKey.includes('quality') || lowKey.includes('manager') || lowKey.includes('ansari') || lowKey.includes('admin') || lowKey.includes('dev')) {
