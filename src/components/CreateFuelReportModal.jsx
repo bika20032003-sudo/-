@@ -4,8 +4,9 @@ import {
   FileSpreadsheet, AlertCircle, RefreshCw, Layers, Calendar
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { fastFetch } from '../utils/apiCache.js';
+import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 
 export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCreated, onPrintReport, onNavigateTab }) => {
   if (!isOpen) return null;
@@ -205,35 +206,9 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
         };
       }
 
-      // 1. Persist in localStorage under local_reports
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r &&
-          String(r.id) !== String(saved.id) && 
-          r.reportNumber !== saved.reportNumber &&
-          !(r.isFuelReport && (r.dateFormatted || r.reportDate || r.date) === (saved.dateFormatted || saved.reportDate || saved.date) && r.sector === saved.sector)
-        );
-        filtered.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-
-        // Ensure unblocked from deleted_report_ids
-        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
-        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
-        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
-      } catch (e) {
-        console.error(e);
-      }
-
-      // 2. Clear API Cache and notify other views
-      try {
-        clearApiCache();
-      } catch (cErr) {}
-
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
-      } catch (e) {}
+      // Universal authoritative persistence
+      const savedEnriched = await persistReportUniversal(saved, currentUser);
+      saved = savedEnriched || saved;
 
       setCreatedReport(saved);
       if (onReportCreated) onReportCreated(saved);

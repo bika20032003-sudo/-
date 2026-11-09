@@ -332,9 +332,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
     // 2. Status filter
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
 
-    // 3. Two-Phase report visibility restriction: Only Project Manager and M. Saleh
+    // 3. Two-Phase report visibility restriction (General Archive restricts to PM & Saleh, but creator always sees their own report)
     if (!canAccessTwoPhaseReport(currentUser)) {
-      if (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين' || r.reportCategory === 'two_phase' || r.title?.includes('المرحلتين')) {
+      const isCreatorOrOwner = isReportOwnedByEngineer(r, currentUser);
+      if (!isCreatorOrOwner && (r.isTwoPhaseProgressReport || r.reportType === 'تقرير إنجاز المرحلتين' || r.reportCategory === 'two_phase' || r.title?.includes('المرحلتين'))) {
         return false;
       }
     }

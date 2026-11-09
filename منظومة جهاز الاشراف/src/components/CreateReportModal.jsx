@@ -7,6 +7,7 @@ import {
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 import { calculateStationLength } from '../utils/engineeringFormulas.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 
 // Safe number parsing
 const cleanNum = (val) => {
@@ -373,37 +374,9 @@ export const CreateReportModal = ({
         };
       }
 
-      // 1. Direct save into localStorage under local_reports
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r &&
-          String(r.id) !== String(saved.id) && 
-          r.reportNumber !== saved.reportNumber &&
-          !(r.reportType === saved.reportType && (r.dateFormatted || r.reportDate || r.date) === (saved.dateFormatted || saved.reportDate || saved.date) && r.sector === saved.sector)
-        );
-        filtered.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-
-        // Ensure newly saved report is unblocked if previously marked deleted
-        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
-        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
-        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
-      } catch (e) {
-        console.error(e);
-      }
-
-      // 2. Clear client API cache
-      try {
-        clearApiCache();
-      } catch (cErr) {}
-
-      // 3. Notify other views & archives
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
-      } catch (evErr) {}
+      // Universal authoritative persistence
+      const savedEnriched = await persistReportUniversal(saved, currentUser);
+      saved = savedEnriched || saved;
 
       // 4. If sendAfter (Forward to mail), create and dispatch message too
       if (sendAfter) {

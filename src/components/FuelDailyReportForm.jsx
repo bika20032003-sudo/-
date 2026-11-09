@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
 
 // Clean text and force standard regular Latin digits (0-9)
@@ -406,11 +407,15 @@ export const FuelDailyReportForm = ({
       // 1. Prepare full printable report object
       const printableObj = {
         ...getFullPrintableReport(),
-        id: Date.now(),
+        id: reportData.id || ('fuel-daily-' + (reportData.reportDate || Date.now())),
         fuelAmount: calculatedTotals.totalDispatched,
         totalDispatchedLiters: calculatedTotals.totalDispatched,
         totalReceivedLiters: calculatedTotals.totalReceived,
         totalRemainingLiters: calculatedTotals.totalRemaining,
+        isFuelReport: true,
+        reportType: 'تقرير كميات الوقود اليومية',
+        reportCategory: 'fuel',
+        status: 'approved',
         createdByUsername: currentUser?.username || 'fuel_officer',
         authorUsername: currentUser?.username || 'fuel_officer',
         createdByName: currentUser?.name || reportData.supervisorName,
@@ -421,54 +426,21 @@ export const FuelDailyReportForm = ({
         createdAt: new Date().toISOString()
       };
 
-      // 2. Save directly into localStorage under local_reports with strict deduplication
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r && 
-          r.reportNumber !== printableObj.reportNumber &&
-          String(r.id) !== String(printableObj.id) &&
-          !(r.isFuelReport && (r.dateFormatted || r.reportDate || r.date) === (printableObj.dateFormatted || printableObj.reportDate || printableObj.date) && r.sector === printableObj.sector)
-        );
-        filtered.unshift(printableObj);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-      } catch (storageErr) {
-        console.error('Error saving to local_reports:', storageErr);
-      }
+      // 2. Universal authoritative persistence
+      const saved = await persistReportUniversal(printableObj, currentUser);
 
       // 3. Save into dedicated fuel_daily_report_data
       localStorage.setItem('fuel_daily_report_data', JSON.stringify(payload));
 
-      // 4. Fire-and-forget sync to backend without blocking
-      try {
-        fetch('/api/fuel-daily-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-
-        fetch('/api/reports/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(printableObj)
-        }).catch(() => {});
-      } catch (e) {}
-
-      // 5. Invalidate caches and dispatch reactive events
-      clearApiCache();
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: printableObj }));
-        window.dispatchEvent(new CustomEvent('fuel-updated', { detail: printableObj }));
-      } catch (e) {}
-
-      setCreatedReportForForward(printableObj);
+      setCreatedReportForForward(saved || printableObj);
       setStatusMessage({
         type: 'success',
-        text: `تم حفظ التقرير المعتمد برقم (${printableObj.reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!`
+        text: `تم حفظ التقرير المعتمد برقم (${(saved || printableObj).reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!`
       });
 
-      if (onSaved) onSaved(printableObj);
+      if (onSaved) onSaved(saved || printableObj);
     } catch (e) {
+      console.error(e);
       setStatusMessage({
         type: 'error',
         text: 'حدث خطأ أثناء حفظ التقرير: ' + (e.message || 'خطأ اتصال')

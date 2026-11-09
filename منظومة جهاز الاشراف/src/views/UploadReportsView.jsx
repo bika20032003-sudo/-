@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport } from '../utils/apiCache.js';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 
 export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport }) => {
   // Days of week helper
@@ -541,30 +542,9 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
         };
       }
 
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r && 
-          String(r.id) !== String(saved.id) && 
-          String(r.reportNumber) !== String(saved.reportNumber) &&
-          !(r.reportType === saved.reportType && (r.dateFormatted || r.date) === (saved.dateFormatted || saved.date) && r.sector === saved.sector)
-        );
-        filtered.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-      } catch (storageErr) {}
-
-      // Clear client API cache completely so Dashboard immediately gets fresh data
-      try {
-        clearApiCache();
-      } catch (cacheErr) {}
-
-      // Instantly notify Dashboard and other views
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
-      } catch (evtErr) {
-        console.warn('Event dispatch error:', evtErr);
-      }
+      // Universal authoritative persistence
+      const savedEnriched = await persistReportUniversal(saved, currentUser);
+      saved = savedEnriched || saved;
 
       clearInterval(progressTimer);
       setUploadProgress(100);

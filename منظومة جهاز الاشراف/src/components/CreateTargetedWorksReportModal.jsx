@@ -9,6 +9,7 @@ import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { saveReportToIndexedDB } from '../utils/secureDatabase.js';
 import { calculateStationLength } from '../utils/engineeringFormulas.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 
 // Approved Targeted Works Data from official document (Sunday 25/10/2026)
 export const initialTargetedWorksSections = [
@@ -548,50 +549,12 @@ export const CreateTargetedWorksReportModal = ({
     };
 
     try {
-      const saved = (reportToEdit && reportToEdit.id)
+      const initialSaved = (reportToEdit && reportToEdit.id)
         ? { ...reportPayload, id: reportToEdit.id, updatedAt: new Date().toISOString() }
         : { ...reportPayload, id: 'target-rep-' + Date.now(), createdAt: new Date().toISOString() };
 
-      // 1. Direct save into localStorage under local_reports
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r &&
-          String(r.id) !== String(saved.id) && 
-          r.reportNumber !== saved.reportNumber &&
-          !(r.isTargetedWorksReport && (r.dateFormatted || r.reportDate || r.date) === (saved.dateFormatted || saved.reportDate || saved.date) && r.sector === saved.sector)
-        );
-        filtered.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-
-        // Ensure newly saved report is unblocked if previously marked deleted
-        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
-        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
-        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
-      } catch (storageErr) {
-        console.error('Error saving targeted report to local_reports:', storageErr);
-      }
-
-      // 1.1 Persist into IndexedDB
-      try {
-        await saveReportToIndexedDB(saved);
-      } catch (idbErr) {}
-
-      // 2. Clear API cache and dispatch reactive events
-      clearApiCache();
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
-      } catch (e) {}
-
-      // 3. Fire-and-forget sync to backend
-      try {
-        fetch('/api/reports/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(saved)
-        }).catch(() => {});
-      } catch (e) {}
+      const savedEnriched = await persistReportUniversal(initialSaved, currentUser);
+      const saved = savedEnriched || initialSaved;
 
       setCreatedReport(saved);
 

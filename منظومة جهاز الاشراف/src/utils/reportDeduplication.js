@@ -129,8 +129,20 @@ export function deduplicateReportsList(reportsList) {
       const timeNew = new Date(report.updatedAt || report.createdAt || report.date || 0).getTime() || 0;
       const timeOld = new Date(existing.updatedAt || existing.createdAt || existing.date || 0).getTime() || 0;
 
-      const scoreNew = (report.items?.length || 0) + (report.combinedItems?.length || 0) + (report.status === 'approved' ? 20 : 0) + (report.reportNumber ? 5 : 0) + (timeNew >= timeOld ? 2 : 0);
-      const scoreOld = (existing.items?.length || 0) + (existing.combinedItems?.length || 0) + (existing.status === 'approved' ? 20 : 0) + (existing.reportNumber ? 5 : 0);
+      const scoreNew = (report.items?.length || 0) + 
+        (report.combinedItems?.length || 0) + 
+        (report.fuelItems?.length || 0) + 
+        (report.targetedSections?.length || 0) + 
+        (report.status === 'approved' ? 20 : 0) + 
+        (report.reportNumber ? 5 : 0) + 
+        (timeNew >= timeOld ? 50 : 0);
+
+      const scoreOld = (existing.items?.length || 0) + 
+        (existing.combinedItems?.length || 0) + 
+        (existing.fuelItems?.length || 0) + 
+        (existing.targetedSections?.length || 0) + 
+        (existing.status === 'approved' ? 20 : 0) + 
+        (existing.reportNumber ? 5 : 0);
 
       const winner = scoreNew >= scoreOld ? { ...existing, ...report } : { ...report, ...existing };
 
@@ -161,18 +173,33 @@ export function deduplicateReportsList(reportsList) {
 }
 
 /**
- * Sanitizes and deduplicates localStorage['local_reports'] in place
+ * Sanitizes and deduplicates localStorage['local_reports'] in place.
+ * Also pulls in any section-specific report data (two_phase, road, fuel, targeted)
+ * that may have been saved directly to its section key.
  */
 export function sanitizeLocalReportsStorage() {
   if (typeof window === 'undefined' || !window.localStorage) return [];
   try {
     const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
     const raw = localStorage.getItem('local_reports');
-    if (!raw) return [];
-    let parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    let parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) parsed = [];
+
+    // Pull in section-specific saved reports if available
+    const sectionKeys = ['two_phase_report_data', 'road_daily_report_data', 'fuel_daily_report_data', 'targeted_works_report_data'];
+    sectionKeys.forEach(secKey => {
+      try {
+        const secRaw = localStorage.getItem(secKey);
+        if (secRaw) {
+          const secObj = JSON.parse(secRaw);
+          if (secObj && (secObj.id || secObj.reportNumber)) {
+            parsed.push(secObj);
+          }
+        }
+      } catch (_) {}
+    });
     
-    // Filter deleted
+    // Filter out deleted reports
     parsed = parsed.filter(r => r && !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
     
     const clean = deduplicateReportsList(parsed);

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { calculateStationLength, calculateDefaultArea, calculateRowDimensions } from '../utils/engineeringFormulas.js';
 import { TwoPhaseDailyReportForm } from '../components/TwoPhaseDailyReportForm';
@@ -629,37 +630,9 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
         };
       }
 
-      // 1. Direct save into localStorage under local_reports
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r &&
-          String(r.id) !== String(saved.id) && 
-          r.reportNumber !== saved.reportNumber &&
-          !(r.reportType === saved.reportType && (r.dateFormatted || r.reportDate || r.date) === (saved.dateFormatted || saved.reportDate || saved.date) && r.sector === saved.sector)
-        );
-        filtered.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-
-        // Ensure newly saved report is unblocked if previously marked deleted
-        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
-        const updatedDeleted = deleted.filter(id => id !== String(saved.id) && id !== String(saved.reportNumber));
-        localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
-      } catch (e) {
-        console.error(e);
-      }
-
-      // 2. Clear client API cache completely so Dashboard and sections immediately get fresh data
-      try {
-        clearApiCache();
-      } catch (cacheErr) {}
-
-      // 3. Instantly notify Dashboard, Archive, and all views
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('fuel-updated', { detail: saved }));
-      } catch (evtErr) {}
+      // Universal authoritative persistence
+      const savedEnriched = await persistReportUniversal(saved, currentUser);
+      saved = savedEnriched || saved;
 
       setCreatedReport(saved);
 

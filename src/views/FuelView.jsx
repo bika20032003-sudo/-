@@ -6,6 +6,7 @@ import {
   MapPin, ShieldCheck, Edit3
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { fastFetch } from '../utils/apiCache.js';
 import { CreateFuelReportModal } from '../components/CreateFuelReportModal';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { FuelDailyReportForm } from '../components/FuelDailyReportForm';
@@ -34,19 +35,30 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
   const fetchFuelReports = async () => {
     setIsLoading(true);
     try {
+      let deletedIds = [];
+      try {
+        deletedIds = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String);
+      } catch (_) {}
+
       let remoteReports = [];
       try {
-        const response = await fetch('/api/reports');
-        const data = await response.json();
+        const data = await fastFetch('/api/reports');
         remoteReports = data?.reports || (Array.isArray(data) ? data : []);
       } catch (err) {
         console.warn('Backend API unavailable, using local storage:', err);
       }
 
-      // Also read locally cached reports
+      // Also read locally cached reports and section data
       let localReports = [];
       try {
         localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const sectionFuelRaw = localStorage.getItem('fuel_daily_report_data');
+        if (sectionFuelRaw) {
+          const secFuel = JSON.parse(sectionFuelRaw);
+          if (secFuel && (secFuel.fuelItems || secFuel.reportNumber)) {
+            localReports.push(secFuel);
+          }
+        }
       } catch (e) {
         console.error(e);
       }
@@ -55,8 +67,16 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
       const all = [...remoteReports, ...localReports];
       const uniqueMap = new Map();
       all.forEach(r => {
-        if (r && r.id && !uniqueMap.has(String(r.id))) {
-          uniqueMap.set(String(r.id), r);
+        if (r && (r.id || r.reportNumber)) {
+          const rId = String(r.id || '');
+          const rNum = String(r.reportNumber || '');
+          if (deletedIds.includes(rId) || (rNum && deletedIds.includes(rNum))) {
+            return;
+          }
+          const key = rNum || rId;
+          if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, r);
+          }
         }
       });
 
@@ -359,7 +379,10 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
       {activeViewMode === 'form' ? (
         <FuelDailyReportForm 
           currentUser={currentUser}
-          onSaved={fetchFuelReports}
+          onSaved={() => {
+            fetchFuelReports();
+            setActiveViewMode('dashboard');
+          }}
           onPrintReport={(rep) => setSelectedReportForPrint(rep)}
           onNavigateTab={onNavigateTab}
         />

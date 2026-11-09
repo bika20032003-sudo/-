@@ -186,7 +186,7 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
   // م. صلاح العربي (مشرف المرحلة الأولى - 226 كم)
   if (username === 'salah_alarabi' || userName.includes('صلاح')) {
     if (combinedReportAuthors.includes('صلاح') || combinedReportAuthors.includes('العربي')) return true;
-    if (!report.isFuelReport && !report.isTwoPhaseProgressReport && (repSector.includes('الأولى') || repSector.includes('الاولى') || repPhase.includes('الأولى') || repPhase.includes('الاولى'))) {
+    if (repSector.includes('الأولى') || repSector.includes('الاولى') || repPhase.includes('الأولى') || repPhase.includes('الاولى') || repSector.includes('أوباري') || repSector.includes('مشترك')) {
       return true;
     }
   }
@@ -194,7 +194,7 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
   // م. عيسى الطاهر (مشرف المرحلة الثانية - 134 كم)
   if (username === 'issa_altahir' || userName.includes('عيسى')) {
     if (combinedReportAuthors.includes('عيسى') || combinedReportAuthors.includes('الطاهر')) return true;
-    if (!report.isFuelReport && !report.isTwoPhaseProgressReport && (repSector.includes('الثانية') || repSector.includes('التانية') || repPhase.includes('الثانية') || repPhase.includes('التانية'))) {
+    if (repSector.includes('الثانية') || repSector.includes('التانية') || repPhase.includes('الثانية') || repPhase.includes('التانية') || repSector.includes('مشترك')) {
       return true;
     }
   }

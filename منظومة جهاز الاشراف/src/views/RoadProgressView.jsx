@@ -25,6 +25,11 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
 
     const fetchProgressReports = async () => {
         try {
+            let deletedIds = [];
+            try {
+              deletedIds = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String);
+            } catch (_) {}
+
             let remoteReports = [];
             try {
               const data = await fastFetch('/api/reports');
@@ -34,19 +39,42 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
             let localReports = [];
             try {
               localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
+              const roadRaw = localStorage.getItem('road_daily_report_data');
+              if (roadRaw) {
+                const parsedRoad = JSON.parse(roadRaw);
+                if (parsedRoad && (parsedRoad.items || parsedRoad.reportNumber)) {
+                  localReports.push(parsedRoad);
+                }
+              }
+              const tpRaw = localStorage.getItem('two_phase_report_data');
+              if (tpRaw) {
+                const parsedTp = JSON.parse(tpRaw);
+                if (parsedTp && (parsedTp.phase1Items || parsedTp.reportNumber)) {
+                  localReports.push(parsedTp);
+                }
+              }
             } catch (e) {}
 
             const all = [...remoteReports, ...localReports];
             const uniqueMap = new Map();
             all.forEach(r => {
-              if (r && r.id && !uniqueMap.has(String(r.id))) {
-                uniqueMap.set(String(r.id), r);
+              if (r && (r.id || r.reportNumber)) {
+                const rId = String(r.id || '');
+                const rNum = String(r.reportNumber || '');
+                if (deletedIds.includes(rId) || (rNum && deletedIds.includes(rNum))) {
+                  return;
+                }
+                const key = rNum || rId;
+                if (!uniqueMap.has(key)) {
+                  uniqueMap.set(key, r);
+                }
               }
             });
             const uniqueList = Array.from(uniqueMap.values());
 
             const filtered = uniqueList.filter(r => 
                 r.isTwoPhaseProgressReport || 
+                r.isRoadProgressReport ||
                 r.reportType === 'تقرير إنجاز المرحلتين' ||
                 r.reportType === 'تقرير أعمال الطريق اليومي' ||
                 r.reportType === 'تقرير أعمال الطريق اليومية' ||
@@ -270,7 +298,11 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
       {activeViewMode === 'form' ? (
         <RoadDailyReportForm 
           currentUser={currentUser}
-          onSaved={fetchProgressReports}
+          onSaved={() => {
+            fetchProgressReports();
+            fetchRoadProgress();
+            setActiveViewMode('matrix');
+          }}
           onPrintReport={(rep) => setSelectedReportForPrint(rep)}
           onNavigateTab={onNavigateTab}
         />

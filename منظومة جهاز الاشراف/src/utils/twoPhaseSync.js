@@ -183,8 +183,18 @@ export function saveStoredTwoPhaseReport(report) {
       saveReportToIndexedDB(enriched);
     } catch (_) {}
 
+    // Unblock from deleted_report_ids
+    try {
+      const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+      const updatedDeleted = deleted.filter(id => String(id) !== String(enriched.id) && String(id) !== String(enriched.reportNumber));
+      localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
+    } catch (_) {}
+
     // Dispatch custom events for real-time reactive sync across all open views
     window.dispatchEvent(new CustomEvent('report-saved', { detail: enriched }));
+    window.dispatchEvent(new CustomEvent('report-updated', { detail: enriched }));
+    window.dispatchEvent(new CustomEvent('reports-updated', { detail: enriched }));
+    window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: enriched }));
     window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: enriched }));
     return enriched;
   } catch (e) {

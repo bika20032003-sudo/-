@@ -280,10 +280,7 @@ export function getFallbackData(url) {
       }
     } catch {}
     if (localData && typeof localData === 'object' && Array.isArray(localData.fuelItems) && localData.fuelItems.length > 0) {
-      const hasData = localData.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
-      if (hasData && localData.fuelItems.length >= 3) {
-        return { success: true, data: localData };
-      }
+      return { success: true, data: localData };
     }
     return { success: true, data: OFFICIAL_BASELINE_FUEL_REPORT };
   }
@@ -930,7 +927,7 @@ export async function fastFetch(rawUrl, options = {}) {
   if (isGitHubPages && !apiBase) {
     const method = (options.method || 'GET').toUpperCase();
     if (method !== 'GET') {
-            if (url.includes('/api/two-phase-report')) {
+      if (url.includes('/api/two-phase-report')) {
         try {
           if (options.body) {
             const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
@@ -940,6 +937,59 @@ export async function fastFetch(rawUrl, options = {}) {
         } catch (e) {
           console.error('Error saving two-phase report in fastFetch:', e);
         }
+      }
+      if (url.includes('/api/reports/create') || (url.includes('/api/reports') && method === 'POST')) {
+        try {
+          if (options.body) {
+            const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+            const enriched = {
+              ...parsed,
+              id: parsed.id || `rep-${Date.now()}`,
+              createdAt: parsed.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            if (typeof window !== 'undefined' && window.localStorage) {
+              const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+              const filtered = local.filter(r => 
+                r && 
+                String(r.id) !== String(enriched.id) && 
+                String(r.reportNumber) !== String(enriched.reportNumber)
+              );
+              filtered.unshift(enriched);
+              localStorage.setItem('local_reports', JSON.stringify(deduplicateReportsList(filtered)));
+
+              const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+              const updatedDeleted = deleted.filter(id => String(id) !== String(enriched.id) && String(id) !== String(enriched.reportNumber));
+              localStorage.setItem('deleted_report_ids', JSON.stringify(updatedDeleted));
+            }
+            try { saveReportToIndexedDB(enriched); } catch (_) {}
+            return { success: true, message: 'Saved report locally', report: enriched };
+          }
+        } catch (e) {
+          console.error('Error saving report in fastFetch:', e);
+        }
+      }
+      if (url.includes('/api/road-daily-report')) {
+        try {
+          if (options.body) {
+            const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+            if (typeof window !== 'undefined' && window.localStorage) {
+              localStorage.setItem('road_daily_report_data', JSON.stringify(parsed));
+            }
+            return { success: true, message: 'Saved road report locally', report: parsed };
+          }
+        } catch (e) {}
+      }
+      if (url.includes('/api/fuel-daily-report')) {
+        try {
+          if (options.body) {
+            const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+            if (typeof window !== 'undefined' && window.localStorage) {
+              localStorage.setItem('fuel_daily_report_data', JSON.stringify(parsed));
+            }
+            return { success: true, message: 'Saved fuel report locally', report: parsed };
+          }
+        } catch (e) {}
       }
       if (url.includes('/api/road-progress/update-daily')) {
         try {

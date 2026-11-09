@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { calculateReadyToWorkPipeline, calculateRemainingItems } from '../utils/engineeringFormulas.js';
 
@@ -482,34 +483,11 @@ export const TwoPhaseDailyReportForm = ({
     };
 
     try {
-      // 1. Single Authoritative save with built-in deduplication
-      const saved = saveStoredTwoPhaseReport(reportPayload) || { ...reportPayload, id: Date.now() };
-
-      // 2. Notify backend if active (single endpoint sync - avoids saving twice in archive)
-      try {
-        await fastFetch('/api/two-phase-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(saved)
-        });
-      } catch (tpErr) {
-        console.warn('Backend sync /api/two-phase-report:', tpErr);
-      }
+      // 1. Universal authoritative persistence (local_reports, two_phase_report_data, IndexedDB, deleted unblock)
+      const saved = await persistReportUniversal(reportPayload, currentUser) || saveStoredTwoPhaseReport(reportPayload) || { ...reportPayload, id: Date.now() };
 
       setCreatedReport(saved);
       if (onReportSaved) onReportSaved(saved);
-
-      try {
-        clearApiCache();
-      } catch (cacheErr) {}
-
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: saved }));
-        window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: saved }));
-      } catch (evtErr) {
-        console.warn('Event dispatch error:', evtErr);
-      }
 
       setStatusMessage({ 
         type: 'success', 

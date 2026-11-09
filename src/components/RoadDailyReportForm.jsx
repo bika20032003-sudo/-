@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
 import { calculateStationLength, calculateDefaultArea } from '../utils/engineeringFormulas.js';
 
@@ -572,8 +573,12 @@ export const RoadDailyReportForm = ({
       // 1. Prepare full printable report object
       const printableObj = {
         ...getFullPrintableReport(),
-        id: Date.now(),
+        id: reportData.id || ('road-daily-' + (reportData.reportDate || Date.now())),
         itemSummaries: calculatedTotals.itemSummaries,
+        isRoadProgressReport: true,
+        reportType: 'تقرير أعمال الطريق اليومي',
+        reportCategory: 'road',
+        status: 'approved',
         createdByUsername: currentUser?.username,
         authorUsername: currentUser?.username,
         createdByName: currentUser?.name || reportData.sectorDirector,
@@ -583,54 +588,21 @@ export const RoadDailyReportForm = ({
         createdAt: new Date().toISOString()
       };
 
-      // 2. Save directly into localStorage under local_reports with strict deduplication
-      try {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => 
-          r && 
-          r.reportNumber !== printableObj.reportNumber &&
-          String(r.id) !== String(printableObj.id) &&
-          !(r.reportType === printableObj.reportType && (r.dateFormatted || r.reportDate || r.date) === (printableObj.dateFormatted || printableObj.reportDate || printableObj.date) && r.sector === printableObj.sector)
-        );
-        filtered.unshift(printableObj);
-        localStorage.setItem('local_reports', JSON.stringify(filtered));
-      } catch (storageErr) {
-        console.error('Error saving to local_reports:', storageErr);
-      }
+      // 2. Universal authoritative persistence
+      const saved = await persistReportUniversal(printableObj, currentUser);
 
       // 3. Save into dedicated road_daily_report_data
       localStorage.setItem('road_daily_report_data', JSON.stringify(payload));
 
-      // 4. Fire-and-forget sync to backend without blocking
-      try {
-        fetch('/api/road-daily-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-
-        fetch('/api/reports/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(printableObj)
-        }).catch(() => {});
-      } catch (e) {}
-
-      // 5. Invalidate caches and dispatch reactive events
-      clearApiCache();
-      try {
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: printableObj }));
-        window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: printableObj }));
-      } catch (e) {}
-
-      setCreatedReportForForward(printableObj);
+      setCreatedReportForForward(saved || printableObj);
       setStatusMessage({
         type: 'success',
-        text: `تم حفظ التقرير المعتمد برقم (${printableObj.reportNumber}) بنجاح في قسم أعمال الطريق والأرشيف!`
+        text: `تم حفظ التقرير المعتمد برقم (${(saved || printableObj).reportNumber}) بنجاح في قسم أعمال الطريق والأرشيف!`
       });
 
-      if (onSaved) onSaved(printableObj);
+      if (onSaved) onSaved(saved || printableObj);
     } catch (e) {
+      console.error(e);
       setStatusMessage({
         type: 'error',
         text: 'حدث خطأ أثناء حفظ التقرير: ' + (e.message || 'خطأ اتصال')

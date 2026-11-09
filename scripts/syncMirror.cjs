@@ -36,6 +36,8 @@ const filesToSync = [
   'src/utils/supervisoryTasks.js',
   'src/utils/engineeringFormulas.js',
   'src/utils/twoPhaseSync.js',
+  'src/utils/reportPersistence.js',
+  'src/utils/reportDeduplication.js',
   'src/utils/secureDatabase.js',
   'src/utils/apiCache.js',
   'src/utils/permissionUtils.js',
