@@ -538,8 +538,10 @@ export const CreateTargetedWorksReportModal = ({
             sectorDirector,
       ownerRepresentative,
       createdByUsername: currentUser?.username,
+      authorUsername: currentUser?.username,
       createdByName: currentUser?.name || sectorDirector,
       uploadedBy: currentUser?.name || sectorDirector,
+      engineer: currentUser?.name || sectorDirector,
       status: 'approved',
       approvedBy: ownerRepresentative,
       notes: `بيان استهداف الأعمال اليومية والمعدات المطلوبة بموقع ${sector}`

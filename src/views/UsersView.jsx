@@ -94,9 +94,12 @@ export const UsersView = ({ currentUser }) => {
     setTargetUserForPermissions(user);
     const existing = getUserSectionPermissions(user.username);
     if (existing && Array.isArray(existing)) {
-      // إذا كان للمستخدم سجل صلاحيات قديم لا يتضمن التقارير الدورية (كونه قسماً عاماً)، يُفعل افتراضياً
-      const withPeriodic = existing.includes('periodic-reports') ? existing : [...existing, 'periodic-reports'];
-      setSelectedUserSections(withPeriodic);
+      // إذا كان للمستخدم سجل صلاحيات قديم لا يتضمن التقارير الدورية أو الأرشيف الخاص، يُفعل افتراضياً
+      let withDefaults = existing.includes('periodic-reports') ? existing : [...existing, 'periodic-reports'];
+      if (!withDefaults.includes('reports-archive')) {
+        withDefaults = [...withDefaults, 'reports-archive'];
+      }
+      setSelectedUserSections(withDefaults);
     } else {
       // Role default presets
       const uRole = (user.role || '').toLowerCase();

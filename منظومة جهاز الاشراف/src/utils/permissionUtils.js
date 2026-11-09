@@ -89,7 +89,7 @@ export const canAccessPeriodicReports = (currentUser) => {
 };
 
 /**
- * ترقية الصلاحيات القديمة لضمان عدم حجب قسم التقارير الدورية عن أي مستخدم قديم
+ * ترقية الصلاحيات القديمة لضمان عدم حجب قسم التقارير الدورية أو الأرشيف الخاص عن أي مستخدم قديم
  */
 export const migrateLegacyPermissions = () => {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -99,9 +99,15 @@ export const migrateLegacyPermissions = () => {
     const all = JSON.parse(raw);
     let changed = false;
     for (const key of Object.keys(all)) {
-      if (Array.isArray(all[key]) && !all[key].includes('periodic-reports')) {
-        all[key].push('periodic-reports');
-        changed = true;
+      if (Array.isArray(all[key])) {
+        if (!all[key].includes('periodic-reports')) {
+          all[key].push('periodic-reports');
+          changed = true;
+        }
+        if (!all[key].includes('reports-archive')) {
+          all[key].push('reports-archive');
+          changed = true;
+        }
       }
     }
     if (changed) {
@@ -129,6 +135,12 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
 
   const username = (currentUser.username || '').toLowerCase().trim();
   const userName = (currentUser.name || '').trim();
+  const userRole = (currentUser.role || '').toLowerCase();
+
+  // حساب التطوير يرى كافة التقارير للفحص والتدقيق الكامل
+  if (isDevUser(currentUser)) {
+    return true;
+  }
 
   // 1. التطابق المباشر باسم المستخدم (Username)
   if (report.createdByUsername && String(report.createdByUsername).toLowerCase().trim() === username) {
@@ -159,38 +171,42 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
     if (repSupName && (repSupName.includes(userName) || userName.includes(repSupName))) return true;
   }
 
-  // 3. مطابقة الكلمات المفتاحية لأطراف الإشراف
+  // 3. مطابقة الكلمات المفتاحية لأطراف الإشراف ومراحل المشروع
   const combinedReportAuthors = `${repUploadedBy} ${repEngineer} ${repSupervisor} ${repDirector} ${repResp} ${repSupName}`.toLowerCase();
+  const repSector = String(report.sector || '').toLowerCase();
+  const repPhase = String(report.phase || '').toLowerCase();
 
-  // م. صلاح العربي (مشرف المرحلة الأولى)
+  // م. صلاح العربي (مشرف المرحلة الأولى - 226 كم)
   if (username === 'salah_alarabi' || userName.includes('صلاح')) {
     if (combinedReportAuthors.includes('صلاح') || combinedReportAuthors.includes('العربي')) return true;
-    if ((report.sector === 'المرحلة الأولى' || report.phase === 'المرحلة الأولى') && !combinedReportAuthors.includes('عيسى') && !combinedReportAuthors.includes('الأنصاري')) {
+    if (!report.isFuelReport && !report.isTwoPhaseProgressReport && (repSector.includes('الأولى') || repSector.includes('الاولى') || repPhase.includes('الأولى') || repPhase.includes('الاولى'))) {
       return true;
     }
   }
 
-  // م. عيسى الطاهر (مشرف المرحلة الثانية)
+  // م. عيسى الطاهر (مشرف المرحلة الثانية - 134 كم)
   if (username === 'issa_altahir' || userName.includes('عيسى')) {
     if (combinedReportAuthors.includes('عيسى') || combinedReportAuthors.includes('الطاهر')) return true;
-    if ((report.sector === 'المرحلة الثانية' || report.phase === 'المرحلة الثانية') && !combinedReportAuthors.includes('صلاح') && !combinedReportAuthors.includes('الأنصاري')) {
+    if (!report.isFuelReport && !report.isTwoPhaseProgressReport && (repSector.includes('الثانية') || repSector.includes('التانية') || repPhase.includes('الثانية') || repPhase.includes('التانية'))) {
       return true;
     }
   }
 
-  // م. عبدالسلام ابريكاو / م. الصالحين بريكاو
-  if (username === 'abrikaw' || userName.includes('بريكاو') || userName.includes('الصالحين') || userName.includes('عبدالسلام')) {
-    if (combinedReportAuthors.includes('بريكاو') || combinedReportAuthors.includes('الصالحين') || combinedReportAuthors.includes('عبدالسلام')) return true;
+  // م. عبدالسلام ابريكاو / م. الصالحين بريكاو (رئيس جهاز الإشراف)
+  if (username === 'abrikaw' || userName.includes('بريكاو') || userName.includes('الصالحين') || userName.includes('عبدالسلام') || userRole.includes('رئيس جهاز الإشراف')) {
+    if (combinedReportAuthors.includes('بريكاو') || combinedReportAuthors.includes('الصالحين') || combinedReportAuthors.includes('عبدالسلام') || repApprovedBy.includes('ابريكاو')) return true;
+    if (String(report.reportType || '').includes('إشراف') || String(report.reportType || '').includes('متابعة')) return true;
   }
 
   // م. صالح حماد (مسؤول الجودة)
-  if (username === 'saleh_quality' || username === 'saleh' || userName.includes('صالح') || userName.includes('حماد')) {
+  if (username === 'saleh_quality' || username === 'saleh' || userName.includes('صالح') || userName.includes('حماد') || userRole.includes('جودة')) {
     if (combinedReportAuthors.includes('صالح') || combinedReportAuthors.includes('حماد') || combinedReportAuthors.includes('الجودة')) return true;
+    if (String(report.reportType || '').includes('جودة') || String(report.materialName || '').includes('جودة') || report.isQualityReport) return true;
   }
 
-  // م. عبدالرحمن الأنصاري (مدير المشروع) - في أرشيفه الخاص يرى فقط التقارير الصادرة عنه شخصياً
-  if (username === 'project_manager' || userName.includes('الأنصاري') || userName.includes('عبدالرحمن')) {
-    if (combinedReportAuthors.includes('الأنصاري') || combinedReportAuthors.includes('عبدالرحمن') || report.createdByUsername === 'project_manager') return true;
+  // م. عبدالرحمن الأنصاري (مدير المشروع) - في أرشيفه الخاص يرى تقارير الإدارة والمرحلتين والتقارير المعتمدة منه
+  if (username === 'project_manager' || userName.includes('الأنصاري') || userName.includes('عبدالرحمن') || isProjectManagerUser(currentUser)) {
+    if (combinedReportAuthors.includes('الأنصاري') || combinedReportAuthors.includes('عبدالرحمن') || repApprovedBy.includes('الأنصاري') || report.createdByUsername === 'project_manager' || report.isTwoPhaseProgressReport) return true;
   }
 
   // مسؤول الوقود والمحروقات

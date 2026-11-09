@@ -311,6 +311,9 @@ export const Sidebar = ({
                 if (item.id === 'periodic-reports') {
                   return userAllowedSections.includes('periodic-reports') || canAccessPeriodicReports(currentUser);
                 }
+                if (item.id === 'reports-archive') {
+                  return true; // الأرشيف الخاص بالمهندس متاح ومفعل دائماً لكافة المستخدمين
+                }
                 return userAllowedSections.includes(item.id);
               }
               return true;

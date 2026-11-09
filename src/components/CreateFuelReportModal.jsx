@@ -164,7 +164,11 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
       totalReceivedLiters: totalReceived,
       totalRemainingLiters: totalRemaining,
       totalDispatchedLiters: totalDispatched,
+      createdByUsername: currentUser?.username || 'fuel_officer',
+      authorUsername: currentUser?.username || 'fuel_officer',
+      createdByName: currentUser?.name || 'مسؤول الوقود والمحروقات',
       uploadedBy: currentUser?.name || 'مسؤول الوقود والمحروقات',
+      engineer: currentUser?.name || 'مسؤول الوقود والمحروقات',
       status: 'approved',
       approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
       fuelItems: validRows.map((r, idx) => ({

@@ -527,7 +527,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                   <span>
                     {archiveMode === 'general' 
                       ? 'صلاحية خاصة: مدير المشروع ومسؤول الجودة م. صالح' 
-                      : `أرشيف مستقل وخاص بك (${currentUser?.name || ''})`
+                      : `الأرشيف الخاص (مفعل ونشط) — ${currentUser?.name || ''}`
                     }
                   </span>
                 </span>

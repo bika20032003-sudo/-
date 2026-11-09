@@ -403,6 +403,7 @@ export const CreateReportModal = ({
           id: Date.now(),
           ...payload,
           createdByUsername: currentUser?.username || payload.createdByUsername,
+          authorUsername: currentUser?.username || payload.authorUsername || payload.createdByUsername,
           createdByName: currentUser?.name || payload.createdByName || payload.uploadedBy,
           uploadedBy: currentUser?.name || payload.uploadedBy || 'المهندس المشرف',
           engineer: currentUser?.name || payload.engineer || 'المهندس المشرف',
@@ -412,6 +413,7 @@ export const CreateReportModal = ({
         saved = {
           ...saved,
           createdByUsername: currentUser?.username || saved.createdByUsername,
+          authorUsername: currentUser?.username || saved.authorUsername || saved.createdByUsername,
           createdByName: currentUser?.name || saved.createdByName || saved.uploadedBy,
           uploadedBy: currentUser?.name || saved.uploadedBy || 'المهندس المشرف',
           engineer: currentUser?.name || saved.engineer || 'المهندس المشرف'
