@@ -7,6 +7,10 @@ import './index.css';
 import './premium-ui.css';
 import { getFallbackData } from './utils/apiCache.js';
 import { initRealtimeSync } from './utils/realtimeSync.js';
+import { sanitizeLocalReportsStorage } from './utils/reportDeduplication.js';
+
+// Purge any duplicate reports accumulated in browser localStorage
+sanitizeLocalReportsStorage();
 
 // Automatically normalize API requests and provide offline/static fallback
 const originalFetch = window.fetch;

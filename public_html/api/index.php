@@ -257,21 +257,97 @@ if ($resource === 'reports') {
         exit;
     }
 
+// Helper to compute canonical deduplication key for a report
+function get_report_canonical_key($r) {
+    if (!$r || !is_array($r)) return '';
+    $date = substr($r['dateFormatted'] ?? $r['reportDate'] ?? $r['date'] ?? $r['createdAt'] ?? '', 0, 10);
+    $type = $r['reportType'] ?? $r['type'] ?? '';
+    
+    // 1. Two-phase report (single project-wide report per date)
+    if (!empty($r['isTwoPhaseProgressReport']) || mb_stripos($type, 'المرحلتين') !== false) {
+        return 'tp_' . $date;
+    }
+    // 2. Fuel report (single per sector per date)
+    if (!empty($r['isFuelReport']) || mb_stripos($type, 'وقود') !== false) {
+        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
+        return 'fuel_' . $sec . '_' . $date;
+    }
+    // 3. Targeted works report (single per sector per date)
+    if (!empty($r['isTargetedWorksReport']) || mb_stripos($type, 'مستهدف') !== false) {
+        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
+        return 'tw_' . $sec . '_' . $date;
+    }
+    // 4. Daily road report (single per sector per date)
+    if (mb_stripos($type, 'طريق') !== false || mb_stripos($type, 'يومي') !== false) {
+        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
+        return 'road_' . $sec . '_' . $date;
+    }
+    // 5. By normalized report number
+    if (!empty($r['reportNumber'])) {
+        return 'num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']));
+    }
+    return 'id_' . strtolower(trim((string)($r['id'] ?? '')));
+}
+
+// Function to strictly deduplicate a list of reports
+function deduplicate_reports_array($reports) {
+    if (!is_array($reports)) return [];
+    $map = [];
+    foreach ($reports as $r) {
+        if (!is_array($r)) continue;
+        $key = get_report_canonical_key($r);
+        $numKey = !empty($r['reportNumber']) ? ('num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']))) : null;
+        $idKey = !empty($r['id']) ? ('id_' . strtolower(trim((string)$r['id']))) : null;
+
+        $targetKey = null;
+        if (isset($map[$key])) $targetKey = $key;
+        elseif ($numKey && isset($map[$numKey])) $targetKey = $numKey;
+        elseif ($idKey && isset($map[$idKey])) $targetKey = $idKey;
+
+        if ($targetKey) {
+            $existing = $map[$targetKey];
+            $tNew = strtotime($r['updatedAt'] ?? $r['createdAt'] ?? $r['date'] ?? '') ?: 0;
+            $tOld = strtotime($existing['updatedAt'] ?? $existing['createdAt'] ?? $existing['date'] ?? '') ?: 0;
+            $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? []);
+            $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? []);
+            
+            if ($itemsNew >= $itemsOld || $tNew >= $tOld) {
+                $merged = array_merge($existing, $r);
+                $map[$targetKey] = $merged;
+                if ($key) $map[$key] = $merged;
+                if ($numKey) $map[$numKey] = $merged;
+                if ($idKey) $map[$idKey] = $merged;
+            }
+        } else {
+            if ($key) $map[$key] = $r;
+            if ($numKey) $map[$numKey] = $r;
+            if ($idKey) $map[$idKey] = $r;
+        }
+    }
+    $unique = array_values(array_unique($map, SORT_REGULAR));
+    usort($unique, function($a, $b) {
+        $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: 0;
+        $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: 0;
+        return $tb <=> $ta;
+    });
+    return $unique;
+}
+
+// -------------------------------------------------------------
+// [REPORTS RESOURCE]
+// -------------------------------------------------------------
+if ($resource === 'reports') {
+    $db = get_db();
+
     // List all reports (GET /api/reports)
     if ($method === 'GET' && empty($subId)) {
         $sector = $_GET['sector'] ?? '';
-        $list = $db['reports'];
+        $list = deduplicate_reports_array($db['reports'] ?? []);
         if (!empty($sector)) {
             $list = array_values(array_filter($list, function($r) use ($sector) {
                 return isset($r['sector']) && mb_stripos($r['sector'], $sector) !== false;
             }));
         }
-        // Sort descending
-        usort($list, function($a, $b) {
-            $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: ($a['id'] ?? 0);
-            $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: ($b['id'] ?? 0);
-            return $tb <=> $ta;
-        });
         echo json_encode(['success' => true, 'reports' => $list]);
         exit;
     }
@@ -290,14 +366,24 @@ if ($resource === 'reports') {
             $body['createdAt'] = gmdate('Y-m-d\TH:i:s\Z');
         }
 
-        // Deduplicate: replace if exists with same id or reportNumber
-        $filtered = array_filter($db['reports'], function($r) use ($body) {
-            return (string)($r['id'] ?? '') !== (string)$body['id'] &&
-                   (string)($r['reportNumber'] ?? '') !== (string)$body['reportNumber'];
+        $newKey = get_report_canonical_key($body);
+        $newNum = strtolower(preg_replace('/[\s\-_]/', '', (string)$body['reportNumber']));
+        $newId = strtolower(trim((string)$body['id']));
+
+        // Deduplicate: replace if exists with same key, id, or reportNumber
+        $filtered = array_filter($db['reports'] ?? [], function($r) use ($newKey, $newNum, $newId) {
+            $rKey = get_report_canonical_key($r);
+            $rNum = !empty($r['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber'])) : '';
+            $rId = strtolower(trim((string)($r['id'] ?? '')));
+
+            if ($rKey && $rKey === $newKey) return false;
+            if ($rNum && $rNum === $newNum) return false;
+            if ($rId && $rId === $newId) return false;
+            return true;
         });
 
         array_unshift($filtered, $body);
-        $db['reports'] = array_values($filtered);
+        $db['reports'] = deduplicate_reports_array($filtered);
 
         // If Two Phase report, update latestTwoPhaseReport
         if (!empty($body['isTwoPhaseProgressReport']) || ($body['reportType'] ?? '') === 'تقرير إنجاز المرحلتين') {
@@ -309,7 +395,7 @@ if ($resource === 'reports') {
         }
 
         save_db($db);
-        echo json_encode(['success' => true, 'report' => $body, 'message' => 'تم حفظ التقرير سحابياً بنجاح ومزامنته']);
+        echo json_encode(['success' => true, 'report' => $body, 'message' => 'تم حفظ التقرير سحابياً بنجاح ومزامنته بدون أي تكرار']);
         exit;
     }
 
@@ -379,19 +465,8 @@ if ($resource === 'two-phase-report') {
         $body = get_json_input();
         $db['latestTwoPhaseReport'] = $body;
         
-        // Ensure it is simultaneously recorded in reports archive
-        if (!isset($db['reports'])) $db['reports'] = [];
-        $found = false;
-        foreach ($db['reports'] as &$rep) {
-            if ((string)($rep['id'] ?? '') === (string)($body['id'] ?? '') || (string)($rep['reportNumber'] ?? '') === (string)($body['reportNumber'] ?? '')) {
-                $rep = $body;
-                $found = true;
-                break;
-            }
-        }
-        if (!$found) {
-            array_unshift($db['reports'], $body);
-        }
+        // Ensure it is simultaneously recorded in reports archive with strict deduplication
+        $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports'] ?? []));
 
         save_db($db);
         echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير إنجاز المرحلتين سحابياً ومزامنته بالأرشيف']);
@@ -430,19 +505,8 @@ if ($resource === 'fuel-daily-report') {
         $body = get_json_input();
         $db['fuelDailyReport'] = $body;
 
-        // Ensure it is simultaneously recorded in reports archive
-        if (!isset($db['reports'])) $db['reports'] = [];
-        $found = false;
-        foreach ($db['reports'] as &$rep) {
-            if ((string)($rep['id'] ?? '') === (string)($body['id'] ?? '') || (string)($rep['reportNumber'] ?? '') === (string)($body['reportNumber'] ?? '')) {
-                $rep = $body;
-                $found = true;
-                break;
-            }
-        }
-        if (!$found) {
-            array_unshift($db['reports'], $body);
-        }
+        // Ensure it is simultaneously recorded in reports archive with strict deduplication
+        $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports'] ?? []));
 
         save_db($db);
         echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير كميات الوقود اليومية ومزامنته بالأرشيف']);

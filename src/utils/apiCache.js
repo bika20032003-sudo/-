@@ -77,6 +77,7 @@ export {
   updateRoadProgressItem
 };
 import { deleteReportFromIndexedDB } from './secureDatabase.js';
+import { deduplicateReportsList, sanitizeLocalReportsStorage } from './reportDeduplication.js';
 import {
   initialDailySummary,
   initialRecentReports,
@@ -174,15 +175,10 @@ export function getFallbackData(url) {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const deleted = safeGetStorageSet('deleted_report_ids');
-        allReports = allReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
-        const local = safeGetStorageArray('local_reports');
-        const existingIds = new Set(allReports.map(r => String(r.id || r.reportNumber)));
-        const validLocal = local.filter(r => 
-          !deleted.has(String(r.id)) && 
-          !deleted.has(String(r.reportNumber)) && 
-          !existingIds.has(String(r.id || r.reportNumber))
+        const local = sanitizeLocalReportsStorage();
+        allReports = deduplicateReportsList([...local, ...allReports]).filter(r => 
+          r && !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber))
         );
-        allReports = [...validLocal, ...allReports];
       }
     } catch (e) {
       console.warn('Error reading reports for dashboard summary:', e);
@@ -348,20 +344,15 @@ export function getFallbackData(url) {
     const ARABIC_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
     const monthName = ARABIC_MONTHS[month - 1] || 'سبتمبر';
 
-    // 1. Gather all daily reports from cache & localStorage
+    // 1. Gather all daily reports from cache & localStorage with strict deduplication
     let allReports = [...(initialRecentReports || [])];
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
-        allReports = allReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const existingIds = new Set(allReports.map(r => String(r.id || r.reportNumber)));
-        const validLocal = local.filter(r => 
-          !deleted.has(String(r.id)) && 
-          !deleted.has(String(r.reportNumber)) && 
-          !existingIds.has(String(r.id || r.reportNumber))
+        const local = sanitizeLocalReportsStorage();
+        allReports = deduplicateReportsList([...local, ...allReports]).filter(r => 
+          r && !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber))
         );
-        allReports = [...validLocal, ...allReports];
       }
     } catch (e) {
       console.warn('Error reading reports for periodic generation:', e);
@@ -581,15 +572,10 @@ export function getFallbackData(url) {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
-        list = list.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
-        const validLocal = local.filter(r => 
-          !deleted.has(String(r.id)) && 
-          !deleted.has(String(r.reportNumber)) && 
-          !existingIds.has(String(r.id || r.reportNumber))
+        const local = sanitizeLocalReportsStorage();
+        list = deduplicateReportsList([...local, ...list]).filter(r => 
+          r && !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber))
         );
-        list = [...validLocal, ...list];
       }
     } catch (e) {
       console.warn('Error reading reports cache:', e);

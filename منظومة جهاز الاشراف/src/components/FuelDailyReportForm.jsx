@@ -405,10 +405,15 @@ export const FuelDailyReportForm = ({
         createdAt: new Date().toISOString()
       };
 
-      // 2. Save directly into localStorage under local_reports
+      // 2. Save directly into localStorage under local_reports with strict deduplication
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => r.reportNumber !== printableObj.reportNumber);
+        const filtered = local.filter(r => 
+          r && 
+          r.reportNumber !== printableObj.reportNumber &&
+          String(r.id) !== String(printableObj.id) &&
+          !(r.isFuelReport && (r.dateFormatted || r.reportDate || r.date) === (printableObj.dateFormatted || printableObj.reportDate || printableObj.date) && r.sector === printableObj.sector)
+        );
         filtered.unshift(printableObj);
         localStorage.setItem('local_reports', JSON.stringify(filtered));
       } catch (storageErr) {

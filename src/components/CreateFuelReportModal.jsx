@@ -207,7 +207,12 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
       // 1. Persist in localStorage under local_reports
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
+        const filtered = local.filter(r => 
+          r &&
+          String(r.id) !== String(saved.id) && 
+          r.reportNumber !== saved.reportNumber &&
+          !(r.isFuelReport && (r.dateFormatted || r.reportDate || r.date) === (saved.dateFormatted || saved.reportDate || saved.date) && r.sector === saved.sector)
+        );
         filtered.unshift(saved);
         localStorage.setItem('local_reports', JSON.stringify(filtered));
 

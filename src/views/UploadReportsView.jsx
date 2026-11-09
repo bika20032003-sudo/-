@@ -543,8 +543,14 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
 
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        local.unshift(saved);
-        localStorage.setItem('local_reports', JSON.stringify(local));
+        const filtered = local.filter(r => 
+          r && 
+          String(r.id) !== String(saved.id) && 
+          String(r.reportNumber) !== String(saved.reportNumber) &&
+          !(r.reportType === saved.reportType && (r.dateFormatted || r.date) === (saved.dateFormatted || saved.date) && r.sector === saved.sector)
+        );
+        filtered.unshift(saved);
+        localStorage.setItem('local_reports', JSON.stringify(filtered));
       } catch (storageErr) {}
 
       // Clear client API cache completely so Dashboard immediately gets fresh data

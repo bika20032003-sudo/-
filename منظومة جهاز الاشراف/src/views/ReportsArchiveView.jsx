@@ -10,6 +10,7 @@ import { fastFetch } from '../utils/apiCache.js';
 import { deleteReportFromIndexedDB } from '../utils/secureDatabase.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport, canAccessGeneralArchive, isReportOwnedByEngineer, isDevUser } from '../utils/permissionUtils';
+import { deduplicateReportsList, sanitizeLocalReportsStorage } from '../utils/reportDeduplication';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
 
@@ -255,47 +256,17 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       // Merge with locally created reports, filter deleted, and strictly deduplicate
       try {
         const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const local = sanitizeLocalReportsStorage();
 
-        const getReportKey = (r) => {
-          if (!r) return '';
-          const num = r.reportNumber ? String(r.reportNumber).trim() : '';
-          if (num) return `num_${num}`;
-          if (r.isTwoPhaseProgressReport) return `tp_${r.dateFormatted || (r.date ? r.date.split('T')[0] : '')}`;
-          if (r.isTargetedWorksReport) return `tw_${r.dateFormatted || (r.date ? r.date.split('T')[0] : '')}_${r.sector || ''}`;
-          if (r.isFuelReport) return `fuel_${r.dateFormatted || (r.date ? r.date.split('T')[0] : '')}_${r.sector || ''}`;
-          return `id_${r.id || ''}_${r.dateFormatted || r.date || ''}_${r.reportType || ''}`;
-        };
-
-        const seenLocal = new Set();
-        const deduplicatedLocal = [];
-        local.forEach(r => {
-          if (!r) return;
-          const key = getReportKey(r);
-          if (!seenLocal.has(key) && !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber))) {
-            seenLocal.add(key);
-            deduplicatedLocal.push(r);
-          }
-        });
-        localStorage.setItem('local_reports', JSON.stringify(deduplicatedLocal));
-
-        const existingIds = new Set(list.map(r => String(r.id || r.reportNumber)));
-        const existingNums = new Set(list.filter(r => r.reportNumber).map(r => String(r.reportNumber).trim()));
-        const newOnes = deduplicatedLocal.filter(r => 
-          !existingIds.has(String(r.id)) && 
-          !(r.reportNumber && existingNums.has(String(r.reportNumber).trim()))
+        // Merge backend list with sanitized local reports
+        const combined = [...local, ...list].filter(r => 
+          r && 
+          !deletedSet.has(String(r.id)) && 
+          !deletedSet.has(String(r.reportNumber))
         );
-        list = [...newOnes, ...list];
-        list = list.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
 
-        const finalSeen = new Set();
-        list = list.filter(r => {
-          if (!r) return false;
-          const key = getReportKey(r);
-          if (finalSeen.has(key)) return false;
-          finalSeen.add(key);
-          return true;
-        });
+        // Strict composite deduplication: guarantees no duplicates by ID, Report Number, or (Date + Type + Sector)
+        list = deduplicateReportsList(combined);
       } catch (storageErr) {
         console.warn('Storage error in archive:', storageErr);
       }

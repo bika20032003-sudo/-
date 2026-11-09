@@ -632,7 +632,12 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       // 1. Direct save into localStorage under local_reports
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const filtered = local.filter(r => String(r.id) !== String(saved.id) && r.reportNumber !== saved.reportNumber);
+        const filtered = local.filter(r => 
+          r &&
+          String(r.id) !== String(saved.id) && 
+          r.reportNumber !== saved.reportNumber &&
+          !(r.reportType === saved.reportType && (r.dateFormatted || r.reportDate || r.date) === (saved.dateFormatted || saved.reportDate || saved.date) && r.sector === saved.sector)
+        );
         filtered.unshift(saved);
         localStorage.setItem('local_reports', JSON.stringify(filtered));
 

@@ -173,7 +173,8 @@ export function saveStoredTwoPhaseReport(report) {
       r &&
       String(r.id) !== String(enriched.id) && 
       String(r.reportNumber) !== String(enriched.reportNumber) &&
-      !(r.isTwoPhaseProgressReport && (r.dateFormatted === enriched.dateFormatted || r.reportNumber === enriched.reportNumber))
+      !(r.isTwoPhaseProgressReport && (r.dateFormatted === enriched.dateFormatted || r.reportNumber === enriched.reportNumber)) &&
+      !(r.reportType === 'تقرير إنجاز المرحلتين' && r.dateFormatted === enriched.dateFormatted)
     );
     filtered.unshift(enriched);
     localStorage.setItem('local_reports', JSON.stringify(filtered));
