@@ -27,6 +27,23 @@
     if (window.location.pathname === '/-') {
       window.location.replace('/-/');
     }
+
+    // Bust stale version query parameter (e.g. 20261028) and enforce current release
+    (function() {
+      try {
+        var CURRENT_VERSION = '20261109_v6';
+        var params = new URLSearchParams(window.location.search);
+        var v = params.get('v');
+        if (!v || v !== CURRENT_VERSION) {
+          params.set('v', CURRENT_VERSION);
+          var newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', newUrl);
+          }
+        }
+      } catch (e) {}
+    })();
+
     // Clean old caches and unregister stale service workers
     if ('caches' in window) {
       try {
@@ -40,6 +57,28 @@
         });
       } catch (e) {}
     }
+
+    // Active sweeper to completely eliminate any stray floating AI widget
+    (function() {
+      function purgeFloatingWidget() {
+        try {
+          var nodes = document.querySelectorAll('div, button');
+          nodes.forEach(function(node) {
+            var st = node.getAttribute('style') || '';
+            var txt = node.textContent || '';
+            if (
+              (st.indexOf('fixed') !== -1 && (st.indexOf('left: 24px') !== -1 || st.indexOf('left: 20px') !== -1)) &&
+              (txt.indexOf('الذكاء الهندسي') !== -1 || txt.indexOf('مساعد') !== -1 || (node.title && node.title.indexOf('مساعد') !== -1))
+            ) {
+              node.remove();
+            }
+          });
+        } catch (_) {}
+      }
+      var t = setInterval(purgeFloatingWidget, 100);
+      setTimeout(function() { clearInterval(t); }, 8000);
+      window.addEventListener('DOMContentLoaded', purgeFloatingWidget);
+    })();
   </script>
   <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
   <style id="print-orientation-head-style">

@@ -40,7 +40,8 @@ const filesToSync = [
   'src/utils/apiCache.js',
   'src/utils/permissionUtils.js',
   'src/index.css',
-  'src/premium-ui.css'
+  'src/premium-ui.css',
+  'index.html'
 ];
 
 console.log('Syncing all modified files to منظومة جهاز الاشراف/ ...');
