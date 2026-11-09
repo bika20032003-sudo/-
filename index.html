@@ -40,28 +40,6 @@
         });
       } catch (e) {}
     }
-    // Executive DOM sweeper: permanently eliminate any floating AI button or stale widget
-    function purgeLegacyAiWidget() {
-      try {
-        var buttons = document.querySelectorAll('button, div');
-        for (var i = 0; i < buttons.length; i++) {
-          var b = buttons[i];
-          if (!b || b.tagName === 'SCRIPT' || b.tagName === 'STYLE') continue;
-          var txt = b.innerText || b.textContent || '';
-          if (txt.indexOf('الذكاء الهندسي') !== -1 || txt.indexOf('فتح مساعد مدير المشروع') !== -1) {
-            var target = b.closest('button') || b.closest('.fixed') || b;
-            if (target && target.parentNode) {
-              target.parentNode.removeChild(target);
-            }
-          }
-        }
-      } catch (err) {}
-    }
-    if (typeof window !== 'undefined') {
-      window.addEventListener('DOMContentLoaded', purgeLegacyAiWidget);
-      window.addEventListener('load', purgeLegacyAiWidget);
-      setInterval(purgeLegacyAiWidget, 300);
-    }
   </script>
   <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
   <style id="print-orientation-head-style">
@@ -70,12 +48,12 @@
       margin: 4mm 5mm;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-C_JWQxHV-1794243174966.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794243174966.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-DDGW0Okg-1794243174966.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794243174966.js">
-  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-D0VMhXLf-1794243174966.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-BQQNvDTK-1794243174966.css">
+  <script type="module" crossorigin src="./assets/index-CjKjYZS6-1794243727695.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-core-DfiTPdLt-1794243727695.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-icons-D-FS1mWO-1794243727695.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-xlsx-CKN5doRT-1794243727695.js">
+  <link rel="modulepreload" crossorigin href="./assets/vendor-charts-CRMM-LNg-1794243727695.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-BQQNvDTK-1794243727695.css">
 </head>
 
 <body>
