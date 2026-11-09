@@ -66,6 +66,10 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
 
     const handleTabChange = (tabId) => {
       setIsMobileSidebarOpen(false);
+      if (tabId === 'ai-agent') {
+        setActiveTab('dashboard');
+        return;
+      }
       const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
       if (!isDev && typeof window !== 'undefined') {
         try {
@@ -128,7 +132,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         'messages': 'البريد والمراسلات الرسمية المستقلة',
         'road-progress': 'متابعة نسب إنجاز مشروع طريق أوباري - غات (360 كم)',
         'executive-progress': 'الموقف التنفيذي (360 كم) - المالي والفني المعتمد',
-        'ai-agent': 'مساعد مدير المشروع (Project Manager Assistant)',
         'upload-reports': 'رفع ومعالجة ملفات التقارير الميدانية',
         'fuel': 'إدارة الوقود',
         'equipment': 'إدارة وسجل المعدات والآليات الميدانية',
@@ -230,7 +233,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             {activeTab === 'fuel' && <FuelView currentUser={currentUser} onNavigateTab={handleTabChange} />}
             {activeTab === 'equipment' && <EquipmentView />}
             {activeTab === 'users' && <UsersView currentUser={currentUser} />}
-            {activeTab === 'ai-agent' && <AIAgentView currentUser={currentUser} onNavigateTab={handleTabChange} />}
           </main>
         </div>
 

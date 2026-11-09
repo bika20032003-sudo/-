@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout, ZoomIn, ZoomOut, Maximize2, Send } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Vector SVG Bar Chart for Two-Phase Print Layout (100% Crisp print fidelity)
@@ -82,7 +82,7 @@ const TwoPhasePrintChart = ({ title, items }) => {
   );
 };
 
-export const OfficialPrintModal = ({ report, onClose }) => {
+export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
   if (!report) return null;
 
   const isSectorA = (report.sector || '').includes('الأولى') || (report.sector || '').includes('A') || (report.sector || '').includes('أ') || (report.crusherName || '').includes('A') || (report.crusherName || '').includes('الأولى');
@@ -742,6 +742,30 @@ export const OfficialPrintModal = ({ report, onClose }) => {
             <FileSpreadsheet size={17} />
             <span>تصدير إكسل (Excel)</span>
           </button>
+
+          {onForwardReport && (
+            <button
+              onClick={() => onForwardReport(report)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                padding: '0.6rem 1.2rem',
+                borderRadius: '8px',
+                fontWeight: 800,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+              }}
+              title="إحالة التقرير رسمياً إلى البريد والمراسلات"
+            >
+              <Send size={16} />
+              <span>إحالة التقرير</span>
+            </button>
+          )}
 
           <button
             onClick={handlePrint}

@@ -2325,7 +2325,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           type="button"
           disabled={isSubmitting}
           onClick={() => handleSaveReport(true)}
-          title="إحالة التقرير للبريد والمراسلات فقط"
+          title="إحالة التقرير رسمياً عبر البريد والمراسلات"
           style={{
             flex: 1.2,
             padding: '0.85rem 1.5rem',
@@ -2344,13 +2344,14 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           }}
         >
           <Send size={18} />
-          <span>{isSubmitting ? 'جاري المعالجة...' : 'إحالة للمراسلات (بريد)'}</span>
+          <span>{isSubmitting ? 'جاري الإحالة...' : 'إحالة التقرير'}</span>
         </button>
 
         <button
           type="button"
           disabled={isSubmitting}
           onClick={() => handleSaveReport(false)}
+          title="حفظ واعتماد التقرير وإرساله للأرشيف العام والخاص"
           style={{
             flex: 1,
             padding: '0.85rem 1.5rem',
@@ -2369,7 +2370,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           }}
         >
           <CheckCircle2 size={18} />
-          <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+          <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ واعتماد التقرير'}</span>
         </button>
 
         <button

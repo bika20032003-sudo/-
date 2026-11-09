@@ -958,7 +958,7 @@ export const RoadDailyReportForm = ({
           <button
             type="button"
             onClick={handleOpenForwardModal}
-            title="إحالة التقرير للبريد والمراسلات فقط"
+            title="إحالة التقرير رسمياً إلى البريد والمراسلات"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -975,14 +975,14 @@ export const RoadDailyReportForm = ({
             }}
           >
             <Send size={16} />
-            <span>إحالة للمراسلات (بريد)</span>
+            <span>إحالة التقرير</span>
           </button>
 
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            title="حفظ التقرير المعتمد في قسمه والأرشيف"
+            title="حفظ واعتماد التقرير في الأرشيف العام والخاص"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1000,7 +1000,7 @@ export const RoadDailyReportForm = ({
             }}
           >
             <CheckCircle2 size={16} />
-            <span>{isSaving ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+            <span>{isSaving ? 'جاري الحفظ...' : 'حفظ واعتماد التقرير'}</span>
           </button>
         </div>
       </div>

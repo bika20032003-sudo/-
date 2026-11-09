@@ -1589,7 +1589,7 @@ export const CreateTargetedWorksReportModal = ({
               }}
             >
               {isSubmitting ? <RefreshCw size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ واعتماد التقرير'}</span>
             </button>
 
             <button

@@ -1278,11 +1278,7 @@ export const TwoPhaseDailyReportForm = ({
               phase1Items,
               phase2Items,
               combinedItems,
-              remainingItems,
-              twoPhaseTotals: {
-                todayMeters: (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.todayMeters) || 0), 0),
-                totalCumulativeMeters: (combinedItems || []).reduce((acc, curr) => acc + (parseFloat(curr.totalMeters) || 0), 0)
-              }
+              remainingItems
             })}
             style={{
               display: 'flex',
@@ -1305,7 +1301,7 @@ export const TwoPhaseDailyReportForm = ({
           <button
             type="button"
             onClick={handleOpenForwardModal}
-            title="إحالة التقرير للبريد والمراسلات فقط"
+            title="إحالة التقرير رسمياً إلى البريد والمراسلات"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1322,14 +1318,14 @@ export const TwoPhaseDailyReportForm = ({
             }}
           >
             <Send size={16} />
-            <span>إحالة للمراسلات (بريد)</span>
+            <span>إحالة التقرير</span>
           </button>
 
           <button
             type="button"
             disabled={isSubmitting}
             onClick={handleSubmitReport}
-            title="حفظ التقرير المعتمد في قسمه والأرشيف"
+            title="حفظ واعتماد التقرير في الأرشيف العام والخاص"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1346,7 +1342,7 @@ export const TwoPhaseDailyReportForm = ({
             }}
           >
             {isSubmitting ? <RefreshCw className="spin-slow" size={16} /> : <CheckCircle2 size={16} />}
-            <span>حفظ التقرير المعتمد</span>
+            <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ واعتماد التقرير'}</span>
           </button>
         </div>
       </div>

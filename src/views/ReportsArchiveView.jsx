@@ -3,7 +3,7 @@ import {
   FileText, Search, Printer, Plus, RefreshCw, FileSpreadsheet, 
   CheckCircle2, Clock, AlertTriangle, Eye, Edit2, Trash2, 
   Building2, Milestone, Factory, Fuel, Truck, Layers, Filter, Calendar, Download, CalendarRange,
-  FolderArchive, User, Users, ShieldCheck, Lock
+  FolderArchive, User, Users, ShieldCheck, Lock, Send
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch } from '../utils/apiCache.js';
@@ -22,6 +22,16 @@ const OFFICIAL_ENGINEERS_FILTER_LIST = [
   { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
   { id: 'fuel_officer', name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و240' },
   { id: 'honi', name: 'م. مروان الهوني', role: 'إشراف ميداني' }
+];
+
+const OFFICIAL_SUPERVISORS_FORWARD_LIST = [
+  { username: 'all', name: 'كافة أعضاء جهاز الإشراف (إحالة شاملة)', role: 'الإشراف العام' },
+  { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+  { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
+  { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
+  { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مشرف المرحلة الأولى' },
+  { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مشرف المرحلة الثانية' },
+  { username: 'fuel_officer', name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و 240' }
 ];
 
 export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = 'personal' }) => {
@@ -55,6 +65,13 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
   const [reportToDelete, setReportToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingTargetedReport, setEditingTargetedReport] = useState(null);
+
+  // Referral / Forward State
+  const [forwardModalReport, setForwardModalReport] = useState(null);
+  const [forwardRecipient, setForwardRecipient] = useState('all');
+  const [forwardNote, setForwardNote] = useState('');
+  const [isForwarding, setIsForwarding] = useState(false);
+  const [forwardSuccessMessage, setForwardSuccessMessage] = useState(null);
 
   // Edit Modal State
   const [editingReport, setEditingReport] = useState(null);
@@ -138,6 +155,86 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       alert('حدث خطأ أثناء حفظ التعديلات.');
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  // Referral / Forward Report Handler
+  const handleConfirmForward = async () => {
+    if (!forwardModalReport) return;
+    setIsForwarding(true);
+    try {
+      const rep = forwardModalReport;
+      const isAll = forwardRecipient === 'all';
+      const recipients = isAll
+        ? OFFICIAL_SUPERVISORS_FORWARD_LIST.filter(u => u.username !== 'all')
+        : [OFFICIAL_SUPERVISORS_FORWARD_LIST.find(u => u.username === forwardRecipient) || OFFICIAL_SUPERVISORS_FORWARD_LIST[1]];
+
+      const newMsgs = [];
+      for (const targetUser of recipients) {
+        const messagePayload = {
+          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          fromUsername: currentUser?.username || 'user',
+          fromName: currentUser?.name || 'جهاز الإشراف',
+          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          toUsername: targetUser.username,
+          toName: targetUser.name,
+          toRole: targetUser.role,
+          type: 'إحالة تقرير رسمي معتمد',
+          subject: `إحالة ${rep.title || rep.reportType || 'تقرير رسمي'} - رقم (${rep.reportNumber || rep.id})`,
+          content: forwardNote.trim() || `نحيل إليكم رسمياً نسخة معتمدة من ${rep.title || rep.reportType || 'التقرير الميداني'} برقم (${rep.reportNumber || rep.id}) بموقع ${rep.sector || 'طريق أوباري - غات'} للإحاطة والمتابعة الهندسية.`,
+          reportId: rep.id,
+          reportNumber: rep.reportNumber,
+          reportData: rep,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        };
+        newMsgs.push(messagePayload);
+        try {
+          await fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messagePayload)
+          });
+        } catch (_) {}
+      }
+
+      try {
+        const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
+        localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...locMsgs]));
+        const userMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
+        localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...userMsgs]));
+      } catch (_) {}
+
+      window.dispatchEvent(new CustomEvent('messages-updated'));
+
+      // Record referral in local_reports
+      try {
+        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+        const updatedLocal = local.map(r => {
+          if (r.reportNumber === rep.reportNumber || String(r.id) === String(rep.id)) {
+            return {
+              ...r,
+              referredTo: isAll ? 'كافة أعضاء جهاز الإشراف' : recipients[0].name,
+              referredAt: new Date().toISOString(),
+              referredBy: currentUser?.name || 'جهاز الإشراف'
+            };
+          }
+          return r;
+        });
+        localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+        window.dispatchEvent(new CustomEvent('report-updated', { detail: rep }));
+      } catch (_) {}
+
+      const repNameText = isAll ? 'كافة أعضاء جهاز الإشراف' : recipients[0].name;
+      setForwardModalReport(null);
+      setForwardNote('');
+      setForwardSuccessMessage(`تمت إحالة التقرير رقم (${rep.reportNumber || rep.id}) بنجاح إلى (${repNameText})!`);
+      setTimeout(() => setForwardSuccessMessage(null), 5000);
+    } catch (err) {
+      console.error('Error forwarding report:', err);
+      alert('حدث خطأ أثناء إحالة التقرير.');
+    } finally {
+      setIsForwarding(false);
     }
   };
 
@@ -400,6 +497,26 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
   return (
     <div className="view-content" style={{ maxWidth: '1380px', margin: '0 auto', paddingBottom: '3.5rem' }}>
       
+      {/* Referral Success Alert */}
+      {forwardSuccessMessage && (
+        <div style={{
+          background: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          color: '#166534',
+          padding: '0.85rem 1.25rem',
+          borderRadius: '10px',
+          fontWeight: 800,
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <CheckCircle2 size={18} color="#22c55e" />
+          <span>{forwardSuccessMessage}</span>
+        </div>
+      )}
+
       {/* 1. Mode Switcher (Visible ONLY to Project Manager and Eng. Saleh) */}
       {canAccessGeneral && (
         <div style={{
@@ -979,8 +1096,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
 
                       {/* Actions */}
                       <td style={{ padding: '0.9rem 1.1rem', textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                          {/* Print Button */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                          {/* Official Formal Report View & Print */}
                           <button
                             type="button"
                             onClick={() => setSelectedReportForPrint(r)}
@@ -988,7 +1105,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                               background: '#eff6ff',
                               border: '1px solid #bfdbfe',
                               color: '#1d4ed8',
-                              padding: '5px 8px',
+                              padding: '5px 9px',
                               borderRadius: '6px',
                               cursor: 'pointer',
                               display: 'flex',
@@ -997,21 +1114,25 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                               fontSize: '0.74rem',
                               fontWeight: 800
                             }}
-                            title="طباعة تقرير رسمي معتمد"
+                            title="عرض التقرير بالنموذج الرسمي المعتمد وطباعته"
                           >
-                            <Printer size={14} />
-                            <span>طباعة</span>
+                            <FileText size={13} />
+                            <span>النموذج الرسمي</span>
                           </button>
 
-                          {/* View Details */}
+                          {/* Forward / Refer Report Button */}
                           <button
                             type="button"
-                            onClick={() => setViewDetailsReport(r)}
+                            onClick={() => {
+                              setForwardModalReport(r);
+                              setForwardRecipient('all');
+                              setForwardNote('');
+                            }}
                             style={{
-                              background: '#f8fafc',
-                              border: '1px solid #cbd5e1',
-                              color: '#475569',
-                              padding: '5px 8px',
+                              background: '#f0f9ff',
+                              border: '1px solid #bae6fd',
+                              color: '#0284c7',
+                              padding: '5px 9px',
                               borderRadius: '6px',
                               cursor: 'pointer',
                               display: 'flex',
@@ -1020,10 +1141,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                               fontSize: '0.74rem',
                               fontWeight: 800
                             }}
-                            title="عرض تفاصيل التقرير"
+                            title="إحالة التقرير رسمياً عبر البريد والمراسلات"
                           >
-                            <Eye size={14} />
-                            <span>عرض</span>
+                            <Send size={13} />
+                            <span>إحالة</span>
                           </button>
 
                           {/* Edit Report */}
@@ -1080,8 +1201,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         )}
       </div>
 
-      {/* 6. View Details Modal */}
-      {viewDetailsReport && (
+      {/* 6. Referral / Forward Report Modal */}
+      {forwardModalReport && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1098,84 +1219,124 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         }}>
           <div style={{
             background: '#ffffff',
-            borderRadius: '18px',
+            borderRadius: '16px',
             width: '100%',
-            maxWidth: '640px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '1.75rem',
+            maxWidth: '560px',
+            padding: '1.5rem',
             boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
             direction: 'rtl'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem', marginBottom: '1.15rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={22} color="#2563eb" />
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
-                  تفاصيل التقرير رقم: [{viewDetailsReport.reportNumber || viewDetailsReport.id}]
-                </h3>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Send size={20} color="#0284c7" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
+                    إحالة تقرير رسمي عبر المراسلات
+                  </h3>
+                  <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                    رقم التقرير: [{forwardModalReport.reportNumber || forwardModalReport.id}]
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => setViewDetailsReport(null)}
+                onClick={() => setForwardModalReport(null)}
                 style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 800 }}
               >
-                إغلاق
+                ✕
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>تاريخ التقرير:</div>
-                  <div style={{ fontWeight: 900, color: '#0f172a' }}>{viewDetailsReport.date ? new Date(viewDetailsReport.date).toLocaleDateString('ar-LY') : (viewDetailsReport.dateFormatted || '—')}</div>
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>القطاع والموقع:</div>
-                  <div style={{ fontWeight: 900, color: '#1e40af' }}>{viewDetailsReport.sector || 'طريق أوباري - غات'}</div>
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>المشرف المعد:</div>
-                  <div style={{ fontWeight: 900, color: '#0f172a' }}>{viewDetailsReport.uploadedBy || viewDetailsReport.engineer || 'المشرف الميداني'}</div>
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800 }}>نوع التقرير:</div>
-                  <div style={{ fontWeight: 900, color: '#0f172a' }}>{viewDetailsReport.materialName || viewDetailsReport.reportType || 'تقرير يومي'}</div>
-                </div>
-              </div>
-
-              {viewDetailsReport.notes && (
-                <div style={{ background: '#eff6ff', padding: '0.85rem', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-                  <div style={{ fontSize: '0.76rem', color: '#1e40af', fontWeight: 800, marginBottom: '3px' }}>الملاحظات والتوجيهات:</div>
-                  <div style={{ color: '#1e293b', lineHeight: 1.5 }}>{viewDetailsReport.notes}</div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const r = viewDetailsReport;
-                    setViewDetailsReport(null);
-                    setSelectedReportForPrint(r);
-                  }}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                  الجهة المحال إليها (المسؤول / المهندس):
+                </label>
+                <select
+                  value={forwardRecipient}
+                  onChange={(e) => setForwardRecipient(e.target.value)}
                   style={{
-                    background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '0.6rem 1.25rem',
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
                     borderRadius: '8px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    background: '#f8fafc',
+                    color: '#0f172a'
                   }}
                 >
-                  <Printer size={16} />
-                  <span>طباعة رسمية الآن</span>
+                  {OFFICIAL_SUPERVISORS_FORWARD_LIST.map((u, idx) => (
+                    <option key={idx} value={u.username}>
+                      {u.name} — ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                  نص التوجيهات / الملاحظات المرفقة مع الإحالة (اختياري):
+                </label>
+                <textarea
+                  rows={3}
+                  value={forwardNote}
+                  onChange={(e) => setForwardNote(e.target.value)}
+                  placeholder="نحيل إليكم التقرير المعتمد للإحاطة والمتابعة الهندسية واتخاذ ما يلزم..."
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.85rem',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ background: '#f0f9ff', padding: '0.75rem', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '0.8rem', color: '#0369a1' }}>
+                ℹ️ سيتم إرسال هذا التقرير كرسالة إشرافية رسمية تظهر فوراً في صندوق المراسلات للطرف المحال إليه مع ربط التقرير الأصلي.
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setForwardModalReport(null)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '0.6rem 1.2rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  disabled={isForwarding}
+                  onClick={handleConfirmForward}
+                  style={{
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.6rem 1.4rem',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    cursor: isForwarding ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+                  }}
+                >
+                  {isForwarding ? <RefreshCw className="spin-slow" size={16} /> : <Send size={16} />}
+                  <span>{isForwarding ? 'جاري الإحالة...' : 'تأكيد وإرسال الإحالة'}</span>
                 </button>
               </div>
             </div>
@@ -1356,6 +1517,12 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
           report={selectedReportForPrint}
           currentUser={currentUser}
           onClose={() => setSelectedReportForPrint(null)}
+          onForwardReport={(rep) => {
+            setSelectedReportForPrint(null);
+            setForwardModalReport(rep);
+            setForwardRecipient('all');
+            setForwardNote('');
+          }}
         />
       )}
 

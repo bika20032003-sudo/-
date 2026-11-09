@@ -802,7 +802,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
               }}
             >
               <CheckCircle2 size={16} />
-              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ واعتماد التقرير'}</span>
             </button>
 
             <button

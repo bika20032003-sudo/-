@@ -144,11 +144,6 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
   const userName = (currentUser.name || '').trim();
   const userRole = (currentUser.role || '').toLowerCase();
 
-  // حساب التطوير يرى كافة التقارير للفحص والتدقيق الكامل
-  if (isDevUser(currentUser)) {
-    return true;
-  }
-
   // 1. التطابق المباشر باسم المستخدم (Username)
   if (report.createdByUsername && String(report.createdByUsername).toLowerCase().trim() === username) {
     return true;

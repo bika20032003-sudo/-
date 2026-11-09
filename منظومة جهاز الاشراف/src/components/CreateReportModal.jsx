@@ -1168,7 +1168,7 @@ export const CreateReportModal = ({
                 type="button"
                 disabled={isSubmitting}
                 onClick={(e) => handleSubmit(e, true)}
-                title="إحالة التقرير للبريد والمراسلات فقط"
+                title="إحالة التقرير رسمياً إلى البريد والمراسلات"
                 style={{
                   background: '#0284c7',
                   border: 'none',
@@ -1186,13 +1186,14 @@ export const CreateReportModal = ({
                 }}
               >
                 <Send size={16} />
-                <span>{isSubmitting ? 'جاري المعالجة...' : 'إحالة للمراسلات (بريد)'}</span>
+                <span>{isSubmitting ? 'جاري الإحالة...' : 'إحالة التقرير'}</span>
               </button>
 
               <button
                 type="button"
                 disabled={isSubmitting}
                 onClick={(e) => handleSubmit(e, false)}
+                title="حفظ واعتماد التقرير في الأرشيف العام والخاص"
                 style={{
                   background: '#16a34a',
                   border: 'none',
@@ -1210,7 +1211,7 @@ export const CreateReportModal = ({
                 }}
               >
                 <CheckCircle2 size={16} />
-                <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ التقرير المعتمد'}</span>
+                <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ واعتماد التقرير'}</span>
               </button>
             </div>
           </form>
