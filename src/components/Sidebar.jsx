@@ -3,7 +3,7 @@ import {
   Home, Milestone, UploadCloud, FileText, FolderArchive,
   CalendarRange, Truck, 
   Fuel, Bell, Users, LogOut, ShieldCheck, Plus, MapPin,
-  Camera, Mail, Bot, Sparkles, FilePlus, Target, Award
+  Camera, Mail, Briefcase, FilePlus, Target, Award
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 import { canAccessGeneralArchive, canAccessPeriodicReports } from '../utils/permissionUtils.js';
@@ -174,7 +174,7 @@ export const Sidebar = ({
     mainItems.push(
       { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
       { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
-      { id: 'ai-agent', label: 'مساعد مدير المشروع', icon: Bot, badge: 'تنفيذي' }
+      { id: 'ai-agent', label: 'مساعد مدير المشروع', icon: Briefcase, badge: 'تنفيذي' }
     );
 
     const canAccessGeneral = canAccessGeneralArchive(currentUser);

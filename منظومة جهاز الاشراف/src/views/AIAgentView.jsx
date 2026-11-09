@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Bot, Sparkles, Send, Copy, Check, Key, Paperclip, 
+  Briefcase, Send, Copy, Check, Key, Paperclip, 
   FileSpreadsheet, FileText, Image as ImageIcon, X,
   Layers, Milestone, Fuel, AlertTriangle, Printer,
   Award, Newspaper, HardHat, CheckCircle2, Calendar,
@@ -358,7 +358,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
             boxShadow: '0 4px 14px rgba(37,99,235,0.4)',
             border: '2px solid rgba(255,255,255,0.2)'
           }}>
-            <Bot size={28} color="#ffffff" />
+            <Briefcase size={28} color="#ffffff" />
           </div>
 
           <div>
@@ -406,7 +406,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
             }}
             title="بدء جلسة استعلام جديدة"
           >
-            <Sparkles size={15} color="#67e8f9" />
+            <RefreshCw size={15} color="#67e8f9" />
             <span>جلسة جديدة</span>
           </button>
 
@@ -428,7 +428,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
             }}
           >
             <Key size={15} />
-            <span>إعدادات الذكاء الاصطناعي</span>
+            <span>إعدادات الربط السحابي</span>
           </button>
         </div>
       </div>
@@ -444,10 +444,10 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
         }}>
           <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Key size={17} color="#2563eb" />
-            <span>إعدادات الاتصال بمحرك الذكاء الاصطناعي السحابي (Google Gemini)</span>
+            <span>إعدادات المحرك السحابي لمساعد مدير المشروع (Google Gemini)</span>
           </h3>
           <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '0.85rem', lineHeight: 1.5 }}>
-            يعمل مساعد مدير المشروع تلقائياً بمفتاح الذكاء الاصطناعي المدمج المعتمد، ويدعم العمل السحابي والمحلي المباشر:
+            يعمل مساعد مدير المشروع تلقائياً بالمحرك المدمج المعتمد، ويدعم الربط السحابي والمحلي المباشر:
           </p>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -654,7 +654,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
         whiteSpace: 'nowrap'
       }}>
         <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '4px' }}>
-          <Sparkles size={14} color="#2563eb" />
+          <CheckCircle2 size={14} color="#2563eb" />
           <span>استعلام سريع:</span>
         </span>
 
@@ -728,7 +728,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
             boxShadow: activeTab === 'chat' ? '0 3px 8px rgba(30,58,138,0.2)' : 'none'
           }}
         >
-          <Bot size={17} />
+          <Briefcase size={17} />
           <span>المحادثة والاستعلام التنفيذي لمدير المشروع</span>
         </button>
 
@@ -836,7 +836,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                               alignItems: 'center',
                               justifyContent: 'center'
                             }}>
-                              <Bot size={15} color="#2563eb" />
+                              <Briefcase size={15} color="#2563eb" />
                             </div>
                             <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#1e3a8a' }}>
                               {msg.title || 'مساعد مدير المشروع'}
@@ -1260,7 +1260,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                             gap: '4px'
                           }}
                         >
-                          <Sparkles size={13} />
+                          <FileText size={13} />
                           <span>استعلام المساعد عن هذا التقرير</span>
                         </button>
                       </div>
@@ -1384,7 +1384,7 @@ export const AIAgentView = ({ currentUser, onNavigateTab }) => {
                             gap: '4px'
                           }}
                         >
-                          <Sparkles size={13} />
+                          <Mail size={13} />
                           <span>استعلام المساعد عن هذه المراسلة</span>
                         </button>
                       </div>

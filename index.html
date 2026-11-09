@@ -27,11 +27,40 @@
     if (window.location.pathname === '/-') {
       window.location.replace('/-/');
     }
-    // Clean old caches if any
+    // Clean old caches and unregister stale service workers
     if ('caches' in window) {
       try {
         caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
       } catch (e) {}
+    }
+    if ('serviceWorker' in navigator) {
+      try {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+        });
+      } catch (e) {}
+    }
+    // Executive DOM sweeper: permanently eliminate any floating AI button or stale widget
+    function purgeLegacyAiWidget() {
+      try {
+        var buttons = document.querySelectorAll('button, div');
+        for (var i = 0; i < buttons.length; i++) {
+          var b = buttons[i];
+          if (!b || b.tagName === 'SCRIPT' || b.tagName === 'STYLE') continue;
+          var txt = b.innerText || b.textContent || '';
+          if (txt.indexOf('الذكاء الهندسي') !== -1 || txt.indexOf('فتح مساعد مدير المشروع') !== -1) {
+            var target = b.closest('button') || b.closest('.fixed') || b;
+            if (target && target.parentNode) {
+              target.parentNode.removeChild(target);
+            }
+          }
+        }
+      } catch (err) {}
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('DOMContentLoaded', purgeLegacyAiWidget);
+      window.addEventListener('load', purgeLegacyAiWidget);
+      setInterval(purgeLegacyAiWidget, 300);
     }
   </script>
   <!-- Enforce A4 Landscape Print Mode by Default across all browsers -->
