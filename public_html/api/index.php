@@ -378,8 +378,23 @@ if ($resource === 'two-phase-report') {
     if ($method === 'POST') {
         $body = get_json_input();
         $db['latestTwoPhaseReport'] = $body;
+        
+        // Ensure it is simultaneously recorded in reports archive
+        if (!isset($db['reports'])) $db['reports'] = [];
+        $found = false;
+        foreach ($db['reports'] as &$rep) {
+            if ((string)($rep['id'] ?? '') === (string)($body['id'] ?? '') || (string)($rep['reportNumber'] ?? '') === (string)($body['reportNumber'] ?? '')) {
+                $rep = $body;
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            array_unshift($db['reports'], $body);
+        }
+
         save_db($db);
-        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير إنجاز المرحلتين سحابياً']);
+        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير إنجاز المرحلتين سحابياً ومزامنته بالأرشيف']);
         exit;
     }
 }
@@ -414,8 +429,23 @@ if ($resource === 'fuel-daily-report') {
     if ($method === 'POST') {
         $body = get_json_input();
         $db['fuelDailyReport'] = $body;
+
+        // Ensure it is simultaneously recorded in reports archive
+        if (!isset($db['reports'])) $db['reports'] = [];
+        $found = false;
+        foreach ($db['reports'] as &$rep) {
+            if ((string)($rep['id'] ?? '') === (string)($body['id'] ?? '') || (string)($rep['reportNumber'] ?? '') === (string)($body['reportNumber'] ?? '')) {
+                $rep = $body;
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            array_unshift($db['reports'], $body);
+        }
+
         save_db($db);
-        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير كميات الوقود اليومية']);
+        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير كميات الوقود اليومية ومزامنته بالأرشيف']);
         exit;
     }
 }
