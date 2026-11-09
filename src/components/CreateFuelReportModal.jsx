@@ -25,13 +25,14 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
   const [sector, setSector] = useState(currentUser?.sector || 'المرحلة الأولى');
   const [reportNumber, setReportNumber] = useState(`FUEL-REP-${Date.now().toString().slice(-4)}`);
 
-  // Table items - loaded empty for live field reporting
+  // Table items - initialized with official approved baseline values (Document 094834_24.10.2026)
   const [fuelItems, setFuelItems] = useState([
-    { id: 1, location: 'خزان نقطة 107', dispatchedLiters: '', receivedLiters: '', remainingLiters: '' },
-    { id: 2, location: 'خزان نقطة 240', dispatchedLiters: '', receivedLiters: '', remainingLiters: '' }
+    { id: 1, location: '107', dispatchedLiters: '570.00', receivedLiters: '0.00', remainingLiters: '49,829.00' },
+    { id: 2, location: '240', dispatchedLiters: '17,530.00', receivedLiters: '14,631.00', remainingLiters: '141,795.00' },
+    { id: 3, location: 'الكسارات', dispatchedLiters: '4,638.00', receivedLiters: '0.00', remainingLiters: '19,073.00' }
   ]);
 
-  const locationPresets = ['خزان نقطة 107', 'خزان نقطة 240', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
+  const locationPresets = ['107', '240', 'الكسارات', 'خزان نقطة 107', 'خزان نقطة 240', 'محطة الخلط', 'المستودع المركزي'];
 
   // Status & modal states
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -950,7 +950,7 @@
         {
           "index": 3,
           "seq": "3",
-          "location": "محطة الموقع والمعدات",
+          "location": "الكسارات",
           "dispatchedLiters": 4638,
           "receivedLiters": 0,
           "remainingLiters": 19073
@@ -2015,7 +2015,7 @@
       {
         "id": 3,
         "seq": "3",
-        "location": "محطة الموقع والمعدات",
+        "location": "الكسارات",
         "dispatchedLiters": "4,638.00",
         "receivedLiters": "0.00",
         "remainingLiters": "19,073.00",

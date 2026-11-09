@@ -8,9 +8,24 @@ import './premium-ui.css';
 import { getFallbackData } from './utils/apiCache.js';
 import { initRealtimeSync } from './utils/realtimeSync.js';
 import { sanitizeLocalReportsStorage } from './utils/reportDeduplication.js';
+import { OFFICIAL_BASELINE_FUEL_REPORT } from './data/mockData.js';
 
 // Purge any duplicate reports accumulated in browser localStorage
 sanitizeLocalReportsStorage();
+
+// Ensure official baseline fuel daily report is adopted in localStorage
+try {
+  const currentFuel = localStorage.getItem('fuel_daily_report_data');
+  if (!currentFuel) {
+    localStorage.setItem('fuel_daily_report_data', JSON.stringify(OFFICIAL_BASELINE_FUEL_REPORT));
+  } else {
+    const parsed = JSON.parse(currentFuel);
+    const hasData = Array.isArray(parsed?.fuelItems) && parsed.fuelItems.length >= 3 && parsed.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
+    if (!hasData) {
+      localStorage.setItem('fuel_daily_report_data', JSON.stringify(OFFICIAL_BASELINE_FUEL_REPORT));
+    }
+  }
+} catch (e) {}
 
 // Automatically normalize API requests and provide offline/static fallback
 const originalFetch = window.fetch;

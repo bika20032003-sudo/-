@@ -81,6 +81,7 @@ import { deduplicateReportsList, sanitizeLocalReportsStorage } from './reportDed
 import {
   initialDailySummary,
   initialRecentReports,
+  OFFICIAL_BASELINE_FUEL_REPORT,
   initialCrushers,
   initialCrusherStocks,
   initialEquipment,
@@ -279,9 +280,12 @@ export function getFallbackData(url) {
       }
     } catch {}
     if (localData && typeof localData === 'object' && Array.isArray(localData.fuelItems) && localData.fuelItems.length > 0) {
-      return { success: true, data: localData };
+      const hasData = localData.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
+      if (hasData && localData.fuelItems.length >= 3) {
+        return { success: true, data: localData };
+      }
     }
-    return { success: true, data: null };
+    return { success: true, data: OFFICIAL_BASELINE_FUEL_REPORT };
   }
   if (url.includes('/api/two-phase-report')) {
     const rep = getStoredTwoPhaseReport();

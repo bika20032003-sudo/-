@@ -12,6 +12,59 @@ export const initialDailySummary = {
 export const solarTrend7Days = [];
 export const solarByEquipmentType = [];
 
+export const OFFICIAL_BASELINE_FUEL_REPORT = {
+  reportTitle: 'تقرير كميات الوقود اليومية',
+  reportDate: '2026-10-24',
+  formattedSlashDate: '24/10/2026',
+  dateFormatted: '24/10/2026',
+  date: '2026-10-24T00:00:00.000Z',
+  dayName: 'يوم السبت',
+  reportNumber: 'FUEL-094834_24.10.2026',
+  sector: 'مشروع أوباري - غات',
+  fuelOfficer: 'مسؤول الوقود والمحروقات بالموقع',
+  headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
+  totalDispatchedLiters: 22738.00,
+  totalReceivedLiters: 14631.00,
+  totalRemainingLiters: 210697.00,
+  fuelAmount: 22738.00,
+  status: 'approved',
+  approvedBy: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
+  notes: 'تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: 22,738.00 لتر - الوارد: 14,631.00 لتر - المتبقي: 210,697.00 لتر',
+  isFuelReport: true,
+  fuelItems: [
+    {
+      id: 1,
+      index: 1,
+      seq: '1',
+      location: '107',
+      dispatchedLiters: '570.00',
+      receivedLiters: '0.00',
+      remainingLiters: '49,829.00',
+      notes: ''
+    },
+    {
+      id: 2,
+      index: 2,
+      seq: '2',
+      location: '240',
+      dispatchedLiters: '17,530.00',
+      receivedLiters: '14,631.00',
+      remainingLiters: '141,795.00',
+      notes: ''
+    },
+    {
+      id: 3,
+      index: 3,
+      seq: '3',
+      location: 'الكسارات',
+      dispatchedLiters: '4,638.00',
+      receivedLiters: '0.00',
+      remainingLiters: '19,073.00',
+      notes: ''
+    }
+  ]
+};
+
 export const initialRecentReports = [
   {
     id: 'rep-tp-4228',
@@ -293,7 +346,7 @@ export const initialRecentReports = [
     fuelItems: [
       { index: 1, seq: '1', location: '107', dispatchedLiters: 570, receivedLiters: 0, remainingLiters: 49829 },
       { index: 2, seq: '2', location: '240', dispatchedLiters: 17530, receivedLiters: 14631, remainingLiters: 141795 },
-      { index: 3, seq: '3', location: 'محطة الموقع والمعدات', dispatchedLiters: 4638, receivedLiters: 0, remainingLiters: 19073 }
+      { index: 3, seq: '3', location: 'الكسارات', dispatchedLiters: 4638, receivedLiters: 0, remainingLiters: 19073 }
     ],
     totalDispatchedLiters: 22738,
     totalReceivedLiters: 14631,

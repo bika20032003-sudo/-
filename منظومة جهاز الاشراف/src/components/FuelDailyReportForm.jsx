@@ -18,7 +18,7 @@ const toCleanLatin = (val) => {
     .replace(/[٬،]/g, '');
 };
 
-// Default initial data matching the approved daily fuel document (Saturday 24/10/2026)
+// Default initial data matching the approved daily fuel document (Saturday 24/10/2026 - 094834_24.10.2026)
 export const initialFuelDailyData = {
   reportTitle: 'تقرير كميات الوقود اليومية',
   reportDate: '2026-10-24',
@@ -28,23 +28,36 @@ export const initialFuelDailyData = {
   sector: 'مشروع أوباري - غات',
   fuelOfficer: 'مسؤول الوقود والمحروقات بالموقع',
   headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
+  totalDispatchedLiters: 22738.00,
+  totalReceivedLiters: 14631.00,
+  totalRemainingLiters: 210697.00,
+  fuelAmount: 22738.00,
   fuelItems: [
     {
       id: 1,
       seq: '1',
-      location: 'خزان نقطة 107',
-      dispatchedLiters: '',
-      receivedLiters: '',
-      remainingLiters: '',
+      location: '107',
+      dispatchedLiters: '570.00',
+      receivedLiters: '0.00',
+      remainingLiters: '49,829.00',
       notes: ''
     },
     {
       id: 2,
       seq: '2',
-      location: 'خزان نقطة 240',
-      dispatchedLiters: '',
-      receivedLiters: '',
-      remainingLiters: '',
+      location: '240',
+      dispatchedLiters: '17,530.00',
+      receivedLiters: '14,631.00',
+      remainingLiters: '141,795.00',
+      notes: ''
+    },
+    {
+      id: 3,
+      seq: '3',
+      location: 'الكسارات',
+      dispatchedLiters: '4,638.00',
+      receivedLiters: '0.00',
+      remainingLiters: '19,073.00',
       notes: ''
     }
   ]
@@ -136,7 +149,7 @@ export const FuelDailyReportForm = ({
     }
   };
 
-  const locationPresets = ['خزان نقطة 107', 'خزان نقطة 240', 'خزان المرحلة الأولى', 'خزان المرحلة الثانية', 'محطة الخلط', 'المستودع المركزي'];
+  const locationPresets = ['107', '240', 'الكسارات', 'خزان نقطة 107', 'خزان نقطة 240', 'محطة الخلط', 'المستودع المركزي'];
 
   // Helper to parse numbers safely
   const parseNum = (val) => {
@@ -175,8 +188,11 @@ export const FuelDailyReportForm = ({
           try {
             const parsed = JSON.parse(local);
             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.fuelItems) && parsed.fuelItems.length > 0) {
-              setReportData(parsed);
-              return;
+              const hasActualData = parsed.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
+              if (hasActualData && parsed.fuelItems.length >= 3) {
+                setReportData(parsed);
+                return;
+              }
             }
           } catch {}
         }
