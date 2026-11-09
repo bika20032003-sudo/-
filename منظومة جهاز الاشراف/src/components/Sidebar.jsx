@@ -173,7 +173,8 @@ export const Sidebar = ({
     }
     mainItems.push(
       { id: 'road-progress', label: 'متابعة إنجاز الطريق (360 كم)', icon: Milestone },
-      { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award }
+      { id: 'executive-progress', label: 'الموقف التنفيذي (360 كم)', icon: Award },
+      { id: 'ai-agent', label: 'مساعد مدير المشروع', icon: Briefcase, badge: 'تنفيذي' }
     );
 
     const canAccessGeneral = canAccessGeneralArchive(currentUser);
