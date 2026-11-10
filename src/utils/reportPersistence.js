@@ -88,7 +88,10 @@ export async function persistReportUniversal(reportPayload, currentUser) {
       
       const filtered = list.filter(r => r && !areReportsIdentical(r, enriched));
       filtered.unshift(enriched);
-      localStorage.setItem('local_reports', JSON.stringify(deduplicateReportsList(filtered)));
+      const deduped = deduplicateReportsList(filtered);
+      // Keep most recent 120 reports in local storage to prevent QuotaExceededError
+      const capped = deduped.length > 120 ? deduped.slice(0, 120) : deduped;
+      localStorage.setItem('local_reports', JSON.stringify(capped));
     }
   } catch (storageErr) {
     console.error('Error saving report to local_reports:', storageErr);

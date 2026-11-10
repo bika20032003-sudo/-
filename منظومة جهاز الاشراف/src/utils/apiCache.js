@@ -952,7 +952,9 @@ export async function fastFetch(rawUrl, options = {}) {
               const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
               const filtered = local.filter(r => r && !areReportsIdentical(r, enriched));
               filtered.unshift(enriched);
-              localStorage.setItem('local_reports', JSON.stringify(deduplicateReportsList(filtered)));
+              const deduped = deduplicateReportsList(filtered);
+              const capped = deduped.length > 120 ? deduped.slice(0, 120) : deduped;
+              localStorage.setItem('local_reports', JSON.stringify(capped));
 
               const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
               const updatedDeleted = deleted.filter(id => String(id) !== String(enriched.id) && String(id) !== String(enriched.reportNumber));
