@@ -21,11 +21,17 @@ const toCleanLatin = (val) => {
 
 // Default initial data matching the approved daily fuel document (Saturday 24/10/2026 - 094834_24.10.2026)
 export const initialFuelDailyData = {
+  id: 'fuel-daily-2026-10-24',
   reportTitle: 'تقرير كميات الوقود اليومية',
   reportDate: '2026-10-24',
+  dateFormatted: '2026-10-24',
+  date: '2026-10-24T00:00:00.000Z',
   formattedSlashDate: '24/10/2026',
   dayName: 'يوم السبت',
   reportNumber: 'FUEL-094834_24.10.2026',
+  reportType: 'تقرير كميات الوقود اليومية',
+  reportCategory: 'fuel',
+  isFuelReport: true,
   sector: 'مشروع أوباري - غات',
   fuelOfficer: 'مسؤول الوقود والمحروقات بالموقع',
   headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
@@ -430,7 +436,7 @@ export const FuelDailyReportForm = ({
       const saved = await persistReportUniversal(printableObj, currentUser);
 
       // 3. Save into dedicated fuel_daily_report_data
-      localStorage.setItem('fuel_daily_report_data', JSON.stringify(payload));
+      localStorage.setItem('fuel_daily_report_data', JSON.stringify(saved || printableObj));
 
       setCreatedReportForForward(saved || printableObj);
       setStatusMessage({

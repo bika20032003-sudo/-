@@ -973,6 +973,12 @@ export async function fastFetch(rawUrl, options = {}) {
             const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
             if (typeof window !== 'undefined' && window.localStorage) {
               localStorage.setItem('executive_progress_data', JSON.stringify(parsed));
+              const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+              const filtered = local.filter(r => r && !areReportsIdentical(r, parsed));
+              filtered.unshift(parsed);
+              const deduped = deduplicateReportsList(filtered);
+              const capped = deduped.length > 120 ? deduped.slice(0, 120) : deduped;
+              localStorage.setItem('local_reports', JSON.stringify(capped));
             }
             return { success: true, message: 'Saved executive progress locally', report: parsed };
           }
@@ -986,6 +992,12 @@ export async function fastFetch(rawUrl, options = {}) {
             const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
             if (typeof window !== 'undefined' && window.localStorage) {
               localStorage.setItem('road_daily_report_data', JSON.stringify(parsed));
+              const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+              const filtered = local.filter(r => r && !areReportsIdentical(r, parsed));
+              filtered.unshift(parsed);
+              const deduped = deduplicateReportsList(filtered);
+              const capped = deduped.length > 120 ? deduped.slice(0, 120) : deduped;
+              localStorage.setItem('local_reports', JSON.stringify(capped));
             }
             return { success: true, message: 'Saved road report locally', report: parsed };
           }
@@ -997,6 +1009,12 @@ export async function fastFetch(rawUrl, options = {}) {
             const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
             if (typeof window !== 'undefined' && window.localStorage) {
               localStorage.setItem('fuel_daily_report_data', JSON.stringify(parsed));
+              const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+              const filtered = local.filter(r => r && !areReportsIdentical(r, parsed));
+              filtered.unshift(parsed);
+              const deduped = deduplicateReportsList(filtered);
+              const capped = deduped.length > 120 ? deduped.slice(0, 120) : deduped;
+              localStorage.setItem('local_reports', JSON.stringify(capped));
             }
             return { success: true, message: 'Saved fuel report locally', report: parsed };
           }

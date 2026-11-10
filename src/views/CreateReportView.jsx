@@ -1060,6 +1060,10 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
           currentUser={currentUser}
           onNavigateTab={onNavigateTab}
           onPrintReport={onPrintReport}
+          onSaved={(saved) => {
+            setCreatedReport(saved);
+            setStatusMessage({ type: 'success', text: `تم حفظ واعتماد تقرير الموقف التنفيذي برقم (${saved.reportNumber || saved.id}) بنجاح في الأرشيف!` });
+          }}
         />
       ) : reportCategory === 'two_phase' ? (
         <TwoPhaseDailyReportForm 

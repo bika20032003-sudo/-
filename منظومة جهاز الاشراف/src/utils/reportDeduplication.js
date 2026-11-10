@@ -88,7 +88,7 @@ export function getReportCompositeKey(report) {
   // At most ONE official report per type, sector, and date
   if (['two_phase', 'fuel', 'road_daily', 'targeted', 'executive'].includes(type) && date) {
     let secKey = sector;
-    if (type === 'two_phase' || type === 'executive') {
+    if (type === 'two_phase' || type === 'executive' || type === 'fuel') {
       secKey = 'both';
     } else if (type === 'road_daily') {
       secKey = (sector === 'phase2') ? 'phase2' : 'main';
@@ -297,6 +297,19 @@ export function sanitizeLocalReportsStorage() {
               if (!secObj.status) secObj.status = 'approved';
               if (!secObj.uploadedBy) secObj.uploadedBy = secObj.sectorDirector || 'م. صلاح العربي';
               if (!secObj.engineer) secObj.engineer = secObj.sectorDirector || 'م. صلاح العربي';
+            } else if (secKey === 'fuel_daily_report_data') {
+              secObj.isFuelReport = true;
+              secObj.reportType = 'تقرير كميات الوقود اليومية';
+              secObj.reportCategory = 'fuel';
+              if (!secObj.id) secObj.id = 'fuel-daily-' + (secObj.reportDate || '2026-10-24');
+              if (!secObj.reportNumber) secObj.reportNumber = 'FUEL-094834_24.10.2026';
+              if (!secObj.dateFormatted) secObj.dateFormatted = secObj.reportDate || '2026-10-24';
+              if (!secObj.date) secObj.date = secObj.reportDate ? new Date(secObj.reportDate).toISOString() : '2026-10-24T00:00:00.000Z';
+              if (!secObj.sector) secObj.sector = 'مشروع أوباري - غات';
+              if (!secObj.title) secObj.title = secObj.reportTitle || 'تقرير كميات الوقود اليومية';
+              if (!secObj.status) secObj.status = 'approved';
+              if (!secObj.uploadedBy) secObj.uploadedBy = secObj.fuelOfficer || 'مسؤول الوقود والمحروقات بالموقع';
+              if (!secObj.engineer) secObj.engineer = secObj.fuelOfficer || 'مسؤول الوقود والمحروقات بالموقع';
             }
             parsed.push(secObj);
           }

@@ -10,7 +10,7 @@ import { fastFetch } from '../utils/apiCache.js';
 import { deleteReportFromIndexedDB } from '../utils/secureDatabase.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport, canAccessGeneralArchive, isReportOwnedByEngineer, isDevUser } from '../utils/permissionUtils';
-import { deduplicateReportsList, sanitizeLocalReportsStorage } from '../utils/reportDeduplication';
+import { deduplicateReportsList, sanitizeLocalReportsStorage, areReportsIdentical } from '../utils/reportDeduplication';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
 
@@ -425,9 +425,33 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       if (targetId) await deleteReportFromIndexedDB(targetId);
       if (targetNum) await deleteReportFromIndexedDB(targetNum);
 
+      // 1. Clear dedicated section storage if this was a section document
+      try {
+        if (reportToDelete.isFuelReport || reportToDelete.reportType === 'تقرير كميات الوقود اليومية') {
+          localStorage.removeItem('fuel_daily_report_data');
+        }
+        if (reportToDelete.isRoadProgressReport || reportToDelete.reportType === 'تقرير أعمال الطريق اليومي') {
+          localStorage.removeItem('road_daily_report_data');
+        }
+        if (reportToDelete.isExecutiveProgressReport || reportToDelete.reportType === 'الموقف التنفيذي' || reportToDelete.reportCategory === 'executive') {
+          localStorage.removeItem('executive_progress_data');
+        }
+        if (reportToDelete.isTwoPhaseProgressReport || reportToDelete.reportType === 'تقرير إنجاز المرحلتين') {
+          localStorage.removeItem('two_phase_report_data');
+        }
+        if (reportToDelete.isTargetedWorksReport || reportToDelete.reportType === 'تقرير الأعمال المستهدفة') {
+          localStorage.removeItem('targeted_works_report_data');
+        }
+      } catch (secErr) {
+        console.warn('Error clearing section storage on delete:', secErr);
+      }
+
+      // 2. Remove from local_reports using both identity match and ID/number
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
         const updatedLocal = local.filter(r => {
+          if (!r) return false;
+          if (areReportsIdentical(r, reportToDelete)) return false;
           const rId = String(r.id || '');
           const rNum = String(r.reportNumber || '');
           return rId !== targetId && rNum !== targetNum && (targetNum ? rId !== targetNum : true) && (targetId ? rNum !== targetId : true);
@@ -437,6 +461,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         console.error('LocalStorage error updating local_reports:', storageErr);
       }
 
+      // 3. Record in deleted_report_ids
       try {
         const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
         if (targetId && !deleted.includes(targetId)) deleted.push(targetId);
@@ -446,7 +471,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         console.error('LocalStorage error updating deleted_report_ids:', delErr);
       }
 
+      // 4. Update UI state
       setReports(prev => prev.filter(r => {
+        if (!r) return false;
+        if (areReportsIdentical(r, reportToDelete)) return false;
         const rId = String(r.id || '');
         const rNum = String(r.reportNumber || '');
         if (targetId && rId === targetId) return false;

@@ -450,6 +450,18 @@ if ($resource === 'reports') {
         $db['reports'] = array_values(array_filter($db['reports'], function($r) use ($subId) {
             return (string)($r['id'] ?? '') !== (string)$subId && (string)($r['reportNumber'] ?? '') !== (string)$subId;
         }));
+        if (isset($db['fuelDailyReport']) && ((string)($db['fuelDailyReport']['id'] ?? '') === (string)$subId || (string)($db['fuelDailyReport']['reportNumber'] ?? '') === (string)$subId)) {
+            unset($db['fuelDailyReport']);
+        }
+        if (isset($db['roadDailyReport']) && ((string)($db['roadDailyReport']['id'] ?? '') === (string)$subId || (string)($db['roadDailyReport']['reportNumber'] ?? '') === (string)$subId)) {
+            unset($db['roadDailyReport']);
+        }
+        if (isset($db['executiveProgress']) && ((string)($db['executiveProgress']['id'] ?? '') === (string)$subId || (string)($db['executiveProgress']['reportNumber'] ?? '') === (string)$subId)) {
+            unset($db['executiveProgress']);
+        }
+        if (isset($db['latestTwoPhaseReport']) && ((string)($db['latestTwoPhaseReport']['id'] ?? '') === (string)$subId || (string)($db['latestTwoPhaseReport']['reportNumber'] ?? '') === (string)$subId)) {
+            unset($db['latestTwoPhaseReport']);
+        }
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم حذف التقرير من قاعدة البيانات بنجاح']);
         exit;
@@ -548,8 +560,10 @@ if ($resource === 'executive-progress') {
     if ($method === 'POST') {
         $body = get_json_input();
         $db['executiveProgress'] = $body;
+        if (!isset($db['reports'])) $db['reports'] = [];
+        $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports']));
         save_db($db);
-        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث الموقف التنفيذي بنجاح']);
+        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث الموقف التنفيذي بنجاح ومزامنته بالأرشيف']);
         exit;
     }
 }
