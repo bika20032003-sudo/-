@@ -28,17 +28,24 @@
       window.location.replace('/-/');
     }
 
-    // Bust stale version query parameter (e.g. 20261028) and enforce current release
+    // Clean URL: Strip any version query parameter (e.g. ?v=...) to keep address bar clean
     (function () {
       try {
-        var CURRENT_VERSION = '20261110_v4';
-        var params = new URLSearchParams(window.location.search);
-        var v = params.get('v');
-        if (!v || v !== CURRENT_VERSION) {
-          params.set('v', CURRENT_VERSION);
-          var newUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
-          if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', newUrl);
+        if (window.location.search) {
+          var params = new URLSearchParams(window.location.search);
+          var keysToRemove = [];
+          params.forEach(function (val, key) {
+            if (key === 'v' || key.toLowerCase().indexOf('v_') === 0 || key.indexOf('2026') === 0) {
+              keysToRemove.push(key);
+            }
+          });
+          if (keysToRemove.length > 0) {
+            keysToRemove.forEach(function (k) { params.delete(k); });
+            var remaining = params.toString();
+            var cleanUrl = window.location.pathname + (remaining ? ('?' + remaining) : '') + window.location.hash;
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', cleanUrl);
+            }
           }
         }
       } catch (e) { }
