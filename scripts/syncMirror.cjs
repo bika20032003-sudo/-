@@ -28,7 +28,6 @@ const filesToSync = [
   'src/views/ReportsArchiveView.jsx',
   'src/views/FuelView.jsx',
   'src/views/RoadProgressView.jsx',
-  'src/views/SectorDashboardView.jsx',
   'src/views/TargetedWorksView.jsx',
   'src/views/PeriodicReportsView.jsx',
   'src/views/CorrespondenceView.jsx',

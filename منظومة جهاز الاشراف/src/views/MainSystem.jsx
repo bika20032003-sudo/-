@@ -111,7 +111,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
 
     const tabTitles = {
         'dashboard': 'لوحة القيادة الموحدة - جهاز الإشراف والمتابعة',
-        'sector-dashboard': `لوحة العمليات الميدانية - ${currentUser?.title || currentUser?.role || 'القطاع'}`,
         'reports-archive': 'الأرشيف الخاص بي (تقاريري الميدانية)',
         'general-archive': 'الأرشيف العام لكافة تقارير المشروع (الإشراف العام)',
         'periodic-reports': 'التقارير الأسبوعية والشهرية التجميعية لأعمال الطريق',
@@ -161,7 +160,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
 
           <main className="custom-page-container">
             {/* 1. General Unified Dashboard for ALL Engineers */}
-            {(activeTab === 'dashboard' || activeTab === 'sector-dashboard') && <DashboardView onNavigateTab={handleTabChange} currentUser={currentUser} />}
+            {activeTab === 'dashboard' && <DashboardView onNavigateTab={handleTabChange} currentUser={currentUser} />}
 
             {/* 3. Dedicated Create Report Section */}
             {activeTab === 'create-report' && (
