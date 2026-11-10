@@ -88,11 +88,21 @@ export const FuelDailyReportForm = ({
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
-  // Automatically resolve author name and role from logged-in username
+  // Automatically resolve author name and role from logged-in username (صاحب الحساب المسجل)
   const resolvedAuthor = useMemo(() => {
+    // 1. If currentUser exists, their actual account name & role ALWAYS take top priority!
+    if (currentUser?.name) {
+      return {
+        name: currentUser.name,
+        role: currentUser.title || currentUser.role || 'عضو جهاز الإشراف'
+      };
+    }
     const OFFICIAL_MAP = {
-      'admin': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-      'dev': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'admin': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+      'dev': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+      'developer': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+      'development': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+      'حساب التطوير': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
       'project_manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
       'alansari': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
       'manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
@@ -110,7 +120,6 @@ export const FuelDailyReportForm = ({
     };
     const uKey = String(currentUser?.username || '').toLowerCase().trim();
     if (OFFICIAL_MAP[uKey]) return OFFICIAL_MAP[uKey];
-    if (currentUser?.name) return { name: currentUser.name, role: currentUser.title || currentUser.role || 'عضو جهاز الإشراف' };
     return { name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و 240' };
   }, [currentUser]);
 

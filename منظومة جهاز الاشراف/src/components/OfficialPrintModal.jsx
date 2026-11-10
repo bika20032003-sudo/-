@@ -84,7 +84,7 @@ const TwoPhasePrintChart = ({ title, items }) => {
 
 /**
  * Universal Author & Creator Info Resolver
- * Automatically resolves the author's official Libyan agency title & name from username.
+ * Automatically resolves the author's official Libyan agency title & name from the active account owner.
  */
 export const getReportAuthorInfo = (report = {}, activeUser = null) => {
   let user = activeUser;
@@ -95,6 +95,15 @@ export const getReportAuthorInfo = (report = {}, activeUser = null) => {
     } catch (e) {}
   }
 
+  // 1. If an active logged-in user exists, their actual account owner name ALWAYS takes top priority!
+  if (user && user.name) {
+    return {
+      name: user.name,
+      role: user.title || user.role || 'عضو جهاز الإشراف'
+    };
+  }
+
+  // 2. Known official system mapping by username
   const rawUsername = String(
     report?.authorUsername ||
     report?.createdByUsername ||
@@ -103,9 +112,11 @@ export const getReportAuthorInfo = (report = {}, activeUser = null) => {
   ).trim().toLowerCase();
 
   const OFFICIAL_MAP = {
-    'admin': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    'dev': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    'developer': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'admin': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+    'dev': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+    'developer': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+    'development': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
+    'حساب التطوير': { name: 'م. حساب التطوير', role: 'حساب التطوير والإشراف البرمجي الكامل' },
     'project_manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
     'alansari': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
     'manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
@@ -119,13 +130,14 @@ export const getReportAuthorInfo = (report = {}, activeUser = null) => {
     'sector_a': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
     'issa_altahir': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
     'sector_b': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
-    'fuel_officer': { name: 'مسؤول الوقود والمحروقات', role: 'مسؤول الوقود بالموقع' },
+    'fuel_officer': { name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و 240' },
   };
 
   if (rawUsername && OFFICIAL_MAP[rawUsername]) {
     return OFFICIAL_MAP[rawUsername];
   }
 
+  // 3. Fallback to custom users in localStorage
   if (typeof window !== 'undefined' && rawUsername) {
     try {
       const rawCustom = localStorage.getItem('system_custom_users');
@@ -144,13 +156,7 @@ export const getReportAuthorInfo = (report = {}, activeUser = null) => {
     } catch (e) {}
   }
 
-  if (user && user.name) {
-    return {
-      name: user.name,
-      role: user.title || user.role || 'عضو جهاز الإشراف'
-    };
-  }
-
+  // 4. Fallback to report fields if recorded previously
   const repName = report?.createdByName || report?.uploadedBy || report?.author || report?.engineer;
   if (repName && typeof repName === 'string' && repName.trim()) {
     const match = repName.match(/^([^(]+)(?:\(([^)]+)\))?/);
@@ -167,8 +173,8 @@ export const getReportAuthorInfo = (report = {}, activeUser = null) => {
   }
 
   return {
-    name: 'م. عبدالرحمن الأنصاري',
-    role: 'مدير المشروع'
+    name: 'م. حساب التطوير',
+    role: 'حساب التطوير'
   };
 };
 
