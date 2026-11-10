@@ -1,6 +1,6 @@
 import { saveReportToIndexedDB } from './secureDatabase.js';
 import { clearApiCache, fastFetch } from './apiCache.js';
-import { deduplicateReportsList } from './reportDeduplication.js';
+import { deduplicateReportsList, areReportsIdentical } from './reportDeduplication.js';
 import { toCleanLatinDigits } from './forceLatinDigits.js';
 
 /**
@@ -86,14 +86,7 @@ export async function persistReportUniversal(reportPayload, currentUser) {
       const local = rawLocal ? JSON.parse(rawLocal) : [];
       const list = Array.isArray(local) ? local : [];
       
-      const filtered = list.filter(r => 
-        r &&
-        String(r.id) !== String(enriched.id) &&
-        String(r.reportNumber) !== String(enriched.reportNumber) &&
-        !(r.reportType === enriched.reportType && 
-          (r.dateFormatted || r.reportDate || r.date) === (enriched.dateFormatted || enriched.reportDate || enriched.date) && 
-          r.sector === enriched.sector)
-      );
+      const filtered = list.filter(r => r && !areReportsIdentical(r, enriched));
       filtered.unshift(enriched);
       localStorage.setItem('local_reports', JSON.stringify(deduplicateReportsList(filtered)));
     }

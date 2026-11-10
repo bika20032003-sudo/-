@@ -77,7 +77,7 @@ export {
   updateRoadProgressItem
 };
 import { deleteReportFromIndexedDB } from './secureDatabase.js';
-import { deduplicateReportsList, sanitizeLocalReportsStorage } from './reportDeduplication.js';
+import { deduplicateReportsList, sanitizeLocalReportsStorage, areReportsIdentical } from './reportDeduplication.js';
 import {
   initialDailySummary,
   initialRecentReports,
@@ -950,11 +950,7 @@ export async function fastFetch(rawUrl, options = {}) {
             };
             if (typeof window !== 'undefined' && window.localStorage) {
               const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-              const filtered = local.filter(r => 
-                r && 
-                String(r.id) !== String(enriched.id) && 
-                String(r.reportNumber) !== String(enriched.reportNumber)
-              );
+              const filtered = local.filter(r => r && !areReportsIdentical(r, enriched));
               filtered.unshift(enriched);
               localStorage.setItem('local_reports', JSON.stringify(deduplicateReportsList(filtered)));
 

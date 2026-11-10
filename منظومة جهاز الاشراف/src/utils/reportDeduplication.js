@@ -18,14 +18,14 @@ export function normalizeReportDate(report) {
   const raw = report.dateFormatted || report.reportDate || report.date || report.createdAt || '';
   if (!raw) return '';
   const str = String(raw).trim();
-  const ymdMatch = str.match(/(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})/);
+  const ymdMatch = str.match(/(\d{4})\s*[./\-]\s*(\d{1,2})\s*[./\-]\s*(\d{1,2})/);
   if (ymdMatch) {
     const y = ymdMatch[1];
     const m = ymdMatch[2].padStart(2, '0');
     const d = ymdMatch[3].padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
-  const dmyMatch = str.match(/(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})/);
+  const dmyMatch = str.match(/(\d{1,2})\s*[./\-]\s*(\d{1,2})\s*[./\-]\s*(\d{4})/);
   if (dmyMatch) {
     const d = dmyMatch[1].padStart(2, '0');
     const m = dmyMatch[2].padStart(2, '0');
@@ -87,7 +87,12 @@ export function getReportCompositeKey(report) {
   // Daily operations (two-phase, fuel, road, targeted, executive):
   // At most ONE official report per type, sector, and date
   if (['two_phase', 'fuel', 'road_daily', 'targeted', 'executive'].includes(type) && date) {
-    const secKey = (type === 'two_phase' || type === 'executive') ? 'both' : sector;
+    let secKey = sector;
+    if (type === 'two_phase' || type === 'executive') {
+      secKey = 'both';
+    } else if (type === 'road_daily') {
+      secKey = (sector === 'phase2') ? 'phase2' : 'main';
+    }
     return `daily_${type}_${secKey}_${date}`;
   }
 
@@ -116,6 +121,15 @@ export function areReportsIdentical(a, b) {
   const numB = normalizeReportNumber(b.reportNumber);
   if (numA && numB && numA === numB) return true;
 
+  // 1.1 Match by report numbers containing identical numeric date tokens (e.g. 24.10.2026 or 20261024)
+  if (numA && numB) {
+    const cleanNumA = numA.replace(/\D/g, '');
+    const cleanNumB = numB.replace(/\D/g, '');
+    if (cleanNumA.length >= 6 && cleanNumB.length >= 6 && cleanNumA === cleanNumB) {
+      return true;
+    }
+  }
+
   // 2. Match by direct ID
   const idA = a.id ? String(a.id).toLowerCase().trim() : '';
   const idB = b.id ? String(b.id).toLowerCase().trim() : '';
@@ -133,7 +147,7 @@ export function areReportsIdentical(a, b) {
   const compB = getReportCompositeKey(b);
   if (compA && compB && compA === compB) return true;
 
-  // 5. Match daily operations of the same type and date (fuel, two-phase, executive, targeted)
+  // 5. Match daily operations of the same type and date (fuel, two-phase, executive, targeted, road_daily)
   const typeA = normalizeReportType(a);
   const typeB = normalizeReportType(b);
   const dateA = normalizeReportDate(a);
@@ -142,10 +156,15 @@ export function areReportsIdentical(a, b) {
     if (['two_phase', 'fuel', 'targeted', 'executive'].includes(typeA)) {
       return true;
     }
-    // For road daily: same sector and same date
-    const secA = normalizeReportSector(a.sector);
-    const secB = normalizeReportSector(b.sector);
-    if (secA === secB) return true;
+    if (typeA === 'road_daily') {
+      const secA = normalizeReportSector(a.sector);
+      const secB = normalizeReportSector(b.sector);
+      // Daily road reports for the same day match unless explicitly Phase 1 vs Phase 2
+      const isDistinctPhases = (secA === 'phase1' && secB === 'phase2') || (secA === 'phase2' && secB === 'phase1');
+      if (!isDistinctPhases) {
+        return true;
+      }
+    }
   }
 
   // 6. Match by exact title and date
@@ -265,6 +284,19 @@ export function sanitizeLocalReportsStorage() {
               if (!secObj.engineer) secObj.engineer = 'م. عبدالرحمن الأنصاري';
               if (!secObj.sectorDirector) secObj.sectorDirector = 'م. عبدالرحمن الأنصاري';
               if (!secObj.status) secObj.status = 'approved';
+            } else if (secKey === 'road_daily_report_data') {
+              secObj.isRoadProgressReport = true;
+              secObj.reportType = 'تقرير أعمال الطريق اليومي';
+              secObj.reportCategory = 'road';
+              if (!secObj.id) secObj.id = 'road-daily-' + (secObj.reportDate || '2026-10-24');
+              if (!secObj.reportNumber) secObj.reportNumber = 'ROAD-REP-24.10.2026';
+              if (!secObj.dateFormatted) secObj.dateFormatted = secObj.reportDate || '2026-10-24';
+              if (!secObj.date) secObj.date = secObj.reportDate ? new Date(secObj.reportDate).toISOString() : '2026-10-24T00:00:00.000Z';
+              if (!secObj.sector) secObj.sector = 'طريق أوباري - غات';
+              if (!secObj.title) secObj.title = secObj.reportTitle || `تقرير أعمال يوم ${secObj.dayName || 'السبت'} ${secObj.reportDate || '2026-10-24'}`;
+              if (!secObj.status) secObj.status = 'approved';
+              if (!secObj.uploadedBy) secObj.uploadedBy = secObj.sectorDirector || 'م. صلاح العربي';
+              if (!secObj.engineer) secObj.engineer = secObj.sectorDirector || 'م. صلاح العربي';
             }
             parsed.push(secObj);
           }

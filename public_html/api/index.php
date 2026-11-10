@@ -393,6 +393,10 @@ if ($resource === 'reports') {
         if (!empty($body['isFuelReport']) || ($body['reportType'] ?? '') === 'تقرير كميات الوقود اليومية') {
             $db['fuelDailyReport'] = $body;
         }
+        // If Road daily report, update roadDailyReport
+        if (!empty($body['isRoadProgressReport']) || ($body['reportType'] ?? '') === 'تقرير أعمال الطريق اليومي') {
+            $db['roadDailyReport'] = $body;
+        }
 
         save_db($db);
         echo json_encode(['success' => true, 'report' => $body, 'message' => 'تم حفظ التقرير سحابياً بنجاح ومزامنته بدون أي تكرار']);
@@ -486,8 +490,10 @@ if ($resource === 'road-daily-report') {
     if ($method === 'POST') {
         $body = get_json_input();
         $db['roadDailyReport'] = $body;
+        if (!isset($db['reports'])) $db['reports'] = [];
+        $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports']));
         save_db($db);
-        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير أعمال الطريق اليومي']);
+        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير أعمال الطريق اليومي ومزامنته بالأرشيف']);
         exit;
     }
 }

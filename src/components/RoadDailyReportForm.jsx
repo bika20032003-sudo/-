@@ -22,12 +22,18 @@ const toCleanLatin = (val) => {
 
 // Default initial data matching the approved road daily works document (Saturday 24/10/2026)
 export const initialRoadDailyData = {
+  id: 'road-daily-2026-10-24',
   projectName: 'مشروع صيانة وتطوير طريق أوباري - غات',
   sector: 'طريق أوباري - غات',
   reportTitle: 'تقرير أعمال يوم السبت 24 - 10 - 2026',
   reportDate: '2026-10-24',
+  dateFormatted: '2026-10-24',
+  date: '2026-10-24T00:00:00.000Z',
   dayName: 'السبت',
   reportNumber: 'ROAD-REP-24.10.2026',
+  reportType: 'تقرير أعمال الطريق اليومي',
+  reportCategory: 'road',
+  isRoadProgressReport: true,
   sectorDirector: (typeof window !== 'undefined' && localStorage.getItem('system_default_sector_director')) || 'م. صلاح العربي',
   ownerRepresentative: '',
   items: [
@@ -592,7 +598,7 @@ export const RoadDailyReportForm = ({
       const saved = await persistReportUniversal(printableObj, currentUser);
 
       // 3. Save into dedicated road_daily_report_data
-      localStorage.setItem('road_daily_report_data', JSON.stringify(payload));
+      localStorage.setItem('road_daily_report_data', JSON.stringify(saved || printableObj));
 
       setCreatedReportForForward(saved || printableObj);
       setStatusMessage({
