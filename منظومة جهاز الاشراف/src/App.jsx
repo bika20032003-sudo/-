@@ -4,12 +4,37 @@ import { MainSystem } from './views/MainSystem';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const App = () => {
-    const [currentUser, setCurrentUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(() => {
+      try {
+        const saved = localStorage.getItem('portal_logged_user');
+        return saved ? JSON.parse(saved) : null;
+      } catch (e) {
+        return null;
+      }
+    });
+
+    const handleLoginSuccess = (user) => {
+      try {
+        localStorage.setItem('portal_logged_user', JSON.stringify(user));
+      } catch (e) {}
+      setCurrentUser(user);
+    };
+
+    const handleLogout = () => {
+      try {
+        localStorage.removeItem('portal_logged_user');
+      } catch (e) {}
+      setCurrentUser(null);
+    };
 
     const handleUpdateUser = (updatedFields) => {
       setCurrentUser(prev => {
         if (!prev) return null;
-        return { ...prev, ...updatedFields };
+        const updated = { ...prev, ...updatedFields };
+        try {
+          localStorage.setItem('portal_logged_user', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
       });
     };
 
@@ -19,11 +44,11 @@ export const App = () => {
           {currentUser ? (
             <MainSystem 
               currentUser={currentUser} 
-              onLogout={() => setCurrentUser(null)}
+              onLogout={handleLogout}
               onUpdateUser={handleUpdateUser}
             />
           ) : (
-            <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />
+            <LoginPage onLoginSuccess={handleLoginSuccess} />
           )}
         </div>
       </ErrorBoundary>

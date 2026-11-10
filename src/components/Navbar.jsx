@@ -125,16 +125,17 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
         </div>
 
         {/* Left side in RTL: Server Status, Notifications & Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {/* Live Server Pulse */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '20px', padding: '0.2rem 0.65rem', fontSize: '0.76rem', color: '#166534', fontWeight: 700 }}>
+          <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '20px', padding: '0.2rem 0.65rem', fontSize: '0.76rem', color: '#166534', fontWeight: 700 }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }}/>
-            <span className="hide-on-mobile">متصل ومحدث</span>
+            <span>متصل ومحدث</span>
           </div>
 
           {/* Database Backup & Restore Tool */}
           <button 
             onClick={onBackupClick} 
+            className="hide-on-mobile"
             style={{
               background: '#f8fafc',
               border: '1px solid #cbd5e1',
@@ -153,7 +154,7 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
             title="إدارة قاعدة البيانات، النسخ الاحتياطي، والاستعادة الفورية"
           >
             <Database size={15} color="#2563eb"/>
-            <span className="hide-on-mobile">النسخ الاحتياطي</span>
+            <span>النسخ الاحتياطي</span>
           </button>
 
           {/* Mail & Correspondence Button */}

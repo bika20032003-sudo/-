@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const filesToSync = [
+  'src/App.jsx',
   'src/components/ExecutiveProgressForm.jsx',
   'src/components/StationQuantitiesModal.jsx',
   'src/components/RoadDailyReportForm.jsx',

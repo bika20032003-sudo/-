@@ -303,19 +303,19 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             border: '1px solid #cbd5e1',
             boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
         }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: '1 1 240px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Milestone size={22}/>
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.3 }}>
                 مشروع صيانة وتطوير طريق أوباري - غات (نسبة الإنجاز من الموقف التنفيذي)
               </h3>
             </div>
           </div>
 
-          <button onClick={() => onNavigateTab('road-progress')} className="secondary-action-btn" style={{ background: '#fff', fontSize: '0.82rem', fontWeight: 800, color: '#2563eb', borderColor: '#bfdbfe' }}>
+          <button onClick={() => onNavigateTab('road-progress')} className="secondary-action-btn" style={{ background: '#fff', fontSize: '0.82rem', fontWeight: 800, color: '#2563eb', borderColor: '#bfdbfe', flexShrink: 0 }}>
             <span>عرض تفاصيل مسار الطريق</span>
             <ChevronLeft size={16}/>
           </button>
