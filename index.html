@@ -31,7 +31,7 @@
     // Bust stale version query parameter (e.g. 20261028) and enforce current release
     (function () {
       try {
-        var CURRENT_VERSION = '20261110_v2';
+        var CURRENT_VERSION = '20261110_v3';
         var params = new URLSearchParams(window.location.search);
         var v = params.get('v');
         if (!v || v !== CURRENT_VERSION) {
