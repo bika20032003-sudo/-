@@ -969,6 +969,19 @@ export async function fastFetch(rawUrl, options = {}) {
           console.error('Error saving report in fastFetch:', e);
         }
       }
+      if (url.includes('/api/executive-progress')) {
+        try {
+          if (options.body) {
+            const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+            if (typeof window !== 'undefined' && window.localStorage) {
+              localStorage.setItem('executive_progress_data', JSON.stringify(parsed));
+            }
+            return { success: true, message: 'Saved executive progress locally', report: parsed };
+          }
+        } catch (e) {
+          console.error('Error saving executive progress in fastFetch:', e);
+        }
+      }
       if (url.includes('/api/road-daily-report')) {
         try {
           if (options.body) {

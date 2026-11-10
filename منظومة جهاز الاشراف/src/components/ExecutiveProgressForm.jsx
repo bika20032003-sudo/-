@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
+import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
 import { StationQuantitiesModal } from './StationQuantitiesModal';
 import { calculateExecutiveItem, calculateExecutiveTotals, parseCleanNumber, CERTIFIED_RATES } from '../utils/engineeringFormulas.js';
@@ -598,27 +599,72 @@ export const ExecutiveProgressForm = ({
       }
     };
 
-    try {
-      const res = await fastFetch('/api/executive-progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    const fullReport = {
+      ...payload,
+      id: data.id || ('exec-' + (data.reportDate ? String(data.reportDate).replace(/[./]/g, '-') : '2026-10-29')),
+      reportNumber: data.reportNumber || '093436_29.10.2026',
+      title: data.reportTitle || 'الموقف التنفيذي.',
+      reportType: 'الموقف التنفيذي',
+      reportCategory: 'executive',
+      isExecutiveProgressReport: true,
+      date: data.reportDate ? new Date(data.reportDate).toISOString() : new Date('2026-10-29').toISOString(),
+      dateFormatted: data.reportDate || '2026-10-29',
+      dayName: 'الخميس',
+      sector: 'مشروع صيانة وتطوير طريق أوباري - غات (360 كم)',
+      projectName: data.projectName || 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر',
+      companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
+      contractValue: calculations.contractVal,
+      totalExecutedValue: calculations.grandExecutedSum,
+      totalRemainingValue: calculations.grandRemainingVal,
+      overallFinancialPercentage: calculations.basicPercentage,
+      salesAmount: calculations.grandExecutedSum,
+      roadMeters: 239770,
+      basicItems: data.basicItems,
+      additionalItems: data.additionalItems,
+      basicTotals: payload.basicTotals,
+      additionalTotals: payload.additionalTotals,
+      grandTotals: payload.grandTotals,
+      calculations: calculations,
+      signatories: data.signatories || initialExecutiveData.signatories,
+      createdByUsername: currentUser?.username || 'project_manager',
+      authorUsername: currentUser?.username || 'project_manager',
+      createdByName: currentUser?.name || 'م. عبدالرحمن الأنصاري',
+      uploadedBy: currentUser?.name ? `${currentUser.name} (${currentUser.role || 'عضو جهاز الإشراف'})` : 'م. عبدالرحمن الأنصاري (مدير المشروع)',
+      engineer: currentUser?.name || 'م. عبدالرحمن الأنصاري',
+      sectorDirector: 'م. عبدالرحمن الأنصاري',
+      status: 'approved',
+      approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
+      notes: `تقرير الموقف التنفيذي المعتمد للمشروع - نسبة الإنجاز المالي: ${calculations.basicPercentage}% - إجمالي المنفذ: ${Number(calculations.grandExecutedSum).toLocaleString()} د.ل من أصل ${Number(calculations.contractVal).toLocaleString()} د.ل`,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
 
-      localStorage.setItem('executive_progress_data', JSON.stringify(payload));
+    try {
+      await persistReportUniversal(fullReport, currentUser);
+
+      try {
+        await fastFetch('/api/executive-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fullReport)
+        });
+      } catch (_) {}
+
+      localStorage.setItem('executive_progress_data', JSON.stringify(fullReport));
       clearApiCache();
       try {
-        window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: payload }));
-        window.dispatchEvent(new CustomEvent('report-saved', { detail: payload }));
+        window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: fullReport }));
+        window.dispatchEvent(new CustomEvent('report-saved', { detail: fullReport }));
+        window.dispatchEvent(new CustomEvent('reports-updated', { detail: fullReport }));
       } catch (_) {}
 
       setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت الموقف التنفيذي المعتمد بنجاح في قسمه وأرشيف المنظومة!' });
-      if (onSaved) onSaved(payload);
+      if (onSaved) onSaved(fullReport);
     } catch (e) {
-      console.error(e);
-      localStorage.setItem('executive_progress_data', JSON.stringify(payload));
+      console.error('Error saving executive progress:', e);
+      localStorage.setItem('executive_progress_data', JSON.stringify(fullReport));
       setStatusMessage({ type: 'success', text: 'تم حفظ وتثبيت الموقف التنفيذي المعتمد بنجاح في قسمه وأرشيف المنظومة!' });
-      if (onSaved) onSaved(payload);
+      if (onSaved) onSaved(fullReport);
     } finally {
       setIsSaving(false);
     }

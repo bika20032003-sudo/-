@@ -18,13 +18,18 @@ export function normalizeReportDate(report) {
   const raw = report.dateFormatted || report.reportDate || report.date || report.createdAt || '';
   if (!raw) return '';
   const str = String(raw).trim();
-  const isoMatch = str.match(/\d{4}-\d{2}-\d{2}/);
-  if (isoMatch) return isoMatch[0];
-  const dmMatch = str.match(/(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})/);
-  if (dmMatch) {
-    const d = dmMatch[1].padStart(2, '0');
-    const m = dmMatch[2].padStart(2, '0');
-    const y = dmMatch[3];
+  const ymdMatch = str.match(/(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})/);
+  if (ymdMatch) {
+    const y = ymdMatch[1];
+    const m = ymdMatch[2].padStart(2, '0');
+    const d = ymdMatch[3].padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  const dmyMatch = str.match(/(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})/);
+  if (dmyMatch) {
+    const d = dmyMatch[1].padStart(2, '0');
+    const m = dmyMatch[2].padStart(2, '0');
+    const y = dmyMatch[3];
     return `${y}-${m}-${d}`;
   }
   return str.split('T')[0].split(' ')[0];
@@ -46,6 +51,9 @@ export function normalizeReportType(report) {
 
   if (report.isTwoPhaseProgressReport || t.includes('المرحلتين') || title.includes('المرحلتين')) {
     return 'two_phase';
+  }
+  if (report.isExecutiveProgressReport || t.includes('تنفيذي') || title.includes('تنفيذي')) {
+    return 'executive';
   }
   if (report.isFuelReport || t.includes('وقود') || title.includes('وقود')) {
     return 'fuel';
@@ -76,10 +84,10 @@ export function getReportCompositeKey(report) {
   const type = normalizeReportType(report);
   const sector = normalizeReportSector(report.sector);
 
-  // Daily operations (two-phase, fuel, road, targeted):
+  // Daily operations (two-phase, fuel, road, targeted, executive):
   // At most ONE official report per type, sector, and date
-  if (['two_phase', 'fuel', 'road_daily', 'targeted'].includes(type) && date) {
-    const secKey = (type === 'two_phase') ? 'both' : sector;
+  if (['two_phase', 'fuel', 'road_daily', 'targeted', 'executive'].includes(type) && date) {
+    const secKey = (type === 'two_phase' || type === 'executive') ? 'both' : sector;
     return `daily_${type}_${secKey}_${date}`;
   }
 
@@ -97,34 +105,74 @@ export function getReportCompositeKey(report) {
 }
 
 /**
+ * Checks whether two report objects represent the exact same real-world report
+ */
+export function areReportsIdentical(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+
+  // 1. Match by report number (if valid)
+  const numA = normalizeReportNumber(a.reportNumber);
+  const numB = normalizeReportNumber(b.reportNumber);
+  if (numA && numB && numA === numB) return true;
+
+  // 2. Match by direct ID
+  const idA = a.id ? String(a.id).toLowerCase().trim() : '';
+  const idB = b.id ? String(b.id).toLowerCase().trim() : '';
+  if (idA && idB && idA === idB) return true;
+
+  // 3. Match across ID and reportNumber
+  const normIdA = normalizeReportNumber(a.id);
+  const normIdB = normalizeReportNumber(b.id);
+  if (normIdA && normIdB && normIdA === normIdB) return true;
+  if (numA && normIdB && numA === normIdB) return true;
+  if (numB && normIdA && numB === normIdA) return true;
+
+  // 4. Match by canonical composite key (daily_type_sector_date)
+  const compA = getReportCompositeKey(a);
+  const compB = getReportCompositeKey(b);
+  if (compA && compB && compA === compB) return true;
+
+  // 5. Match daily operations of the same type and date (fuel, two-phase, executive, targeted)
+  const typeA = normalizeReportType(a);
+  const typeB = normalizeReportType(b);
+  const dateA = normalizeReportDate(a);
+  const dateB = normalizeReportDate(b);
+  if (typeA && typeA === typeB && dateA && dateA === dateB) {
+    if (['two_phase', 'fuel', 'targeted', 'executive'].includes(typeA)) {
+      return true;
+    }
+    // For road daily: same sector and same date
+    const secA = normalizeReportSector(a.sector);
+    const secB = normalizeReportSector(b.sector);
+    if (secA === secB) return true;
+  }
+
+  // 6. Match by exact title and date
+  if (a.title && b.title && a.title.trim() === b.title.trim() && dateA && dateB && dateA === dateB) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Deduplicate an array of reports.
+ * Merges duplicates in-place into an array with 0% chance of orphan duplicate keys.
  * Always retains the most recent, most complete, and approved version.
  */
 export function deduplicateReportsList(reportsList) {
   if (!Array.isArray(reportsList)) return [];
 
-  const map = new Map();
+  const unique = [];
 
-  reportsList.forEach(report => {
-    if (!report || typeof report !== 'object') return;
+  for (const report of reportsList) {
+    if (!report || typeof report !== 'object') continue;
 
-    const compKey = getReportCompositeKey(report);
-    const repNum = normalizeReportNumber(report.reportNumber);
-    const numKey = repNum ? `num_${repNum}` : null;
-    const repId = report.id ? `id_${String(report.id).toLowerCase().trim()}` : null;
+    const existingIdx = unique.findIndex(item => areReportsIdentical(item, report));
 
-    // Check if we already have this report under any of its keys
-    let matchedKey = null;
-    if (compKey && map.has(compKey)) {
-      matchedKey = compKey;
-    } else if (numKey && map.has(numKey)) {
-      matchedKey = numKey;
-    } else if (repId && map.has(repId)) {
-      matchedKey = repId;
-    }
-
-    if (matchedKey) {
-      const existing = map.get(matchedKey);
+    if (existingIdx !== -1) {
+      const existing = unique[existingIdx];
       
       const timeNew = new Date(report.updatedAt || report.createdAt || report.date || 0).getTime() || 0;
       const timeOld = new Date(existing.updatedAt || existing.createdAt || existing.date || 0).getTime() || 0;
@@ -133,6 +181,7 @@ export function deduplicateReportsList(reportsList) {
         (report.combinedItems?.length || 0) + 
         (report.fuelItems?.length || 0) + 
         (report.targetedSections?.length || 0) + 
+        (report.basicItems?.length || 0) + 
         (report.status === 'approved' ? 20 : 0) + 
         (report.reportNumber ? 5 : 0) + 
         (timeNew >= timeOld ? 50 : 0);
@@ -141,26 +190,20 @@ export function deduplicateReportsList(reportsList) {
         (existing.combinedItems?.length || 0) + 
         (existing.fuelItems?.length || 0) + 
         (existing.targetedSections?.length || 0) + 
+        (existing.basicItems?.length || 0) + 
         (existing.status === 'approved' ? 20 : 0) + 
         (existing.reportNumber ? 5 : 0);
 
+      // Merge: winner takes priority, but preserves non-empty fields from both
       const winner = scoreNew >= scoreOld ? { ...existing, ...report } : { ...report, ...existing };
-
-      map.set(matchedKey, winner);
-      if (compKey) map.set(compKey, winner);
-      if (numKey) map.set(numKey, winner);
-      if (repId) map.set(repId, winner);
+      unique[existingIdx] = winner;
     } else {
-      if (compKey) map.set(compKey, report);
-      if (numKey) map.set(numKey, report);
-      if (repId) map.set(repId, report);
+      unique.push(report);
     }
-  });
-
-  const uniqueReports = Array.from(new Set(map.values()));
+  }
 
   // Sort descending by date
-  uniqueReports.sort((a, b) => {
+  unique.sort((a, b) => {
     const da = normalizeReportDate(a);
     const db = normalizeReportDate(b);
     if (da && db && da !== db) return db.localeCompare(da);
@@ -169,12 +212,12 @@ export function deduplicateReportsList(reportsList) {
     return tb - ta;
   });
 
-  return uniqueReports;
+  return unique;
 }
 
 /**
  * Sanitizes and deduplicates localStorage['local_reports'] in place.
- * Also pulls in any section-specific report data (two_phase, road, fuel, targeted)
+ * Also pulls in any section-specific report data (two_phase, road, fuel, targeted, executive)
  * that may have been saved directly to its section key.
  */
 export function sanitizeLocalReportsStorage() {
@@ -186,13 +229,43 @@ export function sanitizeLocalReportsStorage() {
     if (!Array.isArray(parsed)) parsed = [];
 
     // Pull in section-specific saved reports if available
-    const sectionKeys = ['two_phase_report_data', 'road_daily_report_data', 'fuel_daily_report_data', 'targeted_works_report_data'];
+    const sectionKeys = [
+      'two_phase_report_data',
+      'road_daily_report_data',
+      'fuel_daily_report_data',
+      'targeted_works_report_data',
+      'executive_progress_data'
+    ];
     sectionKeys.forEach(secKey => {
       try {
         const secRaw = localStorage.getItem(secKey);
         if (secRaw) {
           const secObj = JSON.parse(secRaw);
-          if (secObj && (secObj.id || secObj.reportNumber)) {
+          if (secObj && (secObj.id || secObj.reportNumber || secObj.basicItems)) {
+            if (secKey === 'executive_progress_data') {
+              secObj.isExecutiveProgressReport = true;
+              secObj.reportType = 'الموقف التنفيذي';
+              secObj.reportCategory = 'executive';
+              if (!secObj.id) secObj.id = 'exec-' + (secObj.reportDate || '2026-10-29');
+              if (!secObj.reportNumber) secObj.reportNumber = '093436_29.10.2026';
+              if (!secObj.title) secObj.title = 'الموقف التنفيذي.';
+              if (!secObj.sector) secObj.sector = 'مشروع صيانة وتطوير طريق أوباري - غات (360 كم)';
+              if (!secObj.date) secObj.date = secObj.reportDate ? new Date(secObj.reportDate).toISOString() : new Date('2026-10-29').toISOString();
+              if (!secObj.dateFormatted) secObj.dateFormatted = secObj.reportDate || '2026-10-29';
+              if (!secObj.overallFinancialPercentage && secObj.grandTotals?.overallFinancialPercentage) {
+                secObj.overallFinancialPercentage = secObj.grandTotals.overallFinancialPercentage;
+              }
+              if (!secObj.totalExecutedValue && secObj.grandTotals?.totalExecutedValue) {
+                secObj.totalExecutedValue = secObj.grandTotals.totalExecutedValue;
+              }
+              if (!secObj.contractValue && secObj.grandTotals?.contractValue) {
+                secObj.contractValue = secObj.grandTotals.contractValue;
+              }
+              if (!secObj.uploadedBy) secObj.uploadedBy = 'م. عبدالرحمن الأنصاري (مدير المشروع)';
+              if (!secObj.engineer) secObj.engineer = 'م. عبدالرحمن الأنصاري';
+              if (!secObj.sectorDirector) secObj.sectorDirector = 'م. عبدالرحمن الأنصاري';
+              if (!secObj.status) secObj.status = 'approved';
+            }
             parsed.push(secObj);
           }
         }

@@ -145,6 +145,14 @@ if (typeof window !== 'undefined') {
 export const isReportOwnedByEngineer = (report, currentUser) => {
   if (!report || !currentUser) return false;
 
+  // 0. حساب التطوير (Dev) يرى كافة التقارير دائماً
+  if (isDevUser(currentUser)) return true;
+
+  // 0.1 تقرير الموقف التنفيذي (360 كم) وثيقة سيادية معتمدة تظهر لجميع أعضاء جهاز الإشراف في الأرشيف
+  if (report.isExecutiveProgressReport || report.reportCategory === 'executive' || String(report.reportType || '').includes('تنفيذي') || String(report.title || '').includes('تنفيذي')) {
+    return true;
+  }
+
   const username = (currentUser.username || '').toLowerCase().trim();
   const userName = (currentUser.name || '').trim();
   const userRole = (currentUser.role || '').toLowerCase();

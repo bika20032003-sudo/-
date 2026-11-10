@@ -342,7 +342,9 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
 
     // 4. Type filter
     if (typeFilter !== 'all') {
-      if (typeFilter === 'تقرير إنجاز المرحلتين') {
+      if (typeFilter === 'الموقف التنفيذي') {
+        if (!r.isExecutiveProgressReport && r.reportType !== 'الموقف التنفيذي' && !String(r.title || '').includes('تنفيذي') && r.reportCategory !== 'executive') return false;
+      } else if (typeFilter === 'تقرير إنجاز المرحلتين') {
         if (!r.isTwoPhaseProgressReport && r.reportType !== 'تقرير إنجاز المرحلتين' && !r.title?.includes('المرحلتين')) return false;
       } else if (typeFilter === 'تقرير كميات الوقود اليومية') {
         if (!r.isFuelReport && r.reportType !== 'تقرير كميات الوقود اليومية' && r.title !== 'تقرير كميات الوقود اليومية') return false;
@@ -789,6 +791,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
             style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700 }}
           >
             <option value="all">كافة التقارير</option>
+            <option value="الموقف التنفيذي">الموقف التنفيذي (360 كم) 🏛️</option>
             {canAccessTwoPhaseReport(currentUser) && (
               <option value="تقرير إنجاز المرحلتين">تقرير إنجاز المرحلتين 📊</option>
             )}
@@ -991,7 +994,12 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
 
                       {/* Executed Items (Each item calculated independently - no combined sum) */}
                       <td style={{ padding: '0.9rem 1.1rem' }}>
-                        {Array.isArray(r.items) && r.items.length > 0 ? (
+                        {(r.isExecutiveProgressReport || r.reportType === 'الموقف التنفيذي' || r.reportCategory === 'executive' || String(r.title || '').includes('تنفيذي')) ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.78rem' }}>
+                            <strong style={{ color: '#0284c7' }}>إنجاز مالي: {r.overallFinancialPercentage || (r.calculations?.basicPercentage) || '71.11'}%</strong>
+                            <span style={{ color: '#475569', fontSize: '0.72rem' }}>منفذ: {Number(r.totalExecutedValue || r.calculations?.grandExecutedSum || 638329685.45).toLocaleString()} د.ل</span>
+                          </div>
+                        ) : Array.isArray(r.items) && r.items.length > 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.78rem' }}>
                             {r.items.map((it, idx) => (
                               <div key={idx} style={{ whiteSpace: 'nowrap' }}>

@@ -41,7 +41,12 @@ export async function persistReportUniversal(reportPayload, currentUser) {
   };
 
   // Canonical classification flags
-  if (enriched.isTwoPhaseProgressReport || rType.includes('المرحلتين')) {
+  if (enriched.isExecutiveProgressReport || rType.includes('تنفيذي') || rType.includes('الموقف التنفيذي')) {
+    enriched.isExecutiveProgressReport = true;
+    enriched.reportType = 'الموقف التنفيذي';
+    enriched.reportCategory = 'executive';
+    if (!enriched.sector) enriched.sector = 'مشروع صيانة طريق اوباري غات (360 كم)';
+  } else if (enriched.isTwoPhaseProgressReport || rType.includes('المرحلتين')) {
     enriched.isTwoPhaseProgressReport = true;
     enriched.reportType = 'تقرير إنجاز المرحلتين';
     enriched.reportCategory = 'two_phase';
@@ -99,7 +104,9 @@ export async function persistReportUniversal(reportPayload, currentUser) {
   // 3. Save to section-specific localStorage
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      if (enriched.isTwoPhaseProgressReport) {
+      if (enriched.isExecutiveProgressReport) {
+        localStorage.setItem('executive_progress_data', JSON.stringify(enriched));
+      } else if (enriched.isTwoPhaseProgressReport) {
         localStorage.setItem('two_phase_report_data', JSON.stringify(enriched));
       } else if (enriched.isFuelReport) {
         localStorage.setItem('fuel_daily_report_data', JSON.stringify(enriched));
@@ -131,6 +138,9 @@ export async function persistReportUniversal(reportPayload, currentUser) {
       window.dispatchEvent(new CustomEvent('report-saved', { detail: enriched }));
       window.dispatchEvent(new CustomEvent('report-updated', { detail: enriched }));
       window.dispatchEvent(new CustomEvent('reports-updated', { detail: enriched }));
+      if (enriched.isExecutiveProgressReport) {
+        window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: enriched }));
+      }
       if (enriched.isTwoPhaseProgressReport) {
         window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: enriched }));
         window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: enriched }));
@@ -154,7 +164,13 @@ export async function persistReportUniversal(reportPayload, currentUser) {
       body: JSON.stringify(enriched)
     }).catch(() => {});
 
-    if (enriched.isTwoPhaseProgressReport) {
+    if (enriched.isExecutiveProgressReport) {
+      fastFetch('/api/executive-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(enriched)
+      }).catch(() => {});
+    } else if (enriched.isTwoPhaseProgressReport) {
       fastFetch('/api/two-phase-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,3 +193,4 @@ export async function persistReportUniversal(reportPayload, currentUser) {
 
   return enriched;
 }
+
