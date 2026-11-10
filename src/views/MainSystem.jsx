@@ -241,6 +241,7 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         {selectedReportForPrint && (
           <OfficialPrintModal
             report={selectedReportForPrint}
+            currentUser={currentUser}
             onClose={() => setSelectedReportForPrint(null)}
           />
         )}

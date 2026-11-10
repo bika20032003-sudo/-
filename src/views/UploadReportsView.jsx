@@ -1442,6 +1442,7 @@ export const UploadReportsView = ({ onNavigateTab, currentUser, onPrintReport })
       {savedReportForPrint && (
         <OfficialPrintModal
           report={savedReportForPrint}
+          currentUser={currentUser}
           onClose={() => setSavedReportForPrint(null)}
         />
       )}

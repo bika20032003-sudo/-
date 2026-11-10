@@ -108,7 +108,7 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
       dataRows.push([]);
       dataRows.push(['ملاحظات الفحص:', inspectionData.notes]);
       dataRows.push([]);
-      dataRows.push(['مهندس الآليات والحركة:', inspectionData.inspectorName, '', 'مهندس الجودة:', 'م. صالح بن يحي', '', 'مدير المشروع:', 'م. عبدالرحمن الأنصاري']);
+      dataRows.push(['منشئ التقرير المعتمد:', `${inspectionData.inspectorName} (${inspectionData.inspectorRole || 'عضو جهاز الإشراف'})`]);
 
       const ws = XLSX.utils.aoa_to_sheet(dataRows);
       const wb = XLSX.utils.book_new();
@@ -719,44 +719,29 @@ export const EquipmentInspectionModal = ({ isOpen, onClose, onSave, currentUser 
               />
             </div>
 
-            {/* 7. Official Endorsements & Signatures Section */}
+            {/* 7. Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '0.75rem',
-              marginTop: '0.5rem',
-              textAlign: 'center'
+              border: '1.5px solid #000000',
+              background: '#ffffff',
+              padding: '10px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '0.75rem'
             }}>
-              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>مهندس الآليات والمعدات</h4>
-                <div style={{ margin: '0.35rem 0', fontWeight: 800, fontSize: '0.85rem', color: '#1e3a8a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                <span style={{ fontSize: '0.98rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
                   {inspectionData.inspectorName}
-                </div>
-                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>التوقيع: .....................</div>
+                </span>
+                {inspectionData.inspectorRole && (
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                    ({inspectionData.inspectorRole})
+                  </span>
+                )}
               </div>
-
-              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>مهندس ضبط الجودة والمختبر</h4>
-                <div style={{ margin: '0.35rem 0', fontWeight: 800, fontSize: '0.85rem', color: '#1e3a8a' }}>
-                  م. صالح بن يحي
-                </div>
-                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>التوقيع: .....................</div>
-              </div>
-
-              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>اعتماد مدير المشروع</h4>
-                <div style={{ margin: '0.35rem 0', fontWeight: 900, fontSize: '0.85rem', color: '#16a34a' }}>
-                  م. عبدالرحمن الأنصاري
-                </div>
-                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>التوقيع والاعتماد: .....................</div>
-              </div>
-
-              <div style={{ border: '1.5px solid #000000', background: '#ffffff', padding: '0.75rem 0.5rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>ختم واعتماد الجهة المالكة</h4>
-                <div style={{ margin: '0.35rem 0', fontWeight: 900, fontSize: '0.78rem', color: '#1e3a8a' }}>
-                  جهاز تنفيذ مشروعات المواصلات
-                </div>
-                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>الختم الرسمي للمشروع</div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                اعتماد وتوثيق آلي بنظام جهاز الإشراف
               </div>
             </div>
 

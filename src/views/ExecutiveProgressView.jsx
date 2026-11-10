@@ -569,6 +569,7 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
         <OfficialPrintModal
           report={getExecutiveReportData()}
           onClose={() => setShowPrintModal(false)}
+          currentUser={currentUser}
         />
       )}
     </div>

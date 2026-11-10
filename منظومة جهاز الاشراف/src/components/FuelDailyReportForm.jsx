@@ -88,6 +88,32 @@ export const FuelDailyReportForm = ({
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
+  // Automatically resolve author name and role from logged-in username
+  const resolvedAuthor = useMemo(() => {
+    const OFFICIAL_MAP = {
+      'admin': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'dev': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'project_manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'alansari': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'abrikaw': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+      'admin_sectors': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+      'sectors': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+      'saleh_quality': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+      'quality': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+      'hammad': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+      'salah_alarabi': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+      'sector_a': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+      'issa_altahir': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
+      'sector_b': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
+      'fuel_officer': { name: 'مسؤول الوقود والمحروقات', role: 'مسؤول الوقود بالموقع' }
+    };
+    const uKey = String(currentUser?.username || '').toLowerCase().trim();
+    if (OFFICIAL_MAP[uKey]) return OFFICIAL_MAP[uKey];
+    if (currentUser?.name) return { name: currentUser.name, role: currentUser.title || currentUser.role || 'عضو جهاز الإشراف' };
+    return { name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و 240' };
+  }, [currentUser]);
+
   const officialSupervisors = [
     { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
     { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
@@ -424,10 +450,11 @@ export const FuelDailyReportForm = ({
         status: 'approved',
         createdByUsername: currentUser?.username || 'fuel_officer',
         authorUsername: currentUser?.username || 'fuel_officer',
-        createdByName: currentUser?.name || reportData.supervisorName,
-        uploadedBy: currentUser?.name || reportData.supervisorName || 'مسؤول الوقود بالموقع',
-        engineer: currentUser?.name || reportData.supervisorName || 'مسؤول الوقود بالموقع',
-        supervisor: currentUser?.name || reportData.supervisorName,
+        createdByName: resolvedAuthor.name,
+        authorRole: resolvedAuthor.role,
+        uploadedBy: `${resolvedAuthor.name} (${resolvedAuthor.role})`,
+        engineer: resolvedAuthor.name,
+        supervisor: resolvedAuthor.name,
         notes: `تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: ${fmtNum(calculatedTotals.totalDispatched)} لتر - الوارد: ${fmtNum(calculatedTotals.totalReceived)} لتر - المتبقي: ${fmtNum(calculatedTotals.totalRemaining)} لتر`,
         createdAt: new Date().toISOString()
       };
@@ -1180,63 +1207,48 @@ export const FuelDailyReportForm = ({
           </table>
         </div>
 
-        {/* Dual Signatures Block */}
+        {/* Automated Report Creator Strip (يحدد تلقائياً من اسم المستخدم) */}
         <div style={{
+          maxWidth: '880px',
+          margin: '2rem auto 0.5rem',
+          padding: '1rem 1.5rem',
+          background: '#f8fafc',
+          border: '1.5px solid #cbd5e1',
+          borderRadius: '12px',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          maxWidth: '880px',
-          margin: '2.5rem auto 0.5rem',
-          padding: '0 1.5rem'
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
         }}>
-          {/* Right: Fuel Officer */}
-          <div style={{ textAlign: 'center', minWidth: '220px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#000000' }}>
-              مسؤول الوقود والمحروقات
-            </h3>
-            <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-              <input 
-                type="text"
-                value={reportData.fuelOfficer}
-                onChange={(e) => setReportData(prev => ({ ...prev, fuelOfficer: e.target.value }))}
-                style={{
-                  border: 'none',
-                  borderBottom: '2px dotted #000000',
-                  fontWeight: 900,
-                  fontSize: '0.95rem',
-                  textAlign: 'center',
-                  background: 'transparent',
-                  padding: '2px 8px',
-                  width: '200px',
-                  outline: 'none'
-                }}
-              />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: '#eff6ff',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #bfdbfe'
+            }}>
+              <UserCheck size={22} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>
+                منشئ التقرير (يُحدد تلقائياً من حساب المستخدم النشط)
+              </div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>{resolvedAuthor.name}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb', background: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>
+                  {resolvedAuthor.role}
+                </span>
+              </div>
             </div>
           </div>
-
-          {/* Left: Supervision Head */}
-          <div style={{ textAlign: 'center', minWidth: '220px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#000000' }}>
-              المهندس المشرف / جهاز الإشراف
-            </h3>
-            <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-              <input 
-                type="text"
-                value={reportData.headOfSupervision}
-                onChange={(e) => setReportData(prev => ({ ...prev, headOfSupervision: e.target.value }))}
-                style={{
-                  border: 'none',
-                  borderBottom: '2px dotted #000000',
-                  fontWeight: 900,
-                  fontSize: '0.95rem',
-                  textAlign: 'center',
-                  background: 'transparent',
-                  padding: '2px 8px',
-                  width: '200px',
-                  outline: 'none'
-                }}
-              />
-            </div>
+          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700, background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px' }}>
+            اسم المستخدم: <strong style={{ color: '#0f172a' }}>{currentUser?.username || 'fuel_officer'}</strong>
           </div>
         </div>
 
@@ -1389,6 +1401,7 @@ export const FuelDailyReportForm = ({
           isOpen={true}
           onClose={() => setShowPrintModal(false)}
           report={getFullPrintableReport()}
+          currentUser={currentUser}
         />
       )}
 

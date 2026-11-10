@@ -1039,6 +1039,7 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
         <OfficialPrintModal
           report={selectedReportForPrint}
           onClose={() => setSelectedReportForPrint(null)}
+          currentUser={currentUser}
         />
       )}
 

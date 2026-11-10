@@ -983,6 +983,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         <OfficialPrintModal
           isOpen={!!selectedReportForPrint}
           report={selectedReportForPrint}
+          currentUser={currentUser}
           onClose={() => setSelectedReportForPrint(null)}
         />
       )}

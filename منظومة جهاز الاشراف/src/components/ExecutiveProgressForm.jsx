@@ -233,6 +233,31 @@ export const ExecutiveProgressForm = ({
   const [showStationModal, setShowStationModal] = useState(false);
   const printRef = useRef(null);
 
+  // Automatically resolve author name and role from logged-in username
+  const resolvedAuthor = useMemo(() => {
+    const OFFICIAL_MAP = {
+      'admin': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'dev': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'project_manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'alansari': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+      'abrikaw': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+      'admin_sectors': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+      'sectors': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+      'saleh_quality': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+      'quality': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+      'hammad': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+      'salah_alarabi': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+      'sector_a': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+      'issa_altahir': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
+      'sector_b': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
+    };
+    const uKey = String(currentUser?.username || '').toLowerCase().trim();
+    if (OFFICIAL_MAP[uKey]) return OFFICIAL_MAP[uKey];
+    if (currentUser?.name) return { name: currentUser.name, role: currentUser.title || currentUser.role || 'عضو جهاز الإشراف' };
+    return { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' };
+  }, [currentUser]);
+
   // Clean text and force standard regular Latin digits (0-9)
   const toCleanLatin = (val) => {
     if (val === null || val === undefined) return '';
@@ -628,12 +653,13 @@ export const ExecutiveProgressForm = ({
       signatories: data.signatories || initialExecutiveData.signatories,
       createdByUsername: currentUser?.username || 'project_manager',
       authorUsername: currentUser?.username || 'project_manager',
-      createdByName: currentUser?.name || 'م. عبدالرحمن الأنصاري',
-      uploadedBy: currentUser?.name ? `${currentUser.name} (${currentUser.role || 'عضو جهاز الإشراف'})` : 'م. عبدالرحمن الأنصاري (مدير المشروع)',
-      engineer: currentUser?.name || 'م. عبدالرحمن الأنصاري',
-      sectorDirector: 'م. عبدالرحمن الأنصاري',
+      createdByName: resolvedAuthor.name,
+      authorRole: resolvedAuthor.role,
+      uploadedBy: `${resolvedAuthor.name} (${resolvedAuthor.role})`,
+      engineer: resolvedAuthor.name,
+      sectorDirector: resolvedAuthor.name,
       status: 'approved',
-      approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
+      approvedBy: `${resolvedAuthor.name} (${resolvedAuthor.role})`,
       notes: `تقرير الموقف التنفيذي المعتمد للمشروع - نسبة الإنجاز المالي: ${calculations.basicPercentage}% - إجمالي المنفذ: ${Number(calculations.grandExecutedSum).toLocaleString()} د.ل من أصل ${Number(calculations.contractVal).toLocaleString()} د.ل`,
       createdAt: data.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -1700,39 +1726,46 @@ export const ExecutiveProgressForm = ({
         </div>
       </div>
 
-      {/* Official Signatories Box */}
+      {/* Automated Report Creator Strip (يحدد تلقائياً من اسم المستخدم) */}
       <div style={{
         background: '#ffffff',
-        border: '1px solid #e2e8f0',
+        border: '1.5px solid #e2e8f0',
         borderRadius: '12px',
-        padding: '1.25rem 1.5rem',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '1.5rem',
-        textAlign: 'center'
+        padding: '1rem 1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
       }}>
-        <div style={{ borderTop: '2px solid #cbd5e1', paddingTop: '0.75rem' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>إعداد ومراجعة</div>
-          <strong style={{ fontSize: '0.92rem', color: '#0f172a', display: 'block', marginTop: '0.2rem' }}>
-            جهاز الإشراف الميداني
-          </strong>
-          <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>مشروع طريق أوباري - غات</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            background: '#eff6ff',
+            color: '#2563eb',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid #bfdbfe'
+          }}>
+            <UserCheck size={22} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>
+              منشئ التقرير (يُحدد تلقائياً من حساب المستخدم النشط)
+            </div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{resolvedAuthor.name}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb', background: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>
+                {resolvedAuthor.role}
+              </span>
+            </div>
+          </div>
         </div>
-
-        <div style={{ borderTop: '2px solid #cbd5e1', paddingTop: '0.75rem' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>رئيس جهاز الإشراف</div>
-          <strong style={{ fontSize: '0.92rem', color: '#0f172a', display: 'block', marginTop: '0.2rem' }}>
-            م. عبدالسلام ابريكاو
-          </strong>
-          <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>رئيس جهاز الإشراف المعتمد</span>
-        </div>
-
-        <div style={{ borderTop: '2px solid #cbd5e1', paddingTop: '0.75rem' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>مدير المشروع المعتمد</div>
-          <strong style={{ fontSize: '0.92rem', color: '#1e40af', display: 'block', marginTop: '0.2rem' }}>
-            م. عبدالرحمن الأنصاري
-          </strong>
-          <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>جهاز تنفيذ مشروعات المواصلات</span>
+        <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700, background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px' }}>
+          اسم المستخدم: <strong style={{ color: '#0f172a' }}>{currentUser?.username || 'project_manager'}</strong>
         </div>
       </div>
 
@@ -1888,6 +1921,7 @@ export const ExecutiveProgressForm = ({
         <OfficialPrintModal
           report={getReportDataForPrint()}
           onClose={() => setShowPrintModal(false)}
+          currentUser={currentUser}
         />
       )}
     </div>

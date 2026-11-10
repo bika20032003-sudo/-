@@ -659,6 +659,7 @@ export const TargetedWorksView = ({ currentUser, onNavigateTab }) => {
       {selectedReportForPrint && (
         <OfficialPrintModal
           report={selectedReportForPrint}
+          currentUser={currentUser}
           onClose={() => setSelectedReportForPrint(null)}
         />
       )}

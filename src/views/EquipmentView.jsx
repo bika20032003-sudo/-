@@ -1065,6 +1065,7 @@ export const EquipmentView = ({ currentUser }) => {
       {officialEquipmentReportForPrint && (
         <OfficialPrintModal
           report={officialEquipmentReportForPrint}
+          currentUser={currentUser}
           onClose={() => setOfficialEquipmentReportForPrint(null)}
         />
       )}

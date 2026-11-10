@@ -1494,6 +1494,7 @@ export const RoadDailyReportForm = ({
           isOpen={true}
           onClose={() => setShowPrintModal(false)}
           report={getFullPrintableReport()}
+          currentUser={currentUser}
         />
       )}
 

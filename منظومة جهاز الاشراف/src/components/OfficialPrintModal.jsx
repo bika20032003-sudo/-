@@ -82,13 +82,105 @@ const TwoPhasePrintChart = ({ title, items }) => {
   );
 };
 
-export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
+/**
+ * Universal Author & Creator Info Resolver
+ * Automatically resolves the author's official Libyan agency title & name from username.
+ */
+export const getReportAuthorInfo = (report = {}, activeUser = null) => {
+  let user = activeUser;
+  if (!user && typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('portal_logged_user');
+      if (saved) user = JSON.parse(saved);
+    } catch (e) {}
+  }
+
+  const rawUsername = String(
+    report?.authorUsername ||
+    report?.createdByUsername ||
+    user?.username ||
+    ''
+  ).trim().toLowerCase();
+
+  const OFFICIAL_MAP = {
+    'admin': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'dev': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'developer': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'project_manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'alansari': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'manager': { name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
+    'abrikaw': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+    'admin_sectors': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+    'sectors': { name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف والمتابعة' },
+    'saleh_quality': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+    'quality': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+    'hammad': { name: 'م. صالح حماد', role: 'مسؤول ضبط ومراقبة الجودة الفنية' },
+    'salah_alarabi': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+    'sector_a': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
+    'issa_altahir': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
+    'sector_b': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
+    'fuel_officer': { name: 'مسؤول الوقود والمحروقات', role: 'مسؤول الوقود بالموقع' },
+  };
+
+  if (rawUsername && OFFICIAL_MAP[rawUsername]) {
+    return OFFICIAL_MAP[rawUsername];
+  }
+
+  if (typeof window !== 'undefined' && rawUsername) {
+    try {
+      const rawCustom = localStorage.getItem('system_custom_users');
+      if (rawCustom) {
+        const customUsers = JSON.parse(rawCustom);
+        if (Array.isArray(customUsers)) {
+          const match = customUsers.find(u => u && String(u.username).trim().toLowerCase() === rawUsername);
+          if (match && match.name) {
+            return {
+              name: match.name,
+              role: match.title || match.role || 'عضو جهاز الإشراف'
+            };
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (user && user.name) {
+    return {
+      name: user.name,
+      role: user.title || user.role || 'عضو جهاز الإشراف'
+    };
+  }
+
+  const repName = report?.createdByName || report?.uploadedBy || report?.author || report?.engineer;
+  if (repName && typeof repName === 'string' && repName.trim()) {
+    const match = repName.match(/^([^(]+)(?:\(([^)]+)\))?/);
+    if (match) {
+      return {
+        name: match[1].trim(),
+        role: match[2]?.trim() || report?.authorRole || 'عضو جهاز الإشراف'
+      };
+    }
+    return {
+      name: repName.trim(),
+      role: report?.authorRole || 'عضو جهاز الإشراف'
+    };
+  }
+
+  return {
+    name: 'م. عبدالرحمن الأنصاري',
+    role: 'مدير المشروع'
+  };
+};
+
+export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUser }) => {
   if (!report) return null;
 
   const isSectorA = (report.sector || '').includes('الأولى') || (report.sector || '').includes('A') || (report.sector || '').includes('أ') || (report.crusherName || '').includes('A') || (report.crusherName || '').includes('الأولى');
   const sectorTitle = isSectorA ? 'المرحلة الأولى' : 'المرحلة الثانية';
   const companyTitle = report.companyName && !report.companyName.includes('شركة') ? report.companyName : sectorTitle;
   const totalLengthKm = isSectorA ? '115.36 كم' : '110.92 كم';
+
+  const authorInfo = getReportAuthorInfo(report, currentUser);
 
   // Controlled Signatures (مدير القطاع وممثل الجهة المالكة)
   const [customSectorDirector, setCustomSectorDirector] = useState(report.sectorDirector || '');
@@ -202,7 +294,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
         dataRows.push([`قيمة العقد: ${Number(contractVal).toLocaleString('en-US', { minimumFractionDigits: 3 })} د.ل`, `إجمالي المنفذ الفعلي: ${Number(grandSum).toLocaleString('en-US', { minimumFractionDigits: 2 })} د.ل`, `المتبقي المالي: ${Number(grandRem).toLocaleString('en-US', { minimumFractionDigits: 2 })} د.ل`, `نسبة الإنجاز: ${grandPct}%`]);
 
         dataRows.push([]);
-        dataRows.push(['إعداد ومراجعة: جهاز الإشراف الميداني', '', 'رئيس جهاز الإشراف: م. عبدالسلام ابريكاو', '', 'مدير المشروع: م. عبدالرحمن الأنصاري']);
+        dataRows.push([`منشئ التقرير المعتمد: ${authorInfo.name} (${authorInfo.role})`]);
       } else if (report.isTargetedWorksReport || report.reportType === 'تقرير الأعمال المستهدفة' || (Array.isArray(report.targetedSections) && report.targetedSections.length > 0)) {
         dataRows = [
           [report.title || `بيان أعمال يوم ${report.dayName || ''} ${report.dateFormatted || reportDateStr}`],
@@ -269,6 +361,8 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
           Number(report.totalReceivedLiters || 0),
           Number(report.totalRemainingLiters || 0)
         ]);
+        dataRows.push([]);
+        dataRows.push([`منشئ التقرير المعتمد: ${authorInfo.name} (${authorInfo.role})`]);
       } else if (Boolean(report.isPeriodicReport || report.reportType === 'تقرير دوري لأعمال الطريق' || report.reportCategory === 'periodic' || report.periodicType)) {
         dataRows = [
           ['مشروع صيانة طريق أوباري غات - ' + (report.reportTitle || report.title || 'التقرير الدوري لأعمال الطريق')],
@@ -290,6 +384,8 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
         });
         dataRows.push([]);
         dataRows.push(['الإجمالي المعتمد:', '', '—', '—', '—', '', report.totalValue || 0, '']);
+        dataRows.push([]);
+        dataRows.push([`منشئ التقرير المعتمد: ${authorInfo.name} (${authorInfo.role})`]);
       } else if (Boolean(report.isTwoPhaseProgressReport || report.reportType === 'تقرير إنجاز المرحلتين' || report.reportCategory === 'two_phase' || (Array.isArray(report.phase1Items) && report.phase1Items.length > 0))) {
         dataRows = [
           ['مشروع صيانة طريق أوباري غات - تقرير الأعمال المنجزة للمرحلتين'],
@@ -320,7 +416,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
           dataRows.push([r.name, r.phase1 || 0, r.phase2 || 0, r.total || 0, r.notes || '']);
         });
         dataRows.push([]);
-        dataRows.push(['مدير القطاع:', customSectorDirector || '', '', 'ممثل الجهة المالكة:', customOwnerRep || '']);
+        dataRows.push([`منشئ التقرير المعتمد: ${authorInfo.name} (${authorInfo.role})`]);
       } else if (Array.isArray(report.items) && report.items.length > 0) {
         dataRows = [
           [report.title || `تقرير أعمال يوم ${report.dayName || ''} ${reportDateStr}`],
@@ -351,7 +447,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
           ['التقرير الفني والتشغيلي اليومي المعتمد'],
           ['رقم التقرير', reportNumber, 'التاريخ', reportDateStr],
           ['المرحلة التنفيذية', sectorTitle, 'الشركة المنفذة', companyTitle],
-          ['المعد / المشرف', report.uploadedBy || (isSectorA ? 'مدير المرحلة الأولى' : 'مدير المرحلة الثانية'), 'حالة الاعتماد', report.status === 'approved' ? 'معتمد رسمياً' : 'قيد المراجعة'],
+          ['المعد / المشرف', authorInfo.name + (authorInfo.role ? ` (${authorInfo.role})` : ''), 'حالة الاعتماد', report.status === 'approved' ? 'معتمد رسمياً' : 'قيد المراجعة'],
           [],
           ['م', 'البند التشغيلي / الفني', 'الموقع / الآلية المحددة', 'الكمية المنجزة اليوم', 'الوحدة', 'الملاحظات'],
           [1, 'أعمال طبقة الأساس الحبيبي', `مسار ${sectorTitle}`, Number(report.roadMeters || report.todayMeters || 0), 'م.ط', 'تنفيذ طبقة الأساس الحبيبي'],
@@ -362,10 +458,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
           [],
           ['بيان الأعمال والملاحظات الفنية:', report.notes || 'تمت الأعمال وفقاً للمواصفات القياسية المعتمدة من جهاز الإشراف'],
           [],
-          ['التوقيعات والاعتمادات الرسمية:'],
-          ['مدير المرحلة الميداني:', report.uploadedBy || (isSectorA ? 'مدير المرحلة الأولى' : 'مدير المرحلة الثانية')],
-          ['مدير إدارة القطاعات:', report.approvedBy || 'مدير عام القطاعات'],
-          ['مدير المشروع (جهاز الإشراف):', 'المهندس عبدالرحمن الأنصاري']
+          ['منشئ التقرير المعتمد:', `${authorInfo.name} (${authorInfo.role})`]
         ];
       }
 
@@ -811,105 +904,129 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
       </div>
 
       {/* Signature Controls Bar (No Print) */}
-      <div className="no-print" style={{
-        background: '#ffffff',
-        borderBottom: '2px solid #e2e8f0',
-        padding: '0.65rem 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            👷 <span>مدير القطاع:</span>
-          </span>
-          <input 
-            type="text" 
-            value={customSectorDirector} 
-            onChange={(e) => handleSectorDirectorChange(e.target.value)}
-            placeholder="اسم مدير القطاع"
-            style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
-              border: '1.5px solid #cbd5e1',
-              fontSize: '0.88rem',
-              fontWeight: 800,
-              width: '190px',
-              color: '#0f172a'
-            }}
-          />
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button 
-              type="button" 
-              onClick={() => handleSectorDirectorChange('م. صلاح العربي')} 
-              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. صلاح العربي' ? '#dbeafe' : '#f8fafc', color: '#1e40af', fontWeight: 800, cursor: 'pointer' }}
-            >
-              م. صلاح العربي (المرحلة 1)
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleSectorDirectorChange('')} 
-              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: !customSectorDirector ? '#fee2e2' : '#f8fafc', color: !customSectorDirector ? '#991b1b' : '#64748b', fontWeight: 800, cursor: 'pointer' }}
-            >
-              فارغ (يدوي)
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleSectorDirectorChange('م. عيسى الطاهر')} 
-              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. عيسى الطاهر' ? '#dbeafe' : '#f8fafc', color: '#0e7490', fontWeight: 800, cursor: 'pointer' }}
-            >
-              م. عيسى الطاهر (المرحلة 2)
-            </button>
+      {(isRoadDoc || isTargetedWorksDoc) ? (
+        <div className="no-print" style={{
+          background: '#ffffff',
+          borderBottom: '2px solid #e2e8f0',
+          padding: '0.65rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              👷 <span>مدير القطاع:</span>
+            </span>
+            <input 
+              type="text" 
+              value={customSectorDirector} 
+              onChange={(e) => handleSectorDirectorChange(e.target.value)}
+              placeholder="اسم مدير القطاع"
+              style={{
+                padding: '5px 10px',
+                borderRadius: '6px',
+                border: '1.5px solid #cbd5e1',
+                fontSize: '0.88rem',
+                fontWeight: 800,
+                width: '190px',
+                color: '#0f172a'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button 
+                type="button" 
+                onClick={() => handleSectorDirectorChange('م. صلاح العربي')} 
+                style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. صلاح العربي' ? '#dbeafe' : '#f8fafc', color: '#1e40af', fontWeight: 800, cursor: 'pointer' }}
+              >
+                م. صلاح العربي (المرحلة 1)
+              </button>
+              <button 
+                type="button" 
+                onClick={() => handleSectorDirectorChange('')} 
+                style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: !customSectorDirector ? '#fee2e2' : '#f8fafc', color: !customSectorDirector ? '#991b1b' : '#64748b', fontWeight: 800, cursor: 'pointer' }}
+              >
+                فارغ (يدوي)
+              </button>
+              <button 
+                type="button" 
+                onClick={() => handleSectorDirectorChange('م. عيسى الطاهر')} 
+                style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customSectorDirector === 'م. عيسى الطاهر' ? '#dbeafe' : '#f8fafc', color: '#0e7490', fontWeight: 800, cursor: 'pointer' }}
+              >
+                م. عيسى الطاهر (المرحلة 2)
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            🏛️ <span>ممثل الجهة المالكة:</span>
-          </span>
-          <input 
-            type="text" 
-            value={customOwnerRep} 
-            onChange={(e) => handleOwnerRepChange(e.target.value)}
-            placeholder="اسم ممثل الجهة المالكة"
-            style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
-              border: '1.5px solid #cbd5e1',
-              fontSize: '0.88rem',
-              fontWeight: 800,
-              width: '190px',
-              color: '#0f172a'
-            }}
-          />
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button 
-              type="button" 
-              onClick={() => handleOwnerRepChange('م. عبدالرحمن الأنصاري')} 
-              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالرحمن الأنصاري' ? '#dcfce7' : '#f8fafc', color: '#166534', fontWeight: 800, cursor: 'pointer' }}
-            >
-              م. عبدالرحمن الأنصاري
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleOwnerRepChange('')} 
-              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: !customOwnerRep ? '#fee2e2' : '#f8fafc', color: !customOwnerRep ? '#991b1b' : '#64748b', fontWeight: 800, cursor: 'pointer' }}
-            >
-              فارغ (يدوي)
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleOwnerRepChange('م. عبدالسلام ابريكاو')} 
-              style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالسلام ابريكاو' ? '#ede9fe' : '#f8fafc', color: '#5b21b6', fontWeight: 800, cursor: 'pointer' }}
-            >
-              م. عبدالسلام ابريكاو
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              🏛️ <span>ممثل الجهة المالكة:</span>
+            </span>
+            <input 
+              type="text" 
+              value={customOwnerRep} 
+              onChange={(e) => handleOwnerRepChange(e.target.value)}
+              placeholder="اسم ممثل الجهة المالكة"
+              style={{
+                padding: '5px 10px',
+                borderRadius: '6px',
+                border: '1.5px solid #cbd5e1',
+                fontSize: '0.88rem',
+                fontWeight: 800,
+                width: '190px',
+                color: '#0f172a'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button 
+                type="button" 
+                onClick={() => handleOwnerRepChange('م. عبدالرحمن الأنصاري')} 
+                style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالرحمن الأنصاري' ? '#dcfce7' : '#f8fafc', color: '#166534', fontWeight: 800, cursor: 'pointer' }}
+              >
+                م. عبدالرحمن الأنصاري
+              </button>
+              <button 
+                type="button" 
+                onClick={() => handleOwnerRepChange('')} 
+                style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: !customOwnerRep ? '#fee2e2' : '#f8fafc', color: !customOwnerRep ? '#991b1b' : '#64748b', fontWeight: 800, cursor: 'pointer' }}
+              >
+                فارغ (يدوي)
+              </button>
+              <button 
+                type="button" 
+                onClick={() => handleOwnerRepChange('م. عبدالسلام ابريكاو')} 
+                style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '5px', border: '1px solid #cbd5e1', background: customOwnerRep === 'م. عبدالسلام ابريكاو' ? '#ede9fe' : '#f8fafc', color: '#5b21b6', fontWeight: 800, cursor: 'pointer' }}
+              >
+                م. عبدالسلام ابريكاو
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="no-print" style={{
+          background: '#f8fafc',
+          borderBottom: '2px solid #e2e8f0',
+          padding: '0.65rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          fontSize: '0.86rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span style={{ fontWeight: 800, color: '#334155' }}>👤 اسم منشئ التقرير (آلياً):</span>
+            <span style={{ fontWeight: 900, color: '#1e3a8a', background: '#dbeafe', padding: '3px 10px', borderRadius: '6px' }}>
+              {authorInfo.name} {authorInfo.role ? `(${authorInfo.role})` : ''}
+            </span>
+          </div>
+          <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+            ℹ️ التوقيعات معتمدة حصرياً في تقارير أعمال الطريق والتقرير المستهدف
+          </span>
+        </div>
+      )}
 
       {/* Printable Sheet Container */}
       <div 
@@ -1235,41 +1352,30 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
                 </div>
               </div>
 
-              {/* Official Tripartite Signatures Block */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '1rem',
+              {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
+              <div className="report-creator-official-strip" style={{
                 border: '1.5px solid #000000',
-                padding: '8px 12px',
+                padding: '10px 16px',
                 background: '#ffffff',
-                textAlign: 'center'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
               }}>
-                <div>
-                  <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 800 }}>إعداد ومراجعة</div>
-                  <strong style={{ fontSize: '0.88rem', color: '#000000', display: 'block', marginTop: '2px' }}>
-                    جهاز الإشراف والمتابعة الميداني
-                  </strong>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '1px' }}>مشروع طريق أوباري - غات (360 كم)</div>
-                  <div style={{ marginTop: '8px', borderBottom: '1.5px dotted #000000', width: '70%', margin: '8px auto 0' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                    {authorInfo.name}
+                  </span>
+                  {authorInfo.role && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                      ({authorInfo.role})
+                    </span>
+                  )}
                 </div>
-
-                <div>
-                  <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 800 }}>رئيس جهاز الإشراف</div>
-                  <strong style={{ fontSize: '0.88rem', color: '#000000', display: 'block', marginTop: '2px' }}>
-                    م. عبدالسلام ابريكاو
-                  </strong>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '1px' }}>رئيس جهاز الإشراف المعتمد</div>
-                  <div style={{ marginTop: '8px', borderBottom: '1.5px dotted #000000', width: '70%', margin: '8px auto 0' }} />
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 800 }}>مدير المشروع المعتمد</div>
-                  <strong style={{ fontSize: '0.88rem', color: '#1e3a8a', display: 'block', marginTop: '2px' }}>
-                    م. عبدالرحمن الأنصاري
-                  </strong>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '1px' }}>جهاز تنفيذ مشروعات المواصلات</div>
-                  <div style={{ marginTop: '8px', borderBottom: '1.5px dotted #000000', width: '70%', margin: '8px auto 0' }} />
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                  اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
 
@@ -1509,34 +1615,32 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
                 </tbody>
               </table>
 
-              {/* Dual Signatures for Fuel Report */}
-              <div className="signatures-block" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                paddingLeft: '3rem',
-                paddingRight: '3rem',
+              {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
+              <div className="report-creator-official-strip" style={{
                 marginTop: '1.25rem',
                 marginBottom: '0.25rem',
+                padding: '10px 16px',
+                border: '1.5px solid #000000',
+                background: '#ffffff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 pageBreakInside: 'avoid',
                 breakInside: 'avoid'
               }}>
-                <div style={{ textAlign: 'center', minWidth: '220px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#000000' }}>
-                    مسؤول الوقود والمحروقات
-                  </h3>
-                  <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.uploadedBy || 'مسؤول الوقود بالموقع'}</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                    {authorInfo.name}
+                  </span>
+                  {authorInfo.role && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                      ({authorInfo.role})
+                    </span>
+                  )}
                 </div>
-
-                <div style={{ textAlign: 'center', minWidth: '220px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#000000' }}>
-                    المهندس المشرف / رئيس جهاز الإشراف
-                  </h3>
-                  <div style={{ marginTop: '1rem', fontSize: '1rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{report.approvedBy || 'م. عبدالسلام ابريكاو'}</span>
-                  </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                  اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
             </div>
@@ -1715,42 +1819,32 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
                 </tbody>
               </table>
 
-              {/* 4 Signatures Block matching Agency official format */}
-              <div className="signatures-block" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '0.75rem',
-                marginTop: '0.65rem',
-                textAlign: 'center',
-                borderTop: '2px dashed #000000',
-                paddingTop: '0.65rem'
+              {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
+              <div className="report-creator-official-strip" style={{
+                marginTop: '0.85rem',
+                marginBottom: '0.35rem',
+                padding: '10px 16px',
+                border: '1.5px solid #000000',
+                background: '#ffffff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
               }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>مسؤول المعدات والآليات</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '1.5px dotted #000000', paddingBottom: '2px' }}>{report.uploadedBy || 'مسؤول الحركة الميداني'}</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                    {authorInfo.name}
+                  </span>
+                  {authorInfo.role && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                      ({authorInfo.role})
+                    </span>
+                  )}
                 </div>
-
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>مهندس القطاع المشرف</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '1.5px dotted #000000', paddingBottom: '2px' }}>م. صلاح العربي / م. عيسى الطاهر</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#000000' }}>رئيس جهاز الإشراف والمتابعة</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '1.5px dotted #000000', paddingBottom: '2px' }}>م. عبدالسلام ابريكاو</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#1e3a8a' }}>اعتماد مدير المشروع</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 900, color: '#1e3a8a' }}>
-                    <span style={{ borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>م. عبدالرحمن الأنصاري</span>
-                  </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                  اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
             </div>
@@ -2017,34 +2111,32 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
                 </table>
               </div>
 
-              {/* Exact Dual Signatures from Photo */}
-              <div style={{
+              {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
+              <div className="report-creator-official-strip" style={{
+                marginTop: '1.25rem',
+                marginBottom: '0.75rem',
+                padding: '10px 16px',
+                border: '1.5px solid #000000',
+                background: '#ffffff',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                paddingLeft: '3rem',
-                paddingRight: '3rem',
-                marginTop: '1.5rem',
-                marginBottom: '1rem'
+                alignItems: 'center',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
               }}>
-                <div style={{ textAlign: 'center', minWidth: '220px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#000000' }}>
-                    مدير القطاع
-                  </h3>
-                  <div style={{ marginTop: '0.8rem', fontSize: '0.95rem', fontWeight: 800 }}>
-                    <span>مهندس: </span>
-                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customSectorDirector || '................................'}</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                    {authorInfo.name}
+                  </span>
+                  {authorInfo.role && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                      ({authorInfo.role})
+                    </span>
+                  )}
                 </div>
-
-                <div style={{ textAlign: 'center', minWidth: '220px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#000000' }}>
-                    ممثل الجهة المالكة
-                  </h3>
-                  <div style={{ marginTop: '0.8rem', fontSize: '0.95rem', fontWeight: 800 }}>
-                    <span>مهندس: </span>
-                    <span style={{ borderBottom: '2px dotted #000000', paddingBottom: '2px' }}>{customOwnerRep || '................................'}</span>
-                  </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                  اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
             </div>
@@ -2156,32 +2248,31 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
                 </table>
               </div>
 
-              {/* Signatures */}
-              <div style={{
+              {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
+              <div className="report-creator-official-strip" style={{
                 marginTop: '1.25rem',
-                borderTop: '2px solid #000000',
-                paddingTop: '0.75rem',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                textAlign: 'center'
+                border: '1.5px solid #000000',
+                padding: '10px 16px',
+                background: '#ffffff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
               }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900 }}>مهندس القطاع المشرف</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '1.5px dotted #000', paddingBottom: '2px' }}>م. صلاح العربي / م. عيسى الطاهر</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                    {authorInfo.name}
+                  </span>
+                  {authorInfo.role && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                      ({authorInfo.role})
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900 }}>رئيس جهاز الإشراف</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 800 }}>
-                    <span style={{ borderBottom: '1.5px dotted #000', paddingBottom: '2px' }}>م. عبدالسلام ابريكاو</span>
-                  </div>
-                </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#1e3a8a' }}>اعتماد مدير المشروع</h4>
-                  <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', fontWeight: 900, color: '#1e3a8a' }}>
-                    <span style={{ borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>م. عبدالرحمن الأنصاري</span>
-                  </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                  اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
             </div>
@@ -2432,51 +2523,31 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport }) => {
                 </div>
               )}
 
-              {/* 6. Signatures and Official Seals */}
-              <div className="official-signatures-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '2px dashed #cbd5e1' }}>
-                <div className="sig-column">
-                  <h4>مدير المرحلة الميداني</h4>
-                  <p className="sig-role">إعداد وتوثيق الميدان</p>
-                  <div className="sig-name">{report.uploadedBy || (isSectorA ? 'مدير المرحلة الأولى' : 'مدير المرحلة الثانية')}</div>
-                  <div className="sig-signature-line">
-                    <span className="digital-stamp-badge">✓ توثيق رقمي معتمد</span>
-                  </div>
-                </div>
-
-                <div className="sig-column">
-                  <h4>مدير إدارة القطاعات</h4>
-                  <p className="sig-role">مراجعة وتدقيق الكميات</p>
-                  <div className="sig-name">{report.approvedBy || 'مدير عام القطاعات'}</div>
-                  <div className="sig-signature-line">
-                    {report.status === 'approved' ? (
-                      <span className="digital-stamp-badge approved">✓ مراجعة وتدقيق مكتمل</span>
-                    ) : (
-                      <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>بانتظار المراجعة</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="sig-column">
-                  <h4>مدير المشروع (جهاز الإشراف)</h4>
-                  <p className="sig-role">الاعتماد النهائي للمشروع</p>
-                  <div className="sig-name" style={{ color: '#1e3a8a', fontWeight: 900 }}>المهندس عبدالرحمن الأنصاري</div>
-                  <div className="sig-signature-line">
-                    <span className="digital-stamp-badge approved" style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}>
-                      ✓ اعتماد مدير المشروع
+              {/* 6. Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
+              <div className="report-creator-official-strip" style={{
+                marginTop: '1.5rem',
+                padding: '10px 16px',
+                border: '1.5px solid #000000',
+                background: '#ffffff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                    {authorInfo.name}
+                  </span>
+                  {authorInfo.role && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                      ({authorInfo.role})
                     </span>
-                  </div>
+                  )}
                 </div>
-
-                <div className="sig-column">
-                  <h4>جهاز الإشراف والمتابعة</h4>
-                  <p className="sig-role">طريق أوباري - غات (360 كم)</p>
-                  <div className="official-seal-box">
-                    <div className="seal-inner">
-                      <span>جهاز الإشراف</span>
-                      <span className="bold">مشروع أوباري - غات</span>
-                      <span>معتمد رسمياً</span>
-                    </div>
-                  </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                  اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
             </>
