@@ -1894,10 +1894,232 @@ html, body {
   }
 }
 
+/* =========================================================================
+   DEDICATED MOBILE BOTTOM NAVIGATION BAR & SMARTPHONE ENHANCEMENTS
+   ========================================================================= */
+.dashboard-hero-progress-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.dashboard-chart-switcher {
+  display: flex;
+  background: #f1f5f9;
+  padding: 0.2rem;
+  border-radius: 8px;
+  gap: 0.2rem;
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+.dashboard-chart-switcher::-webkit-scrollbar {
+  display: none;
+}
+.dashboard-chart-switcher button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mobile-bottom-navigation {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .dashboard-hero-progress-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Bottom Navigation Bar on Mobile Phones */
+  .mobile-bottom-navigation {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -4px 25px rgba(15, 23, 42, 0.09) !important;
+    z-index: 9990 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  .mobile-bottom-nav-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    height: 100% !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+    padding: 0 0.5rem !important;
+    position: relative !important;
+  }
+
+  .mobile-nav-item {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0.3rem 0.15rem !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-family: inherit !important;
+    min-height: 48px !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .mobile-nav-item:active {
+    transform: scale(0.92) !important;
+    background: #f1f5f9 !important;
+  }
+
+  .mobile-nav-item.active {
+    color: #2563eb !important;
+  }
+
+  .mobile-nav-icon-wrap {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 22px !important;
+    margin-bottom: 2px !important;
+    transition: transform 0.2s ease !important;
+  }
+
+  .mobile-nav-item.active .mobile-nav-icon-wrap {
+    transform: translateY(-2px) !important;
+    color: #2563eb !important;
+  }
+
+  .mobile-nav-label {
+    font-size: 0.67rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-nav-badge {
+    position: absolute !important;
+    top: -5px !important;
+    right: -8px !important;
+    background: #ef4444 !important;
+    color: #fff !important;
+    font-size: 0.58rem !important;
+    font-weight: 900 !important;
+    min-width: 15px !important;
+    height: 15px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 3px !important;
+    border: 1.5px solid #fff !important;
+  }
+
+  /* Center Action Button (Elevated Circle Plus) */
+  .mobile-nav-center-action-wrap {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+    top: -14px !important;
+  }
+
+  .mobile-nav-center-btn {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border: 4px solid #ffffff !important;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
+    padding: 0 !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .mobile-nav-center-btn:active {
+    transform: scale(0.9) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+  }
+
+  .mobile-nav-center-btn.active {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  }
+
+  .mobile-center-icon-glow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .mobile-center-label {
+    position: absolute !important;
+    bottom: -19px !important;
+    font-size: 0.65rem !important;
+    font-weight: 800 !important;
+    color: #2563eb !important;
+    white-space: nowrap !important;
+  }
+
+  /* Ensure page content has bottom clearance for bottom nav bar */
+  .custom-page-container {
+    padding: 0.65rem 0.45rem calc(80px + env(safe-area-inset-bottom, 0px)) 0.45rem !important;
+  }
+
+  /* Better mobile touch targets for all action buttons */
+  button, .secondary-action-btn, .primary-action-btn, .nav-btn-link {
+    min-height: 42px !important;
+  }
+
+  /* Responsive filters and search inputs on mobile */
+  .archive-filters-bar,
+  div[style*="justifyContent: 'space-between'"][style*="flexWrap: 'wrap'"] {
+    gap: 0.6rem !important;
+  }
+
+  /* Cards with flex headers on mobile */
+  .card-top-header,
+  div[style*="justifyContent: 'space-between'"][style*="marginBottom"] {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Tables horizontal scrolling hint & momentum */
+  .table-responsive,
+  .table-container,
+  div[style*="overflowX: 'auto'"],
+  div[style*="overflow-x: auto"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 10px !important;
+  }
+}
+
 /* Very Small Phones (<= 480px) */
 @media (max-width: 480px) {
   .custom-page-container {
-    padding: 0.35rem 0.25rem !important;
+    padding: 0.5rem 0.3rem calc(80px + env(safe-area-inset-bottom, 0px)) 0.3rem !important;
   }
 
   .navbar-tab-title {

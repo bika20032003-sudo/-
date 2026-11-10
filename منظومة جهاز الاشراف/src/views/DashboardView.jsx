@@ -322,7 +322,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
         </div>
 
         {/* 3 Main Radial / Progress Indicators */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
+        <div className="dashboard-hero-progress-grid">
           {/* Main Total Project Percentage */}
           <div style={{
             background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
@@ -404,7 +404,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
           </div>
 
           {/* Chart Switcher Buttons */}
-          <div style={{ display: 'flex', background: '#f1f5f9', padding: '0.2rem', borderRadius: '8px', gap: '0.2rem' }}>
+          <div className="dashboard-chart-switcher">
             <button onClick={() => setActiveChartTab('progress')} style={{
             background: activeChartTab === 'progress' ? '#ffffff' : 'transparent',
             color: activeChartTab === 'progress' ? '#2563eb' : '#64748b',

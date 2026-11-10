@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
+import { MobileBottomNav } from '../components/MobileBottomNav';
 
 import { DashboardView } from './DashboardView';
 import { UploadReportsView } from './UploadReportsView';
@@ -262,6 +263,14 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             onClose={() => setIsBackupModalOpen(false)}
           />
         )}
+
+        {/* Dedicated Modern Mobile Bottom Navigation */}
+        <MobileBottomNav 
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onToggleMenu={() => setIsMobileSidebarOpen(prev => !prev)}
+          currentUser={currentUser}
+        />
       </div>
     );
 };

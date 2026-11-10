@@ -17,6 +17,7 @@ const filesToSync = [
   'src/components/ErrorBoundary.jsx',
   'src/components/Sidebar.jsx',
   'src/components/AIAgentWidget.jsx',
+  'src/components/MobileBottomNav.jsx',
   'src/views/DashboardView.jsx',
   'src/views/ExecutiveProgressView.jsx',
   'src/views/UsersView.jsx',
