@@ -3,6 +3,7 @@ import { clearApiCache, fastFetch } from './apiCache.js';
 import { deduplicateReportsList, areReportsIdentical } from './reportDeduplication.js';
 import { toCleanLatinDigits } from './forceLatinDigits.js';
 import { queueOfflineMutation, triggerImmediateSync } from './realtimeSync.js';
+import { syncDailyRoadReportToTwoPhase } from './twoPhaseSync.js';
 
 /**
  * Universal Report Persistence Layer
@@ -109,6 +110,11 @@ export async function persistReportUniversal(reportPayload, currentUser) {
         localStorage.setItem('fuel_daily_report_data', JSON.stringify(enriched));
       } else if (enriched.isRoadProgressReport || enriched.reportCategory === 'road') {
         localStorage.setItem('road_daily_report_data', JSON.stringify(enriched));
+        try {
+          syncDailyRoadReportToTwoPhase(enriched, currentUser);
+        } catch (syncErr) {
+          console.warn('Auto sync road to two phase warning:', syncErr);
+        }
       } else if (enriched.isTargetedWorksReport) {
         localStorage.setItem('targeted_works_report_data', JSON.stringify(enriched));
       }

@@ -3,7 +3,7 @@ import {
   Layers, Plus, Trash2, Printer, Send, CheckCircle2, 
   AlertCircle, FileSpreadsheet, FileText, Calendar, 
   TrendingUp, BarChart3, RotateCcw, Eye, Edit3, Save, 
-  HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check, RefreshCw } from 'lucide-react';
+  HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check, RefreshCw, Zap } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
   CartesianGrid, Tooltip, Cell 
@@ -11,6 +11,8 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
+import { syncDailyRoadReportToTwoPhase } from '../utils/twoPhaseSync.js';
+import { triggerImmediateSync } from '../utils/realtimeSync.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { calculateReadyToWorkPipeline, calculateRemainingItems } from '../utils/engineeringFormulas.js';
 import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
@@ -111,48 +113,87 @@ export const TwoPhaseDailyReportForm = ({
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
-  // Auto load existing data from backend API
+  // Auto load existing data from backend API and subscribe to real-time events
   useEffect(() => {
     let isMounted = true;
+
+    const applyTwoPhaseData = (rep) => {
+      if (!rep || !Array.isArray(rep.phase1Items) || rep.phase1Items.length === 0) return;
+      if (rep.reportDate) setReportDate(rep.reportDate);
+      if (rep.dateFormatted) setReportDate(rep.dateFormatted);
+      if (rep.dayName) setDayName(rep.dayName);
+      if (rep.reportNumber) setReportNumber(rep.reportNumber);
+      if (rep.sectorDirector) setSectorDirector(rep.sectorDirector);
+      if (rep.ownerRepresentative) setOwnerRepresentative(rep.ownerRepresentative);
+      setPhase1Items(rep.phase1Items);
+      if (Array.isArray(rep.phase2Items)) setPhase2Items(rep.phase2Items);
+      if (Array.isArray(rep.remainingItems)) setRemainingItems(rep.remainingItems);
+      if (Array.isArray(rep.combinedItems)) {
+        setCombinedCustom(rep.combinedItems.map((c, idx) => ({
+          id: c.id || idx + 1,
+          readyToWorkMeters: c.readyToWorkMeters !== undefined ? c.readyToWorkMeters : (c.dailyTarget || ''),
+          notes: c.notes || ''
+        })));
+      }
+    };
+
     const loadReportData = async () => {
       try {
         const localSaved = getStoredTwoPhaseReport();
         if (localSaved && Array.isArray(localSaved.phase1Items) && localSaved.phase1Items.length > 0) {
-          if (localSaved.dateFormatted) setReportDate(localSaved.dateFormatted);
-          if (localSaved.dayName) setDayName(localSaved.dayName);
-          if (localSaved.reportNumber) setReportNumber(localSaved.reportNumber);
-          if (localSaved.sectorDirector) setSectorDirector(localSaved.sectorDirector);
-          if (localSaved.ownerRepresentative) setOwnerRepresentative(localSaved.ownerRepresentative);
-          setPhase1Items(localSaved.phase1Items);
-          if (Array.isArray(localSaved.phase2Items)) setPhase2Items(localSaved.phase2Items);
-          if (Array.isArray(localSaved.remainingItems)) setRemainingItems(localSaved.remainingItems);
+          applyTwoPhaseData(localSaved);
         }
         const res = await fastFetch('/api/two-phase-report');
         if (isMounted && res?.data && Array.isArray(res.data.phase1Items) && res.data.phase1Items.length > 0) {
-          const rep = res.data;
-          if (rep.dateFormatted) setReportDate(rep.dateFormatted);
-          if (rep.dayName) setDayName(rep.dayName);
-          if (rep.reportNumber) setReportNumber(rep.reportNumber);
-          if (rep.sectorDirector) setSectorDirector(rep.sectorDirector);
-          if (rep.ownerRepresentative) setOwnerRepresentative(rep.ownerRepresentative);
-          setPhase1Items(rep.phase1Items);
-          if (Array.isArray(rep.phase2Items)) setPhase2Items(rep.phase2Items);
-          if (Array.isArray(rep.remainingItems)) setRemainingItems(rep.remainingItems);
-          if (Array.isArray(rep.combinedItems)) {
-            setCombinedCustom(rep.combinedItems.map((c, idx) => ({
-              id: c.id || idx + 1,
-              readyToWorkMeters: c.readyToWorkMeters !== undefined ? c.readyToWorkMeters : (c.dailyTarget || ''),
-              notes: c.notes || ''
-            })));
-          }
+          applyTwoPhaseData(res.data);
         }
       } catch (err) {
         console.warn('Using certified offline data for two-phase report:', err);
       }
     };
+
     loadReportData();
-    return () => { isMounted = false; };
-  }, []);
+
+    // Real-time reactive listeners
+    const handleTwoPhaseUpdated = (e) => {
+      const data = e?.detail || getStoredTwoPhaseReport();
+      if (data && isMounted) {
+        applyTwoPhaseData(data);
+      }
+    };
+
+    const handleRoadDailyUpdated = (e) => {
+      const roadRep = e?.detail;
+      if (roadRep && isMounted) {
+        const synced = syncDailyRoadReportToTwoPhase(roadRep, currentUser);
+        if (synced) {
+          applyTwoPhaseData(synced);
+        }
+      }
+    };
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'two_phase_report_data' || e.key === 'local_reports') {
+        const latest = getStoredTwoPhaseReport();
+        if (latest && isMounted) {
+          applyTwoPhaseData(latest);
+        }
+      }
+    };
+
+    window.addEventListener('two-phase-updated', handleTwoPhaseUpdated);
+    window.addEventListener('road-daily-updated', handleRoadDailyUpdated);
+    window.addEventListener('road-progress-updated', handleTwoPhaseUpdated);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => { 
+      isMounted = false;
+      window.removeEventListener('two-phase-updated', handleTwoPhaseUpdated);
+      window.removeEventListener('road-daily-updated', handleRoadDailyUpdated);
+      window.removeEventListener('road-progress-updated', handleTwoPhaseUpdated);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [currentUser]);
 
   // Auto-calculated Combined Table (Phase 1 + Phase 2 + Ready-To-Work)
   const combinedItems = useMemo(() => {
@@ -328,6 +369,62 @@ export const TwoPhaseDailyReportForm = ({
       type: 'success',
       text: 'تمت استعادة كافة البيانات المعتمدة لتقرير المرحلتين (يوم السبت 24/10/2026) بنجاح!'
     });
+  };
+
+  // Manually trigger immediate feed from latest Daily Road Report to Phase 2
+  const handleFeedFromRoadDailyReport = () => {
+    try {
+      let roadData = null;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('road_daily_report_data');
+        if (raw) {
+          try {
+            roadData = JSON.parse(raw);
+          } catch (_) {}
+        }
+        if (!roadData) {
+          const localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
+          roadData = localReports.find(r => r && (r.isRoadProgressReport || r.reportType === 'تقرير أعمال الطريق اليومي' || r.reportCategory === 'road'));
+        }
+      }
+
+      if (!roadData) {
+        setStatusMessage({
+          type: 'danger',
+          text: 'لم يتم العثور على تقرير أعمال طريق محفوظ لتغذية المرحلة الثانية منه!'
+        });
+        return;
+      }
+
+      const updated = syncDailyRoadReportToTwoPhase(roadData, currentUser);
+      if (updated) {
+        if (updated.reportDate) setReportDate(updated.reportDate);
+        if (updated.dateFormatted) setReportDate(updated.dateFormatted);
+        if (updated.dayName) setDayName(updated.dayName);
+        if (Array.isArray(updated.phase2Items)) setPhase2Items(updated.phase2Items);
+        if (Array.isArray(updated.combinedItems)) {
+          setCombinedCustom(updated.combinedItems.map((c, idx) => ({
+            id: c.id || idx + 1,
+            readyToWorkMeters: c.readyToWorkMeters !== undefined ? c.readyToWorkMeters : '',
+            notes: c.notes || ''
+          })));
+        }
+        if (Array.isArray(updated.remainingItems)) setRemainingItems(updated.remainingItems);
+
+        triggerImmediateSync();
+
+        setStatusMessage({
+          type: 'success',
+          text: `تمت تغذية وتحديث المرحلة الثانية بنجاح من تقرير أعمال الطريق (${roadData.reportNumber || roadData.reportDate || 'اليومي'})! ⚡`
+        });
+      }
+    } catch (err) {
+      console.error('Error feeding Phase 2 from road daily report:', err);
+      setStatusMessage({
+        type: 'danger',
+        text: 'حدث خطأ أثناء تغذية المرحلة الثانية من تقرير أعمال الطريق.'
+      });
+    }
   };
 
   // Reset / Clear form
@@ -627,9 +724,31 @@ export const TwoPhaseDailyReportForm = ({
           fontWeight: 900,
           fontSize: '1rem',
           textAlign: 'center',
-          letterSpacing: '0.5px'
+          letterSpacing: '0.5px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          flexWrap: 'wrap'
         }}>
-          {title}
+          <span>{title}</span>
+          {title.includes('الثانية') && (
+            <span style={{
+              background: '#e0f2fe',
+              color: '#0369a1',
+              fontSize: '0.78rem',
+              padding: '2px 10px',
+              borderRadius: '20px',
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: '1px solid #7dd3fc',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+            }}>
+              ⚡ تتغذى تلقائياً من تقرير أعمال الطريق
+            </span>
+          )}
         </div>
 
         <div className="responsive-table-wrap"><table style={{ minWidth: '760px', width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
@@ -1171,6 +1290,29 @@ export const TwoPhaseDailyReportForm = ({
 
         {/* Global Action Buttons */}
         <div className="two-phase-actions-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleFeedFromRoadDailyReport}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.55rem 0.95rem',
+              borderRadius: '8px',
+              border: '1.5px solid #0284c7',
+              background: '#f0f9ff',
+              color: '#0369a1',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.15)'
+            }}
+            title="تغذية المرحلة الثانية آلياً وفورياً بحسب كميات تقرير أعمال الطريق اليومي المحفوظ"
+          >
+            <Zap size={16} color="#0284c7" />
+            <span>تغذية المرحلة الثانية من تقرير الطريق ⚡</span>
+          </button>
+
           <button
             type="button"
             onClick={handleRestoreCertifiedData}

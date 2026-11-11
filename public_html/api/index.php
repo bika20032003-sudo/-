@@ -347,6 +347,158 @@ function deduplicate_reports_array($reports) {
 }
 
 // -------------------------------------------------------------
+// [AUTOMATIC ROAD -> PHASE 2 SYNCHRONIZATION HELPERS]
+// -------------------------------------------------------------
+function categorize_road_item_to_phase2_id_php($rawName) {
+    if (empty($rawName)) return null;
+    $s = mb_strtolower(trim((string)$rawName), 'UTF-8');
+    
+    // FDR without cement (Item 4)
+    if (mb_stripos($s, 'بدون أسمنت') !== false || mb_stripos($s, 'بدون اسمنت') !== false || mb_stripos($s, 'فرمة أولى') !== false || mb_stripos($s, 'فرمة اولي') !== false) {
+        return 4;
+    }
+    // MCO (Item 2)
+    if (mb_stripos($s, 'mco') !== false || mb_stripos($s, 'تشريب') !== false || mb_stripos($s, 'رش') !== false) {
+        return 2;
+    }
+    // FDR with cement / recycled (Item 1)
+    if (mb_stripos($s, 'fdr') !== false || mb_stripos($s, 'إعادة التدوير') !== false || mb_stripos($s, 'اعادة التدوير') !== false || mb_stripos($s, 'فرمة ثانية') !== false || mb_stripos($s, 'فرمة تانية') !== false || mb_stripos($s, 'أسمنت') !== false || mb_stripos($s, 'اسمنت') !== false) {
+        return 1;
+    }
+    // Asphalt (Item 3)
+    if (mb_stripos($s, 'اسفلت') !== false || mb_stripos($s, 'أسفلت') !== false) {
+        return 3;
+    }
+    // Base course (Item 5)
+    if (mb_stripos($s, 'أساس') !== false || mb_stripos($s, 'اساس') !== false || mb_stripos($s, 'حبيبي') !== false) {
+        return 5;
+    }
+    // Service Road (Item 6)
+    if (mb_stripos($s, 'خدمي') !== false) {
+        return 6;
+    }
+    return null;
+}
+
+function sync_road_report_to_two_phase_php(&$db, $roadReport) {
+    if (!is_array($roadReport)) return null;
+    
+    // 1. Extract meters by Phase 2 item id
+    $extracted = [];
+    $rawItems = $roadReport['items'] ?? [];
+    if (is_array($rawItems)) {
+        foreach ($rawItems as $it) {
+            if (!is_array($it)) continue;
+            $name = $it['description'] ?? $it['name'] ?? $it['item'] ?? '';
+            $id = categorize_road_item_to_phase2_id_php($name);
+            if (!$id) continue;
+            
+            $m = floatval($it['lengthMeters'] ?? $it['length'] ?? $it['todayMeters'] ?? 0);
+            if (!isset($extracted[$id])) {
+                $extracted[$id] = 0;
+            }
+            $extracted[$id] += $m;
+        }
+    }
+    
+    // Also check explicit field properties
+    if (isset($roadReport['fdrWithoutCementMeters']) && floatval($roadReport['fdrWithoutCementMeters']) > 0) {
+        $extracted[4] = floatval($roadReport['fdrWithoutCementMeters']);
+    }
+    if (isset($roadReport['mcoMeters']) && floatval($roadReport['mcoMeters']) > 0) {
+        $extracted[2] = floatval($roadReport['mcoMeters']);
+    }
+    if (isset($roadReport['fdrMeters']) && floatval($roadReport['fdrMeters']) > 0) {
+        $extracted[1] = floatval($roadReport['fdrMeters']);
+    }
+    if (isset($roadReport['asphaltMeters']) && floatval($roadReport['asphaltMeters']) > 0) {
+        $extracted[3] = floatval($roadReport['asphaltMeters']);
+    }
+    if (isset($roadReport['baseMeters']) && floatval($roadReport['baseMeters']) > 0) {
+        $extracted[5] = floatval($roadReport['baseMeters']);
+    }
+    if (isset($roadReport['serviceRoadMeters']) && floatval($roadReport['serviceRoadMeters']) > 0) {
+        $extracted[6] = floatval($roadReport['serviceRoadMeters']);
+    }
+
+    if (empty($extracted)) return null;
+
+    // 2. Fetch or create baseline latestTwoPhaseReport
+    $twoPhase = $db['latestTwoPhaseReport'] ?? null;
+    if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
+        foreach ($db['reports'] ?? [] as $r) {
+            if (is_array($r) && (!empty($r['isTwoPhaseProgressReport']) || ($r['reportType'] ?? '') === 'تقرير إنجاز المرحلتين') && !empty($r['phase2Items'])) {
+                $twoPhase = $r;
+                break;
+            }
+        }
+    }
+
+    if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
+        return null;
+    }
+
+    // 3. Update Phase 2 Items
+    foreach ($twoPhase['phase2Items'] as &$p2) {
+        $id = intval($p2['id'] ?? 0);
+        if (isset($extracted[$id])) {
+            $today = $extracted[$id];
+            $prev = isset($p2['previousMeters']) && is_numeric($p2['previousMeters']) 
+                ? floatval($p2['previousMeters']) 
+                : max(0, floatval($p2['totalMeters'] ?? 0) - floatval($p2['todayMeters'] ?? 0));
+            $newTotal = $prev + $today;
+            $target = floatval($p2['dailyTarget'] ?? 800);
+
+            $p2['previousMeters'] = (string)$prev;
+            $p2['todayMeters'] = (string)$today;
+            $p2['totalMeters'] = (string)$newTotal;
+            $p2['varianceMeters'] = number_format($today - $target, 2, '.', '');
+            $p2['notes'] = 'تم تحديثه وتغذيته تلقائياً من تقرير أعمال الطريق اليومي';
+        }
+    }
+    unset($p2);
+
+    // 4. Update Combined Items
+    if (!empty($twoPhase['phase1Items']) && is_array($twoPhase['phase1Items'])) {
+        if (!isset($twoPhase['combinedItems']) || !is_array($twoPhase['combinedItems'])) {
+            $twoPhase['combinedItems'] = [];
+        }
+        foreach ($twoPhase['phase1Items'] as $idx => $p1) {
+            $p2 = $twoPhase['phase2Items'][$idx] ?? [];
+            $todayP1 = floatval($p1['todayMeters'] ?? 0);
+            $todayP2 = floatval($p2['todayMeters'] ?? 0);
+            $totalP1 = floatval($p1['totalMeters'] ?? 0);
+            $totalP2 = floatval($p2['totalMeters'] ?? 0);
+            $combToday = $todayP1 + $todayP2;
+            $combTotal = $totalP1 + totalP2;
+
+            $custom = $twoPhase['combinedItems'][$idx] ?? [];
+            $twoPhase['combinedItems'][$idx] = array_merge($custom, [
+                'id' => $p1['id'] ?? ($idx + 1),
+                'category' => $p1['category'] ?? ($idx < 3 ? 'basic' : 'additional'),
+                'name' => $p1['name'] ?? '',
+                'shortName' => $p1['shortName'] ?? '',
+                'todayMeters' => $combToday > 0 ? (string)$combToday : '',
+                'totalMeters' => $combTotal > 0 ? (string)$combTotal : '',
+                'readyToWorkMeters' => $custom['readyToWorkMeters'] ?? '',
+                'notes' => $custom['notes'] ?? ''
+            ]);
+        }
+    }
+
+    $targetDate = $roadReport['reportDate'] ?? $roadReport['dateFormatted'] ?? ($twoPhase['reportDate'] ?? '');
+    $twoPhase['reportDate'] = $targetDate;
+    $twoPhase['dateFormatted'] = $targetDate;
+    $twoPhase['dayName'] = $roadReport['dayName'] ?? ($twoPhase['dayName'] ?? '');
+    $twoPhase['updatedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+    $twoPhase['notes'] = 'تقرير إنجاز المرحلتين — تم تحديث وتغذية المرحلة الثانية تلقائياً من تقرير أعمال الطريق اليومي (' . ($roadReport['reportNumber'] ?? $targetDate) . ')';
+
+    $db['latestTwoPhaseReport'] = $twoPhase;
+    $db['reports'] = deduplicate_reports_array(array_merge([$twoPhase], $db['reports'] ?? []));
+    return $twoPhase;
+}
+
+// -------------------------------------------------------------
 // [REPORTS RESOURCE]
 // -------------------------------------------------------------
 if ($resource === 'reports') {
@@ -406,9 +558,10 @@ if ($resource === 'reports') {
         if (!empty($body['isFuelReport']) || ($body['reportType'] ?? '') === 'تقرير كميات الوقود اليومية') {
             $db['fuelDailyReport'] = $body;
         }
-        // If Road daily report, update roadDailyReport
+        // If Road daily report, update roadDailyReport and auto-feed Phase 2 of Two-Phase report
         if (!empty($body['isRoadProgressReport']) || ($body['reportType'] ?? '') === 'تقرير أعمال الطريق اليومي') {
             $db['roadDailyReport'] = $body;
+            sync_road_report_to_two_phase_php($db, $body);
         }
 
         save_db($db);
@@ -517,8 +670,10 @@ if ($resource === 'road-daily-report') {
         $db['roadDailyReport'] = $body;
         if (!isset($db['reports'])) $db['reports'] = [];
         $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports']));
+        // Automatically feed Phase 2 in Two-Phase report!
+        sync_road_report_to_two_phase_php($db, $body);
         save_db($db);
-        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير أعمال الطريق اليومي ومزامنته بالأرشيف']);
+        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير أعمال الطريق وتغذية المرحلة الثانية تلقائياً ومزامنته بالأرشيف']);
         exit;
     }
 }

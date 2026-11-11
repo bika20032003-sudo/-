@@ -1,5 +1,7 @@
 import { deepSanitizeLatinDigits, toCleanLatinDigits } from './forceLatinDigits.js';
 import { saveReportToIndexedDB } from './secureDatabase.js';
+import { calculateReadyToWorkPipeline, calculateRemainingItems, parseCleanNumber } from './engineeringFormulas.js';
+import { fastFetch } from './apiCache.js';
 
 // Unified synchronization utility linking Two-Phase Achievement Report (تقرير إنجاز المرحلتين)
 // directly with the Dashboard (الداشبورد) and the 360 Road Progress View (متابعة إنجاز الطريق 360 كم).
@@ -406,5 +408,225 @@ export function updateRoadProgressItem(id, todayMeters, notes) {
 
   saveStoredTwoPhaseReport(rep);
   return rep;
+}
+
+/**
+ * Categorize a line item from Daily Road Report (تقرير أعمال الطريق اليومي)
+ * into one of the 6 official Phase 2 items in Two-Phase Report (تقرير إنجاز المرحلتين):
+ * 1: طبقة إعادة التدوير (FDR)
+ * 2: رش طبقة التشريب (MCO)
+ * 3: طبقة الاسفلت المحسن
+ * 4: فرمة اولي بدون اسمنت(FDR)
+ * 5: طبقة أساس حبيبي
+ * 6: الطريق الخدمي
+ */
+export function categorizeRoadItemToPhase2(rawName) {
+  if (!rawName) return null;
+  const name = String(rawName).toLowerCase().trim();
+
+  // 1. فرمة أولى بدون أسمنت (Item 4 in Phase 2)
+  if (name.includes('بدون أسمنت') || name.includes('بدون اسمنت') || name.includes('فرمة أولى') || name.includes('فرمة اولي')) {
+    return 4;
+  }
+
+  // 2. رش طبقة التشريب MCO (Item 2 in Phase 2) - check before base so "رش MCO على طبقة الأساس" matches MCO
+  if (name.includes('mco') || name.includes('تشريب') || name.includes('ام سي او') || (name.includes('رش') && !name.includes('لصق'))) {
+    return 2;
+  }
+
+  // 3. طبقة إعادة التدوير FDR بالأسمنت / فرمة ثانية (Item 1 in Phase 2)
+  if (name.includes('fdr') || name.includes('إعادة التدوير') || name.includes('اعادة التدوير') || name.includes('فرمة ثانية') || name.includes('فرمة تانية') || name.includes('أسمنت') || name.includes('اسمنت') || name.includes('معالجه') || name.includes('معالجة')) {
+    return 1;
+  }
+
+  // 4. طبقة الاسفلت المحسن (Item 3 in Phase 2)
+  if (name.includes('اسفلت') || name.includes('أسفلت')) {
+    return 3;
+  }
+
+  // 5. طبقة أساس حبيبي / تشغيل الأساس / تسليم الأساس (Item 5 in Phase 2)
+  if (name.includes('أساس') || name.includes('اساس')) {
+    return 5;
+  }
+
+  // 6. الطريق الخدمي (Item 6 in Phase 2)
+  if (name.includes('خدمي') || name.includes('خدميه') || name.includes('خدمية')) {
+    return 6;
+  }
+
+  return null;
+}
+
+/**
+ * Extract aggregated daily meters from a Daily Road Report object
+ */
+export function extractDailyMetersFromRoadReport(roadReport) {
+  const result = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const matchedRows = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+
+  const items = Array.isArray(roadReport?.items) ? roadReport.items : [];
+  items.forEach(row => {
+    if (!row) return;
+    const p2Id = categorizeRoadItemToPhase2(row.item);
+    if (p2Id && result[p2Id] !== undefined) {
+      const cleanLen = String(row.length || '')
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+        .replace(/,/g, '')
+        .trim();
+      const num = parseFloat(cleanLen);
+      if (!isNaN(num) && num > 0) {
+        result[p2Id] += num;
+        matchedRows[p2Id].push({
+          item: row.item,
+          length: num,
+          stations: (row.stationFrom && row.stationTo) ? `${row.stationFrom} إلى ${row.stationTo}` : ''
+        });
+      }
+    }
+  });
+
+  return { dailyMeters: result, matchedRows };
+}
+
+/**
+ * Synchronize / Feed Daily Road Report into Phase 2 of Two-Phase Progress Report automatically
+ */
+export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
+  if (!roadReport || typeof roadReport !== 'object') return null;
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const { dailyMeters, matchedRows } = extractDailyMetersFromRoadReport(roadReport);
+    const hasAnyDailyWork = Object.values(dailyMeters).some(m => m > 0);
+
+    const currentTwoPhase = getStoredTwoPhaseReport();
+    if (!currentTwoPhase || !Array.isArray(currentTwoPhase.phase2Items)) return null;
+
+    // 1. Update Phase 2 items
+    const updatedPhase2Items = currentTwoPhase.phase2Items.map((item, idx) => {
+      const id = item.id || (idx + 1);
+      const todayFromRoad = dailyMeters[id] !== undefined ? dailyMeters[id] : 0;
+      const todayM = todayFromRoad;
+
+      const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseFloat(item.previousMeters)))
+        ? parseFloat(item.previousMeters)
+        : Math.max(0, (parseFloat(item.totalMeters) || 0) - (parseFloat(item.todayMeters) || 0));
+
+      const newTotal = prevM + todayM;
+      const target = parseFloat(item.dailyTarget || 800);
+      const variance = todayM - target;
+
+      const detailList = matchedRows[id] || [];
+      const noteDetail = detailList.length > 0
+        ? `منجز يومي معتمد بتقرير أعمال الطريق: ${todayM.toLocaleString('en-US')} م.ط (${detailList.map(d => d.item).join(' + ')})`
+        : (item.notes || 'منجز معتمد بالتقرير اليومي');
+
+      return {
+        ...item,
+        previousMeters: String(prevM),
+        todayMeters: String(todayM),
+        totalMeters: String(newTotal),
+        varianceMeters: variance.toFixed(2),
+        notes: noteDetail
+      };
+    });
+
+    // 2. Update Combined items
+    const updatedCombinedItems = (currentTwoPhase.phase1Items || []).map((p1, idx) => {
+      const p2 = updatedPhase2Items[idx] || {};
+      const custom = currentTwoPhase.combinedItems?.[idx] || {};
+      const todayP1 = parseFloat(p1.todayMeters) || 0;
+      const todayP2 = parseFloat(p2.todayMeters) || 0;
+      const totalP1 = parseFloat(p1.totalMeters) || 0;
+      const totalP2 = parseFloat(p2.totalMeters) || 0;
+      const combinedToday = todayP1 + todayP2;
+      const combinedTotal = totalP1 + totalP2;
+
+      return {
+        ...custom,
+        id: p1.id,
+        category: p1.category,
+        name: p1.name,
+        shortName: p1.shortName,
+        color: p1.color,
+        todayMeters: combinedToday > 0 ? String(combinedToday) : (todayP1 || todayP2 ? '0' : ''),
+        totalMeters: combinedTotal > 0 ? String(combinedTotal) : '',
+        readyToWorkMeters: custom.readyToWorkMeters || '',
+        notes: custom.notes || ''
+      };
+    });
+
+    // 3. Recalculate construction pipeline ("الجاهز للعمل في البند")
+    const totalsMap = {};
+    (currentTwoPhase.phase1Items || []).forEach((p1, idx) => {
+      const p2 = updatedPhase2Items[idx] || {};
+      const t1 = parseFloat(toCleanLatinDigits(p1.totalMeters)) || 0;
+      const t2 = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+      totalsMap[p1.name] = t1 + t2;
+    });
+    const pipeline = calculateReadyToWorkPipeline(totalsMap);
+
+    const updatedCombinedWithPipeline = updatedCombinedItems.map(c => {
+      if (c.id === 1) return { ...c, readyToWorkMeters: String(pipeline.fdrReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' };
+      if (c.id === 2) return { ...c, readyToWorkMeters: String(pipeline.mcoReady), notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' };
+      if (c.id === 3) return { ...c, readyToWorkMeters: String(pipeline.asphaltReady), notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' };
+      if (c.id === 5) return { ...c, readyToWorkMeters: String(pipeline.baseReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' };
+      return c;
+    });
+
+    // 4. Recalculate Remaining quantities
+    const p2Map = {};
+    updatedPhase2Items.forEach(p2 => {
+      p2Map[p2.name] = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+    });
+    const updatedRemaining = calculateRemainingItems(p2Map);
+
+    // 5. Build enriched Two-Phase report
+    const targetDate = roadReport.reportDate || roadReport.dateFormatted || currentTwoPhase.reportDate;
+    const targetDay = roadReport.dayName || currentTwoPhase.dayName;
+    const targetSlash = roadReport.formattedSlashDate || roadReport.dateFormatted || currentTwoPhase.dateFormatted;
+
+    const enrichedTwoPhase = {
+      ...currentTwoPhase,
+      reportDate: targetDate,
+      dateFormatted: targetSlash,
+      date: targetDate ? new Date(targetDate).toISOString() : currentTwoPhase.date,
+      dayName: targetDay,
+      phase2Items: updatedPhase2Items,
+      combinedItems: updatedCombinedWithPipeline,
+      remainingItems: updatedRemaining,
+      isTwoPhaseProgressReport: true,
+      reportType: 'تقرير إنجاز المرحلتين',
+      reportCategory: 'two_phase',
+      status: 'approved',
+      sourceRoadReportNumber: roadReport.reportNumber,
+      sourceRoadReportDate: targetDate,
+      notes: `تقرير إنجاز المرحلتين — تم تحديث وتغذية المرحلة الثانية تلقائياً من تقرير أعمال الطريق اليومي (${roadReport.reportNumber || targetDate})`,
+      updatedAt: new Date().toISOString()
+    };
+
+    // 6. Authoritative save into local storage & IndexedDB
+    saveStoredTwoPhaseReport(enrichedTwoPhase);
+
+    // 7. Dispatch reactive events
+    window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: enrichedTwoPhase }));
+    window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: enrichedTwoPhase }));
+    window.dispatchEvent(new CustomEvent('report-updated', { detail: enrichedTwoPhase }));
+
+    // 8. Push to backend in background
+    try {
+      fastFetch('/api/two-phase-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(enrichedTwoPhase)
+      }).catch(() => {});
+    } catch (_) {}
+
+    return enrichedTwoPhase;
+  } catch (err) {
+    console.error('[twoPhaseSync] Error syncing daily road report to two phase:', err);
+    return null;
+  }
 }
 

@@ -7,6 +7,8 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
+import { syncDailyRoadReportToTwoPhase } from '../utils/twoPhaseSync.js';
+import { triggerImmediateSync } from '../utils/realtimeSync.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
 import { calculateStationLength, calculateDefaultArea } from '../utils/engineeringFormulas.js';
 import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
@@ -562,7 +564,7 @@ export const RoadDailyReportForm = ({
     setShowForwardModal(true);
   };
 
-  // Save report (approved - saves to section and archive)
+  // Save report (approved - saves to section, archive, and automatically feeds Phase 2 in Two-Phase report)
   const handleSave = async () => {
     setIsSaving(true);
     setStatusMessage(null);
@@ -588,22 +590,40 @@ export const RoadDailyReportForm = ({
         uploadedBy: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
         engineer: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
         notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - عدد البنود: ${reportData.items?.length || 0} بنود منفذة`,
-        createdAt: new Date().toISOString()
+        createdAt: reportData.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
-      // 2. Universal authoritative persistence
+      // 2. Immediately update state
+      setReportData(printableObj);
+
+      // 3. Universal authoritative persistence
       const saved = await persistReportUniversal(printableObj, currentUser);
+      const finalReport = saved || printableObj;
 
-      // 3. Save into dedicated road_daily_report_data
-      localStorage.setItem('road_daily_report_data', JSON.stringify(saved || printableObj));
+      // 4. Save into dedicated road_daily_report_data
+      localStorage.setItem('road_daily_report_data', JSON.stringify(finalReport));
 
-      setCreatedReportForForward(saved || printableObj);
+      // 5. Automatically feed and update Phase 2 in the Two-Phase Report!
+      const updatedTwoPhase = syncDailyRoadReportToTwoPhase(finalReport, currentUser);
+
+      // 6. Trigger instant cross-device sync
+      triggerImmediateSync();
+
+      // 7. Dispatch reactive events
+      window.dispatchEvent(new CustomEvent('road-daily-updated', { detail: finalReport }));
+      window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: finalReport }));
+      window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: updatedTwoPhase }));
+      window.dispatchEvent(new CustomEvent('report-saved', { detail: finalReport }));
+      window.dispatchEvent(new CustomEvent('report-updated', { detail: finalReport }));
+
+      setCreatedReportForForward(finalReport);
       setStatusMessage({
         type: 'success',
-        text: `تم حفظ التقرير المعتمد برقم (${(saved || printableObj).reportNumber}) بنجاح في قسم أعمال الطريق والأرشيف!`
+        text: `تم حفظ تقرير أعمال الطريق اليومي برقم (${finalReport.reportNumber}) وتغذية المرحلة الثانية في تقرير إنجاز المرحلتين تلقائياً بنجاح! ⚡`
       });
 
-      if (onSaved) onSaved(saved || printableObj);
+      if (onSaved) onSaved(finalReport);
     } catch (e) {
       console.error(e);
       setStatusMessage({
