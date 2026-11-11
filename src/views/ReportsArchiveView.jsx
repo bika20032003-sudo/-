@@ -13,6 +13,7 @@ import { canAccessTwoPhaseReport, canAccessGeneralArchive, isReportOwnedByEngine
 import { deduplicateReportsList, sanitizeLocalReportsStorage, areReportsIdentical } from '../utils/reportDeduplication';
 import { CreateReportModal } from '../components/CreateReportModal';
 import { CreateTargetedWorksReportModal } from '../components/CreateTargetedWorksReportModal';
+import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
 const OFFICIAL_ENGINEERS_FILTER_LIST = [
   { id: 'all', name: 'كافة المهندسين والمشرفين (عرض شامل)', role: 'الكل' },
@@ -25,14 +26,9 @@ const OFFICIAL_ENGINEERS_FILTER_LIST = [
   { id: 'honi', name: 'م. مروان الهوني', role: 'إشراف ميداني' }
 ];
 
-const OFFICIAL_SUPERVISORS_FORWARD_LIST = [
+const getOfficialForwardList = () => [
   { username: 'all', name: 'كافة أعضاء جهاز الإشراف (إحالة شاملة)', role: 'الإشراف العام' },
-  { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-  { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-  { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
-  { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مشرف المرحلة الأولى' },
-  { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مشرف المرحلة الثانية' },
-  { username: 'fuel_officer', name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و 240' }
+  ...getAllSupervisors()
 ];
 
 export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = 'personal' }) => {
@@ -165,18 +161,21 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
     setIsForwarding(true);
     try {
       const rep = forwardModalReport;
+      const forwardList = getOfficialForwardList();
       const isAll = forwardRecipient === 'all';
       const recipients = isAll
-        ? OFFICIAL_SUPERVISORS_FORWARD_LIST.filter(u => u.username !== 'all')
-        : [OFFICIAL_SUPERVISORS_FORWARD_LIST.find(u => u.username === forwardRecipient) || OFFICIAL_SUPERVISORS_FORWARD_LIST[1]];
+        ? forwardList.filter(u => u.username !== 'all')
+        : [forwardList.find(u => u.username === forwardRecipient) || forwardList[1]];
 
+      const senderCanon = canonicalizeUsername(currentUser?.username) || 'user';
+      const senderInfo = getSupervisorInfo(senderCanon);
       const newMsgs = [];
       for (const targetUser of recipients) {
         const messagePayload = {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-          fromUsername: currentUser?.username || 'user',
-          fromName: currentUser?.name || 'جهاز الإشراف',
-          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          fromUsername: senderCanon,
+          fromName: currentUser?.name || senderInfo.name || 'جهاز الإشراف',
+          fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'جهاز الإشراف',
           toUsername: targetUser.username,
           toName: targetUser.name,
           toRole: targetUser.role,
@@ -1276,7 +1275,7 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                     color: '#0f172a'
                   }}
                 >
-                  {OFFICIAL_SUPERVISORS_FORWARD_LIST.map((u, idx) => (
+                  {getOfficialForwardList().map((u, idx) => (
                     <option key={idx} value={u.username}>
                       {u.name} — ({u.role})
                     </option>

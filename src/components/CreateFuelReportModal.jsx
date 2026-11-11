@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
+import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
 export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCreated, onPrintReport, onNavigateTab }) => {
   if (!isOpen) return null;
@@ -46,13 +47,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
-  const officialSupervisors = [
-    { username: 'admin', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
-  ];
+  const officialSupervisors = getAllSupervisors();
 
   const handleDateChange = (newDate) => {
     setReportDate(newDate);
@@ -243,13 +238,15 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
     const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
+      const senderCanon = canonicalizeUsername(currentUser?.username) || 'fuel_officer';
+      const senderInfo = getSupervisorInfo(senderCanon);
       const newMsgs = [];
       for (const targetUser of targets) {
         const messagePayload = {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-          fromUsername: currentUser?.username || 'fuel_officer',
-          fromName: currentUser?.name || 'مسؤول الوقود والمحروقات',
-          fromRole: currentUser?.title || currentUser?.role || 'إدارة الوقود',
+          fromUsername: senderCanon,
+          fromName: currentUser?.name || senderInfo.name || 'مسؤول الوقود والمحروقات',
+          fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'إدارة الوقود',
           toUsername: targetUser.username,
           toName: targetUser.name,
           toRole: targetUser.role,

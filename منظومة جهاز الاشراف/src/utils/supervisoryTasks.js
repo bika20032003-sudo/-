@@ -120,15 +120,13 @@ export function saveSupervisoryTask(taskData, currentUser) {
         toUsername: newTask.assignedToUsername,
         toName: newTask.assignedToName,
         toRole: newTask.assignedToRole,
+        type: 'توجيه فني وملاحظات ميدانية',
         subject: `تكليف بمهمة إشرافية: ${newTask.title}`,
-        category: 'instruction',
-        priority: newTask.priority === 'urgent' ? 'urgent' : 'high',
-        body: `سعادة المهندس / ${newTask.assignedToName} المحترم،\n\nنود إحاطتكم بتكليفكم رسمياً بالمهمة الإشرافية الميدانية التالية:\n\n• عنوان المهمة: ${newTask.title}\n• الموقع / المحطة: ${newTask.sector}\n• مستوى الأولوية: ${newTask.priorityLabel}\n• تاريخ الإنجاز المستهدف: ${newTask.dueDate}\n\nنص التوجيهات والتفاصيل الفنية:\n${newTask.details || 'يرجى المتابعة الميدانية الدقيقة وموافاتنا بتقرير الإنجاز.'}\n\nمع فائق الاحترام والتقدير،\nمدير المشروع ومساعد مدير المشروع.`,
-        timestamp: new Date().toISOString(),
-        date: new Date().toLocaleDateString('ar-LY', { year: 'numeric', month: '2-digit', day: '2-digit' }),
-        time: new Date().toLocaleTimeString('ar-LY', { hour: '2-digit', minute: '2-digit' }),
-        read: false,
-        attachments: []
+        content: `سعادة المهندس / ${newTask.assignedToName} المحترم،\n\nنود إحاطتكم بتكليفكم رسمياً بالمهمة الإشرافية الميدانية التالية:\n\n• عنوان المهمة: ${newTask.title}\n• الموقع / المحطة: ${newTask.sector}\n• مستوى الأولوية: ${newTask.priorityLabel}\n• تاريخ الإنجاز المستهدف: ${newTask.dueDate}\n\nنص التوجيهات والتفاصيل الفنية:\n${newTask.details || 'يرجى المتابعة الميدانية الدقيقة وموافاتنا بتقرير الإنجاز.'}\n\nمع فائق الاحترام والتقدير،\nمدير المشروع ومساعد مدير المشروع.`,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        readBy: [],
+        deletedBy: []
       };
       const updatedMsgs = [officialDispatchMsg, ...existingMsgs];
       localStorage.setItem('system_messages', JSON.stringify(updatedMsgs));

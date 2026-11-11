@@ -8,6 +8,7 @@ import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 import { calculateStationLength } from '../utils/engineeringFormulas.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
+import { canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
 // Safe number parsing
 const cleanNum = (val) => {
@@ -381,22 +382,32 @@ export const CreateReportModal = ({
       // 4. If sendAfter (Forward to mail), create and dispatch message too
       if (sendAfter) {
         try {
+          const senderCanon = canonicalizeUsername(currentUser?.username) || 'user';
+          const senderInfo = getSupervisorInfo(senderCanon);
           const autoMsg = {
-            id: Date.now(),
-            fromUsername: currentUser?.username || 'user',
-            fromName: currentUser?.name || sectorDirector,
-            fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+            id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+            fromUsername: senderCanon,
+            fromName: currentUser?.name || sectorDirector || senderInfo.name || 'جهاز الإشراف',
+            fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'جهاز الإشراف',
             toUsername: 'all',
-            toName: 'كافة أعضاء جهاز الإشراف',
-            toRole: 'جهاز الإشراف والقيادة',
+            toName: 'كافة أعضاء جهاز الإشراف (تعميم)',
+            toRole: 'جهاز الإشراف والمتابعة',
             type: 'إحالة تقرير عبر البريد والمراسلات',
             subject: `إحالة ${saved.title || saved.reportType} - رقم (${saved.reportNumber})`,
             content: `نحيل إليكم عبر البريد نسخة معتمدة من ${saved.title || saved.reportType} برقم (${saved.reportNumber}) للإحاطة والمتابعة الهندسية.`,
             reportId: saved.id,
             reportNumber: saved.reportNumber,
             reportData: saved,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            isRead: false,
+            readBy: [],
+            deletedBy: []
           };
+          fastFetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(autoMsg)
+          }).catch(() => {});
           const locMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
           locMsgs.unshift(autoMsg);
           localStorage.setItem('system_messages', JSON.stringify(locMsgs));

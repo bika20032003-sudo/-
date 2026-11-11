@@ -62,6 +62,26 @@ const DEFAULT_USERS = [
     sector: 'all',
     email: 'alansari@mot.gov.ly',
     password: 'admin1234'
+  },
+  {
+    id: 7,
+    username: 'fuel_officer',
+    name: 'مسؤول الوقود والمحروقات',
+    role: 'مسؤول الوقود بالموقع',
+    title: 'مسؤول الوقود والمحروقات (المواقع 107 و 240)',
+    sector: 'all',
+    email: 'fuel@mot.gov.ly',
+    password: 'fuel123'
+  },
+  {
+    id: 8,
+    username: 'honi',
+    name: 'م. مروان الهوني',
+    role: 'مهندس إشراف ميداني',
+    title: 'مهندس إشراف ومتابعة ميدانية',
+    sector: 'all',
+    email: 'honi@mot.gov.ly',
+    password: 'honi123'
   }
 ];
 
@@ -97,7 +117,16 @@ const ALIASES = {
   'saleh_quality': 'saleh_quality',
   'صالح': 'saleh_quality',
   'م. صالح حماد': 'saleh_quality',
-  'hammad': 'saleh_quality'
+  'hammad': 'saleh_quality',
+  'fuel': 'fuel_officer',
+  'fuel_officer': 'fuel_officer',
+  'وقود': 'fuel_officer',
+  'مسؤول الوقود': 'fuel_officer',
+  'مسؤول الوقود والمحروقات': 'fuel_officer',
+  'honi': 'honi',
+  'الهوني': 'honi',
+  'مروان': 'honi',
+  'م. مروان الهوني': 'honi'
 };
 
 /**

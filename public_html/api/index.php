@@ -603,32 +603,59 @@ if ($resource === 'road-progress') {
 // -------------------------------------------------------------
 // [MESSAGES & NOTIFICATIONS]
 // -------------------------------------------------------------
+function canonicalize_php_username($u) {
+    $u = strtolower(trim((string)($u ?? '')));
+    if ($u === '') return '';
+    $map = [
+        'dev' => 'admin',
+        'developer' => 'admin',
+        'development' => 'admin',
+        'alansari' => 'project_manager',
+        'manager' => 'project_manager',
+        'admin_sectors' => 'abrikaw',
+        'sectors' => 'abrikaw',
+        'quality' => 'saleh_quality',
+        'saleh' => 'saleh_quality',
+        'hammad' => 'saleh_quality',
+        'sector_a' => 'salah_alarabi',
+        'alarabi' => 'salah_alarabi',
+        'sector_b' => 'issa_altahir',
+        'altahir' => 'issa_altahir',
+        'fuel' => 'fuel_officer',
+        'fuel_officer' => 'fuel_officer',
+        'honi' => 'honi'
+    ];
+    return $map[$u] ?? $u;
+}
+
 if ($resource === 'messages') {
     $db = get_db();
     if (!isset($db['messages'])) $db['messages'] = [];
 
     // Clear messages for a specific user or globally
     if ($method === 'DELETE' && ($subId === 'clear-all' || $subId === 'all' || empty($subId))) {
-        $username = strtolower(trim($_GET['username'] ?? ''));
+        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $cUsername = canonicalize_php_username($rawUsername);
         $box = $_GET['box'] ?? 'all';
 
-        if (!empty($username)) {
+        if (!empty($rawUsername)) {
             // Per-user clear: only mark as deleted for this specific user
             foreach ($db['messages'] as &$m) {
-                $to = strtolower(trim($m['toUsername'] ?? ''));
-                $from = strtolower(trim($m['fromUsername'] ?? ''));
+                $to = canonicalize_php_username($m['toUsername'] ?? '');
+                $from = canonicalize_php_username($m['fromUsername'] ?? '');
+                $rawTo = strtolower(trim((string)($m['toUsername'] ?? '')));
                 $isTarget = false;
-                if ($box === 'inbox' && ($to === $username || $to === 'all') && $from !== $username) {
+                if ($box === 'inbox' && ($to === $cUsername || $rawTo === 'all' || $to === 'all') && $from !== $cUsername) {
                     $isTarget = true;
-                } else if ($box === 'sent' && $from === $username) {
+                } else if ($box === 'sent' && $from === $cUsername) {
                     $isTarget = true;
-                } else if ($box === 'all' && ($to === $username || $to === 'all' || $from === $username)) {
+                } else if ($box === 'all' && ($to === $cUsername || $rawTo === 'all' || $to === 'all' || $from === $cUsername)) {
                     $isTarget = true;
                 }
                 if ($isTarget) {
                     if (!isset($m['deletedBy']) || !is_array($m['deletedBy'])) $m['deletedBy'] = [];
-                    if (!in_array($username, array_map('strtolower', $m['deletedBy']))) {
-                        $m['deletedBy'][] = $username;
+                    if (!in_array($cUsername, array_map('canonicalize_php_username', $m['deletedBy']))) {
+                        $m['deletedBy'][] = $cUsername;
                     }
                 }
             }
@@ -646,13 +673,14 @@ if ($resource === 'messages') {
 
     // Delete single message (Independent per-user soft delete)
     if ($method === 'DELETE' && !empty($subId)) {
-        $username = strtolower(trim($_GET['username'] ?? ''));
-        if (!empty($username)) {
+        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $cUsername = canonicalize_php_username($rawUsername);
+        if (!empty($rawUsername)) {
             foreach ($db['messages'] as &$m) {
                 if ((string)($m['id'] ?? '') === (string)$subId) {
                     if (!isset($m['deletedBy']) || !is_array($m['deletedBy'])) $m['deletedBy'] = [];
-                    if (!in_array($username, array_map('strtolower', $m['deletedBy']))) {
-                        $m['deletedBy'][] = $username;
+                    if (!in_array($cUsername, array_map('canonicalize_php_username', $m['deletedBy']))) {
+                        $m['deletedBy'][] = $cUsername;
                     }
                     break;
                 }
@@ -672,14 +700,15 @@ if ($resource === 'messages') {
 
     // Mark as read
     if ($method === 'PUT' && !empty($subId) && $subAction === 'read') {
-        $username = strtolower(trim($_GET['username'] ?? ''));
+        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $cUsername = canonicalize_php_username($rawUsername);
         foreach ($db['messages'] as &$m) {
             if ((string)($m['id'] ?? '') === (string)$subId) {
                 $m['isRead'] = true;
-                if (!empty($username)) {
+                if (!empty($rawUsername)) {
                     if (!isset($m['readBy']) || !is_array($m['readBy'])) $m['readBy'] = [];
-                    if (!in_array($username, array_map('strtolower', $m['readBy']))) {
-                        $m['readBy'][] = $username;
+                    if (!in_array($cUsername, array_map('canonicalize_php_username', $m['readBy']))) {
+                        $m['readBy'][] = $cUsername;
                     }
                 }
                 break;
@@ -709,25 +738,27 @@ if ($resource === 'messages') {
 
     // List messages (GET /api/messages) - Strictly isolated per user
     if ($method === 'GET') {
-        $username = strtolower(trim($_GET['username'] ?? ''));
+        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $cUsername = canonicalize_php_username($rawUsername);
         $list = $db['messages'];
-        if (!empty($username)) {
+        if (!empty($rawUsername)) {
             $filtered = [];
             foreach ($list as $m) {
-                $deletedBy = array_map('strtolower', $m['deletedBy'] ?? []);
-                if (in_array($username, $deletedBy)) {
+                $deletedBy = array_map('canonicalize_php_username', $m['deletedBy'] ?? []);
+                if (in_array($cUsername, $deletedBy) || in_array($rawUsername, array_map('strtolower', $m['deletedBy'] ?? []))) {
                     continue; // Hidden from this user because they deleted it
                 }
-                $to = strtolower(trim($m['toUsername'] ?? ''));
-                $from = strtolower(trim($m['fromUsername'] ?? ''));
+                $to = canonicalize_php_username($m['toUsername'] ?? '');
+                $from = canonicalize_php_username($m['fromUsername'] ?? '');
+                $rawTo = strtolower(trim((string)($m['toUsername'] ?? '')));
 
                 // Must be either addressed to user, broadcast to all, or sent by user
-                if ($to === $username || $to === 'all' || $from === $username) {
+                if ($to === $cUsername || $rawTo === 'all' || $to === 'all' || $from === $cUsername) {
                     $mCopy = $m;
                     // Compute user-specific read status for broadcasts
-                    if ($to === 'all') {
-                        $readBy = array_map('strtolower', $m['readBy'] ?? []);
-                        $mCopy['isRead'] = in_array($username, $readBy);
+                    if ($rawTo === 'all' || $to === 'all') {
+                        $readBy = array_map('canonicalize_php_username', $m['readBy'] ?? []);
+                        $mCopy['isRead'] = in_array($cUsername, $readBy) || in_array($rawUsername, array_map('strtolower', $m['readBy'] ?? []));
                     }
                     $filtered[] = $mCopy;
                 }

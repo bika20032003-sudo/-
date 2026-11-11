@@ -9,6 +9,7 @@ import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
 import { calculateStationLength, calculateDefaultArea } from '../utils/engineeringFormulas.js';
+import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
 // Clean text and force standard regular Latin digits (0-9)
 const toCleanLatin = (val) => {
@@ -484,13 +485,7 @@ export const RoadDailyReportForm = ({
     }
   };
 
-  const officialSupervisors = [
-    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
-  ];
+  const officialSupervisors = useMemo(() => getAllSupervisors(), []);
 
   const handleForwardReport = async () => {
     const rep = createdReportForForward || getFullPrintableReport();
@@ -499,13 +494,15 @@ export const RoadDailyReportForm = ({
     const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
+      const senderCanon = canonicalizeUsername(currentUser?.username) || 'salah_alarabi';
+      const senderInfo = getSupervisorInfo(senderCanon);
       const newMsgs = [];
       for (const targetUser of targets) {
         const messagePayload = {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-          fromUsername: currentUser?.username || 'user',
-          fromName: currentUser?.name || rep.sectorDirector || 'مهندس الموقع',
-          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          fromUsername: senderCanon,
+          fromName: currentUser?.name || rep.sectorDirector || senderInfo.name || 'مهندس الموقع',
+          fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'جهاز الإشراف',
           toUsername: targetUser.username,
           toName: targetUser.name,
           toRole: targetUser.role,

@@ -6,7 +6,15 @@ import {
   Paperclip, ArrowRight, CornerDownLeft, MessageSquare, Sparkles
 } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
-import { getSystemUsers } from '../components/LoginPage.jsx';
+import { 
+  getAllSupervisors, 
+  getSelectableRecipients, 
+  canonicalizeUsername, 
+  isSameSupervisor, 
+  isMessageForUser, 
+  isMessageFromUser, 
+  getSupervisorInfo 
+} from '../utils/supervisionTeam.js';
 import { 
   isReportOwnedByEngineer, 
   canAccessGeneralArchive, 
@@ -26,7 +34,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const [statusNotification, setStatusNotification] = useState(null);
 
   // Compose Form State
-  const [composeRecipient, setComposeRecipient] = useState('');
+  const [composeRecipient, setComposeRecipient] = useState('all');
   const [composeType, setComposeType] = useState('إحالة تقرير يومي');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
@@ -36,51 +44,30 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   // Expanded message for detailed reading
   const [selectedMessage, setSelectedMessage] = useState(null);
 
-  const username = currentUser?.username || 'project_manager';
-  const u = (username || '').toLowerCase().trim();
+  const rawUsername = currentUser?.username || 'project_manager';
+  const u = canonicalizeUsername(rawUsername);
 
-  // Dynamic system supervisors & active team members
+  // Dynamic system supervisors & active team members (all valid correspondents)
   const officialSupervisors = useMemo(() => {
-    const list = [
-      { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', badge: 'إشراف عام' },
-      { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف', badge: 'رئاسة الجهاز' },
-      { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة', badge: 'ضبط الجودة' },
-      { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)', badge: 'المرحلة الأولى' },
-      { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)', badge: 'المرحلة الثانية' },
-    ];
-
-    const systemUsers = typeof getSystemUsers === 'function' ? getSystemUsers() : [];
-    systemUsers.forEach(su => {
-      const suName = su.username?.toLowerCase().trim();
-      if (suName && !list.some(item => item.username.toLowerCase().trim() === suName)) {
-        list.push({
-          username: su.username,
-          name: su.name,
-          role: su.role || su.title || 'عضو جهاز الإشراف',
-          badge: su.sector === 'المرحلة الأولى' ? 'المرحلة الأولى' : su.sector === 'المرحلة الثانية' ? 'المرحلة الثانية' : 'إشراف'
-        });
-      }
-    });
-
-    return list;
+    return getAllSupervisors();
   }, []);
 
   // Filter out the current user so they don't send messages to themselves
   const selectableRecipients = useMemo(() => {
-    return officialSupervisors.filter(sup => sup.username.toLowerCase().trim() !== u);
-  }, [officialSupervisors, u]);
+    return getSelectableRecipients(u);
+  }, [u]);
 
   useEffect(() => {
-    if (selectableRecipients.length > 0 && (!composeRecipient || composeRecipient === username)) {
-      setComposeRecipient(selectableRecipients[0].username);
+    if (!composeRecipient || isSameSupervisor(composeRecipient, u)) {
+      setComposeRecipient(selectableRecipients.length > 0 ? selectableRecipients[0].username : 'all');
     }
-  }, [selectableRecipients, composeRecipient, username]);
+  }, [selectableRecipients, composeRecipient, u]);
 
   // Fetch messages from backend & local storage
   const fetchMessages = async () => {
     setIsLoading(true);
     try {
-      const res = await fastFetch(`/api/messages?username=${encodeURIComponent(username)}`);
+      const res = await fastFetch(`/api/messages?username=${encodeURIComponent(u)}`);
       if (res && res.messages) {
         setMessages(res.messages);
       } else if (Array.isArray(res)) {
@@ -141,7 +128,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       window.removeEventListener('storage', handleUpdate);
       clearInterval(interval);
     };
-  }, [username]);
+  }, [u]);
 
   // Filter messages strictly for current user's isolated mailbox
   const userDeletedIds = getUserDeletedMessageIds(u);
@@ -152,21 +139,19 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     if (!m || !m.id) return false;
     const msgId = String(m.id);
     if (userDeletedIds.has(msgId)) return false;
-    const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
-    if (deletedBy.includes(u)) return false;
+    const deletedBy = (m.deletedBy || []).map(d => canonicalizeUsername(d));
+    if (deletedBy.includes(u) || deletedBy.includes(rawUsername.toLowerCase())) return false;
 
     // الرسائل الصادرة من هذا المستخدم تذهب لصندوق الصادر فقط
-    const from = String(m.fromUsername || '').toLowerCase().trim();
-    if (from === u) return false;
+    if (isMessageFromUser(m, u)) return false;
 
     // المراسلات الموجهة لهذا المستخدم حصرياً أو تعميم لكافة الفريق
-    const to = String(m.toUsername || '').toLowerCase().trim();
-    return to === u || to === 'all';
+    return isMessageForUser(m, u);
   }).map(m => {
-    const to = String(m.toUsername || '').toLowerCase().trim();
-    if (to === 'all') {
-      const readBy = (m.readBy || []).map(r => String(r).toLowerCase().trim());
-      const isRead = userReadIds.has(String(m.id)) || readBy.includes(u) || Boolean(m.isRead);
+    const to = canonicalizeUsername(m.toUsername);
+    if (to === 'all' || m.toUsername === 'all') {
+      const readBy = (m.readBy || []).map(r => canonicalizeUsername(r));
+      const isRead = userReadIds.has(String(m.id)) || readBy.includes(u) || readBy.includes(rawUsername.toLowerCase()) || Boolean(m.isRead);
       return { ...m, isRead };
     }
     return m;
@@ -177,11 +162,10 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     if (!m || !m.id) return false;
     const msgId = String(m.id);
     if (userDeletedIds.has(msgId)) return false;
-    const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
-    if (deletedBy.includes(u)) return false;
+    const deletedBy = (m.deletedBy || []).map(d => canonicalizeUsername(d));
+    if (deletedBy.includes(u) || deletedBy.includes(rawUsername.toLowerCase())) return false;
 
-    const from = String(m.fromUsername || '').toLowerCase().trim();
-    return from === u;
+    return isMessageFromUser(m, u);
   });
 
   const unreadCount = inboxMessages.filter(m => !m.isRead).length;
@@ -326,13 +310,16 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
     setIsSending(true);
 
-    let targetUser = officialSupervisors.find(u => u.username === composeRecipient);
-    let toName = targetUser?.name || 'مدير المشروع';
-    let toRole = targetUser?.role || 'جهاز الإشراف';
+    let toName = 'مدير المشروع';
+    let toRole = 'جهاز الإشراف';
 
     if (composeRecipient === 'all') {
       toName = 'كافة أعضاء جهاز الإشراف (تعميم)';
       toRole = 'جهاز الإشراف والمتابعة';
+    } else {
+      const sup = getSupervisorInfo(composeRecipient);
+      toName = sup.name || 'عضو جهاز الإشراف';
+      toRole = sup.role || 'جهاز الإشراف';
     }
 
     // Attached report details
@@ -346,11 +333,12 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       }
     }
 
+    const senderInfo = getSupervisorInfo(u);
     const payload = {
       id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      fromUsername: currentUser?.username || 'project_manager',
-      fromName: currentUser?.name || 'مدير المشروع',
-      fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+      fromUsername: u,
+      fromName: currentUser?.name || senderInfo.name || 'مدير المشروع',
+      fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'جهاز الإشراف',
       toUsername: composeRecipient,
       toName,
       toRole,
@@ -374,7 +362,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
       });
 
       const newMsg = res?.message || payload;
-      setMessages(prev => [newMsg, ...prev]);
+      setMessages(prev => [newMsg, ...prev.filter(m => String(m.id) !== String(newMsg.id))]);
 
       // Reset form
       setComposeSubject('');
@@ -385,8 +373,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     } catch (err) {
       console.error('Error sending message:', err);
       const newMsg = payload;
-      setMessages(prev => [newMsg, ...prev]);
-      setStatusNotification({ type: 'success', text: `تم تسجيل وإرسال المراسلة محلياً بنجاح.` });
+      setMessages(prev => [newMsg, ...prev.filter(m => String(m.id) !== String(newMsg.id))]);
+      setStatusNotification({ type: 'success', text: `تم تسجيل وإرسال المراسلة بنجاح.` });
       setActiveSubTab('sent');
     } finally {
       setIsSending(false);
@@ -395,7 +383,8 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
   // Reply shortcut
   const handleReplyTo = (msg) => {
-    const replyRecipient = msg.fromUsername || 'project_manager';
+    const rawReply = msg.fromUsername || 'project_manager';
+    const replyRecipient = canonicalizeUsername(rawReply);
     setComposeRecipient(replyRecipient);
     setComposeSubject(`رد: ${msg.subject}`);
     setComposeBody(`\n\n--------------------\nرداً على مراسلة ${msg.fromName} بتاريخ ${new Date(msg.createdAt).toLocaleDateString('ar-LY')}:\n${msg.content}`);

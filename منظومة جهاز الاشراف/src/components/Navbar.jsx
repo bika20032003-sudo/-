@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail, Database } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
+import { canonicalizeUsername, isMessageForUser } from '../utils/supervisionTeam.js';
 
 export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClick, onBackupClick, currentUser, onToggleMobileSidebar }) => {
     const [unreadCount, setUnreadCount] = useState(0);
@@ -19,10 +20,11 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
 
     const fetchUnreadMessages = async () => {
         try {
-            const u = currentUser?.username || 'admin';
+            const rawU = currentUser?.username || 'admin';
+            const u = canonicalizeUsername(rawU);
             const res = await fastFetch(`/api/messages?username=${encodeURIComponent(u)}`);
             const list = res?.messages || (Array.isArray(res) ? res : []);
-            const unread = list.filter(m => !m.isRead && (m.toUsername === u || m.toUsername === 'all')).length;
+            const unread = list.filter(m => !m.isRead && isMessageForUser(m, u)).length;
             setUnreadMessages(unread);
         } catch {
             // silent fallback
@@ -32,11 +34,19 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
     React.useEffect(() => {
         fetchUnreadAlerts();
         fetchUnreadMessages();
+        const handleMsgUpdate = () => fetchUnreadMessages();
+        const handleAlertsUpdate = () => fetchUnreadAlerts();
+        window.addEventListener('messages-updated', handleMsgUpdate);
+        window.addEventListener('alerts-updated', handleAlertsUpdate);
         const interval = setInterval(() => {
             fetchUnreadAlerts();
             fetchUnreadMessages();
-        }, 20000);
-        return () => clearInterval(interval);
+        }, 15000);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('messages-updated', handleMsgUpdate);
+            window.removeEventListener('alerts-updated', handleAlertsUpdate);
+        };
     }, [currentUser?.username]);
 
     // Determine clean official name and role
@@ -117,16 +127,17 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
         </div>
 
         {/* Left side in RTL: Server Status, Notifications & Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {/* Live Server Pulse */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '20px', padding: '0.2rem 0.65rem', fontSize: '0.76rem', color: '#166534', fontWeight: 700 }}>
+          <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '20px', padding: '0.2rem 0.65rem', fontSize: '0.76rem', color: '#166534', fontWeight: 700 }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }}/>
-            <span className="hide-on-mobile">متصل ومحدث</span>
+            <span>متصل ومحدث</span>
           </div>
 
           {/* Database Backup & Restore Tool */}
           <button 
             onClick={onBackupClick} 
+            className="hide-on-mobile"
             style={{
               background: '#f8fafc',
               border: '1px solid #cbd5e1',
@@ -145,7 +156,7 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
             title="إدارة قاعدة البيانات، النسخ الاحتياطي، والاستعادة الفورية"
           >
             <Database size={15} color="#2563eb"/>
-            <span className="hide-on-mobile">النسخ الاحتياطي</span>
+            <span>النسخ الاحتياطي</span>
           </button>
 
           {/* Mail & Correspondence Button */}

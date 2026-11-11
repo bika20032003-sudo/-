@@ -58,8 +58,30 @@ const INITIAL_CORRESPONDENCE_MESSAGES = [
     reportNumber: null,
     isRead: true,
     createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
+  },
+  {
+    id: 'msg-seed-5',
+    fromUsername: 'fuel_officer',
+    fromName: 'مسؤول الوقود والمحروقات',
+    fromRole: 'مسؤول الوقود بالموقع',
+    toUsername: 'project_manager',
+    toName: 'م. عبدالرحمن الأنصاري',
+    toRole: 'مدير المشروع',
+    type: 'إحالة تقرير يومي',
+    subject: 'إحاطة وصول شحنة الديزل وخزانات الوقود بالموقع 107 والموقع 240',
+    content: 'نحيطكم علماً باستلام وتفريغ شحنة الوقود الجديدة بكمية 40,000 لتر وتوزيعها على خزانات المحطة 107 والمحطة 240، وتأمين كافة الآليات والمعدات العاملة بالقطاعين دون أي عجز.',
+    reportNumber: 'FUEL-DAILY-202611-01',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3600000 * 12).toISOString()
   }
 ];
+
+import {
+  canonicalizeUsername,
+  isSameSupervisor,
+  isMessageForUser,
+  isMessageFromUser
+} from './supervisionTeam.js';
 
 import {
   getStoredTwoPhaseReport,
@@ -137,32 +159,34 @@ export function getFallbackData(url) {
       }
     } catch {}
     
-    // Filter strictly by username (independent personal mailbox)
+    // Filter strictly by username (independent personal mailbox with canonical alias support)
     const match = url.match(/username=([^&]+)/);
     if (match && match[1]) {
-      const u = decodeURIComponent(match[1]).toLowerCase().trim();
+      const rawU = decodeURIComponent(match[1]).toLowerCase().trim();
+      const canonU = canonicalizeUsername(rawU);
       let userDeletedIds = new Set();
       let userReadIds = new Set();
       try {
-        const rawDel = localStorage.getItem(`user_deleted_messages_${u}`);
+        const rawDel = localStorage.getItem(`user_deleted_messages_${canonU}`) || localStorage.getItem(`user_deleted_messages_${rawU}`);
         if (rawDel) userDeletedIds = new Set(JSON.parse(rawDel).map(String));
-        const rawRead = localStorage.getItem(`user_read_messages_${u}`);
+        const rawRead = localStorage.getItem(`user_read_messages_${canonU}`) || localStorage.getItem(`user_read_messages_${rawU}`);
         if (rawRead) userReadIds = new Set(JSON.parse(rawRead).map(String));
       } catch (_) {}
 
       const filtered = allMsgs.filter(m => {
         if (!m || !m.id) return false;
         if (userDeletedIds.has(String(m.id))) return false;
-        const deletedBy = (m.deletedBy || []).map(d => String(d).toLowerCase().trim());
-        if (deletedBy.includes(u)) return false;
+        const deletedBy = (m.deletedBy || []).map(d => canonicalizeUsername(d));
+        if (deletedBy.includes(canonU) || deletedBy.includes(rawU)) return false;
 
-        const to = String(m.toUsername || '').toLowerCase().trim();
-        const from = String(m.fromUsername || '').toLowerCase().trim();
-        return to === u || to === 'all' || from === u;
+        const isToMe = isMessageForUser(m, canonU);
+        const isFromMe = isMessageFromUser(m, canonU);
+        return isToMe || isFromMe;
       }).map(m => {
-        const to = String(m.toUsername || '').toLowerCase().trim();
-        if (to === 'all') {
-          const isRead = userReadIds.has(String(m.id)) || (m.readBy || []).map(r => String(r).toLowerCase().trim()).includes(u);
+        const to = canonicalizeUsername(m.toUsername);
+        if (to === 'all' || m.toUsername === 'all') {
+          const readBy = (m.readBy || []).map(r => canonicalizeUsername(r));
+          const isRead = userReadIds.has(String(m.id)) || readBy.includes(canonU) || readBy.includes(rawU) || Boolean(m.isRead);
           return { ...m, isRead };
         }
         return m;
@@ -883,7 +907,11 @@ export async function fastFetch(rawUrl, options = {}) {
       if (liveData && liveData.success && Array.isArray(liveData.messages)) {
         if (typeof window !== 'undefined' && window.localStorage) {
           try {
-            localStorage.setItem('system_messages', JSON.stringify(liveData.messages));
+            const existing = JSON.parse(localStorage.getItem('system_messages') || '[]');
+            const map = new Map();
+            existing.forEach(m => m && m.id && map.set(String(m.id), m));
+            liveData.messages.forEach(m => m && m.id && map.set(String(m.id), m));
+            localStorage.setItem('system_messages', JSON.stringify(Array.from(map.values())));
           } catch (_) {}
         }
         return liveData;

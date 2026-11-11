@@ -10,6 +10,7 @@ import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
 import { saveReportToIndexedDB } from '../utils/secureDatabase.js';
 import { calculateStationLength } from '../utils/engineeringFormulas.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
+import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
 // Approved Targeted Works Data from official document (Sunday 25/10/2026)
 export const initialTargetedWorksSections = [
@@ -287,17 +288,11 @@ export const CreateTargetedWorksReportModal = ({
   const [createdReport, setCreatedReport] = useState(null);
 
   const [showForwardModal, setShowForwardModal] = useState(false);
-  const [forwardRecipient, setForwardRecipient] = useState('admin');
+  const [forwardRecipient, setForwardRecipient] = useState('project_manager');
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
 
-  const officialSupervisors = [
-    { username: 'admin', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
-  ];
+  const officialSupervisors = getAllSupervisors();
 
   const handleDateChange = (newDate) => {
     setReportDate(newDate);
@@ -600,13 +595,15 @@ export const CreateTargetedWorksReportModal = ({
       ? officialSupervisors
       : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
+    const senderCanon = canonicalizeUsername(currentUser?.username) || 'supervisor';
+    const senderInfo = getSupervisorInfo(senderCanon);
     const newMsgs = [];
     for (const targetUser of targets) {
       const messagePayload = {
         id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-        fromUsername: currentUser?.username || 'supervisor',
-        fromName: currentUser?.name || sectorDirector,
-        fromRole: currentUser?.title || currentUser?.role || 'مهندس إشراف',
+        fromUsername: senderCanon,
+        fromName: currentUser?.name || sectorDirector || senderInfo.name || 'مهندس الموقع',
+        fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'مهندس إشراف',
         toUsername: targetUser.username,
         toName: targetUser.name,
         toRole: targetUser.role,

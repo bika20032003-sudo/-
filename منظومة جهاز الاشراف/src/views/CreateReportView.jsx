@@ -19,6 +19,7 @@ import {
   emptyTargetedWorksSections, 
   defaultApprovedTargetedWorksReport 
 } from '../components/CreateTargetedWorksReportModal';
+import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
 export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) => {
   const username = currentUser?.username || '';
@@ -128,28 +129,12 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
   const [isForwarding, setIsForwarding] = useState(false);
 
 
-  // Official Broadcast Recipient Hierarchy (مدير المشروع إلى آخره، عدا حساب التطوير)
-  const officialSupervisors = [
-    { username: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع', title: 'مدير المشروع (جهاز الإشراف)' },
-    { username: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف', title: 'رئيس جهاز الإشراف والمتابعة' },
-    { username: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة', title: 'مسؤول ضبط ومراقبة الجودة الفنية' },
-    { username: 'salah_alarabi', name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)', title: 'مهندس مشرف - المرحلة الأولى' },
-    { username: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)', title: 'مهندس مشرف - المرحلة الثانية' },
-  ];
+  // Official Supervision Team
+  const officialSupervisors = useMemo(() => getAllSupervisors(), []);
 
-  // Get full list of supervision members strictly excluding Development Account
+  // Get full list of supervision members
   const getSupervisionTeamExcludingDev = () => {
-    try {
-      const custom = JSON.parse(localStorage.getItem('custom_users') || '[]');
-      const filtered = custom.filter(u => {
-        const r = (u.role || '').toLowerCase();
-        const un = (u.username || '').toLowerCase();
-        return !r.includes('تطوير') && un !== 'admin' && un !== 'dev';
-      });
-      return [...officialSupervisors, ...filtered];
-    } catch (e) {
-      return officialSupervisors;
-    }
+    return officialSupervisors;
   };
 
 
@@ -726,13 +711,15 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
       : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
+      const senderCanon = canonicalizeUsername(currentUser?.username) || 'user';
+      const senderInfo = getSupervisorInfo(senderCanon);
       const newMsgs = [];
       for (const targetUser of recipients) {
         const messagePayload = {
           id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-          fromUsername: currentUser?.username || 'user',
-          fromName: currentUser?.name || (reportCategory === 'fuel' ? 'مسؤول الوقود' : (sectorDirector || 'جهاز الإشراف')),
-          fromRole: currentUser?.title || currentUser?.role || 'جهاز الإشراف',
+          fromUsername: senderCanon,
+          fromName: currentUser?.name || (reportCategory === 'fuel' ? 'مسؤول الوقود' : (sectorDirector || senderInfo.name || 'جهاز الإشراف')),
+          fromRole: currentUser?.title || currentUser?.role || senderInfo.role || 'جهاز الإشراف',
           toUsername: targetUser.username,
           toName: targetUser.name,
           toRole: targetUser.role,

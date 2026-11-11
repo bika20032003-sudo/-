@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail, Database } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
+import { canonicalizeUsername, isMessageForUser } from '../utils/supervisionTeam.js';
 
 export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClick, onBackupClick, currentUser, onToggleMobileSidebar }) => {
     const [unreadCount, setUnreadCount] = useState(0);
@@ -19,10 +20,11 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
 
     const fetchUnreadMessages = async () => {
         try {
-            const u = currentUser?.username || 'admin';
+            const rawU = currentUser?.username || 'admin';
+            const u = canonicalizeUsername(rawU);
             const res = await fastFetch(`/api/messages?username=${encodeURIComponent(u)}`);
             const list = res?.messages || (Array.isArray(res) ? res : []);
-            const unread = list.filter(m => !m.isRead && (m.toUsername === u || m.toUsername === 'all')).length;
+            const unread = list.filter(m => !m.isRead && isMessageForUser(m, u)).length;
             setUnreadMessages(unread);
         } catch {
             // silent fallback
