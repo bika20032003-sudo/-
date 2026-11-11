@@ -1082,9 +1082,14 @@ export async function fastFetch(rawUrl, options = {}) {
     return getFallbackData(url);
   }
 
-  if (typeof url === 'string' && url.includes('/api/')) {
-    if (isGitHubPages && apiBase) {
-      url = url.replace(/https?:\/\/[^/]+/, apiBase);
+  if (typeof url === 'string') {
+    if (apiBase) {
+      const cleanBase = apiBase.replace(/\/+$/, '');
+      if (url.startsWith('/api/')) {
+        url = cleanBase + url;
+      } else if (/^https?:\/\/[^/]+\/api\//.test(url)) {
+        url = url.replace(/^https?:\/\/[^/]+/, cleanBase);
+      }
     }
   }
   const method = (options.method || 'GET').toUpperCase();
@@ -1094,7 +1099,7 @@ export async function fastFetch(rawUrl, options = {}) {
     cache.clear();
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await nativeFetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) return await res.json();

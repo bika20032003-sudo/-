@@ -257,20 +257,33 @@ if ($resource === 'reports') {
         exit;
     }
 
+// Helper to normalize dates for reliable deduplication (converts DD/MM/YYYY or YYYY-MM-DD to YYYY-MM-DD)
+function normalize_report_date_str($val) {
+    if (empty($val) || !is_string($val)) return '';
+    $val = trim($val);
+    if (preg_match('/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/', $val, $m)) {
+        return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
+    }
+    if (preg_match('/^(\d{1,2})[-.\/](\d{1,2})[-.\/](\d{4})/', $val, $m)) {
+        return sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
+    }
+    return substr($val, 0, 10);
+}
+
 // Helper to compute canonical deduplication key for a report
 function get_report_canonical_key($r) {
     if (!$r || !is_array($r)) return '';
-    $date = substr($r['dateFormatted'] ?? $r['reportDate'] ?? $r['date'] ?? $r['createdAt'] ?? '', 0, 10);
-    $type = $r['reportType'] ?? $r['type'] ?? '';
+    $rawDate = $r['reportDate'] ?? $r['date'] ?? $r['dateFormatted'] ?? $r['createdAt'] ?? '';
+    $date = normalize_report_date_str($rawDate);
+    $type = $r['reportType'] ?? $r['type'] ?? $r['title'] ?? '';
     
     // 1. Two-phase report (single project-wide report per date)
     if (!empty($r['isTwoPhaseProgressReport']) || mb_stripos($type, 'المرحلتين') !== false) {
         return 'tp_' . $date;
     }
-    // 2. Fuel report (single per sector per date)
+    // 2. Fuel report (single project-wide report per date)
     if (!empty($r['isFuelReport']) || mb_stripos($type, 'وقود') !== false) {
-        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
-        return 'fuel_' . $sec . '_' . $date;
+        return 'fuel_' . $date;
     }
     // 3. Targeted works report (single per sector per date)
     if (!empty($r['isTargetedWorksReport']) || mb_stripos($type, 'مستهدف') !== false) {
@@ -308,8 +321,8 @@ function deduplicate_reports_array($reports) {
             $existing = $map[$targetKey];
             $tNew = strtotime($r['updatedAt'] ?? $r['createdAt'] ?? $r['date'] ?? '') ?: 0;
             $tOld = strtotime($existing['updatedAt'] ?? $existing['createdAt'] ?? $existing['date'] ?? '') ?: 0;
-            $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? []);
-            $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? []);
+            $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? $r['fuelItems'] ?? []);
+            $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? $existing['fuelItems'] ?? []);
             
             if ($itemsNew >= $itemsOld || $tNew >= $tOld) {
                 $merged = array_merge($existing, $r);

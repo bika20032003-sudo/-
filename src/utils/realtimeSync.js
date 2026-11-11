@@ -5,7 +5,7 @@
  * ==============================================================================
  * 
  * Provides:
- * 1. Background Smart Polling (every 12 seconds when active).
+ * 1. Background Smart Polling (every 5 seconds when active).
  * 2. Instant wakeup on Tab Focus / Phone Unlock.
  * 3. Offline Resilience with Outgoing Mutation Queue (auto-syncs on reconnection).
  * 4. Reactive Event Dispatching to all UI components (Dashboard, Reports, Fuel, Road).
@@ -13,10 +13,37 @@
 
 import { clearApiCache, fastFetch } from './apiCache.js';
 import { saveReportToIndexedDB } from './secureDatabase.js';
+import { deduplicateReportsList } from './reportDeduplication.js';
 
 let syncTimer = null;
 let isSyncing = false;
 let isInitialized = false;
+
+export function getApiBaseUrl() {
+  if (typeof window === 'undefined') return '';
+  const custom = localStorage.getItem('custom_cloud_api_url');
+  if (custom && custom.trim()) {
+    return custom.trim().replace(/\/+$/, '');
+  }
+  const envBase = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || '';
+  if (envBase && envBase.trim()) {
+    return envBase.trim().replace(/\/+$/, '');
+  }
+  return '';
+}
+
+export function resolveApiUrl(path) {
+  if (!path || typeof path !== 'string') return path;
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = getApiBaseUrl();
+  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  return base ? `${base}${cleanPath}` : cleanPath;
+}
+
+export function triggerImmediateSync() {
+  if (typeof window === 'undefined') return;
+  setTimeout(() => checkServerUpdates(true), 80);
+}
 
 // 1. Check for server-side updates
 export async function checkServerUpdates(force = false) {
@@ -25,7 +52,8 @@ export async function checkServerUpdates(force = false) {
 
   isSyncing = true;
   try {
-    const res = await fetch('/api/sync/timestamp', {
+    const syncUrl = resolveApiUrl('/api/sync/timestamp');
+    const res = await fetch(syncUrl, {
       headers: { 'Accept': 'application/json' },
       cache: 'no-store'
     }).catch(() => null);
@@ -59,11 +87,11 @@ export async function checkServerUpdates(force = false) {
 
       // Pull fresh data in parallel
       const [reportsRes, twoPhaseRes, messagesRes, roadDailyRes, fuelDailyRes] = await Promise.allSettled([
-        fetch('/api/reports', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-        fetch('/api/two-phase-report', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-        fetch('/api/messages', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-        fetch('/api/road-daily-report', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-        fetch('/api/fuel-daily-report', { cache: 'no-store' }).then(r => r.json()).catch(() => null)
+        fetch(resolveApiUrl('/api/reports'), { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+        fetch(resolveApiUrl('/api/two-phase-report'), { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+        fetch(resolveApiUrl('/api/messages'), { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+        fetch(resolveApiUrl('/api/road-daily-report'), { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+        fetch(resolveApiUrl('/api/fuel-daily-report'), { cache: 'no-store' }).then(r => r.json()).catch(() => null)
       ]);
 
       // Update Reports in Local Storage & IndexedDB
@@ -72,7 +100,10 @@ export async function checkServerUpdates(force = false) {
         try {
           const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String));
           const validReports = serverReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
-          localStorage.setItem('local_reports', JSON.stringify(validReports));
+          const rawLocal = localStorage.getItem('local_reports');
+          const localReports = rawLocal ? JSON.parse(rawLocal) : [];
+          const merged = deduplicateReportsList([...validReports, ...localReports]);
+          localStorage.setItem('local_reports', JSON.stringify(merged));
           validReports.forEach(r => saveReportToIndexedDB(r));
         } catch (_) {}
       }
@@ -91,10 +122,17 @@ export async function checkServerUpdates(force = false) {
         } catch (_) {}
       }
 
-      // Update Fuel Daily Report
+      // Update Fuel Daily Report & merge into archive
       if (fuelDailyRes.status === 'fulfilled' && fuelDailyRes.value && fuelDailyRes.value.data) {
         try {
-          localStorage.setItem('fuel_daily_report_data', JSON.stringify(fuelDailyRes.value.data));
+          const fuelData = fuelDailyRes.value.data;
+          localStorage.setItem('fuel_daily_report_data', JSON.stringify(fuelData));
+          
+          const rawLocal = localStorage.getItem('local_reports');
+          const localReports = rawLocal ? JSON.parse(rawLocal) : [];
+          const merged = deduplicateReportsList([fuelData, ...localReports]);
+          localStorage.setItem('local_reports', JSON.stringify(merged));
+          saveReportToIndexedDB(fuelData);
         } catch (_) {}
       }
 
@@ -115,7 +153,7 @@ export async function checkServerUpdates(force = false) {
       window.dispatchEvent(new CustomEvent('road-progress-updated'));
       window.dispatchEvent(new CustomEvent('two-phase-updated'));
       window.dispatchEvent(new CustomEvent('executive-progress-updated'));
-      window.dispatchEvent(new CustomEvent('fuel-updated'));
+      window.dispatchEvent(new CustomEvent('fuel-updated', { detail: fuelDailyRes?.value?.data }));
       window.dispatchEvent(new CustomEvent('messages-updated'));
 
       // If this was an incoming update from another device, show subtle toast
@@ -166,7 +204,8 @@ export async function flushPendingQueue() {
 
     for (const item of queue) {
       try {
-        const res = await fetch(item.endpoint, {
+        const targetUrl = resolveApiUrl(item.endpoint);
+        const res = await fetch(targetUrl, {
           method: item.method || 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item.payload)
@@ -243,15 +282,15 @@ export function initRealtimeSync() {
   isInitialized = true;
 
   // Immediate check on startup
-  setTimeout(() => checkServerUpdates(true), 1200);
+  setTimeout(() => checkServerUpdates(true), 800);
 
-  // Periodic poll every 12 seconds when active
+  // Periodic poll every 5 seconds when active
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(() => {
     if (!document.hidden) {
       checkServerUpdates(false);
     }
-  }, 12000);
+  }, 5000);
 
   // Wakeup triggers
   window.addEventListener('online', () => {
@@ -269,6 +308,6 @@ export function initRealtimeSync() {
     }
   });
 
-  console.log('[RealtimeSync] Cloud Sync Engine active and listening (12s interval).');
+  console.log('[RealtimeSync] Cloud Sync Engine active and listening (5s interval).');
 }
 

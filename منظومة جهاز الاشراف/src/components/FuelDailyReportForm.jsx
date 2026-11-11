@@ -7,6 +7,7 @@ import {
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
+import { triggerImmediateSync } from '../utils/realtimeSync.js';
 import { OfficialPrintModal } from './OfficialPrintModal';
 import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
 
@@ -71,6 +72,43 @@ export const initialFuelDailyData = {
   ]
 };
 
+export const normalizeFuelReport = (data) => {
+  if (!data || typeof data !== 'object') return initialFuelDailyData;
+  const rawItems = Array.isArray(data.fuelItems) ? data.fuelItems : [];
+  const normalizedItems = rawItems.length > 0
+    ? rawItems.map((r, idx) => ({
+        id: r.id || (Date.now() + idx),
+        seq: r.seq || String(idx + 1),
+        location: r.location !== undefined && r.location !== null ? String(r.location) : '',
+        dispatchedLiters: r.dispatchedLiters !== undefined && r.dispatchedLiters !== null ? String(r.dispatchedLiters) : '0.00',
+        receivedLiters: r.receivedLiters !== undefined && r.receivedLiters !== null ? String(r.receivedLiters) : '0.00',
+        remainingLiters: r.remainingLiters !== undefined && r.remainingLiters !== null ? String(r.remainingLiters) : '0.00',
+        notes: r.notes || ''
+      }))
+    : initialFuelDailyData.fuelItems;
+
+  const repDate = data.reportDate || (data.date ? String(data.date).split('T')[0] : '2026-10-24');
+  let slashDate = data.formattedSlashDate || data.dateFormatted;
+  if (!slashDate && repDate) {
+    const parts = repDate.split('-');
+    slashDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : repDate;
+  }
+
+  return {
+    ...initialFuelDailyData,
+    ...data,
+    reportDate: repDate,
+    formattedSlashDate: slashDate || '24/10/2026',
+    dateFormatted: slashDate || '24/10/2026',
+    dayName: data.dayName || 'يوم السبت',
+    reportNumber: data.reportNumber || 'FUEL-094834_24.10.2026',
+    reportTitle: data.reportTitle || data.title || 'تقرير كميات الوقود اليومية',
+    fuelOfficer: data.fuelOfficer || (data.uploadedBy ? data.uploadedBy.split('(')[0].trim() : 'مسؤول الوقود بالموقع'),
+    headOfSupervision: data.headOfSupervision || (data.approvedBy || 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)'),
+    fuelItems: normalizedItems
+  };
+};
+
 export const FuelDailyReportForm = ({
   currentUser,
   onSaved,
@@ -78,7 +116,20 @@ export const FuelDailyReportForm = ({
   onNavigateTab,
   readOnlyMode = false
 }) => {
-  const [reportData, setReportData] = useState(initialFuelDailyData);
+  const [reportData, setReportData] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const local = localStorage.getItem('fuel_daily_report_data');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed && Array.isArray(parsed.fuelItems) && parsed.fuelItems.length > 0) {
+            return normalizeFuelReport(parsed);
+          }
+        }
+      }
+    } catch (_) {}
+    return initialFuelDailyData;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -210,15 +261,20 @@ export const FuelDailyReportForm = ({
     ? reportData
     : initialFuelDailyData;
 
-  // Load from backend or localStorage on mount
+  // Load from backend or localStorage on mount & listen to real-time cross-device updates
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
       try {
         setIsLoading(true);
+
         const res = await fastFetch('/api/fuel-daily-report');
         if (res && res.success && res.data && typeof res.data === 'object' && Array.isArray(res.data.fuelItems) && res.data.fuelItems.length > 0 && isMounted) {
-          setReportData(res.data);
+          const fresh = normalizeFuelReport(res.data);
+          setReportData(fresh);
+          try {
+            localStorage.setItem('fuel_daily_report_data', JSON.stringify(fresh));
+          } catch (_) {}
           return;
         }
 
@@ -227,27 +283,51 @@ export const FuelDailyReportForm = ({
           try {
             const parsed = JSON.parse(local);
             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.fuelItems) && parsed.fuelItems.length > 0) {
-              const hasActualData = parsed.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
-              if (hasActualData && parsed.fuelItems.length >= 3) {
-                setReportData(parsed);
-                return;
-              }
+              setReportData(normalizeFuelReport(parsed));
+              return;
             }
-          } catch { }
-        }
-
-        if (isMounted) {
-          setReportData(initialFuelDailyData);
+          } catch (_) {}
         }
       } catch (e) {
-        console.warn('Could not load fuel daily report from server, using default:', e);
-        if (isMounted) setReportData(initialFuelDailyData);
+        console.warn('Could not load fuel daily report from server, using local/default:', e);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     };
+
     loadData();
-    return () => { isMounted = false; };
+
+    // Realtime cross-device sync listener
+    const handleRemoteSync = (e) => {
+      if (!isMounted) return;
+      try {
+        const detail = e?.detail;
+        if (detail && (detail.isFuelReport || detail.reportCategory === 'fuel' || String(detail.reportType || '').includes('وقود')) && Array.isArray(detail.fuelItems) && detail.fuelItems.length > 0) {
+          setReportData(normalizeFuelReport(detail));
+          return;
+        }
+        const raw = localStorage.getItem('fuel_daily_report_data');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.fuelItems) && parsed.fuelItems.length > 0) {
+            setReportData(normalizeFuelReport(parsed));
+          }
+        }
+      } catch (_) {}
+    };
+
+    window.addEventListener('fuel-updated', handleRemoteSync);
+    window.addEventListener('report-saved', handleRemoteSync);
+    window.addEventListener('report-updated', handleRemoteSync);
+    window.addEventListener('storage', handleRemoteSync);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('fuel-updated', handleRemoteSync);
+      window.removeEventListener('report-saved', handleRemoteSync);
+      window.removeEventListener('report-updated', handleRemoteSync);
+      window.removeEventListener('storage', handleRemoteSync);
+    };
   }, []);
 
   // Recalculate totals dynamically
@@ -376,33 +456,46 @@ export const FuelDailyReportForm = ({
   };
 
   // Prepare full printable report object
-  const getFullPrintableReport = () => ({
-    id: 'fuel-daily-' + (reportData.reportDate || '2026-10-24'),
-    title: reportData.reportTitle || 'تقرير كميات الوقود اليومية',
-    reportType: 'تقرير كميات الوقود اليومية',
-    reportCategory: 'fuel',
-    isFuelReport: true,
-    reportNumber: reportData.reportNumber || 'FUEL-094834_24.10.2026',
-    date: reportData.reportDate ? new Date(reportData.reportDate).toISOString() : new Date().toISOString(),
-    dayName: reportData.dayName || 'يوم السبت',
-    dateFormatted: reportData.formattedSlashDate || '24/10/2026',
-    sector: reportData.sector || 'مشروع أوباري - غات',
-    fuelAmount: calculatedTotals.totalDispatched,
-    totalDispatchedLiters: calculatedTotals.totalDispatched,
-    totalReceivedLiters: calculatedTotals.totalReceived,
-    totalRemainingLiters: calculatedTotals.totalRemaining,
-    uploadedBy: reportData.fuelOfficer || 'مسؤول الوقود بالموقع',
-    approvedBy: reportData.headOfSupervision || 'م. عبدالسلام ابريكاو',
-    fuelItems: (currentData.fuelItems || []).map((r, idx) => ({
-      index: idx + 1,
-      seq: r.seq || String(idx + 1),
-      location: r.location,
-      dispatchedLiters: parseNum(r.dispatchedLiters),
-      receivedLiters: parseNum(r.receivedLiters),
-      remainingLiters: parseNum(r.remainingLiters)
-    })),
-    status: 'approved'
-  });
+  const getFullPrintableReport = () => {
+    const rawItems = currentData.fuelItems || [];
+    const repDate = reportData.reportDate || '2026-10-24';
+    const slashDate = reportData.formattedSlashDate || '24/10/2026';
+
+    return {
+      id: reportData.id || ('fuel-daily-' + repDate),
+      title: reportData.reportTitle || 'تقرير كميات الوقود اليومية',
+      reportTitle: reportData.reportTitle || 'تقرير كميات الوقود اليومية',
+      reportType: 'تقرير كميات الوقود اليومية',
+      reportCategory: 'fuel',
+      isFuelReport: true,
+      reportNumber: reportData.reportNumber || 'FUEL-094834_24.10.2026',
+      date: repDate ? new Date(repDate).toISOString() : new Date().toISOString(),
+      reportDate: repDate,
+      dayName: reportData.dayName || 'يوم السبت',
+      formattedSlashDate: slashDate,
+      dateFormatted: slashDate,
+      sector: reportData.sector || 'مشروع أوباري - غات',
+      fuelOfficer: reportData.fuelOfficer || resolvedAuthor.name,
+      headOfSupervision: reportData.headOfSupervision || 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
+      fuelAmount: calculatedTotals.totalDispatched,
+      totalDispatchedLiters: calculatedTotals.totalDispatched,
+      totalReceivedLiters: calculatedTotals.totalReceived,
+      totalRemainingLiters: calculatedTotals.totalRemaining,
+      uploadedBy: `${resolvedAuthor.name} (${resolvedAuthor.role})`,
+      approvedBy: reportData.headOfSupervision || 'م. عبدالسلام ابريكاو',
+      fuelItems: rawItems.map((r, idx) => ({
+        id: r.id || (Date.now() + idx),
+        index: idx + 1,
+        seq: r.seq || String(idx + 1),
+        location: r.location !== undefined && r.location !== null ? String(r.location) : '',
+        dispatchedLiters: r.dispatchedLiters !== undefined && r.dispatchedLiters !== null ? String(r.dispatchedLiters) : '0.00',
+        receivedLiters: r.receivedLiters !== undefined && r.receivedLiters !== null ? String(r.receivedLiters) : '0.00',
+        remainingLiters: r.remainingLiters !== undefined && r.remainingLiters !== null ? String(r.remainingLiters) : '0.00',
+        notes: r.notes || ''
+      })),
+      status: 'approved'
+    };
+  };
 
   const handleTriggerPrint = () => {
     const rep = getFullPrintableReport();
@@ -429,31 +522,13 @@ export const FuelDailyReportForm = ({
     setShowForwardModal(true);
   };
 
-  // Save report (approved - saves to section and archive)
+  // Save report (approved - saves to section and archive and triggers instant multi-device sync)
   const handleSave = async () => {
     setIsSaving(true);
     setStatusMessage(null);
     try {
-      const payload = {
-        ...reportData,
-        totalDispatchedLiters: calculatedTotals.totalDispatched,
-        totalReceivedLiters: calculatedTotals.totalReceived,
-        totalRemainingLiters: calculatedTotals.totalRemaining,
-        updatedAt: new Date().toISOString()
-      };
-
-      // 1. Prepare full printable report object
       const printableObj = {
         ...getFullPrintableReport(),
-        id: reportData.id || ('fuel-daily-' + (reportData.reportDate || Date.now())),
-        fuelAmount: calculatedTotals.totalDispatched,
-        totalDispatchedLiters: calculatedTotals.totalDispatched,
-        totalReceivedLiters: calculatedTotals.totalReceived,
-        totalRemainingLiters: calculatedTotals.totalRemaining,
-        isFuelReport: true,
-        reportType: 'تقرير كميات الوقود اليومية',
-        reportCategory: 'fuel',
-        status: 'approved',
         createdByUsername: currentUser?.username || 'fuel_officer',
         authorUsername: currentUser?.username || 'fuel_officer',
         createdByName: resolvedAuthor.name,
@@ -462,22 +537,36 @@ export const FuelDailyReportForm = ({
         engineer: resolvedAuthor.name,
         supervisor: resolvedAuthor.name,
         notes: `تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: ${fmtNum(calculatedTotals.totalDispatched)} لتر - الوارد: ${fmtNum(calculatedTotals.totalReceived)} لتر - المتبقي: ${fmtNum(calculatedTotals.totalRemaining)} لتر`,
-        createdAt: new Date().toISOString()
+        createdAt: reportData.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
-      // 2. Universal authoritative persistence
+      // 1. Immediately update React state with full fields
+      setReportData(printableObj);
+
+      // 2. Universal authoritative persistence (local_reports, fuel_daily_report_data, IndexedDB, and server)
       const saved = await persistReportUniversal(printableObj, currentUser);
+      const finalReport = saved || printableObj;
 
       // 3. Save into dedicated fuel_daily_report_data
-      localStorage.setItem('fuel_daily_report_data', JSON.stringify(saved || printableObj));
+      localStorage.setItem('fuel_daily_report_data', JSON.stringify(finalReport));
 
-      setCreatedReportForForward(saved || printableObj);
+      // 4. Trigger instant server sync across devices
+      triggerImmediateSync();
+
+      // 5. Dispatch reactive events
+      window.dispatchEvent(new CustomEvent('fuel-updated', { detail: finalReport }));
+      window.dispatchEvent(new CustomEvent('report-saved', { detail: finalReport }));
+      window.dispatchEvent(new CustomEvent('report-updated', { detail: finalReport }));
+      window.dispatchEvent(new CustomEvent('reports-updated', { detail: finalReport }));
+
+      setCreatedReportForForward(finalReport);
       setStatusMessage({
         type: 'success',
-        text: `تم حفظ التقرير المعتمد برقم (${(saved || printableObj).reportNumber}) بنجاح في قسم كميات الوقود والأرشيف!`
+        text: `تم حفظ التقرير المعتمد برقم (${finalReport.reportNumber}) بنجاح وتوحيد كافة الحقول في قسم الوقود والأرشيف وعلى كافة الأجهزة!`
       });
 
-      if (onSaved) onSaved(saved || printableObj);
+      if (onSaved) onSaved(finalReport);
     } catch (e) {
       console.error(e);
       setStatusMessage({

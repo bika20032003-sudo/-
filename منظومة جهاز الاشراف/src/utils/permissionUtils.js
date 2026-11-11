@@ -219,14 +219,32 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
     if (String(report.reportType || '').includes('جودة') || String(report.materialName || '').includes('جودة') || report.isQualityReport) return true;
   }
 
-  // م. عبدالرحمن الأنصاري (مدير المشروع) - في أرشيفه الخاص يرى تقارير الإدارة والمرحلتين والتقارير المعتمدة منه
+  // م. عبدالرحمن الأنصاري (مدير المشروع) - في أرشيفه الخاص يرى تقارير الإدارة والمرحلتين وكافة تقارير الوقود والموقف التنفيذي والتقارير المعتمدة منه
   if (username === 'project_manager' || userName.includes('الأنصاري') || userName.includes('عبدالرحمن') || isProjectManagerUser(currentUser)) {
-    if (combinedReportAuthors.includes('الأنصاري') || combinedReportAuthors.includes('عبدالرحمن') || repApprovedBy.includes('الأنصاري') || report.createdByUsername === 'project_manager' || report.isTwoPhaseProgressReport) return true;
+    if (
+      report.isFuelReport ||
+      report.reportCategory === 'fuel' ||
+      String(report.reportType || '').includes('وقود') ||
+      String(report.title || '').includes('وقود') ||
+      combinedReportAuthors.includes('الأنصاري') ||
+      combinedReportAuthors.includes('عبدالرحمن') ||
+      repApprovedBy.includes('الأنصاري') ||
+      report.createdByUsername === 'project_manager' ||
+      report.isTwoPhaseProgressReport ||
+      report.isExecutiveProgressReport
+    ) return true;
   }
 
   // مسؤول الوقود والمحروقات
   if (currentUser.role?.includes('وقود') || username.includes('fuel')) {
-    if (report.isFuelReport || report.reportType?.includes('وقود') || combinedReportAuthors.includes('وقود')) return true;
+    if (
+      report.isFuelReport ||
+      report.reportCategory === 'fuel' ||
+      String(report.reportType || '').includes('وقود') ||
+      String(report.title || '').includes('وقود') ||
+      combinedReportAuthors.includes('وقود') ||
+      combinedReportAuthors.includes('محروقات')
+    ) return true;
   }
 
   // م. مروان الهوني

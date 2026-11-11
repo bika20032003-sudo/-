@@ -2,6 +2,7 @@ import { saveReportToIndexedDB } from './secureDatabase.js';
 import { clearApiCache, fastFetch } from './apiCache.js';
 import { deduplicateReportsList, areReportsIdentical } from './reportDeduplication.js';
 import { toCleanLatinDigits } from './forceLatinDigits.js';
+import { queueOfflineMutation, triggerImmediateSync } from './realtimeSync.js';
 
 /**
  * Universal Report Persistence Layer
@@ -158,33 +159,49 @@ export async function persistReportUniversal(reportPayload, currentUser) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(enriched)
-    }).catch(() => {});
+    }).then(() => {
+      triggerImmediateSync();
+    }).catch(() => {
+      queueOfflineMutation('/api/reports/create', 'POST', enriched);
+    });
 
     if (enriched.isExecutiveProgressReport) {
       fastFetch('/api/executive-progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(enriched)
-      }).catch(() => {});
+      }).catch(() => {
+        queueOfflineMutation('/api/executive-progress', 'POST', enriched);
+      });
     } else if (enriched.isTwoPhaseProgressReport) {
       fastFetch('/api/two-phase-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(enriched)
-      }).catch(() => {});
+      }).catch(() => {
+        queueOfflineMutation('/api/two-phase-report', 'POST', enriched);
+      });
     } else if (enriched.isRoadProgressReport) {
       fastFetch('/api/road-daily-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(enriched)
-      }).catch(() => {});
+      }).catch(() => {
+        queueOfflineMutation('/api/road-daily-report', 'POST', enriched);
+      });
     } else if (enriched.isFuelReport) {
       fastFetch('/api/fuel-daily-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(enriched)
-      }).catch(() => {});
+      }).catch(() => {
+        queueOfflineMutation('/api/fuel-daily-report', 'POST', enriched);
+      });
     }
+  } catch (_) {}
+
+  try {
+    triggerImmediateSync();
   } catch (_) {}
 
   return enriched;

@@ -264,3 +264,4 @@ export function getSupervisorInfo(username) {
     role: 'جهاز الإشراف'
   };
 }
+
