@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Fuel, Printer, Save, RotateCcw, Plus, Trash2, 
-  CheckCircle2, AlertCircle, Edit3, Eye, FileSpreadsheet, 
+import {
+  Fuel, Printer, Save, RotateCcw, Plus, Trash2,
+  CheckCircle2, AlertCircle, Edit3, Eye, FileSpreadsheet,
   Calendar, Droplets, MapPin, ShieldCheck, UserCheck, Send
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -164,14 +164,14 @@ export const FuelDailyReportForm = ({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(messagePayload)
           });
-        } catch (e) {}
+        } catch (e) { }
       }
       try {
         const sysMsgs = JSON.parse(localStorage.getItem('system_messages') || '[]');
         localStorage.setItem('system_messages', JSON.stringify([...newMsgs, ...sysMsgs]));
         const locMsgs = JSON.parse(localStorage.getItem('local_messages') || '[]');
         localStorage.setItem('local_messages', JSON.stringify([...newMsgs, ...locMsgs]));
-      } catch (e) {}
+      } catch (e) { }
       window.dispatchEvent(new CustomEvent('messages-updated'));
 
       setShowForwardModal(false);
@@ -224,7 +224,7 @@ export const FuelDailyReportForm = ({
           setReportData(res.data);
           return;
         }
-        
+
         const local = typeof window !== 'undefined' ? localStorage.getItem('fuel_daily_report_data') : null;
         if (local && isMounted) {
           try {
@@ -236,7 +236,7 @@ export const FuelDailyReportForm = ({
                 return;
               }
             }
-          } catch {}
+          } catch { }
         }
 
         if (isMounted) {
@@ -494,7 +494,7 @@ export const FuelDailyReportForm = ({
 
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', direction: 'rtl', fontFamily: 'inherit' }}>
-      
+
       {/* Status Alert Banner with Direct Action Buttons */}
       {statusMessage && (
         <div style={{
@@ -662,7 +662,7 @@ export const FuelDailyReportForm = ({
                   {reportData.dayName}
                 </span>
 
-                <input 
+                <input
                   type="date"
                   value={reportData.reportDate}
                   onChange={(e) => {
@@ -1039,7 +1039,7 @@ export const FuelDailyReportForm = ({
             <tbody>
               {(currentData.fuelItems || []).map((row, idx) => (
                 <tr key={row.id} style={{ background: '#ffffff' }}>
-                  
+
                   {/* Sequence */}
                   <td style={{
                     border: '2px solid #000000',
@@ -1047,7 +1047,7 @@ export const FuelDailyReportForm = ({
                     fontWeight: 900,
                     background: '#fffbeb'
                   }}>
-                    <input 
+                    <input
                       type="text"
                       value={row.seq || idx + 1}
                       onChange={(e) => handleRowChange(row.id, 'seq', e.target.value)}
@@ -1066,7 +1066,7 @@ export const FuelDailyReportForm = ({
                   {/* Location (نقطة 107 / نقطة 240) */}
                   <td style={{ border: '2px solid #000000', padding: '0.65rem 1rem', fontWeight: 800 }}>
                     <div style={{ position: 'relative' }}>
-                      <input 
+                      <input
                         type="text"
                         value={row.location}
                         onChange={(e) => handleRowChange(row.id, 'location', e.target.value)}
@@ -1098,7 +1098,7 @@ export const FuelDailyReportForm = ({
 
                   {/* Dispatched Liters */}
                   <td style={{ border: '2px solid #000000', padding: '0.65rem 1rem', fontWeight: 800 }}>
-                    <input 
+                    <input
                       type="text"
                       value={row.dispatchedLiters}
                       onChange={(e) => handleRowChange(row.id, 'dispatchedLiters', e.target.value)}
@@ -1123,7 +1123,7 @@ export const FuelDailyReportForm = ({
 
                   {/* Received Liters */}
                   <td style={{ border: '2px solid #000000', padding: '0.65rem 1rem', fontWeight: 800 }}>
-                    <input 
+                    <input
                       type="text"
                       value={row.receivedLiters}
                       onChange={(e) => handleRowChange(row.id, 'receivedLiters', e.target.value)}
@@ -1148,7 +1148,7 @@ export const FuelDailyReportForm = ({
 
                   {/* Remaining Liters */}
                   <td style={{ border: '2px solid #000000', padding: '0.65rem 1rem', fontWeight: 800 }}>
-                    <input 
+                    <input
                       type="text"
                       value={row.remainingLiters}
                       onChange={(e) => handleRowChange(row.id, 'remainingLiters', e.target.value)}
@@ -1406,7 +1406,7 @@ export const FuelDailyReportForm = ({
 
       {/* Official Print Modal Portal */}
       {showPrintModal && (
-        <OfficialPrintModal 
+        <OfficialPrintModal
           isOpen={true}
           onClose={() => setShowPrintModal(false)}
           report={getFullPrintableReport()}
