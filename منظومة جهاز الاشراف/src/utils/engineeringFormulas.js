@@ -13,7 +13,7 @@ export const parseCleanNumber = (val, defaultVal = 0) => {
     .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
     .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
     .replace(/٫/g, '.')
-    .replace(/[٬،]/g, '');
+    .replace(/[,٬،]/g, '');
   const num = parseFloat(cleaned);
   return isNaN(num) ? defaultVal : num;
 };
@@ -154,9 +154,9 @@ export const calculateRemainingItems = (phase2ItemsMap = {}) => {
     const p2Rem = Math.max(0, p2Target - executed);
     const totalRem = p1CollapsedCulvert + p2Rem;
     return {
-      phase1: p1CollapsedCulvert.toFixed(2),
-      phase2: p2Rem.toFixed(2),
-      total: totalRem.toFixed(2)
+      phase1: p1CollapsedCulvert.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      phase2: p2Rem.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      total: totalRem.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     };
   };
 
@@ -172,7 +172,7 @@ export const calculateRemainingItems = (phase2ItemsMap = {}) => {
     { id: 3, group: 'A', name: 'المتبقي من الأساس', ...baseRem, notes: '' },
     { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', ...mcoRem, notes: '' },
     { id: 5, group: 'B', name: 'المتبقي من الاسفلت', ...asphRem, notes: '' },
-    { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9030.00', notes: 'كيلومتر' },
+    { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9,030.00', notes: 'كيلومتر' },
   ];
 };
 

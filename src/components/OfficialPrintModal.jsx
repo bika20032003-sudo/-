@@ -3,10 +3,32 @@ import ReactDOM from 'react-dom';
 import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout, ZoomIn, ZoomOut, Maximize2, Send } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+// Safe number cleaning and formatting for crisp official print fidelity
+const safeCleanPrintNumber = (val, defaultVal = 0) => {
+  if (val === null || val === undefined || val === '') return defaultVal;
+  const clean = String(val)
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g, '.')
+    .replace(/[,٬،]/g, '')
+    .trim();
+  const num = parseFloat(clean);
+  return isNaN(num) ? defaultVal : num;
+};
+
+const formatPrintNumber = (val) => {
+  if (val === null || val === undefined || val === '' || val === '-' || val === '—') return '-';
+  const clean = String(val).replace(/,/g, '').trim();
+  if (clean === '' || isNaN(Number(clean))) return String(val);
+  const parts = clean.split('.');
+  const intFormatted = Number(parts[0]).toLocaleString('en-US');
+  return parts.length > 1 ? `${intFormatted}.${parts[1]}` : intFormatted;
+};
+
 // Vector SVG Bar Chart for Two-Phase Print Layout (100% Crisp print fidelity)
 const TwoPhasePrintChart = ({ title, items }) => {
   const validItems = (items || []).filter(Boolean);
-  const maxVal = Math.max(...validItems.map(i => parseFloat(i.totalMeters) || parseFloat(i.todayMeters) || 0), 100);
+  const maxVal = Math.max(...validItems.map(i => safeCleanPrintNumber(i.totalMeters) || safeCleanPrintNumber(i.todayMeters) || 0), 100);
   return (
     <div style={{
       border: '1.5px solid #000000',
@@ -41,7 +63,7 @@ const TwoPhasePrintChart = ({ title, items }) => {
       }}>
         {validItems.map((it, idx) => {
           if (!it) return null;
-          const val = parseFloat(it.totalMeters) || parseFloat(it.todayMeters) || 0;
+          const val = safeCleanPrintNumber(it.totalMeters) || safeCleanPrintNumber(it.todayMeters) || 0;
           const heightPercent = maxVal > 0 ? Math.min(100, Math.max(val > 0 ? 8 : 2, (val / maxVal) * 95)) : 2;
           return (
             <div key={idx} style={{
@@ -1922,10 +1944,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                           <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
@@ -1936,10 +1958,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                           <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
@@ -1977,10 +1999,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                           <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
@@ -1991,10 +2013,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                           <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{it.dailyTarget ? Number(it.dailyTarget).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{it.varianceMeters || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
@@ -2031,12 +2053,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                           <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{formatPrintNumber(it.totalMeters)}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>
-                            {it.readyToWorkMeters !== '' && it.readyToWorkMeters !== null && it.readyToWorkMeters !== undefined && Number(it.readyToWorkMeters) > 0 
-                              ? Number(it.readyToWorkMeters).toLocaleString('en-US') 
-                              : (it.readyToWork ? Number(it.readyToWork).toLocaleString('en-US') : '—')}
+                            {formatPrintNumber(it.readyToWorkMeters || it.readyToWork)}
                           </td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -2048,12 +2068,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                           <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
                           <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{it.todayMeters ? Number(it.todayMeters).toLocaleString('en-US') : '-'}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{it.totalMeters ? Number(it.totalMeters).toLocaleString('en-US') : '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{formatPrintNumber(it.totalMeters)}</td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>
-                            {it.readyToWorkMeters !== '' && it.readyToWorkMeters !== null && it.readyToWorkMeters !== undefined && Number(it.readyToWorkMeters) > 0 
-                              ? Number(it.readyToWorkMeters).toLocaleString('en-US') 
-                              : (it.readyToWork ? Number(it.readyToWork).toLocaleString('en-US') : '—')}
+                            {formatPrintNumber(it.readyToWorkMeters || it.readyToWork)}
                           </td>
                           <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
                         </tr>
@@ -2083,9 +2101,9 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                     {(report.remainingItems || []).filter(r => r && r.group === 'A').map((r, idx) => (
                       <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                         <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString('en-US') : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString('en-US') : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase1)}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase2)}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{formatPrintNumber(r.total)}</td>
                         <td style={{ border: '1px solid #000', padding: '4px', fontSize: '0.72rem' }}>{r.notes || '-'}</td>
                       </tr>
                     ))}
@@ -2107,9 +2125,9 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                     {(report.remainingItems || []).filter(r => r && r.group === 'B').map((r, idx) => (
                       <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                         <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase1 ? Number(r.phase1).toLocaleString('en-US') : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{r.phase2 ? Number(r.phase2).toLocaleString('en-US') : '-'}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{r.total ? Number(r.total).toLocaleString('en-US') : '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase1)}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase2)}</td>
+                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{formatPrintNumber(r.total)}</td>
                         <td style={{ border: '1px solid #000', padding: '4px', fontSize: '0.72rem' }}>{r.notes || '-'}</td>
                       </tr>
                     ))}

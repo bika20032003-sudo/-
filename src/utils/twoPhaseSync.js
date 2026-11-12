@@ -7,39 +7,39 @@ import { fastFetch } from './apiCache.js';
 // directly with the Dashboard (الداشبورد) and the 360 Road Progress View (متابعة إنجاز الطريق 360 كم).
 
 export const initialPhase1ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '226083', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '226083', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '226083', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '226083', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '226083', todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '226213', todayMeters: '0', totalMeters: '226213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '226,213', todayMeters: '0', totalMeters: '226,213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 export const initialPhase2ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19200', todayMeters: '100', totalMeters: '19300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '11370', todayMeters: '1150', totalMeters: '12520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '10290', todayMeters: '0', totalMeters: '10290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19320', todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '12030', todayMeters: '600', totalMeters: '12630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '19320', todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19,200', todayMeters: '100', totalMeters: '19,300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '11,370', todayMeters: '1,150', totalMeters: '12,520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '10,290', todayMeters: '0', totalMeters: '10,290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '12,030', todayMeters: '600', totalMeters: '12,630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 export const initialCombinedCustomFields = [
   { id: 1, readyToWorkMeters: '20.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' },
   { id: 2, readyToWorkMeters: '110.00', notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' },
-  { id: 3, readyToWorkMeters: '2230.00', notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' },
+  { id: 3, readyToWorkMeters: '2,230.00', notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' },
   { id: 4, readyToWorkMeters: '', notes: '' },
-  { id: 5, readyToWorkMeters: '6670.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' },
+  { id: 5, readyToWorkMeters: '6,670.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' },
   { id: 6, readyToWorkMeters: '', notes: '' },
 ];
 
 export const initialRemainingReportItems = [
-  { id: 1, group: 'A', name: 'المتبقي من الفرمة الأولى', phase1: '130.00', phase2: '114467.00', total: '114597.00', notes: 'جزء العبارة المنهارة' },
-  { id: 2, group: 'A', name: 'المتبقي من الفرمة الثانية', phase1: '130.00', phase2: '114487.00', total: '114617.00', notes: 'جزء العبارة المنهارة' },
-  { id: 3, group: 'A', name: 'المتبقي من الأساس', phase1: '130.00', phase2: '121157.00', total: '121287.00', notes: '' },
-  { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', phase1: '130.00', phase2: '121267.00', total: '121397.00', notes: '' },
-  { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '130.00', phase2: '123497.00', total: '123627.00', notes: '' },
-  { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9030.00', notes: 'كيلومتر' },
+  { id: 1, group: 'A', name: 'المتبقي من الفرمة الأولى', phase1: '130.00', phase2: '114,467.00', total: '114,597.00', notes: 'جزء العبارة المنهارة' },
+  { id: 2, group: 'A', name: 'المتبقي من الفرمة الثانية', phase1: '130.00', phase2: '114,487.00', total: '114,617.00', notes: 'جزء العبارة المنهارة' },
+  { id: 3, group: 'A', name: 'المتبقي من الأساس', phase1: '130.00', phase2: '121,157.00', total: '121,287.00', notes: '' },
+  { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', phase1: '130.00', phase2: '121,267.00', total: '121,397.00', notes: '' },
+  { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '130.00', phase2: '123,497.00', total: '123,627.00', notes: '' },
+  { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9,030.00', notes: 'كيلومتر' },
 ];
 
 export function getCertifiedBaselineTwoPhaseReport() {
@@ -218,8 +218,9 @@ export function calculateTwoPhaseRoadMetrics(report) {
       id === 5 ? it.name?.includes('أساس') || it.name?.includes('اساس') :
       it.name?.includes('خدمي')
     ));
-    if (found && found.totalMeters !== undefined && found.totalMeters !== '' && !isNaN(Number(found.totalMeters))) {
-      return Number(found.totalMeters) || 0;
+    if (found && found.totalMeters !== undefined && found.totalMeters !== '') {
+      const val = parseCleanNumber(found.totalMeters, NaN);
+      if (!isNaN(val)) return val;
     }
     return fallback;
   };
@@ -233,8 +234,9 @@ export function calculateTwoPhaseRoadMetrics(report) {
       id === 5 ? it.name?.includes('أساس') || it.name?.includes('اساس') :
       it.name?.includes('خدمي')
     ));
-    if (found && found.todayMeters !== undefined && found.todayMeters !== '' && !isNaN(Number(found.todayMeters))) {
-      return Number(found.todayMeters) || 0;
+    if (found && found.todayMeters !== undefined && found.todayMeters !== '') {
+      const val = parseCleanNumber(found.todayMeters, NaN);
+      if (!isNaN(val)) return val;
     }
     return 0;
   };
@@ -273,9 +275,9 @@ export function calculateTwoPhaseRoadMetrics(report) {
 
   // Today sums
   let p1TodaySum = 0;
-  p1.forEach((_, idx) => { p1TodaySum += (Number(p1[idx]?.todayMeters) || 0); });
+  p1.forEach((_, idx) => { p1TodaySum += parseCleanNumber(p1[idx]?.todayMeters, 0); });
   let p2TodaySum = 0;
-  p2.forEach((_, idx) => { p2TodaySum += (Number(p2[idx]?.todayMeters) || 0); });
+  p2.forEach((_, idx) => { p2TodaySum += parseCleanNumber(p2[idx]?.todayMeters, 0); });
   const todaySum = p1TodaySum + p2TodaySum;
 
   // Dedicated Phase 1 Metrics (226.08 KM)
@@ -373,10 +375,10 @@ export function generateRoadProgressItems(report) {
   itemConfigs.forEach((cfg, idx) => {
     const raw = p1[idx] || {};
     const c = custom[idx] || {};
-    const total = Number(raw.totalMeters) || cfg.p1DefTotal;
-    const today = Number(raw.todayMeters) || 0;
+    const total = parseCleanNumber(raw.totalMeters, cfg.p1DefTotal);
+    const today = parseCleanNumber(raw.todayMeters, 0);
     const prev = Math.max(0, total - today);
-    const target = Number(raw.dailyTarget) || cfg.defTarget;
+    const target = parseCleanNumber(raw.dailyTarget, cfg.defTarget);
     items.push({
       id: idx + 1,
       sector: 'المرحلة الأولى',
@@ -387,7 +389,7 @@ export function generateRoadProgressItems(report) {
       totalMeters: total,
       dailyTarget: target,
       varianceMeters: today > 0 ? (today - target) : 0,
-      readyLength: Number(c.readyToWorkMeters) || 0,
+      readyLength: parseCleanNumber(c.readyToWorkMeters, 0),
       notes: raw.notes || 'مكتملة بالكامل بالمرحلة الأولى'
     });
   });
@@ -396,10 +398,10 @@ export function generateRoadProgressItems(report) {
   itemConfigs.forEach((cfg, idx) => {
     const raw = p2[idx] || {};
     const c = custom[idx] || {};
-    const total = Number(raw.totalMeters) || cfg.p2DefTotal;
-    const today = (raw.todayMeters !== undefined && raw.todayMeters !== '') ? Number(raw.todayMeters) : cfg.p2DefToday;
+    const total = parseCleanNumber(raw.totalMeters, cfg.p2DefTotal);
+    const today = (raw.todayMeters !== undefined && raw.todayMeters !== '') ? parseCleanNumber(raw.todayMeters, cfg.p2DefToday) : cfg.p2DefToday;
     const prev = Math.max(0, total - today);
-    const target = Number(raw.dailyTarget) || cfg.defTarget;
+    const target = parseCleanNumber(raw.dailyTarget, cfg.defTarget);
     items.push({
       id: idx + 7,
       sector: 'المرحلة الثانية',
@@ -410,7 +412,7 @@ export function generateRoadProgressItems(report) {
       totalMeters: total,
       dailyTarget: target,
       varianceMeters: today - target,
-      readyLength: Number(c.readyToWorkMeters) || 0,
+      readyLength: parseCleanNumber(c.readyToWorkMeters, 0),
       notes: raw.notes || 'منجز معتمد بالتقرير اليومي'
     });
   });
@@ -421,26 +423,26 @@ export function generateRoadProgressItems(report) {
 export function updateRoadProgressItem(id, todayMeters, notes) {
   const rep = getStoredTwoPhaseReport();
   const numId = Number(id);
-  const val = Number(todayMeters) || 0;
+  const val = parseCleanNumber(todayMeters, 0);
 
   if (numId <= 6) {
     const idx = numId - 1;
     if (rep.phase1Items && rep.phase1Items[idx]) {
-      const prevTotal = Number(rep.phase1Items[idx].totalMeters) || 0;
-      const oldToday = Number(rep.phase1Items[idx].todayMeters) || 0;
-      rep.phase1Items[idx].todayMeters = String(val);
-      rep.phase1Items[idx].totalMeters = String(prevTotal - oldToday + val);
+      const prevTotal = parseCleanNumber(rep.phase1Items[idx].totalMeters, 0);
+      const oldToday = parseCleanNumber(rep.phase1Items[idx].todayMeters, 0);
+      rep.phase1Items[idx].todayMeters = val.toLocaleString('en-US');
+      rep.phase1Items[idx].totalMeters = (prevTotal - oldToday + val).toLocaleString('en-US');
       if (notes !== undefined) rep.phase1Items[idx].notes = notes;
     }
   } else {
     const idx = numId - 7;
     if (rep.phase2Items && rep.phase2Items[idx]) {
-      const prevTotal = Number(rep.phase2Items[idx].totalMeters) || 0;
-      const oldToday = Number(rep.phase2Items[idx].todayMeters) || 0;
-      rep.phase2Items[idx].todayMeters = String(val);
-      rep.phase2Items[idx].totalMeters = String(prevTotal - oldToday + val);
-      const target = Number(rep.phase2Items[idx].dailyTarget) || 800;
-      rep.phase2Items[idx].varianceMeters = String(val - target);
+      const prevTotal = parseCleanNumber(rep.phase2Items[idx].totalMeters, 0);
+      const oldToday = parseCleanNumber(rep.phase2Items[idx].todayMeters, 0);
+      rep.phase2Items[idx].todayMeters = val.toLocaleString('en-US');
+      rep.phase2Items[idx].totalMeters = (prevTotal - oldToday + val).toLocaleString('en-US');
+      const target = parseCleanNumber(rep.phase2Items[idx].dailyTarget, 800);
+      rep.phase2Items[idx].varianceMeters = (val - target).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (notes !== undefined) rep.phase2Items[idx].notes = notes;
     }
   }
@@ -450,10 +452,10 @@ export function updateRoadProgressItem(id, todayMeters, notes) {
     rep.combinedItems = rep.phase1Items.map((p1, i) => {
       const p2 = rep.phase2Items[i] || {};
       const c = (rep.combinedItems && rep.combinedItems[i]) || {};
-      const t1 = Number(p1.todayMeters) || 0;
-      const t2 = Number(p2.todayMeters) || 0;
-      const tot1 = Number(p1.totalMeters) || 0;
-      const tot2 = Number(p2.totalMeters) || 0;
+      const t1 = parseCleanNumber(p1.todayMeters, 0);
+      const t2 = parseCleanNumber(p2.todayMeters, 0);
+      const tot1 = parseCleanNumber(p1.totalMeters, 0);
+      const tot2 = parseCleanNumber(p2.totalMeters, 0);
       return {
         ...c,
         id: p1.id,
@@ -461,8 +463,8 @@ export function updateRoadProgressItem(id, todayMeters, notes) {
         name: p1.name,
         shortName: p1.shortName,
         color: p1.color,
-        todayMeters: String(t1 + t2),
-        totalMeters: String(tot1 + tot2)
+        todayMeters: (t1 + t2).toLocaleString('en-US'),
+        totalMeters: (tot1 + tot2).toLocaleString('en-US')
       };
     });
   }
@@ -570,12 +572,12 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
       const todayFromRoad = dailyMeters[id] !== undefined ? dailyMeters[id] : 0;
       const todayM = todayFromRoad;
 
-      const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseFloat(item.previousMeters)))
-        ? parseFloat(item.previousMeters)
-        : Math.max(0, (parseFloat(item.totalMeters) || 0) - (parseFloat(item.todayMeters) || 0));
+      const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseCleanNumber(item.previousMeters)))
+        ? parseCleanNumber(item.previousMeters)
+        : Math.max(0, (parseCleanNumber(item.totalMeters) || 0) - (parseCleanNumber(item.todayMeters) || 0));
 
       const newTotal = prevM + todayM;
-      const target = parseFloat(item.dailyTarget || 800);
+      const target = parseCleanNumber(item.dailyTarget || 800);
       const variance = todayM - target;
 
       const detailList = matchedRows[id] || [];
@@ -585,10 +587,10 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
 
       return {
         ...item,
-        previousMeters: String(prevM),
-        todayMeters: String(todayM),
-        totalMeters: String(newTotal),
-        varianceMeters: variance.toFixed(2),
+        previousMeters: prevM.toLocaleString('en-US'),
+        todayMeters: todayM.toLocaleString('en-US'),
+        totalMeters: newTotal.toLocaleString('en-US'),
+        varianceMeters: variance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         notes: noteDetail
       };
     });
@@ -597,10 +599,10 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
     const updatedCombinedItems = (currentTwoPhase.phase1Items || []).map((p1, idx) => {
       const p2 = updatedPhase2Items[idx] || {};
       const custom = currentTwoPhase.combinedItems?.[idx] || {};
-      const todayP1 = parseFloat(p1.todayMeters) || 0;
-      const todayP2 = parseFloat(p2.todayMeters) || 0;
-      const totalP1 = parseFloat(p1.totalMeters) || 0;
-      const totalP2 = parseFloat(p2.totalMeters) || 0;
+      const todayP1 = parseCleanNumber(p1.todayMeters) || 0;
+      const todayP2 = parseCleanNumber(p2.todayMeters) || 0;
+      const totalP1 = parseCleanNumber(p1.totalMeters) || 0;
+      const totalP2 = parseCleanNumber(p2.totalMeters) || 0;
       const combinedToday = todayP1 + todayP2;
       const combinedTotal = totalP1 + totalP2;
 
@@ -611,8 +613,8 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
         name: p1.name,
         shortName: p1.shortName,
         color: p1.color,
-        todayMeters: combinedToday > 0 ? String(combinedToday) : (todayP1 || todayP2 ? '0' : ''),
-        totalMeters: combinedTotal > 0 ? String(combinedTotal) : '',
+        todayMeters: combinedToday > 0 ? combinedToday.toLocaleString('en-US') : (todayP1 || todayP2 ? '0' : ''),
+        totalMeters: combinedTotal > 0 ? combinedTotal.toLocaleString('en-US') : '',
         readyToWorkMeters: custom.readyToWorkMeters || '',
         notes: custom.notes || ''
       };
@@ -622,24 +624,24 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
     const totalsMap = {};
     (currentTwoPhase.phase1Items || []).forEach((p1, idx) => {
       const p2 = updatedPhase2Items[idx] || {};
-      const t1 = parseFloat(toCleanLatinDigits(p1.totalMeters)) || 0;
-      const t2 = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+      const t1 = parseCleanNumber(p1.totalMeters) || 0;
+      const t2 = parseCleanNumber(p2.totalMeters) || 0;
       totalsMap[p1.name] = t1 + t2;
     });
     const pipeline = calculateReadyToWorkPipeline(totalsMap);
 
     const updatedCombinedWithPipeline = updatedCombinedItems.map(c => {
-      if (c.id === 1) return { ...c, readyToWorkMeters: String(pipeline.fdrReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' };
-      if (c.id === 2) return { ...c, readyToWorkMeters: String(pipeline.mcoReady), notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' };
-      if (c.id === 3) return { ...c, readyToWorkMeters: String(pipeline.asphaltReady), notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' };
-      if (c.id === 5) return { ...c, readyToWorkMeters: String(pipeline.baseReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' };
+      if (c.id === 1) return { ...c, readyToWorkMeters: pipeline.fdrReady.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' };
+      if (c.id === 2) return { ...c, readyToWorkMeters: pipeline.mcoReady.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' };
+      if (c.id === 3) return { ...c, readyToWorkMeters: pipeline.asphaltReady.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' };
+      if (c.id === 5) return { ...c, readyToWorkMeters: pipeline.baseReady.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' };
       return c;
     });
 
     // 4. Recalculate Remaining quantities
     const p2Map = {};
     updatedPhase2Items.forEach(p2 => {
-      p2Map[p2.name] = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+      p2Map[p2.name] = parseCleanNumber(p2.totalMeters) || 0;
     });
     const updatedRemaining = calculateRemainingItems(p2Map);
 

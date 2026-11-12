@@ -14,47 +14,63 @@ import { persistReportUniversal } from '../utils/reportPersistence.js';
 import { syncDailyRoadReportToTwoPhase } from '../utils/twoPhaseSync.js';
 import { triggerImmediateSync } from '../utils/realtimeSync.js';
 import { toCleanLatinDigits } from '../utils/forceLatinDigits.js';
-import { calculateReadyToWorkPipeline, calculateRemainingItems } from '../utils/engineeringFormulas.js';
+import { calculateReadyToWorkPipeline, calculateRemainingItems, parseCleanNumber } from '../utils/engineeringFormulas.js';
 import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../utils/supervisionTeam.js';
+
+// Format number with thousand separators (commas)
+export const formatTwoPhaseNumber = (val) => {
+  if (val === null || val === undefined || val === '' || val === '—' || val === '-') return '';
+  const clean = String(val).replace(/,/g, '').trim();
+  if (clean === '' || isNaN(Number(clean))) return String(val);
+  const parts = clean.split('.');
+  const intFormatted = Number(parts[0]).toLocaleString('en-US');
+  return parts.length > 1 ? `${intFormatted}.${parts[1]}` : intFormatted;
+};
+
+// Safe parser for two-phase numbers that may contain commas
+export const parseTwoPhaseNumber = (val, defaultVal = 0) => {
+  if (val === null || val === undefined || val === '') return defaultVal;
+  return parseCleanNumber(val, defaultVal);
+};
 
 // Official Certified Items for Phase 1 (Matching Official Document 24/10/2026)
 export const initialPhase1ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: 226083, todayMeters: '0', totalMeters: '226083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: 226213, todayMeters: '0', totalMeters: '226213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '226,083', todayMeters: '0', totalMeters: '226,083', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '226,213', todayMeters: '0', totalMeters: '226,213', dailyTarget: '800', varianceMeters: '—', notes: 'مكتملة بالكامل بالمرحلة الأولى', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 // Official Certified Items for Phase 2 (Matching Official Document 24/10/2026)
 export const initialPhase2ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: 19200, todayMeters: '100', totalMeters: '19300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
-  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: 11370, todayMeters: '1150', totalMeters: '12520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
-  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: 10290, todayMeters: '0', totalMeters: '10290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: 19320, todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
-  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: 12030, todayMeters: '600', totalMeters: '12630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
-  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: 19320, todayMeters: '0', totalMeters: '19320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19,200', todayMeters: '100', totalMeters: '19,300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '11,370', todayMeters: '1,150', totalMeters: '12,520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
+  { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '10,290', todayMeters: '0', totalMeters: '10,290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '12,030', todayMeters: '600', totalMeters: '12,630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
+  { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
 ];
 
 // Official Custom Fields for Combined Table ("الجاهز للعمل في البند" والملاحظات)
 export const initialCombinedCustomFields = [
   { id: 1, readyToWorkMeters: '20.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' },
   { id: 2, readyToWorkMeters: '110.00', notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' },
-  { id: 3, readyToWorkMeters: '2230.00', notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' },
+  { id: 3, readyToWorkMeters: '2,230.00', notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' },
   { id: 4, readyToWorkMeters: '', notes: '' },
-  { id: 5, readyToWorkMeters: '6670.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' },
+  { id: 5, readyToWorkMeters: '6,670.00', notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' },
   { id: 6, readyToWorkMeters: '', notes: '' },
 ];
 
 // Official Certified Remaining Items (Matching Official Document 24/10/2026)
 export const initialRemainingReportItems = [
-  { id: 1, group: 'A', name: 'المتبقي من الفرمة الأولى', phase1: '130.00', phase2: '114467.00', total: '114597.00', notes: 'جزء العبارة المنهارة' },
-  { id: 2, group: 'A', name: 'المتبقي من الفرمة الثانية', phase1: '130.00', phase2: '114487.00', total: '114617.00', notes: 'جزء العبارة المنهارة' },
-  { id: 3, group: 'A', name: 'المتبقي من الأساس', phase1: '130.00', phase2: '121157.00', total: '121287.00', notes: '' },
-  { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', phase1: '130.00', phase2: '121267.00', total: '121397.00', notes: '' },
-  { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '130.00', phase2: '123497.00', total: '123627.00', notes: '' },
-  { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9030.00', notes: 'كيلومتر' },
+  { id: 1, group: 'A', name: 'المتبقي من الفرمة الأولى', phase1: '130.00', phase2: '114,467.00', total: '114,597.00', notes: 'جزء العبارة المنهارة' },
+  { id: 2, group: 'A', name: 'المتبقي من الفرمة الثانية', phase1: '130.00', phase2: '114,487.00', total: '114,617.00', notes: 'جزء العبارة المنهارة' },
+  { id: 3, group: 'A', name: 'المتبقي من الأساس', phase1: '130.00', phase2: '121,157.00', total: '121,287.00', notes: '' },
+  { id: 4, group: 'B', name: 'المتبقي من طبقة التشريب', phase1: '130.00', phase2: '121,267.00', total: '121,397.00', notes: '' },
+  { id: 5, group: 'B', name: 'المتبقي من الاسفلت', phase1: '130.00', phase2: '123,497.00', total: '123,627.00', notes: '' },
+  { id: 6, group: 'B', name: 'طول الطريق الخدمي العامل', phase1: '', phase2: '', total: '9,030.00', notes: 'كيلومتر' },
 ];
 
 export const createDefaultPhaseItems = () => initialPhase1ReportItems.map(item => ({ ...item }));
@@ -200,10 +216,10 @@ export const TwoPhaseDailyReportForm = ({
     return phase1Items.map((p1, idx) => {
       const p2 = phase2Items[idx] || {};
       const custom = combinedCustom[idx] || {};
-      const todayP1 = parseFloat(p1.todayMeters) || 0;
-      const todayP2 = parseFloat(p2.todayMeters) || 0;
-      const totalP1 = parseFloat(p1.totalMeters) || 0;
-      const totalP2 = parseFloat(p2.totalMeters) || 0;
+      const todayP1 = parseTwoPhaseNumber(p1.todayMeters);
+      const todayP2 = parseTwoPhaseNumber(p2.todayMeters);
+      const totalP1 = parseTwoPhaseNumber(p1.totalMeters);
+      const totalP2 = parseTwoPhaseNumber(p2.totalMeters);
       const combinedToday = todayP1 + todayP2;
       const combinedTotal = totalP1 + totalP2;
 
@@ -213,15 +229,15 @@ export const TwoPhaseDailyReportForm = ({
         name: p1.name,
         shortName: p1.shortName,
         color: p1.color,
-        todayMeters: combinedToday > 0 ? String(combinedToday) : (todayP1 || todayP2 ? '0' : ''),
-        totalMeters: combinedTotal > 0 ? String(combinedTotal) : '',
+        todayMeters: combinedToday > 0 ? formatTwoPhaseNumber(combinedToday) : (todayP1 || todayP2 ? '0' : ''),
+        totalMeters: combinedTotal > 0 ? formatTwoPhaseNumber(combinedTotal) : '',
         readyToWorkMeters: custom.readyToWorkMeters !== undefined ? custom.readyToWorkMeters : '',
         notes: custom.notes !== undefined ? custom.notes : (p1.notes || p2.notes || '')
       };
     });
   }, [phase1Items, phase2Items, combinedCustom]);
 
-    // Handlers for Phase 1 updates
+  // Handlers for Phase 1 updates
   const handleUpdatePhase1 = (id, field, value) => {
     const cleanVal = (field === 'todayMeters' || field === 'totalMeters' || field === 'dailyTarget' || field === 'previousMeters') 
       ? toCleanLatinDigits(value) 
@@ -230,30 +246,30 @@ export const TwoPhaseDailyReportForm = ({
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
       if (field === 'todayMeters') {
-        const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseFloat(item.previousMeters)))
-          ? parseFloat(item.previousMeters)
-          : Math.max(0, (parseFloat(item.totalMeters) || 0) - (parseFloat(item.todayMeters) || 0));
-        const todayM = parseFloat(cleanVal) || 0;
+        const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseTwoPhaseNumber(item.previousMeters)))
+          ? parseTwoPhaseNumber(item.previousMeters)
+          : Math.max(0, parseTwoPhaseNumber(item.totalMeters) - parseTwoPhaseNumber(item.todayMeters));
+        const todayM = parseTwoPhaseNumber(cleanVal);
         const newTotal = prevM + todayM;
-        updated.previousMeters = String(prevM);
+        updated.previousMeters = formatTwoPhaseNumber(prevM);
         updated.todayMeters = cleanVal;
-        updated.totalMeters = String(newTotal);
-        const target = parseFloat(item.dailyTarget || 800);
-        updated.varianceMeters = (todayM - target).toFixed(2);
+        updated.totalMeters = formatTwoPhaseNumber(newTotal);
+        const target = parseTwoPhaseNumber(item.dailyTarget || 800);
+        updated.varianceMeters = formatTwoPhaseNumber((todayM - target).toFixed(2));
       } else if (field === 'previousMeters') {
-        const prevM = parseFloat(cleanVal) || 0;
-        const todayM = parseFloat(item.todayMeters) || 0;
+        const prevM = parseTwoPhaseNumber(cleanVal);
+        const todayM = parseTwoPhaseNumber(item.todayMeters);
         updated.previousMeters = cleanVal;
-        updated.totalMeters = String(prevM + todayM);
+        updated.totalMeters = formatTwoPhaseNumber(prevM + todayM);
       } else if (field === 'totalMeters') {
-        const totM = parseFloat(cleanVal) || 0;
-        const todayM = parseFloat(item.todayMeters) || 0;
+        const totM = parseTwoPhaseNumber(cleanVal);
+        const todayM = parseTwoPhaseNumber(item.todayMeters);
         updated.totalMeters = cleanVal;
-        updated.previousMeters = String(Math.max(0, totM - todayM));
+        updated.previousMeters = formatTwoPhaseNumber(Math.max(0, totM - todayM));
       } else if (field === 'dailyTarget') {
-        const todayM = parseFloat(item.todayMeters || 0);
-        const target = parseFloat(cleanVal || 800);
-        updated.varianceMeters = (todayM - target).toFixed(2);
+        const todayM = parseTwoPhaseNumber(item.todayMeters || 0);
+        const target = parseTwoPhaseNumber(cleanVal || 800);
+        updated.varianceMeters = formatTwoPhaseNumber((todayM - target).toFixed(2));
       }
       return updated;
     }));
@@ -268,30 +284,30 @@ export const TwoPhaseDailyReportForm = ({
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
       if (field === 'todayMeters') {
-        const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseFloat(item.previousMeters)))
-          ? parseFloat(item.previousMeters)
-          : Math.max(0, (parseFloat(item.totalMeters) || 0) - (parseFloat(item.todayMeters) || 0));
-        const todayM = parseFloat(cleanVal) || 0;
+        const prevM = (item.previousMeters !== undefined && item.previousMeters !== '' && !isNaN(parseTwoPhaseNumber(item.previousMeters)))
+          ? parseTwoPhaseNumber(item.previousMeters)
+          : Math.max(0, parseTwoPhaseNumber(item.totalMeters) - parseTwoPhaseNumber(item.todayMeters));
+        const todayM = parseTwoPhaseNumber(cleanVal);
         const newTotal = prevM + todayM;
-        updated.previousMeters = String(prevM);
+        updated.previousMeters = formatTwoPhaseNumber(prevM);
         updated.todayMeters = cleanVal;
-        updated.totalMeters = String(newTotal);
-        const target = parseFloat(item.dailyTarget || 800);
-        updated.varianceMeters = (todayM - target).toFixed(2);
+        updated.totalMeters = formatTwoPhaseNumber(newTotal);
+        const target = parseTwoPhaseNumber(item.dailyTarget || 800);
+        updated.varianceMeters = formatTwoPhaseNumber((todayM - target).toFixed(2));
       } else if (field === 'previousMeters') {
-        const prevM = parseFloat(cleanVal) || 0;
-        const todayM = parseFloat(item.todayMeters) || 0;
+        const prevM = parseTwoPhaseNumber(cleanVal);
+        const todayM = parseTwoPhaseNumber(item.todayMeters);
         updated.previousMeters = cleanVal;
-        updated.totalMeters = String(prevM + todayM);
+        updated.totalMeters = formatTwoPhaseNumber(prevM + todayM);
       } else if (field === 'totalMeters') {
-        const totM = parseFloat(cleanVal) || 0;
-        const todayM = parseFloat(item.todayMeters) || 0;
+        const totM = parseTwoPhaseNumber(cleanVal);
+        const todayM = parseTwoPhaseNumber(item.todayMeters);
         updated.totalMeters = cleanVal;
-        updated.previousMeters = String(Math.max(0, totM - todayM));
+        updated.previousMeters = formatTwoPhaseNumber(Math.max(0, totM - todayM));
       } else if (field === 'dailyTarget') {
-        const todayM = parseFloat(item.todayMeters || 0);
-        const target = parseFloat(cleanVal || 800);
-        updated.varianceMeters = (todayM - target).toFixed(2);
+        const todayM = parseTwoPhaseNumber(item.todayMeters || 0);
+        const target = parseTwoPhaseNumber(cleanVal || 800);
+        updated.varianceMeters = formatTwoPhaseNumber((todayM - target).toFixed(2));
       }
       return updated;
     }));
@@ -313,10 +329,10 @@ export const TwoPhaseDailyReportForm = ({
       if (item.id !== id) return item;
       const updated = { ...item, [field]: cleanVal };
       if (field === 'phase1' || field === 'phase2') {
-        const p1 = field === 'phase1' ? parseFloat(value) : parseFloat(item.phase1);
-        const p2 = field === 'phase2' ? parseFloat(value) : parseFloat(item.phase2);
+        const p1 = field === 'phase1' ? parseTwoPhaseNumber(value) : parseTwoPhaseNumber(item.phase1);
+        const p2 = field === 'phase2' ? parseTwoPhaseNumber(value) : parseTwoPhaseNumber(item.phase2);
         const total = (isNaN(p1) ? 0 : p1) + (isNaN(p2) ? 0 : p2);
-        updated.total = total > 0 ? total.toFixed(2) : '';
+        updated.total = total > 0 ? formatTwoPhaseNumber(total.toFixed(2)) : '';
       }
       return updated;
     }));
@@ -330,8 +346,8 @@ export const TwoPhaseDailyReportForm = ({
     const totalsMap = {};
     phase1Items.forEach((p1, idx) => {
       const p2 = phase2Items[idx] || {};
-      const t1 = parseFloat(toCleanLatinDigits(p1.totalMeters)) || 0;
-      const t2 = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+      const t1 = parseTwoPhaseNumber(p1.totalMeters);
+      const t2 = parseTwoPhaseNumber(p2.totalMeters);
       totalsMap[p1.name] = t1 + t2;
     });
 
@@ -339,17 +355,17 @@ export const TwoPhaseDailyReportForm = ({
 
     // Update combinedCustom
     setCombinedCustom(prev => prev.map(c => {
-      if (c.id === 1) return { ...c, readyToWorkMeters: String(pipeline.fdrReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' };
-      if (c.id === 2) return { ...c, readyToWorkMeters: String(pipeline.mcoReady), notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' };
-      if (c.id === 3) return { ...c, readyToWorkMeters: String(pipeline.asphaltReady), notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' };
-      if (c.id === 5) return { ...c, readyToWorkMeters: String(pipeline.baseReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' };
+      if (c.id === 1) return { ...c, readyToWorkMeters: formatTwoPhaseNumber(pipeline.fdrReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة اولي وغير منفذ فرمة تانية)' };
+      if (c.id === 2) return { ...c, readyToWorkMeters: formatTwoPhaseNumber(pipeline.mcoReady), notes: 'الجاهز للعمل بالبند (منفذ اساس وغير مرشوش mc)' };
+      if (c.id === 3) return { ...c, readyToWorkMeters: formatTwoPhaseNumber(pipeline.asphaltReady), notes: 'الجاهز للعمل بالبند (مرشوش mc وغير منفذ اسفلت)' };
+      if (c.id === 5) return { ...c, readyToWorkMeters: formatTwoPhaseNumber(pipeline.baseReady), notes: 'الجاهز للعمل بالبند (منفذ فرمة ثانية وغير منفذ اساس)' };
       return c;
     }));
 
     // 2. Auto calculate remaining
     const p2Map = {};
     phase2Items.forEach(p2 => {
-      p2Map[p2.name] = parseFloat(toCleanLatinDigits(p2.totalMeters)) || 0;
+      p2Map[p2.name] = parseTwoPhaseNumber(p2.totalMeters);
     });
     const calculatedRemaining = calculateRemainingItems(p2Map);
     setRemainingItems(calculatedRemaining);
@@ -442,7 +458,7 @@ export const TwoPhaseDailyReportForm = ({
   const getChartData = (items) => {
     return items.map(item => ({
       name: item.shortName || item.name,
-      value: parseFloat(item.totalMeters) || parseFloat(item.todayMeters) || 0,
+      value: parseTwoPhaseNumber(item.totalMeters) || parseTwoPhaseNumber(item.todayMeters) || 0,
       color: item.color
     }));
   };
@@ -464,11 +480,11 @@ export const TwoPhaseDailyReportForm = ({
       ['م', 'الوصف', 'إنجاز اليوم (م.ط)', 'الإجمالي (م.ط)', 'المستهدف اليومي', 'الزيادة / النقصان', 'ملاحظات']
     ];
     phase1Items.filter(i => i.category === 'basic').forEach((i, idx) => {
-      p1Data.push([idx + 1, i.name, i.todayMeters || 0, i.totalMeters || 0, i.dailyTarget || 0, i.varianceMeters || 0, i.notes || '']);
+      p1Data.push([idx + 1, i.name, parseTwoPhaseNumber(i.todayMeters), parseTwoPhaseNumber(i.totalMeters), parseTwoPhaseNumber(i.dailyTarget), parseTwoPhaseNumber(i.varianceMeters), i.notes || '']);
     });
     p1Data.push(['المرحلة الأولى - بنود إضافية']);
     phase1Items.filter(i => i.category === 'additional').forEach((i, idx) => {
-      p1Data.push([idx + 1, i.name, i.todayMeters || 0, i.totalMeters || 0, i.dailyTarget || 0, i.varianceMeters || 0, i.notes || '']);
+      p1Data.push([idx + 1, i.name, parseTwoPhaseNumber(i.todayMeters), parseTwoPhaseNumber(i.totalMeters), parseTwoPhaseNumber(i.dailyTarget), parseTwoPhaseNumber(i.varianceMeters), i.notes || '']);
     });
 
     const ws1 = XLSX.utils.aoa_to_sheet(p1Data);
@@ -480,11 +496,11 @@ export const TwoPhaseDailyReportForm = ({
       ['م', 'الوصف', 'إنجاز اليوم (م.ط)', 'الإجمالي (م.ط)', 'المستهدف اليومي', 'الزيادة / النقصان', 'ملاحظات']
     ];
     phase2Items.filter(i => i.category === 'basic').forEach((i, idx) => {
-      p2Data.push([idx + 1, i.name, i.todayMeters || 0, i.totalMeters || 0, i.dailyTarget || 0, i.varianceMeters || 0, i.notes || '']);
+      p2Data.push([idx + 1, i.name, parseTwoPhaseNumber(i.todayMeters), parseTwoPhaseNumber(i.totalMeters), parseTwoPhaseNumber(i.dailyTarget), parseTwoPhaseNumber(i.varianceMeters), i.notes || '']);
     });
     p2Data.push(['المرحلة الثانية - بنود إضافية']);
     phase2Items.filter(i => i.category === 'additional').forEach((i, idx) => {
-      p2Data.push([idx + 1, i.name, i.todayMeters || 0, i.totalMeters || 0, i.dailyTarget || 0, i.varianceMeters || 0, i.notes || '']);
+      p2Data.push([idx + 1, i.name, parseTwoPhaseNumber(i.todayMeters), parseTwoPhaseNumber(i.totalMeters), parseTwoPhaseNumber(i.dailyTarget), parseTwoPhaseNumber(i.varianceMeters), i.notes || '']);
     });
 
     const ws2 = XLSX.utils.aoa_to_sheet(p2Data);
@@ -496,13 +512,13 @@ export const TwoPhaseDailyReportForm = ({
       ['م', 'الوصف', 'إنجاز اليوم (م.ط)', 'الإجمالي (م.ط)', 'الجاهز للعمل في البند', 'ملاحظات']
     ];
     combinedItems.forEach((i, idx) => {
-      combData.push([idx + 1, i.name, i.todayMeters || 0, i.totalMeters || 0, i.readyToWorkMeters || 0, i.notes || '']);
+      combData.push([idx + 1, i.name, parseTwoPhaseNumber(i.todayMeters), parseTwoPhaseNumber(i.totalMeters), parseTwoPhaseNumber(i.readyToWorkMeters), i.notes || '']);
     });
     combData.push([]);
     combData.push(['المتبقي من البنود']);
     combData.push(['المتبقي من البند', 'المرحلة الأولى', 'المرحلة الثانية', 'الإجمالي', 'ملاحظات']);
     remainingItems.forEach(r => {
-      combData.push([r.name, r.phase1 || 0, r.phase2 || 0, r.total || 0, r.notes || '']);
+      combData.push([r.name, parseTwoPhaseNumber(r.phase1), parseTwoPhaseNumber(r.phase2), parseTwoPhaseNumber(r.total), r.notes || '']);
     });
     combData.push([]);
     combData.push(['مدير القطاع:', sectorDirector, '', 'ممثل الجهة المالكة:', ownerRepresentative]);
@@ -788,6 +804,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.previousMeters)}
                     onChange={(e) => onUpdate(item.id, 'previousMeters', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'previousMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -808,6 +825,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.todayMeters)}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'todayMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -827,6 +845,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.totalMeters)}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'totalMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -846,6 +865,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.dailyTarget)}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'dailyTarget', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -859,15 +879,15 @@ export const TwoPhaseDailyReportForm = ({
                   />
                 </td>
                 <td style={{ padding: '4px 6px', borderRight: '1px solid #e2e8f0', fontWeight: 800 }}>
-                  {item.varianceMeters !== '' && item.varianceMeters !== null && !isNaN(Number(item.varianceMeters)) ? (
+                  {item.varianceMeters !== '' && item.varianceMeters !== null && !isNaN(parseTwoPhaseNumber(item.varianceMeters)) ? (
                     <span style={{
                       padding: '3px 8px',
                       borderRadius: '12px',
                       fontSize: '0.8rem',
-                      background: Number(item.varianceMeters) >= 0 ? '#dcfce7' : '#fee2e2',
-                      color: Number(item.varianceMeters) >= 0 ? '#15803d' : '#b91c1c'
+                      background: parseTwoPhaseNumber(item.varianceMeters) >= 0 ? '#dcfce7' : '#fee2e2',
+                      color: parseTwoPhaseNumber(item.varianceMeters) >= 0 ? '#15803d' : '#b91c1c'
                     }}>
-                      {Number(item.varianceMeters) >= 0 ? `+${item.varianceMeters}` : item.varianceMeters}
+                      {parseTwoPhaseNumber(item.varianceMeters) >= 0 ? `+${formatTwoPhaseNumber(item.varianceMeters)}` : formatTwoPhaseNumber(item.varianceMeters)}
                     </span>
                   ) : (
                     <span style={{ color: '#94a3b8' }}>—</span>
@@ -914,6 +934,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.previousMeters)}
                     onChange={(e) => onUpdate(item.id, 'previousMeters', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'previousMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -934,6 +955,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.todayMeters)}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'todayMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -953,6 +975,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.totalMeters)}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'totalMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -972,6 +995,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.dailyTarget)}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
+                    onBlur={(e) => onUpdate(item.id, 'dailyTarget', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -985,15 +1009,15 @@ export const TwoPhaseDailyReportForm = ({
                   />
                 </td>
                 <td style={{ padding: '4px 6px', borderRight: '1px solid #e2e8f0', fontWeight: 800 }}>
-                  {item.varianceMeters !== '' && item.varianceMeters !== null && !isNaN(Number(item.varianceMeters)) ? (
+                  {item.varianceMeters !== '' && item.varianceMeters !== null && !isNaN(parseTwoPhaseNumber(item.varianceMeters)) ? (
                     <span style={{
                       padding: '3px 8px',
                       borderRadius: '12px',
                       fontSize: '0.8rem',
-                      background: Number(item.varianceMeters) >= 0 ? '#dcfce7' : '#fee2e2',
-                      color: Number(item.varianceMeters) >= 0 ? '#15803d' : '#b91c1c'
+                      background: parseTwoPhaseNumber(item.varianceMeters) >= 0 ? '#dcfce7' : '#fee2e2',
+                      color: parseTwoPhaseNumber(item.varianceMeters) >= 0 ? '#15803d' : '#b91c1c'
                     }}>
-                      {Number(item.varianceMeters) >= 0 ? `+${item.varianceMeters}` : item.varianceMeters}
+                      {parseTwoPhaseNumber(item.varianceMeters) >= 0 ? `+${formatTwoPhaseNumber(item.varianceMeters)}` : formatTwoPhaseNumber(item.varianceMeters)}
                     </span>
                   ) : (
                     <span style={{ color: '#94a3b8' }}>—</span>
@@ -1086,10 +1110,10 @@ export const TwoPhaseDailyReportForm = ({
                   </div>
                 </td>
                 <td style={{ padding: '6px 8px', fontWeight: 900, color: '#1d4ed8', borderRight: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                  {item.todayMeters ? `${item.todayMeters} م.ط` : '—'}
+                  {item.todayMeters ? `${formatTwoPhaseNumber(item.todayMeters)} م.ط` : '—'}
                 </td>
                 <td style={{ padding: '6px 8px', fontWeight: 900, color: '#15803d', borderRight: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                  {item.totalMeters ? `${item.totalMeters} م.ط` : '—'}
+                  {item.totalMeters ? `${formatTwoPhaseNumber(item.totalMeters)} م.ط` : '—'}
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0', background: '#fffbeb' }}>
                   <input
@@ -1097,6 +1121,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.readyToWorkMeters)}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
+                    onBlur={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -1145,10 +1170,10 @@ export const TwoPhaseDailyReportForm = ({
                   </div>
                 </td>
                 <td style={{ padding: '6px 8px', fontWeight: 900, color: '#1d4ed8', borderRight: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                  {item.todayMeters ? `${item.todayMeters} م.ط` : '—'}
+                  {item.todayMeters ? `${formatTwoPhaseNumber(item.todayMeters)} م.ط` : '—'}
                 </td>
                 <td style={{ padding: '6px 8px', fontWeight: 900, color: '#15803d', borderRight: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                  {item.totalMeters ? `${item.totalMeters} م.ط` : '—'}
+                  {item.totalMeters ? `${formatTwoPhaseNumber(item.totalMeters)} م.ط` : '—'}
                 </td>
                 <td style={{ padding: '4px', borderRight: '1px solid #e2e8f0', background: '#fffbeb' }}>
                   <input
@@ -1156,6 +1181,7 @@ export const TwoPhaseDailyReportForm = ({
                     step="any"
                     value={toCleanLatinDigits(item.readyToWorkMeters)}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
+                    onBlur={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
                     style={{
                       width: '100%',
@@ -1839,6 +1865,7 @@ export const TwoPhaseDailyReportForm = ({
                       step="any"
                       value={toCleanLatinDigits(item.phase1)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
+                      onBlur={(e) => handleUpdateRemaining(item.id, 'phase1', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
                       style={{
                         width: '100%',
@@ -1857,6 +1884,7 @@ export const TwoPhaseDailyReportForm = ({
                       step="any"
                       value={toCleanLatinDigits(item.phase2)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
+                      onBlur={(e) => handleUpdateRemaining(item.id, 'phase2', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
                       style={{
                         width: '100%',
@@ -1870,7 +1898,7 @@ export const TwoPhaseDailyReportForm = ({
                     />
                   </td>
                   <td style={{ padding: '4px', fontWeight: 900, color: '#0f172a', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
-                    {item.total ? toCleanLatinDigits(item.total) : '—'}
+                    {item.total ? formatTwoPhaseNumber(item.total) : '—'}
                   </td>
                   <td style={{ padding: '3px' }}>
                     <input
@@ -1915,6 +1943,7 @@ export const TwoPhaseDailyReportForm = ({
                       step="any"
                       value={toCleanLatinDigits(item.phase1)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
+                      onBlur={(e) => handleUpdateRemaining(item.id, 'phase1', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
                       style={{
                         width: '100%',
@@ -1933,6 +1962,7 @@ export const TwoPhaseDailyReportForm = ({
                       step="any"
                       value={toCleanLatinDigits(item.phase2)}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
+                      onBlur={(e) => handleUpdateRemaining(item.id, 'phase2', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
                       style={{
                         width: '100%',
@@ -1946,7 +1976,7 @@ export const TwoPhaseDailyReportForm = ({
                     />
                   </td>
                   <td style={{ padding: '4px', fontWeight: 900, color: '#0f172a', background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
-                    {item.total ? toCleanLatinDigits(item.total) : '—'}
+                    {item.total ? formatTwoPhaseNumber(item.total) : '—'}
                   </td>
                   <td style={{ padding: '3px' }}>
                     <input
