@@ -30,7 +30,7 @@ const toCleanLatin = (val) => {
     .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
     .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
     .replace(/٫/g, '.')
-    .replace(/[٬،]/g, '');
+    .replace(/[,٬،]/g, '');
 };
 
 const fmtNum = (val, decimals = 2) => {

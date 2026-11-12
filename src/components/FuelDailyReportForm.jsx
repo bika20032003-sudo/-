@@ -18,7 +18,7 @@ const toCleanLatin = (val) => {
     .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
     .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
     .replace(/٫/g, '.')
-    .replace(/[٬،]/g, '');
+    .replace(/[,٬،]/g, '');
 };
 
 // Default initial data matching the approved daily fuel document (Saturday 24/10/2026 - 094834_24.10.2026)

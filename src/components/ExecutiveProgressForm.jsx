@@ -275,7 +275,7 @@ export const ExecutiveProgressForm = ({
       .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
       .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
       .replace(/٫/g, '.')
-      .replace(/[٬،]/g, '');
+      .replace(/[,٬،]/g, '');
   };
 
   const cleanAllItemNumbers = (items = []) => {

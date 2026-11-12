@@ -249,7 +249,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
       .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
       .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
       .replace(/٫/g, '.')
-      .replace(/[٬،]/g, '');
+      .replace(/[,٬،]/g, '');
     const n = Number(cleanStr);
     if (isNaN(n)) return val;
     return n.toLocaleString('en-US', { minimumFractionDigits: minF, maximumFractionDigits: maxF });

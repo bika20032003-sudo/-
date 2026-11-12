@@ -1,6 +1,6 @@
 import { deepSanitizeLatinDigits, toCleanLatinDigits } from './forceLatinDigits.js';
 import { saveReportToIndexedDB } from './secureDatabase.js';
-import { calculateReadyToWorkPipeline, calculateRemainingItems, parseCleanNumber } from './engineeringFormulas.js';
+import { calculateReadyToWorkPipeline, calculateRemainingItems, parseCleanNumber, formatTwoPhaseNumber } from './engineeringFormulas.js';
 import { fastFetch } from './apiCache.js';
 
 // Unified synchronization utility linking Two-Phase Achievement Report (تقرير إنجاز المرحلتين)
@@ -129,21 +129,37 @@ export function getStoredTwoPhaseReport() {
         phase1Items: p1.map((item, idx) => ({
           ...baseline.phase1Items[idx],
           ...item,
+          previousMeters: formatTwoPhaseNumber(item.previousMeters),
+          todayMeters: item.todayMeters !== undefined && item.todayMeters !== null && item.todayMeters !== '' ? (item.todayMeters === '0' || item.todayMeters === 0 ? '0' : formatTwoPhaseNumber(item.todayMeters)) : '',
+          totalMeters: formatTwoPhaseNumber(item.totalMeters),
+          dailyTarget: formatTwoPhaseNumber(item.dailyTarget || 800),
+          varianceMeters: formatTwoPhaseNumber(item.varianceMeters),
           category: item.category || (idx < 3 ? 'basic' : 'additional')
         })),
         phase2Items: p2.map((item, idx) => ({
           ...baseline.phase2Items[idx],
           ...item,
+          previousMeters: formatTwoPhaseNumber(item.previousMeters),
+          todayMeters: item.todayMeters !== undefined && item.todayMeters !== null && item.todayMeters !== '' ? (item.todayMeters === '0' || item.todayMeters === 0 ? '0' : formatTwoPhaseNumber(item.todayMeters)) : '',
+          totalMeters: formatTwoPhaseNumber(item.totalMeters),
+          dailyTarget: formatTwoPhaseNumber(item.dailyTarget || 800),
+          varianceMeters: formatTwoPhaseNumber(item.varianceMeters),
           category: item.category || (idx < 3 ? 'basic' : 'additional')
         })),
         remainingItems: remaining.map((item, idx) => ({
           ...baseline.remainingItems[idx],
           ...item,
+          phase1: item.phase1 !== undefined && item.phase1 !== null && item.phase1 !== '' ? formatTwoPhaseNumber(item.phase1) : '',
+          phase2: item.phase2 !== undefined && item.phase2 !== null && item.phase2 !== '' ? formatTwoPhaseNumber(item.phase2) : '',
+          total: item.total !== undefined && item.total !== null && item.total !== '' ? formatTwoPhaseNumber(item.total) : '',
           group: item.group || (idx < 3 ? 'A' : 'B')
         })),
         combinedItems: combined.map((item, idx) => ({
           ...baseline.combinedItems[idx],
           ...item,
+          todayMeters: item.todayMeters !== undefined && item.todayMeters !== null && item.todayMeters !== '' ? (item.todayMeters === '0' || item.todayMeters === 0 ? '0' : formatTwoPhaseNumber(item.todayMeters)) : '',
+          totalMeters: item.totalMeters !== undefined && item.totalMeters !== null && item.totalMeters !== '' ? formatTwoPhaseNumber(item.totalMeters) : '',
+          readyToWorkMeters: item.readyToWorkMeters !== undefined && item.readyToWorkMeters !== null && item.readyToWorkMeters !== '' ? formatTwoPhaseNumber(item.readyToWorkMeters) : '',
           category: item.category || (idx < 3 ? 'basic' : 'additional')
         }))
       };
@@ -165,7 +181,35 @@ export function saveStoredTwoPhaseReport(report) {
       id: sanitized.id || Date.now(),
       reportNumber: sanitized.reportNumber || `REP-TWO-PHASE-${Date.now().toString().slice(-4)}`,
       isTwoPhaseProgressReport: true,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      phase1Items: Array.isArray(sanitized.phase1Items) ? sanitized.phase1Items.map(it => ({
+        ...it,
+        previousMeters: formatTwoPhaseNumber(it.previousMeters),
+        todayMeters: it.todayMeters !== undefined && it.todayMeters !== null && it.todayMeters !== '' ? (it.todayMeters === '0' || it.todayMeters === 0 ? '0' : formatTwoPhaseNumber(it.todayMeters)) : '',
+        totalMeters: formatTwoPhaseNumber(it.totalMeters),
+        dailyTarget: formatTwoPhaseNumber(it.dailyTarget || 800),
+        varianceMeters: formatTwoPhaseNumber(it.varianceMeters)
+      })) : sanitized.phase1Items,
+      phase2Items: Array.isArray(sanitized.phase2Items) ? sanitized.phase2Items.map(it => ({
+        ...it,
+        previousMeters: formatTwoPhaseNumber(it.previousMeters),
+        todayMeters: it.todayMeters !== undefined && it.todayMeters !== null && it.todayMeters !== '' ? (it.todayMeters === '0' || it.todayMeters === 0 ? '0' : formatTwoPhaseNumber(it.todayMeters)) : '',
+        totalMeters: formatTwoPhaseNumber(it.totalMeters),
+        dailyTarget: formatTwoPhaseNumber(it.dailyTarget || 800),
+        varianceMeters: formatTwoPhaseNumber(it.varianceMeters)
+      })) : sanitized.phase2Items,
+      remainingItems: Array.isArray(sanitized.remainingItems) ? sanitized.remainingItems.map(it => ({
+        ...it,
+        phase1: it.phase1 !== undefined && it.phase1 !== null && it.phase1 !== '' ? formatTwoPhaseNumber(it.phase1) : '',
+        phase2: it.phase2 !== undefined && it.phase2 !== null && it.phase2 !== '' ? formatTwoPhaseNumber(it.phase2) : '',
+        total: it.total !== undefined && it.total !== null && it.total !== '' ? formatTwoPhaseNumber(it.total) : ''
+      })) : sanitized.remainingItems,
+      combinedItems: Array.isArray(sanitized.combinedItems) ? sanitized.combinedItems.map(it => ({
+        ...it,
+        todayMeters: it.todayMeters !== undefined && it.todayMeters !== null && it.todayMeters !== '' ? (it.todayMeters === '0' || it.todayMeters === 0 ? '0' : formatTwoPhaseNumber(it.todayMeters)) : '',
+        totalMeters: it.totalMeters !== undefined && it.totalMeters !== null && it.totalMeters !== '' ? formatTwoPhaseNumber(it.totalMeters) : '',
+        readyToWorkMeters: it.readyToWorkMeters !== undefined && it.readyToWorkMeters !== null && it.readyToWorkMeters !== '' ? formatTwoPhaseNumber(it.readyToWorkMeters) : ''
+      })) : sanitized.combinedItems
     };
     localStorage.setItem('two_phase_report_data', JSON.stringify(enriched));
 

@@ -20,7 +20,12 @@ import { getAllSupervisors, canonicalizeUsername, getSupervisorInfo } from '../u
 // Format number with thousand separators (commas)
 export const formatTwoPhaseNumber = (val) => {
   if (val === null || val === undefined || val === '' || val === '—' || val === '-') return '';
-  const clean = String(val).replace(/,/g, '').trim();
+  const clean = String(val)
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g, '.')
+    .replace(/[,٬،]/g, '')
+    .trim();
   if (clean === '' || isNaN(Number(clean))) return String(val);
   const parts = clean.split('.');
   const intFormatted = Number(parts[0]).toLocaleString('en-US');
@@ -141,13 +146,36 @@ export const TwoPhaseDailyReportForm = ({
       if (rep.reportNumber) setReportNumber(rep.reportNumber);
       if (rep.sectorDirector) setSectorDirector(rep.sectorDirector);
       if (rep.ownerRepresentative) setOwnerRepresentative(rep.ownerRepresentative);
-      setPhase1Items(rep.phase1Items);
-      if (Array.isArray(rep.phase2Items)) setPhase2Items(rep.phase2Items);
-      if (Array.isArray(rep.remainingItems)) setRemainingItems(rep.remainingItems);
+      setPhase1Items((rep.phase1Items || []).map(it => ({
+        ...it,
+        previousMeters: formatTwoPhaseNumber(it.previousMeters),
+        todayMeters: it.todayMeters !== undefined && it.todayMeters !== null && it.todayMeters !== '' ? (it.todayMeters === '0' || it.todayMeters === 0 ? '0' : formatTwoPhaseNumber(it.todayMeters)) : '',
+        totalMeters: formatTwoPhaseNumber(it.totalMeters),
+        dailyTarget: formatTwoPhaseNumber(it.dailyTarget || 800),
+        varianceMeters: formatTwoPhaseNumber(it.varianceMeters)
+      })));
+      if (Array.isArray(rep.phase2Items)) {
+        setPhase2Items(rep.phase2Items.map(it => ({
+          ...it,
+          previousMeters: formatTwoPhaseNumber(it.previousMeters),
+          todayMeters: it.todayMeters !== undefined && it.todayMeters !== null && it.todayMeters !== '' ? (it.todayMeters === '0' || it.todayMeters === 0 ? '0' : formatTwoPhaseNumber(it.todayMeters)) : '',
+          totalMeters: formatTwoPhaseNumber(it.totalMeters),
+          dailyTarget: formatTwoPhaseNumber(it.dailyTarget || 800),
+          varianceMeters: formatTwoPhaseNumber(it.varianceMeters)
+        })));
+      }
+      if (Array.isArray(rep.remainingItems)) {
+        setRemainingItems(rep.remainingItems.map(r => ({
+          ...r,
+          phase1: r.phase1 !== undefined && r.phase1 !== null && r.phase1 !== '' ? formatTwoPhaseNumber(r.phase1) : '',
+          phase2: r.phase2 !== undefined && r.phase2 !== null && r.phase2 !== '' ? formatTwoPhaseNumber(r.phase2) : '',
+          total: r.total !== undefined && r.total !== null && r.total !== '' ? formatTwoPhaseNumber(r.total) : ''
+        })));
+      }
       if (Array.isArray(rep.combinedItems)) {
         setCombinedCustom(rep.combinedItems.map((c, idx) => ({
           id: c.id || idx + 1,
-          readyToWorkMeters: c.readyToWorkMeters !== undefined ? c.readyToWorkMeters : (c.dailyTarget || ''),
+          readyToWorkMeters: c.readyToWorkMeters !== undefined && c.readyToWorkMeters !== null && c.readyToWorkMeters !== '' ? formatTwoPhaseNumber(c.readyToWorkMeters) : (c.dailyTarget ? formatTwoPhaseNumber(c.dailyTarget) : ''),
           notes: c.notes || ''
         })));
       }
@@ -417,15 +445,31 @@ export const TwoPhaseDailyReportForm = ({
         if (updated.reportDate) setReportDate(updated.reportDate);
         if (updated.dateFormatted) setReportDate(updated.dateFormatted);
         if (updated.dayName) setDayName(updated.dayName);
-        if (Array.isArray(updated.phase2Items)) setPhase2Items(updated.phase2Items);
+        if (Array.isArray(updated.phase2Items)) {
+          setPhase2Items(updated.phase2Items.map(it => ({
+            ...it,
+            previousMeters: formatTwoPhaseNumber(it.previousMeters),
+            todayMeters: it.todayMeters !== undefined && it.todayMeters !== null && it.todayMeters !== '' ? (it.todayMeters === '0' || it.todayMeters === 0 ? '0' : formatTwoPhaseNumber(it.todayMeters)) : '',
+            totalMeters: formatTwoPhaseNumber(it.totalMeters),
+            dailyTarget: formatTwoPhaseNumber(it.dailyTarget || 800),
+            varianceMeters: formatTwoPhaseNumber(it.varianceMeters)
+          })));
+        }
         if (Array.isArray(updated.combinedItems)) {
           setCombinedCustom(updated.combinedItems.map((c, idx) => ({
             id: c.id || idx + 1,
-            readyToWorkMeters: c.readyToWorkMeters !== undefined ? c.readyToWorkMeters : '',
+            readyToWorkMeters: c.readyToWorkMeters !== undefined ? formatTwoPhaseNumber(c.readyToWorkMeters) : '',
             notes: c.notes || ''
           })));
         }
-        if (Array.isArray(updated.remainingItems)) setRemainingItems(updated.remainingItems);
+        if (Array.isArray(updated.remainingItems)) {
+          setRemainingItems(updated.remainingItems.map(r => ({
+            ...r,
+            phase1: r.phase1 !== undefined && r.phase1 !== null && r.phase1 !== '' ? formatTwoPhaseNumber(r.phase1) : '',
+            phase2: r.phase2 !== undefined && r.phase2 !== null && r.phase2 !== '' ? formatTwoPhaseNumber(r.phase2) : '',
+            total: r.total !== undefined && r.total !== null && r.total !== '' ? formatTwoPhaseNumber(r.total) : ''
+          })));
+        }
 
         triggerImmediateSync();
 
@@ -802,7 +846,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.previousMeters)}
+                    value={formatTwoPhaseNumber(item.previousMeters)}
                     onChange={(e) => onUpdate(item.id, 'previousMeters', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'previousMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -823,7 +867,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.todayMeters)}
+                    value={item.todayMeters !== undefined && item.todayMeters !== null && item.todayMeters !== '' ? (item.todayMeters === '0' || item.todayMeters === 0 ? '0' : formatTwoPhaseNumber(item.todayMeters)) : ''}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'todayMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -843,7 +887,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.totalMeters)}
+                    value={formatTwoPhaseNumber(item.totalMeters)}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'totalMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -863,7 +907,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.dailyTarget)}
+                    value={formatTwoPhaseNumber(item.dailyTarget)}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'dailyTarget', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -932,7 +976,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.previousMeters)}
+                    value={formatTwoPhaseNumber(item.previousMeters)}
                     onChange={(e) => onUpdate(item.id, 'previousMeters', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'previousMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -953,7 +997,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.todayMeters)}
+                    value={item.todayMeters !== undefined && item.todayMeters !== null && item.todayMeters !== '' ? (item.todayMeters === '0' || item.todayMeters === 0 ? '0' : formatTwoPhaseNumber(item.todayMeters)) : ''}
                     onChange={(e) => onUpdate(item.id, 'todayMeters', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'todayMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -973,7 +1017,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.totalMeters)}
+                    value={formatTwoPhaseNumber(item.totalMeters)}
                     onChange={(e) => onUpdate(item.id, 'totalMeters', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'totalMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -993,7 +1037,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.dailyTarget)}
+                    value={formatTwoPhaseNumber(item.dailyTarget)}
                     onChange={(e) => onUpdate(item.id, 'dailyTarget', e.target.value)}
                     onBlur={(e) => onUpdate(item.id, 'dailyTarget', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -1119,7 +1163,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.readyToWorkMeters)}
+                    value={item.readyToWorkMeters !== undefined && item.readyToWorkMeters !== null && item.readyToWorkMeters !== '' ? formatTwoPhaseNumber(item.readyToWorkMeters) : ''}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
                     onBlur={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -1179,7 +1223,7 @@ export const TwoPhaseDailyReportForm = ({
                   <input
                     type="text" inputMode="decimal" dir="ltr" lang="en"
                     step="any"
-                    value={toCleanLatinDigits(item.readyToWorkMeters)}
+                    value={item.readyToWorkMeters !== undefined && item.readyToWorkMeters !== null && item.readyToWorkMeters !== '' ? formatTwoPhaseNumber(item.readyToWorkMeters) : ''}
                     onChange={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', e.target.value)}
                     onBlur={(e) => handleUpdateCombined(item.id, 'readyToWorkMeters', formatTwoPhaseNumber(e.target.value))}
                     placeholder="0.00"
@@ -1863,7 +1907,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={toCleanLatinDigits(item.phase1)}
+                      value={item.phase1 !== undefined && item.phase1 !== null && item.phase1 !== '' ? formatTwoPhaseNumber(item.phase1) : ''}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
                       onBlur={(e) => handleUpdateRemaining(item.id, 'phase1', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
@@ -1882,7 +1926,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={toCleanLatinDigits(item.phase2)}
+                      value={item.phase2 !== undefined && item.phase2 !== null && item.phase2 !== '' ? formatTwoPhaseNumber(item.phase2) : ''}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
                       onBlur={(e) => handleUpdateRemaining(item.id, 'phase2', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
@@ -1941,7 +1985,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={toCleanLatinDigits(item.phase1)}
+                      value={item.phase1 !== undefined && item.phase1 !== null && item.phase1 !== '' ? formatTwoPhaseNumber(item.phase1) : ''}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase1', e.target.value)}
                       onBlur={(e) => handleUpdateRemaining(item.id, 'phase1', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
@@ -1960,7 +2004,7 @@ export const TwoPhaseDailyReportForm = ({
                     <input
                       type="text" inputMode="decimal" dir="ltr" lang="en"
                       step="any"
-                      value={toCleanLatinDigits(item.phase2)}
+                      value={item.phase2 !== undefined && item.phase2 !== null && item.phase2 !== '' ? formatTwoPhaseNumber(item.phase2) : ''}
                       onChange={(e) => handleUpdateRemaining(item.id, 'phase2', e.target.value)}
                       onBlur={(e) => handleUpdateRemaining(item.id, 'phase2', formatTwoPhaseNumber(e.target.value))}
                       placeholder="0.00"
