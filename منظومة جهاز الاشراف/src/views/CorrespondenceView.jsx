@@ -46,6 +46,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
   const rawUsername = currentUser?.username || 'project_manager';
   const u = canonicalizeUsername(rawUsername);
+  const username = u;
 
   // Dynamic system supervisors & active team members (all valid correspondents)
   const officialSupervisors = useMemo(() => {
@@ -199,9 +200,9 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
   // Handle Mark as Read
   const handleMarkAsRead = async (msgId) => {
-    markMessageReadForUser(msgId, username);
+    markMessageReadForUser(msgId, u);
     try {
-      await fastFetch(`/api/messages/${msgId}/read?username=${encodeURIComponent(username)}`, { method: 'PUT' });
+      await fastFetch(`/api/messages/${msgId}/read?username=${encodeURIComponent(u)}`, { method: 'PUT' });
     } catch (err) {
       console.warn('Failed to mark read on server, updating local state:', err);
     }
@@ -209,17 +210,49 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     window.dispatchEvent(new CustomEvent('messages-updated'));
   };
 
+  // Helper to sync local storage cache deletion
+  const syncLocalDeleted = (msgIds) => {
+    try {
+      const idSet = new Set((Array.isArray(msgIds) ? msgIds : [msgIds]).map(String));
+      const updateDb = (key) => {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        const list = JSON.parse(raw);
+        if (!Array.isArray(list)) return;
+        const updated = list.map(m => {
+          if (idSet.has(String(m.id))) {
+            const dBy = Array.isArray(m.deletedBy) ? m.deletedBy : [];
+            if (!dBy.includes(u)) return { ...m, deletedBy: [...dBy, u] };
+          }
+          return m;
+        });
+        localStorage.setItem(key, JSON.stringify(updated));
+      };
+      updateDb('system_messages');
+      updateDb('local_messages');
+    } catch (e) {
+      console.warn('Local storage delete sync warning:', e);
+    }
+  };
+
   // Handle Delete Single Message (Independent per-user soft delete)
   const handleDeleteMessage = async (msgId) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه المراسلة من صندوق بريدك؟\n\nلن يؤثر الحذف على الطرف الآخر.')) return;
-    markMessageDeletedForUser(msgId, username);
+    
+    // 1. Mark in user-specific deleted set
+    markMessageDeletedForUser(msgId, u);
+    
+    // 2. Sync local stores
+    syncLocalDeleted(msgId);
 
+    // 3. Call backend API
     try {
-      await fastFetch(`/api/messages/${msgId}?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
+      await fastFetch(`/api/messages/${msgId}?username=${encodeURIComponent(u)}`, { method: 'DELETE' });
     } catch (err) {
       console.warn('Backend delete error, preserved local mark:', err);
     }
 
+    // 4. Update UI state immediately
     setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)));
     if (String(selectedMessage?.id) === String(msgId)) setSelectedMessage(null);
     setStatusNotification({ type: 'success', text: 'تم حذف المراسلة من صندوق بريدك بنجاح.' });
@@ -238,15 +271,18 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     );
     if (!confirmed) return;
 
-    [...inboxMessages, ...sentMessages].forEach(m => markMessageDeletedForUser(m.id, username));
+    const allMyIds = [...inboxMessages, ...sentMessages].map(m => m.id);
+    allMyIds.forEach(id => markMessageDeletedForUser(id, u));
+    syncLocalDeleted(allMyIds);
+
     try {
-      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(username)}&box=all`, { method: 'DELETE' });
+      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(u)}&box=all`, { method: 'DELETE' });
     } catch (e) {
       console.warn('Backend clear failed:', e);
     }
 
-    const myIds = new Set([...inboxMessages, ...sentMessages].map(m => String(m.id)));
-    setMessages(prev => prev.filter(m => !myIds.has(String(m.id))));
+    const myIdsSet = new Set(allMyIds.map(String));
+    setMessages(prev => prev.filter(m => !myIdsSet.has(String(m.id))));
     setSelectedMessage(null);
     setStatusNotification({ type: 'success', text: 'تم تفريغ صندوق بريدك بالكامل بنجاح.' });
     window.dispatchEvent(new CustomEvent('messages-updated'));
@@ -260,12 +296,15 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     );
     if (!confirmed) return;
 
-    inboxMessages.forEach(m => markMessageDeletedForUser(m.id, username));
+    const ids = inboxMessages.map(m => m.id);
+    ids.forEach(id => markMessageDeletedForUser(id, u));
+    syncLocalDeleted(ids);
+
     try {
-      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(username)}&box=inbox`, { method: 'DELETE' });
+      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(u)}&box=inbox`, { method: 'DELETE' });
     } catch (e) {}
 
-    const inboxIds = new Set(inboxMessages.map(m => String(m.id)));
+    const inboxIds = new Set(ids.map(String));
     setMessages(prev => prev.filter(m => !inboxIds.has(String(m.id))));
     if (selectedMessage && inboxIds.has(String(selectedMessage.id))) setSelectedMessage(null);
     setStatusNotification({ type: 'success', text: 'تم تفريغ صندوق الوارد الخاص بك بنجاح.' });
@@ -280,12 +319,15 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     );
     if (!confirmed) return;
 
-    sentMessages.forEach(m => markMessageDeletedForUser(m.id, username));
+    const ids = sentMessages.map(m => m.id);
+    ids.forEach(id => markMessageDeletedForUser(id, u));
+    syncLocalDeleted(ids);
+
     try {
-      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(username)}&box=sent`, { method: 'DELETE' });
+      await fastFetch(`/api/messages/clear-all?username=${encodeURIComponent(u)}&box=sent`, { method: 'DELETE' });
     } catch (e) {}
 
-    const sentIds = new Set(sentMessages.map(m => String(m.id)));
+    const sentIds = new Set(ids.map(String));
     setMessages(prev => prev.filter(m => !sentIds.has(String(m.id))));
     if (selectedMessage && sentIds.has(String(selectedMessage.id))) setSelectedMessage(null);
     setStatusNotification({ type: 'success', text: 'تم تفريغ صندوق الصادر الخاص بك بنجاح.' });
@@ -1047,7 +1089,29 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                             </div>
                           )}
 
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                padding: '0.5rem 1rem',
+                                background: '#fef2f2',
+                                color: '#dc2626',
+                                border: '1px solid #fecaca',
+                                borderRadius: '8px',
+                                fontSize: '0.84rem',
+                                fontWeight: 800,
+                                cursor: 'pointer'
+                              }}
+                              title="حذف هذه المراسلة من صندوق بريدك"
+                            >
+                              <Trash2 size={15} />
+                              <span>حذف المراسلة</span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleReplyTo(msg); }}
@@ -1200,7 +1264,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
 
                           <button
                             type="button"
-                            onClick={() => handleDeleteMessage(msg.id)}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
                             style={{
                               padding: '0.35rem',
                               borderRadius: '6px',
@@ -1209,6 +1273,7 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
                               color: '#ef4444',
                               cursor: 'pointer'
                             }}
+                            title="حذف الرسالة الصادرة من صندوقك"
                           >
                             <Trash2 size={13} />
                           </button>

@@ -468,20 +468,29 @@ docker-compose up -d --build
 fs.writeFileSync(path.join(outDir, 'دليل_الرفع_والتشغيل_على_الاستضافة.md'), guideContent, 'utf8');
 
 // 14. Generate zip archives automatically
-console.log('[Hosting Package] Compressing into: نسخة_الاستضافة_المتكاملة.zip...');
+console.log('[Hosting Package] Compressing zip archives...');
 try {
-  execSync('powershell -Command "Compress-Archive -Path \'نسخة_المشروع_للاستضافة\\*\' -DestinationPath \'نسخة_الاستضافة_المتكاملة.zip\' -Force"', { cwd: rootDir });
-  console.log('[Hosting Package] ✅ Full hosting zip archive created successfully!');
+  const fullZipPath = path.join(rootDir, 'نسخة_الاستضافة_المتكاملة.zip');
+  const publicZipPath = path.join(rootDir, 'ملفات_الرفع_المباشر_public_html.zip');
+  
+  const psScript = `
+$OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+Compress-Archive -Path '${outDir.replace(/'/g, "''")}\\*' -DestinationPath '${fullZipPath.replace(/'/g, "''")}' -Force
+Compress-Archive -Path '${path.join(outDir, 'public_html').replace(/'/g, "''")}\\*' -DestinationPath '${publicZipPath.replace(/'/g, "''")}' -Force
+`;
+  const tempPs1 = path.join(rootDir, '_temp_zip.ps1');
+  fs.writeFileSync(tempPs1, '\ufeff' + psScript, 'utf8');
+  execSync(`powershell -ExecutionPolicy Bypass -File "${tempPs1}"`, { cwd: rootDir });
+  if (fs.existsSync(tempPs1)) fs.unlinkSync(tempPs1);
+
+  if (fs.existsSync(fullZipPath)) {
+    console.log('[Hosting Package] ✅ Full hosting zip archive created successfully:', fullZipPath);
+  }
+  if (fs.existsSync(publicZipPath)) {
+    console.log('[Hosting Package] ✅ Frontend direct zip created successfully:', publicZipPath);
+  }
 } catch (zipErr) {
   console.warn('[Hosting Package] Zip command warning:', zipErr.message);
-}
-
-console.log('[Hosting Package] Compressing frontend only into: ملفات_الرفع_المباشر_public_html.zip...');
-try {
-  execSync('powershell -Command "Compress-Archive -Path \'نسخة_المشروع_للاستضافة\\public_html\\*\' -DestinationPath \'ملفات_الرفع_المباشر_public_html.zip\' -Force"', { cwd: rootDir });
-  console.log('[Hosting Package] ✅ Frontend direct zip created successfully!');
-} catch (zipErr2) {
-  console.warn('[Hosting Package] Direct zip command warning:', zipErr2.message);
 }
 
 console.log('[Hosting Package] ✅ All hosting assets prepared successfully at:', outDir);

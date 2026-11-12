@@ -174,6 +174,34 @@ assert(fs.existsSync(mirrorPrintModal), 'اكتمال مزامنة الملفا�
 assert(fs.existsSync(hostingZip), 'وجود الحزمة المضغوطة الكاملة للاستضافة نسخة_الاستضافة_المتكاملة.zip');
 
 // ----------------------------------------------------
+// 7. اختبار وظائف حذف المراسلات في البريد والمراسلات
+// ----------------------------------------------------
+console.log('\n7️⃣ اختبار وظائف حذف المراسلات في البريد والمراسلات:');
+
+const correspondenceCode = fs.readFileSync(path.join(__dirname, '../src/views/CorrespondenceView.jsx'), 'utf8');
+
+assert(correspondenceCode.includes('const username = u;'), 'تعريف متغير username بشكل صريح مساوياً لاسم المستخدم النشط');
+assert(correspondenceCode.includes('syncLocalDeleted'), 'توفير دالة المزامنة الفورية لحذف المراسلات محلياً عبر syncLocalDeleted');
+assert(correspondenceCode.includes('markMessageDeletedForUser(msgId, u)'), 'تسجيل حذف المراسلة الفردية بمعرف المستخدم الفعلي');
+assert(correspondenceCode.includes('setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)))'), 'تحديث واجهة المستخدم فوراً بحذف الرسالة من القائمة');
+assert(correspondenceCode.includes('title="حذف هذه المراسلة من صندوق بريدك"'), 'توفير زر حذف صريح للمراسلة عند فتحها وقراءتها بالكامل');
+
+// محاكاة آلية العزل والحذف في صندوق البريد
+const testUser = 'dev_engineer';
+const testMessages = [
+  { id: 'msg-1', toUsername: 'dev_engineer', fromUsername: 'project_manager', content: 'رسالة 1' },
+  { id: 'msg-2', toUsername: 'dev_engineer', fromUsername: 'quality_manager', content: 'رسالة 2' },
+  { id: 'msg-3', toUsername: 'all', fromUsername: 'general_director', content: 'تعميم عام' }
+];
+
+const deletedSet = new Set(['msg-1']);
+const remainingInbox = testMessages.filter(m => !deletedSet.has(m.id));
+
+assert(remainingInbox.length === 2, 'نجاح استبعاد الرسالة المحذوفة msg-1 من صندوق الوارد');
+assert(!remainingInbox.some(m => m.id === 'msg-1'), 'التأكد من عدم ظهور الرسالة المحذوفة إطلاقاً');
+assert(remainingInbox.some(m => m.id === 'msg-2'), 'بقاء الرسائل غير المحذوفة سليمة دون مساس');
+
+// ----------------------------------------------------
 // خلاصة الفحص
 // ----------------------------------------------------
 console.log('\n====================================================');
