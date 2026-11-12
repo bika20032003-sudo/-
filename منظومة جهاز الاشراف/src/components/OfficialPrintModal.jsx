@@ -3,6 +3,12 @@ import ReactDOM from 'react-dom';
 import { Printer, X, CheckCircle2, Clock, AlertTriangle, ShieldCheck, FileText, Calendar, Building2, User, Layers, Fuel, Factory, Truck, Download, FileSpreadsheet, Layout, ZoomIn, ZoomOut, Maximize2, Send } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+// Clean day name preventing duplicate "يوم يوم"
+export const cleanDayName = (day) => {
+  if (!day) return 'السبت';
+  return String(day).replace(/^يوم\s+/g, '').trim();
+};
+
 // Safe number cleaning and formatting for crisp official print fidelity
 const safeCleanPrintNumber = (val, defaultVal = 0) => {
   if (val === null || val === undefined || val === '') return defaultVal;
@@ -17,15 +23,34 @@ const safeCleanPrintNumber = (val, defaultVal = 0) => {
 };
 
 const formatPrintNumber = (val) => {
-  if (val === null || val === undefined || val === '' || val === '-' || val === '—') return '-';
-  const clean = String(val).replace(/,/g, '').trim();
-  if (clean === '' || isNaN(Number(clean))) return String(val);
+  if (val === null || val === undefined || val === '' || val === '-' || val === '—' || String(val).toLowerCase() === 'nan') return '-';
+  const clean = String(val)
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g, '.')
+    .replace(/[,٬،]/g, '')
+    .trim();
+  if (clean === '' || isNaN(Number(clean)) || clean.toLowerCase() === 'nan') return '-';
   const parts = clean.split('.');
   const intFormatted = Number(parts[0]).toLocaleString('en-US');
   return parts.length > 1 ? `${intFormatted}.${parts[1]}` : intFormatted;
 };
 
-// Vector SVG Bar Chart for Two-Phase Print Layout (100% Crisp print fidelity)
+// Safe fuel number formatter with 2 decimal places, preventing any "NaN"
+export const formatFuelNumber = (val) => {
+  if (val === null || val === undefined || val === '' || val === '-' || val === '—' || String(val).toLowerCase() === 'nan') return '0.00';
+  const clean = String(val)
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g, '.')
+    .replace(/[,٬،]/g, '')
+    .trim();
+  const num = parseFloat(clean);
+  if (isNaN(num)) return '0.00';
+  return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Vector SVG Bar Chart for Two-Phase Print Layout (Compact single-page fit)
 const TwoPhasePrintChart = ({ title, items }) => {
   const validItems = (items || []).filter(Boolean);
   const maxVal = Math.max(...validItems.map(i => safeCleanPrintNumber(i.totalMeters) || safeCleanPrintNumber(i.todayMeters) || 0), 100);
@@ -33,19 +58,21 @@ const TwoPhasePrintChart = ({ title, items }) => {
     <div style={{
       border: '1.5px solid #000000',
       background: '#ffffff',
-      padding: '4px',
+      padding: '2px 4px',
       height: '100%',
+      minHeight: '62px',
+      maxHeight: '85px',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
       boxSizing: 'border-box'
     }}>
       <div style={{
-        fontSize: '0.78rem',
+        fontSize: '0.72rem',
         fontWeight: 900,
         textAlign: 'center',
         borderBottom: '1px solid #cbd5e1',
-        paddingBottom: '3px',
+        paddingBottom: '2px',
         marginBottom: '2px',
         color: '#0f172a'
       }}>
@@ -56,10 +83,11 @@ const TwoPhasePrintChart = ({ title, items }) => {
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'space-around',
-        gap: '4px',
-        minHeight: '120px',
-        padding: '0 4px 6px 4px',
-        borderBottom: '1.5px solid #000000'
+        gap: '3px',
+        minHeight: '48px',
+        maxHeight: '62px',
+        padding: '0 2px 3px 2px',
+        borderBottom: '1px solid #000000'
       }}>
         {validItems.map((it, idx) => {
           if (!it) return null;
@@ -325,7 +353,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
         dataRows.push([`منشئ التقرير المعتمد: ${authorInfo.name} (${authorInfo.role})`]);
       } else if (report.isTargetedWorksReport || report.reportType === 'تقرير الأعمال المستهدفة' || (Array.isArray(report.targetedSections) && report.targetedSections.length > 0)) {
         dataRows = [
-          [report.title || `بيان أعمال يوم ${report.dayName || ''} ${report.dateFormatted || reportDateStr}`],
+          [report.title ? report.title.replace(/يوم\s+يوم/g, 'يوم') : `بيان أعمال يوم ${cleanDayName(report.dayName)} ${report.dateFormatted || reportDateStr}`],
           [`القطاع: ${sectorTitle}`, `رقم البيان: ${reportNumber}`],
           []
         ];
@@ -366,7 +394,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
       } else if (report.isFuelReport || report.reportType === 'تقرير كميات الوقود اليومية' || (Array.isArray(report.fuelItems) && report.fuelItems.length > 0)) {
         dataRows = [
           ['تقرير كميات الوقود اليومية'],
-          [`يوم ${report.dayName || 'السبت'}`, report.dateFormatted || reportDateStr],
+          [`يوم ${cleanDayName(report.dayName)}`, report.dateFormatted || reportDateStr],
           [],
           ['ت', 'الموقع', 'الكمية المصروفة (لتر)', 'الوارد (لتر)', 'الكمية المتبقية (لتر)']
         ];
@@ -417,7 +445,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
       } else if (Boolean(report.isTwoPhaseProgressReport || report.reportType === 'تقرير إنجاز المرحلتين' || report.reportCategory === 'two_phase' || (Array.isArray(report.phase1Items) && report.phase1Items.length > 0))) {
         dataRows = [
           ['مشروع صيانة طريق أوباري غات - تقرير الأعمال المنجزة للمرحلتين'],
-          [`التاريخ: ${report.dateFormatted || reportDateStr}`, `اليوم: ${report.dayName || 'السبت'}`, `رقم التقرير: ${reportNumber}`],
+          [`التاريخ: ${report.dateFormatted || reportDateStr}`, `اليوم: يوم ${cleanDayName(report.dayName)}`, `رقم التقرير: ${reportNumber}`],
           [],
           ['المرحلة الأولى - بنود أساسية وإضافية:'],
           ['م', 'الوصف', 'إنجاز اليوم (م.ط)', 'الإجمالي (م.ط)', 'المستهدف اليومي', 'الزيادة / النقصان', 'ملاحظات']
@@ -447,7 +475,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
         dataRows.push([`منشئ التقرير المعتمد: ${authorInfo.name} (${authorInfo.role})`]);
       } else if (Array.isArray(report.items) && report.items.length > 0) {
         dataRows = [
-          [report.title || `تقرير أعمال يوم ${report.dayName || ''} ${reportDateStr}`],
+          [report.title ? report.title.replace(/يوم\s+يوم/g, 'يوم') : `تقرير أعمال يوم ${cleanDayName(report.dayName)} ${reportDateStr}`],
           [`القطاع: ${sectorTitle}`, `رقم التقرير: ${reportNumber}`],
           [],
           ['م', 'البند', 'من', 'الى', 'طول (م)', 'م٢', 'ملاحظات']
@@ -542,11 +570,10 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
   );
   const isStandardNewForm = isTargetedWorksDoc || isFuelDoc || isTwoPhaseDoc || isRoadDoc || isExecutiveDoc || isEquipmentDoc || isPeriodicDoc;
   
-  // Default orientation: Portrait for executive progress report (matching the official 2-page document), landscape for two-phase report
-  // Default orientation: Landscape (أفقي) for all engineering reports to fit all tables and columns without clipping
-  const [printOrientation, setPrintOrientation] = useState('landscape');
+  // Default orientation: Portrait for executive progress, landscape for wide multi-column reports
+  const [printOrientation, setPrintOrientation] = useState(() => (isExecutiveDoc ? 'portrait' : 'landscape'));
 
-  // Dynamically update document.head @page rule so Chromium/Edge instantly detects orientation
+  // Dynamically update document.head @page rule so Chromium/Edge instantly detects orientation and compact margins
   useEffect(() => {
     if (typeof document === 'undefined') return;
     let styleEl = document.getElementById('print-orientation-head-style');
@@ -558,11 +585,19 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
     styleEl.innerHTML = `
       @page {
         size: ${printOrientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'};
-        margin: ${printOrientation === 'portrait' ? '6mm 8mm' : '4mm 5mm'};
+        margin: ${printOrientation === 'portrait' ? '4mm 5mm' : '3mm 4mm'};
       }
     `;
   }, [printOrientation]);
-  const [zoomLevel, setZoomLevel] = useState(isTwoPhaseDoc ? 85 : 100);
+
+  // Default optimal zoom level to guarantee fitting 100% on a single page (صفحة واحدة)
+  const [zoomLevel, setZoomLevel] = useState(() => {
+    if (isTwoPhaseDoc) return 76;
+    if (isExecutiveDoc) return 80;
+    if (isTargetedWorksDoc) return 85;
+    if (isRoadDoc) return 90;
+    return 100;
+  });
 
   const reportDateStr = report.date ? new Date(report.date).toLocaleDateString('ar-LY', {
     weekday: 'long',
@@ -599,11 +634,11 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
         overflow: 'hidden'
       }}
     >
-      {/* Dynamic Print Rules for Page Size and Exact Form Colors */}
+      {/* Dynamic Print Rules for Single Page Fit and Exact Form Colors */}
       <style>{`
         @page {
           size: ${printOrientation === 'portrait' ? 'A4 portrait' : 'A4 landscape'};
-          margin: ${printOrientation === 'portrait' ? '6mm 8mm' : '4mm 5mm'};
+          margin: ${printOrientation === 'portrait' ? '4mm 5mm' : '3mm 4mm'};
         }
 
         @media print {
@@ -617,7 +652,8 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
-          .signatures-block {
+          .signatures-block,
+          .report-creator-official-strip {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
@@ -669,15 +705,17 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
             min-width: 0 !important;
             min-height: 0 !important;
             height: auto !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             box-shadow: none !important;
             border: none !important;
             display: block !important;
             box-sizing: border-box !important;
-            zoom: 1 !important;
+            zoom: ${zoomLevel / 100} !important;
             transform: none !important;
             page-break-after: avoid !important;
             break-after: avoid !important;
+            page-break-before: avoid !important;
+            break-before: avoid !important;
           }
           .official-print-document > *:last-child,
           .official-print-document div:last-child {
@@ -688,8 +726,8 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
             width: 100% !important;
             max-width: 100% !important;
             table-layout: auto !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
             box-sizing: border-box !important;
           }
           .official-print-document th,
@@ -821,24 +859,44 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
             </button>
             <button
               type="button"
-              onClick={() => setZoomLevel(isTwoPhaseDoc ? 85 : 100)}
+              onClick={() => {
+                if (isTwoPhaseDoc) {
+                  setPrintOrientation('portrait');
+                  setZoomLevel(75);
+                } else if (isExecutiveDoc) {
+                  setPrintOrientation('portrait');
+                  setZoomLevel(80);
+                } else if (isTargetedWorksDoc) {
+                  setPrintOrientation('portrait');
+                  setZoomLevel(85);
+                } else if (isRoadDoc) {
+                  setPrintOrientation('landscape');
+                  setZoomLevel(90);
+                } else if (isFuelDoc) {
+                  setPrintOrientation('landscape');
+                  setZoomLevel(90);
+                } else {
+                  setZoomLevel(95);
+                }
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '0.45rem 0.7rem',
+                padding: '0.45rem 0.8rem',
                 borderRadius: '6px',
                 border: 'none',
-                background: '#ffffff',
-                color: '#1e293b',
-                fontWeight: 800,
-                fontSize: '0.8rem',
-                cursor: 'pointer'
+                background: '#16a34a',
+                color: '#ffffff',
+                fontWeight: 900,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)'
               }}
-              title="ملاءمة الشاشة"
+              title="ملاءمة ذكية لطباعة التقرير بالكامل في صفحة واحدة A4 دون أي انقسام"
             >
               <Maximize2 size={14} />
-              <span>ملاءمة</span>
+              <span>📄 صفحة واحدة (1 Page)</span>
             </button>
           </div>
 
@@ -1138,35 +1196,35 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
 
           {/* 0. Executive Progress Report Official Print Layout (Exact from User Document 24/10/2026) */}
           {isExecutiveDoc ? (
-            <div style={{ marginBottom: '1.25rem', direction: 'rtl', fontFamily: 'inherit' }}>
+            <div style={{ marginBottom: '0.4rem', direction: 'rtl', fontFamily: 'inherit' }}>
               
               {/* Official Libyan Agency Header */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '2.5px solid #000000',
-                paddingBottom: '0.45rem',
-                marginBottom: '0.65rem'
+                borderBottom: '2px solid #000000',
+                paddingBottom: '2px',
+                marginBottom: '4px'
               }}>
-                <div style={{ textAlign: 'right', minWidth: '220px' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: '#000000' }}>دولة ليبيا</h4>
-                  <h3 style={{ margin: '1px 0', fontSize: '0.94rem', fontWeight: 900, color: '#000000' }}>وزارة المواصلات</h3>
-                  <h2 style={{ margin: '1px 0', fontSize: '1rem', fontWeight: 900, color: '#1e3a8a' }}>جهاز تنفيذ مشروعات المواصلات</h2>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155' }}>مكتب جهاز الإشراف والمتابعة</div>
+                <div style={{ textAlign: 'right', minWidth: '180px' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.78rem', fontWeight: 900, color: '#000000' }}>دولة ليبيا</h4>
+                  <h3 style={{ margin: '1px 0', fontSize: '0.84rem', fontWeight: 900, color: '#000000' }}>وزارة المواصلات</h3>
+                  <h2 style={{ margin: '1px 0', fontSize: '0.90rem', fontWeight: 900, color: '#1e3a8a' }}>جهاز تنفيذ مشروعات المواصلات</h2>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#334155' }}>مكتب جهاز الإشراف والمتابعة</div>
                 </div>
 
-                <div style={{ textAlign: 'center', flex: 1, padding: '0 0.75rem' }}>
-                  <h1 style={{ margin: 0, fontSize: '1.28rem', fontWeight: 900, color: '#000000', letterSpacing: '-0.3px' }}>
+                <div style={{ textAlign: 'center', flex: 1, padding: '0 0.5rem' }}>
+                  <h1 style={{ margin: 0, fontSize: '1.14rem', fontWeight: 900, color: '#000000', letterSpacing: '-0.2px' }}>
                     {report.projectName || 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر'}
                   </h1>
-                  <h2 style={{ margin: '3px 0 0', fontSize: '1.14rem', fontWeight: 900, color: '#0f172a' }}>
+                  <h2 style={{ margin: '2px 0 0', fontSize: '1.02rem', fontWeight: 900, color: '#0f172a' }}>
                     {report.reportTitle || 'الموقف التنفيذي.'}
                   </h2>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '220px', justifyContent: 'flex-end' }}>
-                  <div style={{ textAlign: 'left', fontSize: '0.78rem', fontWeight: 800 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px', justifyContent: 'flex-end' }}>
+                  <div style={{ textAlign: 'left', fontSize: '0.72rem', fontWeight: 800, lineHeight: 1.25 }}>
                     <div><span style={{ color: '#64748b' }}>المرجع:</span> <strong dir="ltr" style={{ color: '#000' }}>{report.reportNumber || '093436_24.10.2026'}</strong></div>
                     <div><span style={{ color: '#64748b' }}>التاريخ:</span> <strong dir="ltr" style={{ color: '#000' }}>{report.reportDate || '24/10/2026'}</strong></div>
                     <div><span style={{ color: '#64748b' }}>الحالة:</span> <strong style={{ color: '#16a34a' }}>معتمد رسمياً</strong></div>
@@ -1175,12 +1233,12 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                     src={`${import.meta.env.BASE_URL}logo-agency.jpg`} 
                     alt="شعار الجهاز" 
                     style={{
-                      width: '62px',
-                      height: '62px',
+                      width: '46px',
+                      height: '46px',
                       objectFit: 'contain',
                       borderRadius: '50%',
                       border: '1.5px solid #000000',
-                      padding: '2px'
+                      padding: '1px'
                     }}
                   />
                 </div>
@@ -1193,14 +1251,14 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 alignItems: 'center',
                 border: '1.5px solid #000000',
                 background: '#f8fafc',
-                padding: '5px 12px',
+                padding: '3px 10px',
                 fontWeight: 900,
-                fontSize: '0.88rem',
-                marginBottom: '6px'
+                fontSize: '0.82rem',
+                marginBottom: '4px'
               }}>
                 <div>
                   <span>قيمة العقد: </span>
-                  <strong style={{ color: '#1e3a8a', fontSize: '1.02rem' }} dir="ltr">
+                  <strong style={{ color: '#1e3a8a', fontSize: '0.94rem' }} dir="ltr">
                     {fmtNum(report.contractValue || report.calculations?.contractVal || 897665675.03, 3, 3)}
                   </strong>
                   <span> دينار</span>
@@ -1216,27 +1274,28 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 width: '100%',
                 borderCollapse: 'collapse',
                 textAlign: 'center',
-                fontSize: '0.76rem',
+                fontSize: '0.70rem',
+                lineHeight: 1.15,
                 border: '1.5px solid #000000',
-                marginBottom: '10px'
+                marginBottom: '4px'
               }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000000' }}>
-                    <th style={{ border: '1px solid #000000', padding: '5px 2px', width: '34px', fontWeight: 900 }}>البند</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 6px', textAlign: 'right', fontWeight: 900 }}>الوصف</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 2px', width: '55px', fontWeight: 900 }}>الوحدة</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '92px', fontWeight: 900 }}>كمية العقد</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '92px', fontWeight: 900 }}>المنفذ</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '92px', fontWeight: 900 }}>المتبقي</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '85px', fontWeight: 900 }}>الفئة (د.ل)</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '120px', fontWeight: 900 }}>قيمة المنفذ</th>
-                    <th style={{ border: '1px solid #000000', padding: '5px 3px', width: '65px', fontWeight: 900 }}>النسبة %</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '30px', fontWeight: 900 }}>البند</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 5px', textAlign: 'right', fontWeight: 900 }}>الوصف</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '45px', fontWeight: 900 }}>الوحدة</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '85px', fontWeight: 900 }}>كمية العقد</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '85px', fontWeight: 900 }}>المنفذ</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '85px', fontWeight: 900 }}>المتبقي</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '80px', fontWeight: 900 }}>الفئة (د.ل)</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '105px', fontWeight: 900 }}>قيمة المنفذ</th>
+                    <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '60px', fontWeight: 900 }}>النسبة %</th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* شريط الأقسام الأصفر: بنود أساسية */}
-                  <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, pageBreakInside: 'avoid' }}>
-                    <td colSpan={9} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
+                  <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900 }}>
+                    <td colSpan={9} style={{ border: '1px solid #000000', padding: '2px 6px', textAlign: 'right', fontSize: '0.74rem' }}>
                       بنود أساسية
                     </td>
                   </tr>
@@ -1247,34 +1306,34 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                     return (
                       <React.Fragment key={item.id || idx}>
                         {showSec && item.section && (
-                          <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900, pageBreakInside: 'avoid' }}>
-                            <td colSpan={9} style={{ border: '1px solid #000000', padding: '3px 8px', textAlign: 'right', fontSize: '0.8rem' }}>
+                          <tr style={{ background: '#fef08a', color: '#000000', fontWeight: 900 }}>
+                            <td colSpan={9} style={{ border: '1px solid #000000', padding: '2px 6px', textAlign: 'right', fontSize: '0.72rem' }}>
                               {item.section}
                             </td>
                           </tr>
                         )}
-                        <tr style={{ pageBreakInside: 'avoid' }}>
-                          <td style={{ border: '1px solid #000000', padding: '3px 2px', fontWeight: 800 }}>{item.itemNumber || idx + 1}</td>
-                          <td style={{ border: '1px solid #000000', padding: '3px 6px', textAlign: 'right', fontWeight: 600, lineHeight: 1.32, fontSize: '0.74rem' }}>
+                        <tr>
+                          <td style={{ border: '1px solid #000000', padding: '2px 2px', fontWeight: 800 }}>{item.itemNumber || idx + 1}</td>
+                          <td style={{ border: '1px solid #000000', padding: '2px 5px', textAlign: 'right', fontWeight: 600, lineHeight: 1.15, fontSize: '0.68rem' }}>
                             {item.description}
                           </td>
-                          <td style={{ border: '1px solid #000000', padding: '3px 2px', fontWeight: 700 }}>{item.unit}</td>
-                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 700 }} dir="ltr">
+                          <td style={{ border: '1px solid #000000', padding: '2px 2px', fontWeight: 700 }}>{item.unit}</td>
+                          <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 700 }} dir="ltr">
                             {item.contractQuantity !== '' && item.contractQuantity !== null && item.contractQuantity !== undefined ? fmtNum(item.contractQuantity) : '—'}
                           </td>
-                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800, color: '#166534' }} dir="ltr">
+                          <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 800, color: '#166534' }} dir="ltr">
                             {item.executedQuantity !== '' && item.executedQuantity !== null && item.executedQuantity !== undefined && Number(item.executedQuantity) > 0 ? fmtNum(item.executedQuantity) : '—'}
                           </td>
-                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 700, color: '#9a3412' }} dir="ltr">
+                          <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 700, color: '#9a3412' }} dir="ltr">
                             {item.remainingQuantity !== '' && item.remainingQuantity !== null && item.remainingQuantity !== undefined && Number(item.remainingQuantity) > 0 ? fmtNum(item.remainingQuantity) : '—'}
                           </td>
-                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800 }} dir="ltr">
+                          <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 800 }} dir="ltr">
                             {item.unitRate !== '' && item.unitRate !== null && item.unitRate !== undefined ? fmtNum(item.unitRate) : '—'}
                           </td>
-                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 900 }} dir="ltr">
+                          <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 900 }} dir="ltr">
                             {item.executedValue !== '' && item.executedValue !== null && item.executedValue !== undefined && Number(item.executedValue) > 0 ? fmtNum(item.executedValue) : '—'}
                           </td>
-                          <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 900, color: '#1e40af' }} dir="ltr">
+                          <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 900, color: '#1e40af' }} dir="ltr">
                             {item.percentage !== '' && item.percentage !== null && item.percentage !== undefined && Number(item.percentage) > 0 ? `${fmtNum(item.percentage, 2, 2)}%` : '—'}
                           </td>
                         </tr>
@@ -1283,14 +1342,14 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                   })}
 
                   {/* سطر إجمالي البنود الأساسية */}
-                  <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000', borderBottom: '2px solid #000000', pageBreakInside: 'avoid' }}>
-                    <td colSpan={7} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
+                  <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000', borderBottom: '2px solid #000000' }}>
+                    <td colSpan={7} style={{ border: '1px solid #000000', padding: '3px 8px', textAlign: 'left', fontSize: '0.78rem' }}>
                       إجمالي البنود الأساسية
                     </td>
-                    <td style={{ border: '1px solid #000000', padding: '5px', fontSize: '0.88rem', fontWeight: 900 }} dir="ltr">
+                    <td style={{ border: '1px solid #000000', padding: '3px', fontSize: '0.80rem', fontWeight: 900 }} dir="ltr">
                       {fmtNum(report.calculations?.basicExecutedSum || (report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0))} د.ل
                     </td>
-                    <td style={{ border: '1px solid #000000', padding: '5px', fontSize: '0.88rem', color: '#166534', fontWeight: 900 }} dir="ltr">
+                    <td style={{ border: '1px solid #000000', padding: '3px', fontSize: '0.80rem', color: '#166534', fontWeight: 900 }} dir="ltr">
                       %{fmtNum(report.calculations?.basicPercentage || (((report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0) / (report.contractValue || report.calculations?.contractVal || 897665675.03)) * 100), 2, 2)}
                     </td>
                   </tr>
@@ -1304,41 +1363,42 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                   width: '100%',
                   borderCollapse: 'collapse',
                   textAlign: 'center',
-                  fontSize: '0.76rem',
+                  fontSize: '0.70rem',
+                  lineHeight: 1.15,
                   border: '1.5px solid #000000',
-                  marginBottom: '10px'
+                  marginBottom: '4px'
                 }}>
                   <thead>
                     <tr style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 900 }}>
-                      <th colSpan={6} style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'right', fontSize: '0.82rem' }}>
+                      <th colSpan={6} style={{ border: '1px solid #000000', padding: '2px 6px', textAlign: 'right', fontSize: '0.74rem' }}>
                         بنود إضافية (أعمال خارج نطاق العقد الأصلي - لا تُضاف لإجمالي العقد ولا لنسبة الإنجاز التعاقدية)
                       </th>
                     </tr>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000000' }}>
-                      <th style={{ border: '1px solid #000000', padding: '4px 2px', width: '34px', fontWeight: 900 }}>البند</th>
-                      <th style={{ border: '1px solid #000000', padding: '4px 6px', textAlign: 'right', fontWeight: 900 }}>الوصف</th>
-                      <th style={{ border: '1px solid #000000', padding: '4px 2px', width: '55px', fontWeight: 900 }}>الوحدة</th>
-                      <th style={{ border: '1px solid #000000', padding: '4px 3px', width: '92px', fontWeight: 900 }}>المنفذ</th>
-                      <th style={{ border: '1px solid #000000', padding: '4px 3px', width: '85px', fontWeight: 900 }}>الفئة (د.ل)</th>
-                      <th style={{ border: '1px solid #000000', padding: '4px 3px', width: '120px', fontWeight: 900 }}>قيمة المنفذ</th>
+                      <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '30px', fontWeight: 900 }}>البند</th>
+                      <th style={{ border: '1px solid #000000', padding: '3px 5px', textAlign: 'right', fontWeight: 900 }}>الوصف</th>
+                      <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '45px', fontWeight: 900 }}>الوحدة</th>
+                      <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '85px', fontWeight: 900 }}>المنفذ</th>
+                      <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '80px', fontWeight: 900 }}>الفئة (د.ل)</th>
+                      <th style={{ border: '1px solid #000000', padding: '3px 2px', width: '105px', fontWeight: 900 }}>قيمة المنفذ</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.additionalItems.map((item, idx) => (
-                      <tr key={item.id || idx} style={{ pageBreakInside: 'avoid' }}>
-                        <td style={{ border: '1px solid #000000', padding: '3px 2px', fontWeight: 800 }}>{item.itemNumber || idx + 1}</td>
-                        <td style={{ border: '1px solid #000000', padding: '3px 6px', textAlign: 'right', fontWeight: 600 }}>{item.description}</td>
-                        <td style={{ border: '1px solid #000000', padding: '3px 2px', fontWeight: 700 }}>{item.unit}</td>
-                        <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800 }} dir="ltr">{fmtNum(item.executedQuantity)}</td>
-                        <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 800 }} dir="ltr">{fmtNum(item.unitRate)}</td>
-                        <td style={{ border: '1px solid #000000', padding: '3px', fontWeight: 900 }} dir="ltr">{fmtNum(item.executedValue)}</td>
+                      <tr key={item.id || idx}>
+                        <td style={{ border: '1px solid #000000', padding: '2px 2px', fontWeight: 800 }}>{item.itemNumber || idx + 1}</td>
+                        <td style={{ border: '1px solid #000000', padding: '2px 5px', textAlign: 'right', fontWeight: 600 }}>{item.description}</td>
+                        <td style={{ border: '1px solid #000000', padding: '2px 2px', fontWeight: 700 }}>{item.unit}</td>
+                        <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 800 }} dir="ltr">{fmtNum(item.executedQuantity)}</td>
+                        <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 800 }} dir="ltr">{fmtNum(item.unitRate)}</td>
+                        <td style={{ border: '1px solid #000000', padding: '2px', fontWeight: 900 }} dir="ltr">{fmtNum(item.executedValue)}</td>
                       </tr>
                     ))}
-                    <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000', pageBreakInside: 'avoid' }}>
-                      <td colSpan={5} style={{ border: '1px solid #000000', padding: '5px 10px', textAlign: 'left', fontSize: '0.85rem' }}>
+                    <tr style={{ background: '#f8fafc', fontWeight: 900, borderTop: '2px solid #000000' }}>
+                      <td colSpan={5} style={{ border: '1px solid #000000', padding: '3px 8px', textAlign: 'left', fontSize: '0.78rem' }}>
                         إجمالي البنود الإضافية (خارج العقد):
                       </td>
-                      <td style={{ border: '1px solid #000000', padding: '5px', fontSize: '0.88rem', fontWeight: 900, color: '#0369a1' }} dir="ltr">
+                      <td style={{ border: '1px solid #000000', padding: '3px', fontSize: '0.80rem', fontWeight: 900, color: '#0369a1' }} dir="ltr">
                         {fmtNum(report.calculations?.additionalExecutedSum || (report.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0))} د.ل
                       </td>
                     </tr>
@@ -1351,30 +1411,30 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 border: '1.5px solid #000000',
                 background: '#f8fafc',
-                marginBottom: '10px',
+                marginBottom: '4px',
                 textAlign: 'center'
               }}>
-                <div style={{ padding: '6px', borderLeft: '1px solid #000000' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 800 }}>قيمة العقد المعتمدة</div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#000000' }} dir="ltr">
+                <div style={{ padding: '3px', borderLeft: '1px solid #000000' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#475569', fontWeight: 800 }}>قيمة العقد المعتمدة</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 900, color: '#000000' }} dir="ltr">
                     {fmtNum(report.contractValue || report.calculations?.contractVal || 897665675.03, 3, 3)} د.ل
                   </div>
                 </div>
-                <div style={{ padding: '6px', borderLeft: '1px solid #000000' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 800 }}>إجمالي المنفذ الفعلي</div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#166534' }} dir="ltr">
+                <div style={{ padding: '3px', borderLeft: '1px solid #000000' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#166534', fontWeight: 800 }}>إجمالي المنفذ الفعلي</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 900, color: '#166534' }} dir="ltr">
                     {fmtNum(report.calculations?.basicExecutedSum || (report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0))} د.ل
                   </div>
                 </div>
-                <div style={{ padding: '6px', borderLeft: '1px solid #000000' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#c2410c', fontWeight: 800 }}>المتبقي المالي من العقد</div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#ea580c' }} dir="ltr">
+                <div style={{ padding: '3px', borderLeft: '1px solid #000000' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#c2410c', fontWeight: 800 }}>المتبقي المالي من العقد</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 900, color: '#ea580c' }} dir="ltr">
                     {fmtNum(report.calculations?.grandRemainingVal || Math.max(0, (report.contractValue || report.calculations?.contractVal || 897665675.03) - (report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0)))} د.ل
                   </div>
                 </div>
-                <div style={{ padding: '6px' }}>
-                  <div style={{ fontSize: '0.74rem', color: '#1e40af', fontWeight: 800 }}>نسبة الإنجاز المالي الإجمالية</div>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#1d4ed8' }} dir="ltr">
+                <div style={{ padding: '3px' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#1e40af', fontWeight: 800 }}>نسبة الإنجاز المالي الإجمالية</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#1d4ed8' }} dir="ltr">
                     %{fmtNum(report.calculations?.basicPercentage || (((report.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0) / (report.contractValue || report.calculations?.contractVal || 897665675.03)) * 100), 2, 2)}
                   </div>
                 </div>
@@ -1383,26 +1443,24 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
               <div className="report-creator-official-strip" style={{
                 border: '1.5px solid #000000',
-                padding: '10px 16px',
+                padding: '4px 10px',
                 background: '#ffffff',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                pageBreakInside: 'avoid',
-                breakInside: 'avoid'
+                alignItems: 'center'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
-                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.80rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '1px' }}>
                     {authorInfo.name}
                   </span>
                   {authorInfo.role && (
-                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#475569' }}>
                       ({authorInfo.role})
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>
                   اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
@@ -1420,8 +1478,8 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 border: '2px solid #000000',
                 marginBottom: '1rem'
               }}>
-                <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 900 }}>
-                  {report.title || `بيان أعمال يوم ${report.dayName || ''} ${report.dateFormatted || reportDateStr}`}
+                <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900 }}>
+                  {report.title ? report.title.replace(/يوم\s+يوم/g, 'يوم') : `بيان أعمال يوم ${cleanDayName(report.dayName)} ${report.dateFormatted || reportDateStr}`}
                 </h1>
               </div>
 
@@ -1584,7 +1642,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 direction: 'ltr'
               }}>
                 <span>{report.dateFormatted || (report.date ? new Date(report.date).toLocaleDateString('ar-LY') : '')}</span>
-                <span style={{ direction: 'rtl' }}>يوم {report.dayName || 'السبت'}</span>
+                <span style={{ direction: 'rtl' }}>يوم {cleanDayName(report.dayName)}</span>
               </div>
 
               {/* Official Fuel Table */}
@@ -1592,52 +1650,52 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 width: '100%',
                 borderCollapse: 'collapse',
                 textAlign: 'center',
-                fontSize: '1rem',
+                fontSize: '0.95rem',
                 border: '2px solid #000000'
               }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', color: '#000000', fontWeight: 900 }}>
-                    <th style={{ border: '2px solid #000000', padding: '0.75rem 0.5rem', width: '50px' }}>ت</th>
-                    <th style={{ border: '2px solid #000000', padding: '0.75rem 1rem', width: '23%' }}>الموقع</th>
-                    <th style={{ border: '2px solid #000000', padding: '0.75rem 1rem', width: '25%' }}>الكمية المصروفة (لتر)</th>
-                    <th style={{ border: '2px solid #000000', padding: '0.75rem 1rem', width: '23%' }}>الوارد (لتر)</th>
-                    <th style={{ border: '2px solid #000000', padding: '0.75rem 1rem', width: '25%' }}>الكمية المتبقية (لتر)</th>
+                    <th style={{ border: '2px solid #000000', padding: '0.6rem 0.4rem', width: '50px' }}>ت</th>
+                    <th style={{ border: '2px solid #000000', padding: '0.6rem 0.8rem', width: '23%' }}>الموقع</th>
+                    <th style={{ border: '2px solid #000000', padding: '0.6rem 0.8rem', width: '25%' }}>الكمية المصروفة (لتر)</th>
+                    <th style={{ border: '2px solid #000000', padding: '0.6rem 0.8rem', width: '23%' }}>الوارد (لتر)</th>
+                    <th style={{ border: '2px solid #000000', padding: '0.6rem 0.8rem', width: '25%' }}>الكمية المتبقية (لتر)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(report.fuelItems || []).map((row, idx) => (
                     <tr key={idx} style={{ background: '#ffffff' }}>
-                      <td style={{ border: '2px solid #000000', padding: '0.65rem', fontWeight: 900 }}>
+                      <td style={{ border: '2px solid #000000', padding: '0.55rem', fontWeight: 900 }}>
                         {idx + 1}
                       </td>
-                      <td style={{ border: '2px solid #000000', padding: '0.65rem 1rem', fontWeight: 800 }}>
+                      <td style={{ border: '2px solid #000000', padding: '0.55rem 0.8rem', fontWeight: 800 }}>
                         {row.location || '-'}
                       </td>
-                      <td style={{ border: '2px solid #000000', padding: '0.65rem', fontWeight: 800 }}>
-                        {row.dispatchedLiters ? Number(row.dispatchedLiters).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                      <td style={{ border: '2px solid #000000', padding: '0.55rem', fontWeight: 800 }} dir="ltr">
+                        {formatFuelNumber(row.dispatchedLiters)}
                       </td>
-                      <td style={{ border: '2px solid #000000', padding: '0.65rem', fontWeight: 800 }}>
-                        {row.receivedLiters ? Number(row.receivedLiters).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                      <td style={{ border: '2px solid #000000', padding: '0.55rem', fontWeight: 800 }} dir="ltr">
+                        {formatFuelNumber(row.receivedLiters)}
                       </td>
-                      <td style={{ border: '2px solid #000000', padding: '0.65rem', fontWeight: 800 }}>
-                        {row.remainingLiters ? Number(row.remainingLiters).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                      <td style={{ border: '2px solid #000000', padding: '0.55rem', fontWeight: 800 }} dir="ltr">
+                        {formatFuelNumber(row.remainingLiters)}
                       </td>
                     </tr>
                   ))}
 
                   {/* Bright Yellow Footer Row matching photo exactly */}
                   <tr style={{ background: '#ffff00', color: '#000000', fontWeight: 900 }}>
-                    <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.1rem', textAlign: 'center' }}>
+                    <td colSpan={2} style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '1.05rem', textAlign: 'center' }}>
                       الإجمالي (لتر)
                     </td>
-                    <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.1rem' }}>
-                      {Number(report.totalDispatchedLiters || report.fuelAmount || (report.fuelItems || []).reduce((acc, c) => acc + (c.dispatchedLiters || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
+                      {formatFuelNumber(report.totalDispatchedLiters || report.fuelAmount || (report.fuelItems || []).reduce((acc, c) => acc + (safeCleanPrintNumber(c.dispatchedLiters) || 0), 0))}
                     </td>
-                    <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.1rem' }}>
-                      {Number(report.totalReceivedLiters || (report.fuelItems || []).reduce((acc, c) => acc + (c.receivedLiters || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
+                      {formatFuelNumber(report.totalReceivedLiters || (report.fuelItems || []).reduce((acc, c) => acc + (safeCleanPrintNumber(c.receivedLiters) || 0), 0))}
                     </td>
-                    <td style={{ border: '2px solid #000000', padding: '0.75rem', fontSize: '1.1rem' }}>
-                      {Number(report.totalRemainingLiters || (report.fuelItems || []).reduce((acc, c) => acc + (c.remainingLiters || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '1.05rem', fontWeight: 900 }} dir="ltr">
+                      {formatFuelNumber(report.totalRemainingLiters || (report.fuelItems || []).reduce((acc, c) => acc + (safeCleanPrintNumber(c.remainingLiters) || 0), 0))}
                     </td>
                   </tr>
                 </tbody>
@@ -1878,21 +1936,21 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
             </div>
 
           ) : isTwoPhaseDoc ? (
-            <div style={{ marginBottom: '1.5rem', direction: 'rtl', width: '100%', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+            <div style={{ marginBottom: '0.4rem', direction: 'rtl', width: '100%', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
               {/* Document Title Header matching the Photo */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '2.5px solid #000000',
-                paddingBottom: '0.6rem',
-                marginBottom: '1rem'
+                borderBottom: '2px solid #000000',
+                paddingBottom: '2px',
+                marginBottom: '4px'
               }}>
                 <div style={{ textAlign: 'right' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#000000' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#000000' }}>
                     مشروع صيانة طريق أوباري غات
                   </h2>
-                  <h3 style={{ margin: '0.2rem 0 0', fontSize: '1.1rem', fontWeight: 800, color: '#1e3a8a' }}>
+                  <h3 style={{ margin: '1px 0 0', fontSize: '0.96rem', fontWeight: 800, color: '#1e3a8a' }}>
                     الأعمال المنجزة
                   </h3>
                 </div>
@@ -1900,69 +1958,69 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '1.5rem',
+                  gap: '1rem',
                   border: '1.5px solid #000000',
-                  padding: '6px 16px',
+                  padding: '3px 12px',
                   background: '#f8fafc',
                   fontWeight: 900,
-                  fontSize: '0.95rem'
+                  fontSize: '0.82rem'
                 }}>
                   <div>
-                    <span style={{ color: '#64748b', marginLeft: '6px' }}>التاريخ:</span>
+                    <span style={{ color: '#64748b', marginLeft: '4px' }}>التاريخ:</span>
                     <span style={{ direction: 'ltr' }}>{report.dateFormatted || (report.date ? report.date.split('T')[0] : reportDateStr)}</span>
                   </div>
-                  <div style={{ borderRight: '1.5px solid #000000', paddingRight: '1rem' }}>
-                    <span style={{ color: '#64748b', marginLeft: '6px' }}>اليوم:</span>
-                    <span>{report.dayName || 'السبت'}</span>
+                  <div style={{ borderRight: '1.5px solid #000000', paddingRight: '0.8rem' }}>
+                    <span style={{ color: '#64748b', marginLeft: '4px' }}>اليوم:</span>
+                    <span>{cleanDayName(report.dayName)}</span>
                   </div>
                 </div>
               </div>
 
               {/* ROW 1: Phase 1 Table (Right) & Chart (Left) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.4rem', marginBottom: '3px' }}>
                 <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
-                  <div style={{ background: '#1e40af', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
+                  <div style={{ background: '#1e40af', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '2px', fontSize: '0.80rem' }}>
                     المرحلة الأولى
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.68rem', lineHeight: 1.15, background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
-                        <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>الوصف</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '85px' }}>إنجاز اليوم (م.ط)</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '85px' }}>الإجمالي (م.ط)</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '80px' }}>المستهدف اليومي</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '80px' }}>الزيادة / النقصان</th>
-                        <th style={{ border: '1px solid #000', padding: '4px' }}>ملاحظات</th>
+                        <th style={{ border: '1px solid #000', padding: '2px 1px', width: '22px' }}>م</th>
+                        <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right' }}>الوصف</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '80px' }}>إنجاز اليوم (م.ط)</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '80px' }}>الإجمالي (م.ط)</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '75px' }}>المستهدف اليومي</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '75px' }}>الزيادة / النقصان</th>
+                        <th style={{ border: '1px solid #000', padding: '2px' }}>ملاحظات</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
-                        <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
+                        <td colSpan={7} style={{ border: '1px solid #000', padding: '2px 6px', textAlign: 'right', fontSize: '0.70rem' }}>بنود أساسية</td>
                       </tr>
                       {(report.phase1Items || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 1px', color: '#000000' }}>{idx + 1}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
-                        <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
+                        <td colSpan={7} style={{ border: '1px solid #000', padding: '2px 6px', textAlign: 'right', fontSize: '0.70rem' }}>بنود إضافية</td>
                       </tr>
                       {(report.phase1Items || []).filter(i => i && i.category === 'additional').map((it, idx) => (
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 1px', color: '#000000' }}>{idx + 4}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1974,50 +2032,50 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               </div>
 
               {/* ROW 2: Phase 2 Table (Right) & Chart (Left) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.4rem', marginBottom: '3px' }}>
                 <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
-                  <div style={{ background: '#0284c7', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
+                  <div style={{ background: '#0284c7', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '2px', fontSize: '0.80rem' }}>
                     المرحلة الثانية
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.68rem', lineHeight: 1.15, background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
-                        <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>الوصف</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '85px' }}>إنجاز اليوم (م.ط)</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '85px' }}>الإجمالي (م.ط)</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '80px' }}>المستهدف اليومي</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '80px' }}>الزيادة / النقصان</th>
-                        <th style={{ border: '1px solid #000', padding: '4px' }}>ملاحظات</th>
+                        <th style={{ border: '1px solid #000', padding: '2px 1px', width: '22px' }}>م</th>
+                        <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right' }}>الوصف</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '80px' }}>إنجاز اليوم (م.ط)</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '80px' }}>الإجمالي (م.ط)</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '75px' }}>المستهدف اليومي</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '75px' }}>الزيادة / النقصان</th>
+                        <th style={{ border: '1px solid #000', padding: '2px' }}>ملاحظات</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
-                        <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
+                        <td colSpan={7} style={{ border: '1px solid #000', padding: '2px 6px', textAlign: 'right', fontSize: '0.70rem' }}>بنود أساسية</td>
                       </tr>
                       {(report.phase2Items || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 1px', color: '#000000' }}>{idx + 1}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
-                        <td colSpan={7} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
+                        <td colSpan={7} style={{ border: '1px solid #000', padding: '2px 6px', textAlign: 'right', fontSize: '0.70rem' }}>بنود إضافية</td>
                       </tr>
                       {(report.phase2Items || []).filter(i => i && i.category === 'additional').map((it, idx) => (
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px' }}>{formatPrintNumber(it.dailyTarget)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 1px', color: '#000000' }}>{idx + 4}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(it.dailyTarget)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>{formatPrintNumber(it.varianceMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2029,51 +2087,51 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               </div>
 
               {/* ROW 3: Combined Two-Phase Table (Right) & Chart (Left) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.4rem', marginBottom: '3px' }}>
                 <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
-                  <div style={{ background: '#0f172a', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '4px', fontSize: '0.9rem' }}>
+                  <div style={{ background: '#0f172a', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '2px', fontSize: '0.80rem' }}>
                     إجمالي المنجز للمرحلتين (تجميع آلي فوري)
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.68rem', lineHeight: 1.15, background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
-                        <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px' }}>م</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>الوصف</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '90px', background: '#eff6ff' }}>إنجاز اليوم (م.ط)</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '90px', background: '#f0fdf4' }}>الإجمالي (م.ط)</th>
-                        <th style={{ border: '1px solid #000', padding: '4px', width: '90px' }}>الجاهز للعمل في البند</th>
-                        <th style={{ border: '1px solid #000', padding: '4px' }}>ملاحظات وتفاصيل التجميع</th>
+                        <th style={{ border: '1px solid #000', padding: '2px 1px', width: '22px' }}>م</th>
+                        <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right' }}>الوصف</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '85px', background: '#eff6ff' }}>إنجاز اليوم (م.ط)</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '85px', background: '#f0fdf4' }}>الإجمالي (م.ط)</th>
+                        <th style={{ border: '1px solid #000', padding: '2px', width: '85px' }}>الجاهز للعمل في البند</th>
+                        <th style={{ border: '1px solid #000', padding: '2px' }}>ملاحظات وتفاصيل التجميع</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
-                        <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود أساسية</td>
+                        <td colSpan={6} style={{ border: '1px solid #000', padding: '2px 6px', textAlign: 'right', fontSize: '0.70rem' }}>بنود أساسية</td>
                       </tr>
                       {(report.combinedItems || []).filter(i => i && (i.category === 'basic' || !i.category)).map((it, idx) => (
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 1}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{formatPrintNumber(it.todayMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{formatPrintNumber(it.totalMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>
+                          <td style={{ border: '1px solid #000', padding: '2px 1px', color: '#000000' }}>{idx + 1}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 900, color: '#1d4ed8' }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 900, color: '#15803d' }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>
                             {formatPrintNumber(it.readyToWorkMeters || it.readyToWork)}
                           </td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
                       <tr style={{ background: '#e2e8f0', fontWeight: 900 }}>
-                        <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 8px', textAlign: 'right', fontSize: '0.75rem' }}>بنود إضافية</td>
+                        <td colSpan={6} style={{ border: '1px solid #000', padding: '2px 6px', textAlign: 'right', fontSize: '0.70rem' }}>بنود إضافية</td>
                       </tr>
                       {(report.combinedItems || []).filter(i => i && i.category === 'additional').map((it, idx) => (
                         <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                          <td style={{ border: '1px solid #000', padding: '3px', color: '#000000' }}>{idx + 4}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#1d4ed8' }}>{formatPrintNumber(it.todayMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 900, color: '#15803d' }}>{formatPrintNumber(it.totalMeters)}</td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontWeight: 800 }}>
+                          <td style={{ border: '1px solid #000', padding: '2px 1px', color: '#000000' }}>{idx + 4}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{it.name}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 900, color: '#1d4ed8' }}>{formatPrintNumber(it.todayMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 900, color: '#15803d' }}>{formatPrintNumber(it.totalMeters)}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 800 }}>
                             {formatPrintNumber(it.readyToWorkMeters || it.readyToWork)}
                           </td>
-                          <td style={{ border: '1px solid #000', padding: '3px', fontSize: '0.72rem' }}>{it.notes || '-'}</td>
+                          <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{it.notes || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2085,50 +2143,50 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               </div>
 
               {/* ROW 4: Remaining Balances Dual Tables */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem', border: '1.5px solid #000000', padding: '6px', background: '#ffffff', backgroundColor: '#ffffff' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '3px', border: '1.5px solid #000000', padding: '3px', background: '#ffffff', backgroundColor: '#ffffff' }}>
                 {/* Sub-table A */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.68rem', lineHeight: 1.15, background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #000' }}>
-                      <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>المتبقي من البند</th>
-                      <th style={{ border: '1px solid #000', padding: '4px', width: '70px' }}>المرحلة الأولى</th>
-                      <th style={{ border: '1px solid #000', padding: '4px', width: '70px' }}>المرحلة الثانية</th>
-                      <th style={{ border: '1px solid #000', padding: '4px', width: '70px', background: '#e2e8f0' }}>الإجمالي</th>
-                      <th style={{ border: '1px solid #000', padding: '4px' }}>ملاحظات</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', textAlign: 'right' }}>المتبقي من البند</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', width: '65px' }}>المرحلة الأولى</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', width: '65px' }}>المرحلة الثانية</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', width: '65px', background: '#e2e8f0' }}>الإجمالي</th>
+                      <th style={{ border: '1px solid #000', padding: '2px' }}>ملاحظات</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(report.remainingItems || []).filter(r => r && r.group === 'A').map((r, idx) => (
                       <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                        <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase1)}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase2)}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{formatPrintNumber(r.total)}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontSize: '0.72rem' }}>{r.notes || '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(r.phase1)}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(r.phase2)}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 900 }}>{formatPrintNumber(r.total)}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{r.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
 
                 {/* Sub-table B */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.76rem', background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.68rem', lineHeight: 1.15, background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #000' }}>
-                      <th style={{ border: '1px solid #000', padding: '4px', textAlign: 'right' }}>المتبقي من البند</th>
-                      <th style={{ border: '1px solid #000', padding: '4px', width: '70px' }}>المرحلة الأولى</th>
-                      <th style={{ border: '1px solid #000', padding: '4px', width: '70px' }}>المرحلة الثانية</th>
-                      <th style={{ border: '1px solid #000', padding: '4px', width: '70px', background: '#e2e8f0' }}>الإجمالي</th>
-                      <th style={{ border: '1px solid #000', padding: '4px' }}>ملاحظات</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', textAlign: 'right' }}>المتبقي من البند</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', width: '65px' }}>المرحلة الأولى</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', width: '65px' }}>المرحلة الثانية</th>
+                      <th style={{ border: '1px solid #000', padding: '2px', width: '65px', background: '#e2e8f0' }}>الإجمالي</th>
+                      <th style={{ border: '1px solid #000', padding: '2px' }}>ملاحظات</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(report.remainingItems || []).filter(r => r && r.group === 'B').map((r, idx) => (
                       <tr key={idx} style={{ background: '#ffffff', backgroundColor: '#ffffff', color: '#000000' }}>
-                        <td style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase1)}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px' }}>{formatPrintNumber(r.phase2)}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontWeight: 900 }}>{formatPrintNumber(r.total)}</td>
-                        <td style={{ border: '1px solid #000', padding: '4px', fontSize: '0.72rem' }}>{r.notes || '-'}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'right', fontWeight: 800, color: '#000000' }}>{r.name}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(r.phase1)}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px' }}>{formatPrintNumber(r.phase2)}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px', fontWeight: 900 }}>{formatPrintNumber(r.total)}</td>
+                        <td style={{ border: '1px solid #000', padding: '2px', fontSize: '0.66rem' }}>{r.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -2137,29 +2195,27 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
 
               {/* Official Creator Strip (اسم منشئ التقرير يحدد تلقائياً من اسم المستخدم) */}
               <div className="report-creator-official-strip" style={{
-                marginTop: '1.25rem',
-                marginBottom: '0.75rem',
-                padding: '10px 16px',
+                marginTop: '3px',
+                marginBottom: '2px',
+                padding: '4px 10px',
                 border: '1.5px solid #000000',
                 background: '#ffffff',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                pageBreakInside: 'avoid',
-                breakInside: 'avoid'
+                alignItems: 'center'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
-                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.80rem', fontWeight: 900, color: '#000000' }}>اسم منشئ التقرير:</span>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#1e3a8a', borderBottom: '1.5px dotted #1e3a8a', paddingBottom: '1px' }}>
                     {authorInfo.name}
                   </span>
                   {authorInfo.role && (
-                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#475569' }}>
                       ({authorInfo.role})
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>
                   اعتماد وتوثيق آلي بنظام جهاز الإشراف
                 </div>
               </div>
@@ -2312,8 +2368,8 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
                 border: '2.5px solid #000000',
                 marginBottom: '1rem'
               }}>
-                <h1 style={{ margin: 0, fontSize: '1.55rem', fontWeight: 900 }}>
-                  {report.title || (report.dayName ? `تقرير أعمال يوم ${report.dayName} ${report.dateFormatted || reportDateStr}` : `تقرير أعمال الطريق اليومي`)}
+                <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900 }}>
+                  {report.title ? report.title.replace(/يوم\s+يوم/g, 'يوم') : (report.dayName ? `تقرير أعمال يوم ${cleanDayName(report.dayName)} ${report.dateFormatted || reportDateStr}` : `تقرير أعمال الطريق اليومي`)}
                 </h1>
               </div>
 

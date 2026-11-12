@@ -29,7 +29,7 @@ export const initialFuelDailyData = {
   dateFormatted: '2026-10-24',
   date: '2026-10-24T00:00:00.000Z',
   formattedSlashDate: '24/10/2026',
-  dayName: 'يوم السبت',
+  dayName: 'السبت',
   reportNumber: 'FUEL-094834_24.10.2026',
   reportType: 'تقرير كميات الوقود اليومية',
   reportCategory: 'fuel',
@@ -100,7 +100,7 @@ export const normalizeFuelReport = (data) => {
     reportDate: repDate,
     formattedSlashDate: slashDate || '24/10/2026',
     dateFormatted: slashDate || '24/10/2026',
-    dayName: data.dayName || 'يوم السبت',
+    dayName: data.dayName ? String(data.dayName).replace(/^يوم\s+/g, '').trim() : 'السبت',
     reportNumber: data.reportNumber || 'FUEL-094834_24.10.2026',
     reportTitle: data.reportTitle || data.title || 'تقرير كميات الوقود اليومية',
     fuelOfficer: data.fuelOfficer || (data.uploadedBy ? data.uploadedBy.split('(')[0].trim() : 'مسؤول الوقود بالموقع'),
@@ -762,7 +762,7 @@ export const FuelDailyReportForm = ({
                       ...prev,
                       reportDate: newDate,
                       formattedSlashDate: slashStr,
-                      dayName: `يوم ${dayStr}`
+                      dayName: dayStr
                     }));
                   }}
                   style={{
@@ -793,7 +793,7 @@ export const FuelDailyReportForm = ({
                     ...prev,
                     reportDate: d,
                     formattedSlashDate: `${parts[2]}/${parts[1]}/${parts[0]}`,
-                    dayName: `يوم ${dayStr}`
+                    dayName: dayStr
                   }));
                 }}
                 style={{
@@ -817,7 +817,7 @@ export const FuelDailyReportForm = ({
                     ...prev,
                     reportDate: '2026-10-24',
                     formattedSlashDate: '24/10/2026',
-                    dayName: 'يوم السبت'
+                    dayName: 'السبت'
                   }));
                 }}
                 style={{
@@ -1098,7 +1098,7 @@ export const FuelDailyReportForm = ({
               {reportData.formattedSlashDate}
             </span>
             <span style={{ direction: 'rtl', fontWeight: 900 }}>
-              {reportData.dayName}
+              {reportData.dayName ? (reportData.dayName.startsWith('يوم') ? reportData.dayName : `يوم ${reportData.dayName}`) : 'يوم السبت'}
             </span>
           </div>
         </div>

@@ -142,7 +142,7 @@ export const TwoPhaseDailyReportForm = ({
       if (!rep || !Array.isArray(rep.phase1Items) || rep.phase1Items.length === 0) return;
       if (rep.reportDate) setReportDate(rep.reportDate);
       if (rep.dateFormatted) setReportDate(rep.dateFormatted);
-      if (rep.dayName) setDayName(rep.dayName);
+      if (rep.dayName) setDayName(String(rep.dayName).replace(/^يوم\s+/g, '').trim());
       if (rep.reportNumber) setReportNumber(rep.reportNumber);
       if (rep.sectorDirector) setSectorDirector(rep.sectorDirector);
       if (rep.ownerRepresentative) setOwnerRepresentative(rep.ownerRepresentative);
