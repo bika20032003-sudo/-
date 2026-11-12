@@ -50,7 +50,7 @@ export const formatFuelNumber = (val) => {
   return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-// Vector SVG Bar Chart for Two-Phase Print Layout (Compact single-page fit)
+// Vector SVG Bar Chart for Two-Phase Print Layout (Full Height & Clear Visual Fidelity)
 const TwoPhasePrintChart = ({ title, items }) => {
   const validItems = (items || []).filter(Boolean);
   const maxVal = Math.max(...validItems.map(i => safeCleanPrintNumber(i.totalMeters) || safeCleanPrintNumber(i.todayMeters) || 0), 100);
@@ -58,22 +58,22 @@ const TwoPhasePrintChart = ({ title, items }) => {
     <div style={{
       border: '1.5px solid #000000',
       background: '#ffffff',
-      padding: '2px 4px',
+      padding: '4px 6px',
       height: '100%',
-      minHeight: '62px',
-      maxHeight: '85px',
+      minHeight: '165px',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
       boxSizing: 'border-box'
     }}>
       <div style={{
-        fontSize: '0.72rem',
+        fontSize: '0.78rem',
         fontWeight: 900,
         textAlign: 'center',
-        borderBottom: '1px solid #cbd5e1',
-        paddingBottom: '2px',
-        marginBottom: '2px',
+        background: '#f8fafc',
+        borderBottom: '1.5px solid #000000',
+        padding: '3px 4px',
+        marginBottom: '4px',
         color: '#0f172a'
       }}>
         {title}
@@ -83,16 +83,15 @@ const TwoPhasePrintChart = ({ title, items }) => {
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'space-around',
-        gap: '3px',
-        minHeight: '48px',
-        maxHeight: '62px',
-        padding: '0 2px 3px 2px',
-        borderBottom: '1px solid #000000'
+        gap: '4px',
+        minHeight: '115px',
+        padding: '0 4px 4px 4px',
+        borderBottom: '1.5px solid #000000'
       }}>
         {validItems.map((it, idx) => {
           if (!it) return null;
           const val = safeCleanPrintNumber(it.totalMeters) || safeCleanPrintNumber(it.todayMeters) || 0;
-          const heightPercent = maxVal > 0 ? Math.min(100, Math.max(val > 0 ? 8 : 2, (val / maxVal) * 95)) : 2;
+          const heightPercent = maxVal > 0 ? Math.min(100, Math.max(val > 0 ? 10 : 3, (val / maxVal) * 92)) : 3;
           return (
             <div key={idx} style={{
               flex: 1,
@@ -102,25 +101,26 @@ const TwoPhasePrintChart = ({ title, items }) => {
               height: '100%',
               justifyContent: 'flex-end'
             }}>
-              <span style={{ fontSize: '0.6rem', fontWeight: 800, marginBottom: '2px', color: '#000000' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 900, marginBottom: '2px', color: '#000000', whiteSpace: 'nowrap' }}>
                 {val > 0 ? (val >= 1000 ? `${(val/1000).toFixed(1)}k` : val) : ''}
               </span>
               <div style={{
-                width: '75%',
+                width: '78%',
                 height: `${heightPercent}%`,
                 background: it.color || '#2563eb',
-                border: '1px solid #000000',
-                borderRadius: '2px 2px 0 0'
+                border: '1.5px solid #000000',
+                borderRadius: '3px 3px 0 0',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)'
               }} />
               <span style={{
-                fontSize: '0.55rem',
-                fontWeight: 800,
-                color: '#000000',
-                marginTop: '3px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '48px'
+                fontSize: '0.62rem',
+                fontWeight: 900,
+                color: '#0f172a',
+                marginTop: '4px',
+                textAlign: 'center',
+                lineHeight: 1.15,
+                wordBreak: 'break-word',
+                maxWidth: '56px'
               }}>
                 {it.shortName || it.name}
               </span>
@@ -1977,7 +1977,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               </div>
 
               {/* ROW 1: Phase 1 Table (Right) & Chart (Left) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.4rem', marginBottom: '3px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: '0.45rem', marginBottom: '4px', alignItems: 'stretch' }}>
                 <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#1e40af', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '2px', fontSize: '0.80rem' }}>
                     المرحلة الأولى
@@ -2032,7 +2032,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               </div>
 
               {/* ROW 2: Phase 2 Table (Right) & Chart (Left) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.4rem', marginBottom: '3px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: '0.45rem', marginBottom: '4px', alignItems: 'stretch' }}>
                 <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#0284c7', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '2px', fontSize: '0.80rem' }}>
                     المرحلة الثانية
@@ -2087,7 +2087,7 @@ export const OfficialPrintModal = ({ report, onClose, onForwardReport, currentUs
               </div>
 
               {/* ROW 3: Combined Two-Phase Table (Right) & Chart (Left) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '0.4rem', marginBottom: '3px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: '0.45rem', marginBottom: '4px', alignItems: 'stretch' }}>
                 <div style={{ border: '1.5px solid #000000', background: '#ffffff', backgroundColor: '#ffffff' }}>
                   <div style={{ background: '#0f172a', color: '#fff', textAlign: 'center', fontWeight: 900, padding: '2px', fontSize: '0.80rem' }}>
                     إجمالي المنجز للمرحلتين (تجميع آلي فوري)

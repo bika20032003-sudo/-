@@ -6,7 +6,7 @@ import {
   HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check, RefreshCw, Zap } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
-  CartesianGrid, Tooltip, Cell 
+  CartesianGrid, Tooltip, Cell, LabelList 
 } from 'recharts';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
@@ -1263,16 +1263,17 @@ export const TwoPhaseDailyReportForm = ({
     );
   };
 
-  // Helper renderer for chart cards
+  // Helper renderer for chart cards (Large, spacious & clear visual fidelity)
   const renderChartCard = (title, data) => {
     return (
       <div style={{
         background: '#ffffff',
         borderRadius: '10px',
-        border: '1px solid #cbd5e1',
-        padding: '0.85rem',
+        border: '1.5px solid #cbd5e1',
+        padding: '1rem',
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         height: '100%',
+        minHeight: '380px',
         display: 'flex',
         flexDirection: 'column'
       }}>
@@ -1280,35 +1281,45 @@ export const TwoPhaseDailyReportForm = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #e2e8f0',
-          paddingBottom: '0.5rem',
-          marginBottom: '0.5rem'
+          borderBottom: '1.5px solid #e2e8f0',
+          paddingBottom: '0.6rem',
+          marginBottom: '0.75rem'
         }}>
-          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+          <span style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0f172a' }}>
             📊 {title}
           </span>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>متر طولي (م.ط)</span>
+          <span style={{ fontSize: '0.80rem', color: '#64748b', fontWeight: 700 }}>متر طولي (م.ط)</span>
         </div>
 
-        <div style={{ width: '100%', height: '200px', flex: 1 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 15, right: 10, left: 10, bottom: 25 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+        <div style={{ width: '100%', minHeight: '320px', flex: 1, height: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%" minHeight={320}>
+            <BarChart data={data} margin={{ top: 25, right: 10, left: 10, bottom: 45 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis 
                 dataKey="name" 
-                tick={{ fontSize: 10, fill: '#475569' }} 
+                tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 700 }} 
                 interval={0}
-                angle={-15}
+                angle={-18}
                 textAnchor="end"
+                height={50}
               />
-              <YAxis tick={{ fontSize: 10, fill: '#64748b' }} />
+              <YAxis 
+                tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
+                tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(0)}k` : val}
+              />
               <Tooltip 
-                formatter={(val) => [`${val} م.ط`, 'الإنجاز']}
-                contentStyle={{ borderRadius: '8px', direction: 'rtl', fontSize: '0.8rem' }}
+                formatter={(val) => [`${Number(val).toLocaleString()} م.ط`, 'الإنجاز']}
+                contentStyle={{ borderRadius: '8px', direction: 'rtl', fontSize: '0.85rem', fontWeight: 800, border: '1.5px solid #cbd5e1' }}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={52}>
+                <LabelList 
+                  dataKey="value" 
+                  position="top" 
+                  formatter={(val) => val > 0 ? (val >= 1000 ? `${(val/1000).toFixed(1)}k` : val) : ''}
+                  style={{ fontSize: '11px', fontWeight: 800, fill: '#0f172a' }}
+                />
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell key={`cell-${index}`} fill={entry.color || '#2563eb'} />
                 ))}
               </Bar>
             </BarChart>

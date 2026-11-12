@@ -1714,7 +1714,7 @@ html, body {
 
 /* Desktop default for split grids */
 .two-phase-grid-split {
-  grid-template-columns: 1.75fr 1fr;
+  grid-template-columns: 1.55fr 1fr;
 }
 .two-phase-remaining-grid {
   grid-template-columns: 1fr 1fr;
