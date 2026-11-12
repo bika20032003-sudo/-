@@ -209,62 +209,97 @@ export function calculateTwoPhaseRoadMetrics(report) {
   const p1 = rep.phase1Items || [];
   const p2 = rep.phase2Items || [];
 
-  const getP1Total = (idx, def) => (p1[idx] && p1[idx].totalMeters !== undefined) ? Number(p1[idx].totalMeters) || 0 : def;
-  const getP2Total = (idx, def) => (p2[idx] && p2[idx].totalMeters !== undefined) ? Number(p2[idx].totalMeters) || 0 : def;
-  const getP1Today = (idx) => (p1[idx] && p1[idx].todayMeters !== undefined) ? Number(p1[idx].todayMeters) || 0 : 0;
-  const getP2Today = (idx) => (p2[idx] && p2[idx].todayMeters !== undefined) ? Number(p2[idx].todayMeters) || 0 : 0;
+  const getItemTotal = (items, id, fallback) => {
+    const found = items.find(it => it.id === id || (
+      id === 1 ? (it.name?.includes('إعادة التدوير') || it.name?.includes('FDR')) && !it.name?.includes('بدون') :
+      id === 2 ? it.name?.includes('التشريب') || it.name?.includes('MCO') :
+      id === 3 ? it.name?.includes('الاسفلت') || it.name?.includes('أسفلت') :
+      id === 4 ? it.name?.includes('بدون اسمنت') || it.name?.includes('بدون أسمنت') :
+      id === 5 ? it.name?.includes('أساس') || it.name?.includes('اساس') :
+      it.name?.includes('خدمي')
+    ));
+    if (found && found.totalMeters !== undefined && found.totalMeters !== '' && !isNaN(Number(found.totalMeters))) {
+      return Number(found.totalMeters) || 0;
+    }
+    return fallback;
+  };
 
-  // 1. FDR (index 0: طبقة إعادة التدوير)
-  const fdrP1 = getP1Total(0, 226083);
-  const fdrP2 = getP2Total(0, 16240);
+  const getItemToday = (items, id) => {
+    const found = items.find(it => it.id === id || (
+      id === 1 ? (it.name?.includes('إعادة التدوير') || it.name?.includes('FDR')) && !it.name?.includes('بدون') :
+      id === 2 ? it.name?.includes('التشريب') || it.name?.includes('MCO') :
+      id === 3 ? it.name?.includes('الاسفلت') || it.name?.includes('أسفلت') :
+      id === 4 ? it.name?.includes('بدون اسمنت') || it.name?.includes('بدون أسمنت') :
+      id === 5 ? it.name?.includes('أساس') || it.name?.includes('اساس') :
+      it.name?.includes('خدمي')
+    ));
+    if (found && found.todayMeters !== undefined && found.todayMeters !== '' && !isNaN(Number(found.todayMeters))) {
+      return Number(found.todayMeters) || 0;
+    }
+    return 0;
+  };
+
+  // 1. FDR (id 1: طبقة إعادة التدوير بالأسمنت)
+  const fdrP1 = getItemTotal(p1, 1, 226083);
+  const fdrP2 = getItemTotal(p2, 1, 19300);
   const fdrTotal = fdrP1 + fdrP2;
   const fdrPct = parseFloat(((fdrTotal / 360000) * 100).toFixed(1));
   const fdrSecA = Math.min(100, parseFloat(((fdrP1 / 226083) * 100).toFixed(1)));
   const fdrSecB = parseFloat(((fdrP2 / 133917) * 100).toFixed(1));
 
-  // 2. Aggregate Base (index 4: طبقة أساس حبيبي)
-  const aggP1 = getP1Total(4, 226083);
-  const aggP2 = getP2Total(4, 10410);
+  // 2. Aggregate Base (id 5: طبقة أساس حبيبي)
+  const aggP1 = getItemTotal(p1, 5, 226083);
+  const aggP2 = getItemTotal(p2, 5, 12630);
   const aggTotal = aggP1 + aggP2;
   const aggPct = parseFloat(((aggTotal / 360000) * 100).toFixed(1));
   const aggSecA = Math.min(100, parseFloat(((aggP1 / 226083) * 100).toFixed(1)));
   const aggSecB = parseFloat(((aggP2 / 133917) * 100).toFixed(1));
 
-  // 3. MCO (index 1: رش طبقة التشريب)
-  const mcoP1 = getP1Total(1, 226083);
-  const mcoP2 = getP2Total(1, 10410);
+  // 3. MCO (id 2: رش طبقة التشريب)
+  const mcoP1 = getItemTotal(p1, 2, 226083);
+  const mcoP2 = getItemTotal(p2, 2, 12520);
   const mcoTotal = mcoP1 + mcoP2;
   const mcoPct = parseFloat(((mcoTotal / 360000) * 100).toFixed(1));
   const mcoSecA = Math.min(100, parseFloat(((mcoP1 / 226083) * 100).toFixed(1)));
   const mcoSecB = parseFloat(((mcoP2 / 133917) * 100).toFixed(1));
 
-  // 4. Asphalt (index 2: طبقة الاسفلت المحسن)
-  const asphP1 = getP1Total(2, 226083);
-  const asphP2 = getP2Total(2, 8140);
+  // 4. Asphalt (id 3: طبقة الاسفلت المحسن)
+  const asphP1 = getItemTotal(p1, 3, 226083);
+  const asphP2 = getItemTotal(p2, 3, 10290);
   const asphTotal = asphP1 + asphP2;
   const asphPct = parseFloat(((asphTotal / 360000) * 100).toFixed(1));
   const asphSecA = Math.min(100, parseFloat(((asphP1 / 226083) * 100).toFixed(1)));
   const asphSecB = parseFloat(((asphP2 / 133917) * 100).toFixed(1));
 
-  // Total Today meters: sum across both phases
-  let todaySum = 0;
-  p1.forEach((_, idx) => { todaySum += getP1Today(idx); });
-  p2.forEach((_, idx) => { todaySum += getP2Today(idx); });
-  if (todaySum === 0 && rep.twoPhaseTotals?.todayMeters) {
-    todaySum = Number(rep.twoPhaseTotals.todayMeters) || 0;
-  }
+  // Today sums
+  let p1TodaySum = 0;
+  p1.forEach((_, idx) => { p1TodaySum += (Number(p1[idx]?.todayMeters) || 0); });
+  let p2TodaySum = 0;
+  p2.forEach((_, idx) => { p2TodaySum += (Number(p2[idx]?.todayMeters) || 0); });
+  const todaySum = p1TodaySum + p2TodaySum;
 
-  // Executed km (average meters of the 4 core layers divided by 1000)
-  const avgCoreMeters = (fdrTotal + aggTotal + mcoTotal + asphTotal) / 4;
-  const totalExecutedKm = parseFloat((avgCoreMeters / 1000).toFixed(2));
-  const remainingKm = Math.max(0, parseFloat((360.00 - totalExecutedKm).toFixed(2)));
-  const overallPercentage = parseFloat(((totalExecutedKm / 360.00) * 100).toFixed(1));
+  // Dedicated Phase 1 Metrics (226.08 KM)
+  const phase1LengthKm = 226.08;
+  const avgP1Meters = (fdrP1 + aggP1 + mcoP1 + asphP1) / 4;
+  const phase1ExecutedKm = parseFloat((avgP1Meters / 1000).toFixed(2));
+  const phase1RemainingKm = Math.max(0, parseFloat((phase1LengthKm - phase1ExecutedKm).toFixed(2)));
+  const phase1Percentage = Math.min(100, parseFloat(((phase1ExecutedKm / phase1LengthKm) * 100).toFixed(1)));
 
-  // Sector A percentage: 100%
-  const sectorAPercentage = 100.0;
-  // Sector B percentage: average of Sector B progress
-  const avgSecB = (fdrSecB + aggSecB + mcoSecB + asphSecB) / 4;
-  const sectorBPercentage = parseFloat(avgSecB.toFixed(1));
+  // Dedicated Phase 2 Metrics (133.92 KM)
+  const phase2LengthKm = 133.92;
+  const avgP2Meters = (fdrP2 + aggP2 + mcoP2 + asphP2) / 4;
+  const phase2ExecutedKm = parseFloat((avgP2Meters / 1000).toFixed(2));
+  const phase2RemainingKm = Math.max(0, parseFloat((phase2LengthKm - phase2ExecutedKm).toFixed(2)));
+  const phase2Percentage = parseFloat(((phase2ExecutedKm / phase2LengthKm) * 100).toFixed(1));
+
+  // Combined Executed km (226.08 + 13.69 = 239.77 KM)
+  const totalRoadLengthKm = 360.00;
+  const totalExecutedKm = parseFloat((phase1ExecutedKm + phase2ExecutedKm).toFixed(2));
+  const remainingKm = Math.max(0, parseFloat((totalRoadLengthKm - totalExecutedKm).toFixed(2)));
+  const overallPercentage = parseFloat(((totalExecutedKm / totalRoadLengthKm) * 100).toFixed(1));
+
+  const sectorAPercentage = phase1Percentage;
+  const sectorBPercentage = phase2Percentage;
 
   return {
     totalRoadLengthKm: 360.00,
@@ -274,6 +309,32 @@ export function calculateTwoPhaseRoadMetrics(report) {
     totalExecutedKm,
     remainingKm,
     totalTodayMeters: todaySum,
+    phase1: {
+      name: 'المرحلة الأولى',
+      lengthKm: phase1LengthKm,
+      executedKm: phase1ExecutedKm,
+      remainingKm: phase1RemainingKm,
+      percentage: phase1Percentage,
+      todayMeters: p1TodaySum,
+      fdrMeters: fdrP1,
+      aggMeters: aggP1,
+      mcoMeters: mcoP1,
+      asphMeters: asphP1,
+      isCompleted: phase1RemainingKm === 0 || phase1Percentage >= 99.9
+    },
+    phase2: {
+      name: 'المرحلة الثانية',
+      lengthKm: phase2LengthKm,
+      executedKm: phase2ExecutedKm,
+      remainingKm: phase2RemainingKm,
+      percentage: phase2Percentage,
+      todayMeters: p2TodaySum,
+      fdrMeters: fdrP2,
+      aggMeters: aggP2,
+      mcoMeters: mcoP2,
+      asphMeters: asphP2,
+      isCompleted: false
+    },
     layers: [
       { name: 'إعادة التدوير (FDR)', meters: fdrTotal, percentage: fdrPct, color: '#2563eb', phase1: fdrSecA, phase2: fdrSecB, sectorA: fdrSecA, sectorB: fdrSecB },
       { name: 'طبقة الأساس الحبيبي', meters: aggTotal, percentage: aggPct, color: '#16a34a', phase1: aggSecA, phase2: aggSecB, sectorA: aggSecA, sectorB: aggSecB },

@@ -44,15 +44,33 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             totalRoadLengthKm: 360.00,
             overallPercentage: 71.11,
             sectorAPercentage: 100.0,
-            sectorBPercentage: 8.4,
-            totalTodayMeters: 3820,
-            totalExecutedKm: 237.39,
-            remainingKm: 122.61,
+            sectorBPercentage: 10.2,
+            totalTodayMeters: 1850,
+            totalExecutedKm: 239.77,
+            remainingKm: 120.23,
+            phase1: {
+                name: 'المرحلة الأولى',
+                lengthKm: 226.08,
+                executedKm: 226.08,
+                remainingKm: 0.00,
+                percentage: 100.0,
+                todayMeters: 0,
+                isCompleted: true
+            },
+            phase2: {
+                name: 'المرحلة الثانية',
+                lengthKm: 133.92,
+                executedKm: 13.69,
+                remainingKm: 120.23,
+                percentage: 10.2,
+                todayMeters: 1850,
+                isCompleted: false
+            },
             layers: [
-                { name: 'إعادة التدوير (FDR)', meters: 242323, percentage: 67.3, color: '#2563eb', phase1: 100.0, phase2: 12.1 },
-                { name: 'طبقة الأساس الحبيبي', meters: 236493, percentage: 65.7, color: '#16a34a', phase1: 100.0, phase2: 7.8 },
-                { name: 'رش التشريب (MCO)', meters: 236493, percentage: 65.7, color: '#ea580c', phase1: 100.0, phase2: 7.8 },
-                { name: 'الاسفلت المحسن', meters: 234243, percentage: 65.1, color: '#7c3aed', phase1: 100.0, phase2: 6.1 }
+                { name: 'إعادة التدوير (FDR)', meters: 245383, percentage: 68.2, color: '#2563eb', phase1: 100.0, phase2: 14.4 },
+                { name: 'طبقة الأساس الحبيبي', meters: 238713, percentage: 66.3, color: '#16a34a', phase1: 100.0, phase2: 9.4 },
+                { name: 'رش التشريب (MCO)', meters: 238603, percentage: 66.3, color: '#ea580c', phase1: 100.0, phase2: 9.4 },
+                { name: 'الاسفلت المحسن', meters: 236373, percentage: 65.7, color: '#7c3aed', phase1: 100.0, phase2: 7.7 }
             ]
         },
         // Weekly Trend Data for Charting (Starts at 0 until reports are logged)
@@ -233,18 +251,36 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                 // 2. تقرير إنجاز المرحلتين الحي المتزامن مع واجهة إنجاز المرحلتين:
                 roadProgress: {
                     totalRoadLengthKm: 360.00,
-                    overallPercentage: execOverallP || 71.11,
-                    sectorAPercentage: secAVal,
-                    sectorBPercentage: secBVal,
-                    totalExecutedKm: execKm,
-                    remainingKm: remKm,
-                    totalTodayMeters: todayM,
+                    overallPercentage: execOverallP || roadRes?.overallPercentage || 71.11,
+                    sectorAPercentage: roadRes?.phase1?.percentage || secAVal || 100.0,
+                    sectorBPercentage: roadRes?.phase2?.percentage || secBVal || 10.2,
+                    totalExecutedKm: roadRes?.totalExecutedKm || execKm,
+                    remainingKm: roadRes?.remainingKm || remKm,
+                    totalTodayMeters: roadRes?.totalTodayMeters !== undefined ? roadRes.totalTodayMeters : todayM,
+                    phase1: roadRes?.phase1 || {
+                        name: 'المرحلة الأولى',
+                        lengthKm: 226.08,
+                        executedKm: 226.08,
+                        remainingKm: 0.00,
+                        percentage: 100.0,
+                        todayMeters: 0,
+                        isCompleted: true
+                    },
+                    phase2: roadRes?.phase2 || {
+                        name: 'المرحلة الثانية',
+                        lengthKm: 133.92,
+                        executedKm: 13.69,
+                        remainingKm: 120.23,
+                        percentage: 10.2,
+                        todayMeters: todayM,
+                        isCompleted: false
+                    },
                     latestTwoPhaseReport: twoPhaseRep || roadRes?.latestTwoPhaseReport || null,
-                    layers: [
-                        { name: 'إعادة التدوير (FDR)', meters: fdrM, percentage: fdrP, color: '#2563eb', phase1: 100.0, phase2: 12.1 },
-                        { name: 'طبقة الأساس الحبيبي', meters: aggM, percentage: aggP, color: '#16a34a', phase1: 100.0, phase2: 7.8 },
-                        { name: 'رش التشريب (MCO)', meters: mcoM, percentage: mcoP, color: '#ea580c', phase1: 100.0, phase2: 7.8 },
-                        { name: 'الاسفلت المحسن', meters: asphM, percentage: asphP, color: '#7c3aed', phase1: 100.0, phase2: 6.1 }
+                    layers: roadRes?.layers || [
+                        { name: 'إعادة التدوير (FDR)', meters: fdrM, percentage: fdrP, color: '#2563eb', phase1: 100.0, phase2: 14.4 },
+                        { name: 'طبقة الأساس الحبيبي', meters: aggM, percentage: aggP, color: '#16a34a', phase1: 100.0, phase2: 9.4 },
+                        { name: 'رش التشريب (MCO)', meters: mcoM, percentage: mcoP, color: '#ea580c', phase1: 100.0, phase2: 9.4 },
+                        { name: 'الاسفلت المحسن', meters: asphM, percentage: asphP, color: '#7c3aed', phase1: 100.0, phase2: 7.7 }
                     ]
                 },
                 weeklyTrends: [
@@ -310,15 +346,26 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.3 }}>
-                مشروع صيانة وتطوير طريق أوباري - غات (نسبة الإنجاز من الموقف التنفيذي)
+                مشروع صيانة وتطوير طريق أوباري - غات (عدادات إنجاز المرحلة الأولى والثانية)
               </h3>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                المسار الكلي المعتمد: 360.00 كم (المرحلة الأولى: 226.08 كم • المرحلة الثانية: 133.92 كم)
+              </p>
             </div>
           </div>
 
-          <button onClick={() => onNavigateTab('road-progress')} className="secondary-action-btn" style={{ background: '#fff', fontSize: '0.82rem', fontWeight: 800, color: '#2563eb', borderColor: '#bfdbfe', flexShrink: 0 }}>
-            <span>عرض تفاصيل مسار الطريق</span>
-            <ChevronLeft size={16}/>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.74rem', background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: '6px', fontWeight: 800 }}>
+              ✓ المرحلة 1: 226.08 كم (100%)
+            </span>
+            <span style={{ fontSize: '0.74rem', background: '#e0f2fe', color: '#0369a1', padding: '3px 8px', borderRadius: '6px', fontWeight: 800 }}>
+              ⚡ المرحلة 2: {(metrics.roadProgress.phase2?.executedKm || 13.69).toFixed(2)} كم
+            </span>
+            <button onClick={() => onNavigateTab('road-progress')} className="secondary-action-btn" style={{ background: '#fff', fontSize: '0.82rem', fontWeight: 800, color: '#2563eb', borderColor: '#bfdbfe', flexShrink: 0 }}>
+              <span>عرض تفاصيل مسار الطريق</span>
+              <ChevronLeft size={16}/>
+            </button>
+          </div>
         </div>
 
         {/* 3 Main Radial / Progress Indicators */}
@@ -339,48 +386,112 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
               <div style={{ fontSize: '2.5rem', fontWeight: 900, lineHeight: 1.1, margin: '0.35rem 0' }}>
                 {metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage || 71.11}%
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#bfdbfe' }}>مكتمل من إجمالي 360.00 كم</span>
+              <div style={{ fontSize: '0.78rem', color: '#bfdbfe', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span>مكتمل من إجمالي 360.00 كم</span>
+                <span>•</span>
+                <span style={{ color: '#67e8f9', fontWeight: 700 }}>
+                  المنفذ: {(metrics.roadProgress.totalExecutedKm || 239.77).toFixed(2)} كم
+                </span>
+              </div>
             </div>
 
             {/* Circular Visual Gauge */}
             <div style={{ position: 'relative', width: '74px', height: '74px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="74" height="74" viewBox="0 0 36 36">
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3.5"/>
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#38bdf8" strokeWidth="3.5" strokeDasharray={`${metrics.roadProgress.overallPercentage}, 100`} strokeLinecap="round"/>
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#38bdf8" strokeWidth="3.5" strokeDasharray={`${metrics.roadProgress.overallPercentage || 71.11}, 100`} strokeLinecap="round"/>
               </svg>
               <span style={{ position: 'absolute', fontSize: '0.85rem', fontWeight: 900, color: '#fff' }}>
-                {Math.round(metrics.roadProgress.overallPercentage)}%
+                {Math.round(metrics.roadProgress.overallPercentage || 71)}%
               </span>
             </div>
           </div>
 
-          {/* Road Length Progress Card */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.2rem 1.35rem' }}>
+          {/* Phase 1 Length & Progress Card */}
+          <div style={{ 
+            background: '#ffffff', 
+            border: '1.5px solid #bbf7d0', 
+            borderRadius: '14px', 
+            padding: '1.15rem 1.35rem',
+            boxShadow: '0 2px 8px rgba(22, 163, 74, 0.06)'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>🛣️ المسافة المنفذة والمتبقية</span>
-              <strong style={{ fontSize: '1.15rem', color: '#2563eb' }}>{(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>🛣️ إنجاز المرحلة الأولى</span>
+                <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                  226.08 كم
+                </span>
+              </div>
+              <strong style={{ fontSize: '1.2rem', color: '#16a34a', fontWeight: 900 }}>
+                {(metrics.roadProgress.phase1?.executedKm || 226.08).toFixed(2)} كم
+              </strong>
             </div>
+
+            {/* Progress Bar (Green 100%) */}
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
-              <div style={{ width: `${Math.min(100, ((metrics.roadProgress.totalExecutedKm || 237.39) / 360.00) * 100)}%`, height: '100%', background: '#2563eb', borderRadius: '4px' }}/>
+              <div style={{ 
+                width: `${Math.min(100, metrics.roadProgress.phase1?.percentage || 100)}%`, 
+                height: '100%', 
+                background: 'linear-gradient(90deg, #16a34a, #22c55e)', 
+                borderRadius: '4px' 
+              }}/>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>المنجز: {(metrics.roadProgress.totalExecutedKm || 237.39).toFixed(2)} كم</span>
-              <span style={{ color: '#dc2626', fontWeight: 700 }}>المتبقي: {(metrics.roadProgress.remainingKm || 122.61).toFixed(2)} كم</span>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ color: '#15803d', fontWeight: 800 }}>
+                المنجز: {(metrics.roadProgress.phase1?.executedKm || 226.08).toFixed(2)} كم (100%)
+              </span>
+              <span style={{ color: '#166534', fontWeight: 700 }}>
+                المتبقي: {(metrics.roadProgress.phase1?.remainingKm || 0.00).toFixed(2)} كم (مكتملة 🎯)
+              </span>
+            </div>
+            <div style={{ marginTop: '0.4rem', paddingTop: '0.35rem', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b' }}>
+              <span>إنجاز قطاع المرحلة الأولى</span>
+              <span style={{ color: '#15803d', fontWeight: 700 }}>إشراف م. صلاح العربي</span>
             </div>
           </div>
 
-          {/* Daily Productivity & Readiness Card */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.2rem 1.35rem' }}>
+          {/* Phase 2 Length & Progress Card */}
+          <div style={{ 
+            background: '#ffffff', 
+            border: '1.5px solid #bae6fd', 
+            borderRadius: '14px', 
+            padding: '1.15rem 1.35rem',
+            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.06)'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>⚡ الإنتاجية والجاهزية اليومية</span>
-              <strong style={{ fontSize: '1.05rem', color: '#16a34a' }}>جاهزية ميدانية تامة</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>🛣️ إنجاز المرحلة الثانية</span>
+                <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                  133.92 كم
+                </span>
+              </div>
+              <strong style={{ fontSize: '1.2rem', color: '#0284c7', fontWeight: 900 }}>
+                {(metrics.roadProgress.phase2?.executedKm || 13.69).toFixed(2)} كم
+              </strong>
             </div>
+
+            {/* Progress Bar (Blue) */}
             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', margin: '0.5rem 0' }}>
-              <div style={{ width: `${Math.min(100, Math.round(((metrics.activeEquipment || 25) / (metrics.totalEquipment || 25)) * 100))}%`, height: '100%', background: '#16a34a', borderRadius: '4px' }}/>
+              <div style={{ 
+                width: `${Math.min(100, Math.max(2, metrics.roadProgress.phase2?.percentage || 10.2))}%`, 
+                height: '100%', 
+                background: 'linear-gradient(90deg, #0284c7, #38bdf8)', 
+                borderRadius: '4px' 
+              }}/>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-              <span>حساب كل بند على حِدَة دون جمع تراكمي</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>{metrics.activeEquipment || 25} معدة وآلية عاملة</span>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ color: '#0369a1', fontWeight: 800 }}>
+                المنجز: {(metrics.roadProgress.phase2?.executedKm || 13.69).toFixed(2)} كم ({(metrics.roadProgress.phase2?.percentage || 10.2)}%)
+              </span>
+              <span style={{ color: '#dc2626', fontWeight: 800 }}>
+                المتبقي: {(metrics.roadProgress.phase2?.remainingKm || 120.23).toFixed(2)} كم
+              </span>
+            </div>
+            <div style={{ marginTop: '0.4rem', paddingTop: '0.35rem', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b' }}>
+              <span>إنجاز اليوم: <strong style={{ color: '#0369a1' }}>{(metrics.roadProgress.phase2?.todayMeters || 0).toLocaleString()} م.ط</strong></span>
+              <span style={{ color: '#0284c7', fontWeight: 700 }}>⚡ تتغذى تلقائياً من تقرير الطريق</span>
             </div>
           </div>
         </div>
