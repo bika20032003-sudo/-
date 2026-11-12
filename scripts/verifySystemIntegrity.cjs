@@ -202,6 +202,25 @@ assert(!remainingInbox.some(m => m.id === 'msg-1'), 'التأكد من عدم ظ
 assert(remainingInbox.some(m => m.id === 'msg-2'), 'بقاء الرسائل غير المحذوفة سليمة دون مساس');
 
 // ----------------------------------------------------
+// 8. اختبار المزامنة التلقائية كل دقيقة وتوحيد كافة الأجهزة والهواتف
+// ----------------------------------------------------
+console.log('\n8️⃣ اختبار المزامنة التلقائية كل دقيقة وتوحيد كافة الأجهزة والهواتف:');
+
+const realtimeSyncCode = fs.readFileSync(path.join(__dirname, '../src/utils/realtimeSync.js'), 'utf8');
+const navbarCode = fs.readFileSync(path.join(__dirname, '../src/components/Navbar.jsx'), 'utf8');
+const archiveViewCode = fs.readFileSync(path.join(__dirname, '../src/views/ReportsArchiveView.jsx'), 'utf8');
+const cloudModalPath = path.join(__dirname, '../src/components/CloudSyncModal.jsx');
+
+assert(realtimeSyncCode.includes('AUTO_SYNC_INTERVAL_MS = 60000'), 'ضبط المزامنة التلقائية الدورية كل 60 ثانية (دقيقة كاملة) كما طلب المستخدم');
+assert(realtimeSyncCode.includes('BroadcastChannel'), 'تفعيل تقنية BroadcastChannel للمزامنة الفورية بين النوافذ والتبويبات');
+assert(realtimeSyncCode.includes('urlParam'), 'دعم التقاط باراميتر ?api= للربط السحابي المباشر للهواتف الذكية بنقرة واحدة');
+assert(realtimeSyncCode.includes('pageshow') && realtimeSyncCode.includes('visibilitychange'), 'تفعيل استجابة المزامنة اللحظية فور فتح الهاتف أو العودة للتطبيق');
+assert(fs.existsSync(cloudModalPath), 'وجود نافذة إدارة المزامنة السحابية وتوحيد الأجهزة CloudSyncModal.jsx');
+assert(navbarCode.includes('CloudSyncModal') && navbarCode.includes('مزامنة الأجهزة: كل دقيقة ⚡'), 'إتاحة مؤشر وتحكم المزامنة اللحظية في شريط النظام العلوي للحواسب والهواتف');
+assert(archiveViewCode.includes('setArchiveMode(canGen ? \'general\' : \'personal\')'), 'تحديث نمط الأرشيف تلقائياً عند تغيير الحساب أو دخول مدير المشروع');
+assert(archiveViewCode.includes('fuel-updated') && archiveViewCode.includes('reports-updated'), 'استماع الأرشيف اللحظي لتحديثات تقرير الوقود المعتمدة');
+
+// ----------------------------------------------------
 // خلاصة الفحص
 // ----------------------------------------------------
 console.log('\n====================================================');

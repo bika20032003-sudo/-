@@ -1105,8 +1105,6 @@ div[style*="bottom: 20px"][style*="left: 20px"],
     min-height: 0 !important;
     height: auto !important;
     box-sizing: border-box !important;
-    zoom: 1 !important;
-    transform: none !important;
     page-break-inside: auto !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
@@ -1119,9 +1117,14 @@ div[style*="bottom: 20px"][style*="left: 20px"],
     width: 100% !important;
     max-width: 100% !important;
     table-layout: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .official-print-document tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    box-sizing: border-box !important;
   }
 }
 

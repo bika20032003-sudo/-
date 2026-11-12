@@ -1762,6 +1762,16 @@ class Store {
       ...newData,
       updatedAt: new Date().toISOString()
     };
+    if (!this.data.reports) this.data.reports = [];
+    const repId = String(newData.id || newData.reportNumber || '');
+    const idx = this.data.reports.findIndex(r => String(r.id) === repId || (newData.reportNumber && String(r.reportNumber) === String(newData.reportNumber)) || r.isExecutiveProgressReport);
+    const enriched = { ...newData, isExecutiveProgressReport: true, reportType: 'الموقف التنفيذي' };
+    if (idx !== -1) {
+      this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
+    } else {
+      this.data.reports.unshift(enriched);
+    }
+    this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
     return this.data.executiveProgress;
   }
@@ -1777,6 +1787,16 @@ class Store {
       ...newData,
       updatedAt: new Date().toISOString()
     };
+    if (!this.data.reports) this.data.reports = [];
+    const repId = String(newData.id || newData.reportNumber || '');
+    const idx = this.data.reports.findIndex(r => String(r.id) === repId || (newData.reportNumber && String(r.reportNumber) === String(newData.reportNumber)) || (r.isRoadProgressReport && r.dateFormatted === newData.dateFormatted));
+    const enriched = { ...newData, isRoadProgressReport: true, reportType: 'تقرير أعمال الطريق اليومي' };
+    if (idx !== -1) {
+      this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
+    } else {
+      this.data.reports.unshift(enriched);
+    }
+    this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
     return this.data.roadDailyReport;
   }
@@ -1792,6 +1812,16 @@ class Store {
       ...newData,
       updatedAt: new Date().toISOString()
     };
+    if (!this.data.reports) this.data.reports = [];
+    const repId = String(newData.id || newData.reportNumber || '');
+    const idx = this.data.reports.findIndex(r => String(r.id) === repId || (newData.reportNumber && String(r.reportNumber) === String(newData.reportNumber)) || (r.isFuelReport && r.reportDate === newData.reportDate));
+    const enriched = { ...newData, isFuelReport: true, reportType: 'تقرير كميات الوقود اليومية', fuelAmount: Number(newData.fuelAmount || newData.totalDispatchedLiters) || 0 };
+    if (idx !== -1) {
+      this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
+    } else {
+      this.data.reports.unshift(enriched);
+    }
+    this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
     return this.data.fuelDailyReport;
   }

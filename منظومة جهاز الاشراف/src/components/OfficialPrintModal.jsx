@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 // Clean day name preventing duplicate "يوم يوم"
 export const cleanDayName = (day) => {
   if (!day) return 'السبت';
-  return String(day).replace(/^يوم\s+/g, '').trim();
+  return String(day).replace(/^(يوم\s*)+/gi, '').trim() || 'السبت';
 };
 
 // Safe number cleaning and formatting for crisp official print fidelity

@@ -278,6 +278,13 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
     }
   };
 
+  // Automatically update archive mode & refresh reports when currentUser changes
+  useEffect(() => {
+    const canGen = canAccessGeneralArchive(currentUser);
+    setArchiveMode(canGen ? 'general' : 'personal');
+    fetchReports();
+  }, [currentUser]);
+
   useEffect(() => {
     fetchReports();
     const handleGlobalDelete = (e) => {
@@ -293,12 +300,21 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
     window.addEventListener('report-deleted', handleGlobalDelete);
     window.addEventListener('report-saved', handleGlobalSaved);
     window.addEventListener('report-updated', handleGlobalSaved);
+    window.addEventListener('reports-updated', handleGlobalSaved);
+    window.addEventListener('fuel-updated', handleGlobalSaved);
+    window.addEventListener('two-phase-updated', handleGlobalSaved);
+    window.addEventListener('road-progress-updated', handleGlobalSaved);
     window.addEventListener('storage', handleGlobalSaved);
     const autoInterval = setInterval(handleGlobalSaved, 8000);
     return () => {
       window.removeEventListener('report-deleted', handleGlobalDelete);
       window.removeEventListener('report-saved', handleGlobalSaved);
       window.removeEventListener('report-updated', handleGlobalSaved);
+      window.removeEventListener('reports-updated', handleGlobalSaved);
+      window.removeEventListener('fuel-updated', handleGlobalSaved);
+      window.removeEventListener('two-phase-updated', handleGlobalSaved);
+      window.removeEventListener('road-progress-updated', handleGlobalSaved);
+      window.removeEventListener('storage', handleGlobalSaved);
       clearInterval(autoInterval);
     };
   }, []);

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail, Database } from 'lucide-react';
+import { Gauge, Bell, ChevronDown, User, ShieldCheck, Menu, Mail, Database, RefreshCw } from 'lucide-react';
 import { fastFetch } from '../utils/apiCache.js';
 import { canonicalizeUsername, isMessageForUser } from '../utils/supervisionTeam.js';
+import { getSyncStatus } from '../utils/realtimeSync.js';
+import { CloudSyncModal } from './CloudSyncModal';
 
 export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClick, onBackupClick, currentUser, onToggleMobileSidebar }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [unreadMessages, setUnreadMessages] = useState(0);
+    const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+    const [syncStatus, setSyncStatus] = useState(() => getSyncStatus());
 
     const fetchUnreadAlerts = async () => {
         try {
@@ -36,16 +40,20 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
         fetchUnreadMessages();
         const handleMsgUpdate = () => fetchUnreadMessages();
         const handleAlertsUpdate = () => fetchUnreadAlerts();
+        const handleSyncUpdate = (e) => setSyncStatus(e.detail || getSyncStatus());
         window.addEventListener('messages-updated', handleMsgUpdate);
         window.addEventListener('alerts-updated', handleAlertsUpdate);
+        window.addEventListener('sync-status-changed', handleSyncUpdate);
         const interval = setInterval(() => {
             fetchUnreadAlerts();
             fetchUnreadMessages();
+            setSyncStatus(getSyncStatus());
         }, 15000);
         return () => {
             clearInterval(interval);
             window.removeEventListener('messages-updated', handleMsgUpdate);
             window.removeEventListener('alerts-updated', handleAlertsUpdate);
+            window.removeEventListener('sync-status-changed', handleSyncUpdate);
         };
     }, [currentUser?.username]);
 
@@ -128,11 +136,42 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
 
         {/* Left side in RTL: Server Status, Notifications & Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {/* Live Server Pulse */}
-          <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '20px', padding: '0.2rem 0.65rem', fontSize: '0.76rem', color: '#166534', fontWeight: 700 }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }}/>
-            <span>متصل ومحدث</span>
-          </div>
+          {/* Live Server Pulse & Multi-Device Sync Controller */}
+          <button
+            type="button"
+            onClick={() => setIsSyncModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: syncStatus.lastSyncSuccess ? '#f0fdf4' : '#fffbeb',
+              border: syncStatus.lastSyncSuccess ? '1px solid #bbf7d0' : '1px solid #fde68a',
+              borderRadius: '20px',
+              padding: '0.22rem 0.65rem',
+              fontSize: '0.76rem',
+              color: syncStatus.lastSyncSuccess ? '#166534' : '#92400e',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'all 0.2s ease'
+            }}
+            title="المزامنة اللحظية للأجهزة (تحديث تلقائي كل دقيقة) - اضغط لإدارة المزامنة والربط السحابي"
+          >
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: syncStatus.isSyncing ? '#3b82f6' : (syncStatus.lastSyncSuccess ? '#22c55e' : '#f59e0b'),
+              display: 'inline-block',
+              boxShadow: syncStatus.lastSyncSuccess ? '0 0 7px #22c55e' : '0 0 7px #f59e0b'
+            }} />
+            <span className="hide-on-mobile">
+              {syncStatus.isSyncing ? 'جارِ المزامنة...' : 'مزامنة الأجهزة: كل دقيقة ⚡'}
+            </span>
+            <span className="show-on-mobile-inline" style={{ fontSize: '0.74rem' }}>
+              {syncStatus.isSyncing ? 'مزامنة...' : 'دقيقة ⚡'}
+            </span>
+          </button>
 
           {/* Database Backup & Restore Tool */}
           <button 
@@ -218,6 +257,12 @@ export const Navbar = ({ currentTabName, onBellClick, onMailClick, onProfileClic
             <ChevronDown size={13} color="#94a3b8" className="hide-on-mobile"/>
           </div>
         </div>
+
+        {/* Cross-Device Cloud Sync Modal */}
+        <CloudSyncModal 
+          isOpen={isSyncModalOpen} 
+          onClose={() => setIsSyncModalOpen(false)} 
+        />
       </header>
     );
 };

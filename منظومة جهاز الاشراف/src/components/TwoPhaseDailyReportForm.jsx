@@ -133,6 +133,12 @@ export const TwoPhaseDailyReportForm = ({
   const [forwardRecipient, setForwardRecipient] = useState('all');
   const [forwardNote, setForwardNote] = useState('');
   const [isForwarding, setIsForwarding] = useState(false);
+  const [chartLayoutMode, setChartLayoutMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('two_phase_chart_layout') || 'full';
+    }
+    return 'full';
+  });
 
   // Auto load existing data from backend API and subscribe to real-time events
   useEffect(() => {
@@ -1265,15 +1271,16 @@ export const TwoPhaseDailyReportForm = ({
 
   // Helper renderer for chart cards (Large, spacious & clear visual fidelity)
   const renderChartCard = (title, data) => {
+    const isFull = chartLayoutMode === 'full';
     return (
       <div style={{
         background: '#ffffff',
-        borderRadius: '10px',
+        borderRadius: '12px',
         border: '1.5px solid #cbd5e1',
-        padding: '1rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        padding: '1.25rem',
+        boxShadow: '0 3px 12px rgba(0,0,0,0.04)',
         height: '100%',
-        minHeight: '380px',
+        minHeight: isFull ? '390px' : '360px',
         display: 'flex',
         flexDirection: 'column'
       }}>
@@ -1282,41 +1289,44 @@ export const TwoPhaseDailyReportForm = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1.5px solid #e2e8f0',
-          paddingBottom: '0.6rem',
-          marginBottom: '0.75rem'
+          paddingBottom: '0.65rem',
+          marginBottom: '0.85rem'
         }}>
-          <span style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0f172a' }}>
-            📊 {title}
+          <span style={{ fontSize: '1rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <BarChart3 size={18} color="#2563eb" />
+            {title}
           </span>
-          <span style={{ fontSize: '0.80rem', color: '#64748b', fontWeight: 700 }}>متر طولي (م.ط)</span>
+          <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 800, background: '#f8fafc', padding: '3px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+            متر طولي (م.ط)
+          </span>
         </div>
 
-        <div style={{ width: '100%', minHeight: '320px', flex: 1, height: '100%' }}>
-          <ResponsiveContainer width="100%" height="100%" minHeight={320}>
-            <BarChart data={data} margin={{ top: 25, right: 10, left: 10, bottom: 45 }}>
+        <div style={{ width: '100%', minHeight: isFull ? '330px' : '290px', flex: 1, height: '100%' }}>
+          <ResponsiveContainer width="100%" height={isFull ? 340 : 300}>
+            <BarChart data={data} margin={{ top: 25, right: 15, left: 15, bottom: isFull ? 25 : 45 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis 
                 dataKey="name" 
-                tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 700 }} 
+                tick={{ fontSize: isFull ? 12 : 11, fill: '#0f172a', fontWeight: 800 }} 
                 interval={0}
-                angle={-18}
-                textAnchor="end"
-                height={50}
+                angle={isFull ? 0 : -18}
+                textAnchor={isFull ? 'middle' : 'end'}
+                height={isFull ? 35 : 50}
               />
               <YAxis 
-                tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
-                tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(0)}k` : val}
+                tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }}
+                tickFormatter={(val) => val >= 1000 ? `${(val/1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}k` : val}
               />
               <Tooltip 
-                formatter={(val) => [`${Number(val).toLocaleString()} م.ط`, 'الإنجاز']}
-                contentStyle={{ borderRadius: '8px', direction: 'rtl', fontSize: '0.85rem', fontWeight: 800, border: '1.5px solid #cbd5e1' }}
+                formatter={(val) => [`${Number(val).toLocaleString('en-US')} م.ط`, 'الإنجاز']}
+                contentStyle={{ borderRadius: '8px', direction: 'rtl', fontSize: '0.9rem', fontWeight: 800, border: '1.5px solid #cbd5e1', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={52}>
+              <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={isFull ? 64 : 46}>
                 <LabelList 
                   dataKey="value" 
                   position="top" 
-                  formatter={(val) => val > 0 ? (val >= 1000 ? `${(val/1000).toFixed(1)}k` : val) : ''}
-                  style={{ fontSize: '11px', fontWeight: 800, fill: '#0f172a' }}
+                  formatter={(val) => val > 0 ? (val >= 1000 ? `${(val/1000).toFixed(1)}k` : Number(val).toLocaleString('en-US')) : ''}
+                  style={{ fontSize: '11px', fontWeight: 900, fill: '#0f172a' }}
                 />
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color || '#2563eb'} />
@@ -1371,6 +1381,52 @@ export const TwoPhaseDailyReportForm = ({
 
         {/* Global Action Buttons */}
         <div className="two-phase-actions-bar" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          
+          {/* Chart Display Mode Switcher (Full Large vs Split) */}
+          <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '3px', borderRadius: '8px', border: '1.5px solid #cbd5e1' }}>
+            <button
+              type="button"
+              onClick={() => { setChartLayoutMode('full'); if (typeof window !== 'undefined') localStorage.setItem('two_phase_chart_layout', 'full'); }}
+              style={{
+                background: chartLayoutMode === 'full' ? '#2563eb' : 'transparent',
+                color: chartLayoutMode === 'full' ? '#ffffff' : '#475569',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 9px',
+                fontSize: '0.80rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="عرض المخططات البيانية بحجم كبير وموسع وواضح"
+            >
+              <BarChart3 size={14} />
+              <span>مخطط موسع وكبير</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setChartLayoutMode('split'); if (typeof window !== 'undefined') localStorage.setItem('two_phase_chart_layout', 'split'); }}
+              style={{
+                background: chartLayoutMode === 'split' ? '#2563eb' : 'transparent',
+                color: chartLayoutMode === 'split' ? '#ffffff' : '#475569',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 9px',
+                fontSize: '0.80rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="عرض الجدول والمخطط متجاورين جنباً إلى جنب"
+            >
+              <Layers size={14} />
+              <span>عرض متجاور</span>
+            </button>
+          </div>
           <button
             type="button"
             onClick={handleFeedFromRoadDailyReport}
@@ -1844,7 +1900,7 @@ export const TwoPhaseDailyReportForm = ({
       </div>
 
       {/* SECTION 1: PHASE 1 TABLE (Right) + CHART (Left) */}
-      <div className="two-phase-grid-split" style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div className={`two-phase-grid-split ${chartLayoutMode === 'full' ? 'full-mode' : 'split-mode'}`} style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           {renderPhaseTable('المرحلة الأولى', phase1Items, handleUpdatePhase1, '#1e40af')}
         </div>
@@ -1854,7 +1910,7 @@ export const TwoPhaseDailyReportForm = ({
       </div>
 
       {/* SECTION 2: PHASE 2 TABLE (Right) + CHART (Left) */}
-      <div className="two-phase-grid-split" style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div className={`two-phase-grid-split ${chartLayoutMode === 'full' ? 'full-mode' : 'split-mode'}`} style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           {renderPhaseTable('المرحلة الثانية', phase2Items, handleUpdatePhase2, '#0284c7')}
         </div>
@@ -1864,7 +1920,7 @@ export const TwoPhaseDailyReportForm = ({
       </div>
 
       {/* SECTION 3: COMBINED TWO-PHASE TABLE (Right) + CHART (Left) */}
-      <div className="two-phase-grid-split" style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div className={`two-phase-grid-split ${chartLayoutMode === 'full' ? 'full-mode' : 'split-mode'}`} style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           {renderCombinedTable()}
         </div>

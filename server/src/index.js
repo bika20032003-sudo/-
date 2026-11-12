@@ -100,6 +100,13 @@ app.post('/api/two-phase-report', (req, res) => {
   res.json({ success: true, data: updated, message: 'تم تحديث تقرير إنجاز المرحلتين بنجاح' });
 });
 
+app.get('/api/sync/timestamp', (req, res) => {
+  res.json({
+    success: true,
+    lastUpdated: store.data.lastUpdated || store.data.updatedAt || new Date().toISOString()
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 

@@ -72,19 +72,25 @@ export const initialFuelDailyData = {
   ]
 };
 
+// Safe string cleaner for fuel numbers preventing 'NaN'
+const cleanFuelStr = (val, fallback = '0.00') => {
+  if (val === null || val === undefined || val === '' || String(val).toLowerCase() === 'nan') return fallback;
+  return String(val);
+};
+
 export const normalizeFuelReport = (data) => {
   if (!data || typeof data !== 'object') return initialFuelDailyData;
   const rawItems = Array.isArray(data.fuelItems) ? data.fuelItems : [];
   const normalizedItems = rawItems.length > 0
     ? rawItems.map((r, idx) => ({
-        id: r.id || (Date.now() + idx),
-        seq: r.seq || String(idx + 1),
-        location: r.location !== undefined && r.location !== null ? String(r.location) : '',
-        dispatchedLiters: r.dispatchedLiters !== undefined && r.dispatchedLiters !== null ? String(r.dispatchedLiters) : '0.00',
-        receivedLiters: r.receivedLiters !== undefined && r.receivedLiters !== null ? String(r.receivedLiters) : '0.00',
-        remainingLiters: r.remainingLiters !== undefined && r.remainingLiters !== null ? String(r.remainingLiters) : '0.00',
-        notes: r.notes || ''
-      }))
+      id: r.id || (Date.now() + idx),
+      seq: r.seq || String(idx + 1),
+      location: r.location !== undefined && r.location !== null ? String(r.location) : '',
+      dispatchedLiters: cleanFuelStr(r.dispatchedLiters, '0.00'),
+      receivedLiters: cleanFuelStr(r.receivedLiters, '0.00'),
+      remainingLiters: cleanFuelStr(r.remainingLiters, '0.00'),
+      notes: r.notes || ''
+    }))
     : initialFuelDailyData.fuelItems;
 
   const repDate = data.reportDate || (data.date ? String(data.date).split('T')[0] : '2026-10-24');
@@ -100,7 +106,7 @@ export const normalizeFuelReport = (data) => {
     reportDate: repDate,
     formattedSlashDate: slashDate || '24/10/2026',
     dateFormatted: slashDate || '24/10/2026',
-    dayName: data.dayName ? String(data.dayName).replace(/^يوم\s+/g, '').trim() : 'السبت',
+    dayName: data.dayName ? String(data.dayName).replace(/^(يوم\s*)+/gi, '').trim() : 'السبت',
     reportNumber: data.reportNumber || 'FUEL-094834_24.10.2026',
     reportTitle: data.reportTitle || data.title || 'تقرير كميات الوقود اليومية',
     fuelOfficer: data.fuelOfficer || (data.uploadedBy ? data.uploadedBy.split('(')[0].trim() : 'مسؤول الوقود بالموقع'),
@@ -127,7 +133,7 @@ export const FuelDailyReportForm = ({
           }
         }
       }
-    } catch (_) {}
+    } catch (_) { }
     return initialFuelDailyData;
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -250,9 +256,9 @@ export const FuelDailyReportForm = ({
   };
 
   const fmtNum = (num, decimals = 2) => {
-    if (num === null || num === undefined || num === '') return '0.00';
+    if (num === null || num === undefined || num === '' || String(num).toLowerCase() === 'nan') return '0.00';
     const val = Number(toCleanLatin(num));
-    if (isNaN(val)) return num;
+    if (isNaN(val)) return '0.00';
     return val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   };
 
@@ -274,7 +280,7 @@ export const FuelDailyReportForm = ({
           setReportData(fresh);
           try {
             localStorage.setItem('fuel_daily_report_data', JSON.stringify(fresh));
-          } catch (_) {}
+          } catch (_) { }
           return;
         }
 
@@ -286,7 +292,7 @@ export const FuelDailyReportForm = ({
               setReportData(normalizeFuelReport(parsed));
               return;
             }
-          } catch (_) {}
+          } catch (_) { }
         }
       } catch (e) {
         console.warn('Could not load fuel daily report from server, using local/default:', e);
@@ -313,7 +319,7 @@ export const FuelDailyReportForm = ({
             setReportData(normalizeFuelReport(parsed));
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     };
 
     window.addEventListener('fuel-updated', handleRemoteSync);
@@ -471,7 +477,7 @@ export const FuelDailyReportForm = ({
       reportNumber: reportData.reportNumber || 'FUEL-094834_24.10.2026',
       date: repDate ? new Date(repDate).toISOString() : new Date().toISOString(),
       reportDate: repDate,
-      dayName: reportData.dayName || 'يوم السبت',
+      dayName: (reportData.dayName || 'السبت').replace(/^(يوم\s*)+/gi, '').trim() || 'السبت',
       formattedSlashDate: slashDate,
       dateFormatted: slashDate,
       sector: reportData.sector || 'مشروع أوباري - غات',
@@ -488,9 +494,9 @@ export const FuelDailyReportForm = ({
         index: idx + 1,
         seq: r.seq || String(idx + 1),
         location: r.location !== undefined && r.location !== null ? String(r.location) : '',
-        dispatchedLiters: r.dispatchedLiters !== undefined && r.dispatchedLiters !== null ? String(r.dispatchedLiters) : '0.00',
-        receivedLiters: r.receivedLiters !== undefined && r.receivedLiters !== null ? String(r.receivedLiters) : '0.00',
-        remainingLiters: r.remainingLiters !== undefined && r.remainingLiters !== null ? String(r.remainingLiters) : '0.00',
+        dispatchedLiters: cleanFuelStr(r.dispatchedLiters, '0.00'),
+        receivedLiters: cleanFuelStr(r.receivedLiters, '0.00'),
+        remainingLiters: cleanFuelStr(r.remainingLiters, '0.00'),
         notes: r.notes || ''
       })),
       status: 'approved'
@@ -536,7 +542,7 @@ export const FuelDailyReportForm = ({
         uploadedBy: `${resolvedAuthor.name} (${resolvedAuthor.role})`,
         engineer: resolvedAuthor.name,
         supervisor: resolvedAuthor.name,
-        notes: `تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: ${fmtNum(calculatedTotals.totalDispatched)} لتر - الوارد: ${fmtNum(calculatedTotals.totalReceived)} لتر - المتبقي: ${fmtNum(calculatedTotals.totalRemaining)} لتر`,
+        notes: reportData.notes || `تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: ${fmtNum(calculatedTotals.totalDispatched)} لتر - الوارد: ${fmtNum(calculatedTotals.totalReceived)} لتر - المتبقي: ${fmtNum(calculatedTotals.totalRemaining)} لتر`,
         createdAt: reportData.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };

@@ -1658,9 +1658,11 @@ input[type="number"] {
 /* ========== UTILITY HELPERS ========== */
 .hide-on-mobile { }
 .show-on-mobile { display: none; }
+.show-on-mobile-inline { display: none; }
 @media (max-width: 768px) {
   .hide-on-mobile { display: none !important; }
   .show-on-mobile { display: block !important; }
+  .show-on-mobile-inline { display: inline-flex !important; }
   .hide-on-mobile-flex { display: none !important; }
   .show-on-mobile-flex { display: flex !important; }
 }
@@ -1713,8 +1715,12 @@ html, body {
 }
 
 /* Desktop default for split grids */
-.two-phase-grid-split {
+.two-phase-grid-split.split-mode {
   grid-template-columns: 1.55fr 1fr;
+}
+.two-phase-grid-split.full-mode,
+.two-phase-grid-split:not(.split-mode) {
+  grid-template-columns: 1fr;
 }
 .two-phase-remaining-grid {
   grid-template-columns: 1fr 1fr;
