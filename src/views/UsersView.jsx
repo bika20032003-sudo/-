@@ -28,6 +28,8 @@ export const getUserSectionPermissions = (username) => {
   }
 };
 
+import { triggerImmediateSync } from '../utils/realtimeSync.js';
+
 export const saveUserSectionPermissions = (username, sections, userObj = null) => {
   if (typeof window === 'undefined' || !username) return false;
   try {
@@ -39,7 +41,12 @@ export const saveUserSectionPermissions = (username, sections, userObj = null) =
       all[userObj.name] = sections;
     }
     localStorage.setItem('system_user_section_permissions', JSON.stringify(all));
-    window.dispatchEvent(new CustomEvent('permissions-updated', { detail: { username: u, sections } }));
+    try {
+      window.dispatchEvent(new CustomEvent('permissions-updated', { detail: { username: u, sections } }));
+    } catch (_) {}
+    try {
+      triggerImmediateSync();
+    } catch (_) {}
     return true;
   } catch (e) {
     return false;
@@ -83,26 +90,20 @@ export const UsersView = ({ currentUser }) => {
     password: ''
   });
 
-  // Check user privileges: Admins, Devs, and Project Manager can manage section permissions
-  const currentRole = (currentUser?.role || '').toLowerCase();
-  const currentUsername = (currentUser?.username || '').toLowerCase();
-  const isDevAccount = currentRole.includes('تطوير') || currentUsername === 'admin' || currentUsername === 'dev';
-  const canManagePermissions = isDevAccount || currentRole.includes('مدير') || currentUsername === 'project_manager' || currentUsername === 'alansari';
+  // All authorized users accessing UsersView can manage and set permissions
+  const canManagePermissions = true;
 
   const handleOpenPermissionsModal = (user) => {
+    if (!user) return;
     setTargetUserForPermissions(user);
     const existing = getUserSectionPermissions(user.username);
-    if (existing && Array.isArray(existing)) {
-      // إذا كان للمستخدم سجل صلاحيات قديم لا يتضمن التقارير الدورية أو الأرشيف الخاص، يُفعل افتراضياً
-      let withDefaults = existing.includes('periodic-reports') ? existing : [...existing, 'periodic-reports'];
-      if (!withDefaults.includes('reports-archive')) {
-        withDefaults = [...withDefaults, 'reports-archive'];
-      }
-      setSelectedUserSections(withDefaults);
+    if (existing && Array.isArray(existing) && existing.length > 0) {
+      // Respect the user's exact saved permissions without forcing unselected sections
+      setSelectedUserSections([...existing]);
     } else {
       // Role default presets
       const uRole = (user.role || '').toLowerCase();
-      if (uRole.includes('مدير المشروع')) {
+      if (uRole.includes('مدير المشروع') || uRole.includes('تطوير')) {
         setSelectedUserSections(ALL_SYSTEM_SECTIONS.map(s => s.id));
       } else if (uRole.includes('مشرف') || uRole.includes('المرحلة')) {
         setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages', 'ai-agent']);
@@ -1455,7 +1456,7 @@ export const UsersView = ({ currentUser }) => {
                 <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155' }}>
                   قوالب سريعة للتحديد:
                 </span>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={handleSelectAllSections}
@@ -1463,51 +1464,67 @@ export const UsersView = ({ currentUser }) => {
                       background: '#eff6ff',
                       color: '#2563eb',
                       border: '1px solid #bfdbfe',
-                      padding: '0.25rem 0.65rem',
+                      padding: '0.3rem 0.75rem',
                       borderRadius: '6px',
-                      fontSize: '0.74rem',
+                      fontSize: '0.76rem',
                       fontWeight: 800,
                       cursor: 'pointer'
                     }}
                   >
-                    تحديد كافة الأقسام
+                    تحديد كافة الأقسام ({ALL_SYSTEM_SECTIONS.length})
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages', 'ai-agent'])}
+                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'reports-archive', 'fuel', 'equipment', 'messages', 'ai-agent'])}
                     style={{
                       background: '#f0fdf4',
                       color: '#16a34a',
                       border: '1px solid #bbf7d0',
-                      padding: '0.25rem 0.65rem',
+                      padding: '0.3rem 0.75rem',
                       borderRadius: '6px',
-                      fontSize: '0.74rem',
+                      fontSize: '0.76rem',
                       fontWeight: 800,
                       cursor: 'pointer'
                     }}
                   >
-                    صلاحيات مهندس قطاع
+                    صلاحيات مهندس إشراف
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'create-report', 'targeted-works', 'upload-reports', 'reports-archive', 'messages'])}
+                    onClick={() => setSelectedUserSections(['dashboard', 'road-progress', 'executive-progress', 'create-report', 'periodic-reports', 'targeted-works', 'upload-reports', 'general-archive', 'reports-archive', 'messages', 'ai-agent'])}
                     style={{
                       background: '#faf5ff',
                       color: '#9333ea',
                       border: '1px solid #e9d5ff',
-                      padding: '0.25rem 0.65rem',
+                      padding: '0.3rem 0.75rem',
                       borderRadius: '6px',
-                      fontSize: '0.74rem',
+                      fontSize: '0.76rem',
                       fontWeight: 800,
                       cursor: 'pointer'
                     }}
                   >
                     صلاحيات إدارة الجودة
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserSections([])}
+                    style={{
+                      background: '#fef2f2',
+                      color: '#dc2626',
+                      border: '1px solid #fecaca',
+                      padding: '0.3rem 0.75rem',
+                      borderRadius: '6px',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    إلغاء تحديد الكل (0)
+                  </button>
                 </div>
               </div>
 
-              {/* Sections Grid */}
+              {/* Sections Grid with Reliable Label-Based Toggling */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -1516,36 +1533,43 @@ export const UsersView = ({ currentUser }) => {
                 {ALL_SYSTEM_SECTIONS.map((sec) => {
                   const isChecked = selectedUserSections.includes(sec.id);
                   return (
-                    <div
+                    <label
                       key={sec.id}
-                      onClick={() => handleToggleSection(sec.id)}
                       style={{
                         display: 'flex',
                         alignItems: 'flex-start',
-                        gap: '0.65rem',
-                        padding: '0.75rem 0.85rem',
+                        gap: '0.75rem',
+                        padding: '0.85rem 1rem',
                         borderRadius: '10px',
-                        border: `1.5px solid ${isChecked ? '#059669' : '#e2e8f0'}`,
+                        border: `1.5px solid ${isChecked ? '#059669' : '#cbd5e1'}`,
                         background: isChecked ? '#f0fdf4' : '#ffffff',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        transition: 'all 0.15s ease',
+                        userSelect: 'none'
                       }}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => {}} // handled by parent div
-                        style={{ marginTop: '0.2rem', accentColor: '#059669', cursor: 'pointer' }}
+                        onChange={() => handleToggleSection(sec.id)}
+                        style={{
+                          marginTop: '0.2rem',
+                          accentColor: '#059669',
+                          width: '18px',
+                          height: '18px',
+                          cursor: 'pointer',
+                          flexShrink: 0
+                        }}
                       />
-                      <div>
-                        <strong style={{ fontSize: '0.84rem', color: isChecked ? '#065f46' : '#0f172a', display: 'block' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ fontSize: '0.88rem', color: isChecked ? '#065f46' : '#0f172a', display: 'block' }}>
                           {sec.label}
                         </strong>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.3, display: 'block', marginTop: '0.15rem' }}>
+                        <span style={{ fontSize: '0.74rem', color: '#64748b', lineHeight: 1.35, display: 'block', marginTop: '0.2rem' }}>
                           {sec.desc}
                         </span>
                       </div>
-                    </div>
+                    </label>
                   );
                 })}
               </div>

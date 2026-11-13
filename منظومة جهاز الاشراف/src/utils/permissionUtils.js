@@ -51,11 +51,26 @@ export const canAccessTwoPhaseReport = (currentUser) => {
 
 /**
  * صلاحية الاطلاع على الأرشيف العام لكافة تقارير المشروع:
- * يظهر حصرياً لمدير المشروع (م. عبدالرحمن الأنصاري) والمهندس صالح فقط (مع حساب التطوير).
+ * يفحص أولاً الصلاحيات المخصصة من قسم الصلاحيات، وإذا لم تخصص يعتمد الافتراضي لمدير المشروع وم. صالح وحساب التطوير.
  */
 export const canAccessGeneralArchive = (currentUser) => {
   if (!currentUser) return false;
-  return isProjectManagerUser(currentUser) || isSalehUser(currentUser) || isDevUser(currentUser);
+  const username = (currentUser.username || '').toLowerCase().trim();
+  const userName = (currentUser.name || '').trim();
+
+  if (isDevUser(currentUser)) return true;
+
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
+      const userPerms = all[username] || all[currentUser.username] || (userName ? all[userName] : null);
+      if (Array.isArray(userPerms)) {
+        return userPerms.includes('general-archive');
+      }
+    } catch (_) {}
+  }
+
+  return isProjectManagerUser(currentUser) || isSalehUser(currentUser);
 };
 
 /**
@@ -68,12 +83,12 @@ export const canAccessPeriodicReports = (currentUser) => {
   const username = (currentUser.username || '').toLowerCase().trim();
   const userName = (currentUser.name || '').trim();
 
-  // 1. حساب التطوير ومدير المشروع لديهم صلاحية كاملة دائماً
-  if (isDevUser(currentUser) || isProjectManagerUser(currentUser)) {
+  // 1. حساب التطوير لديه صلاحية كاملة دائماً
+  if (isDevUser(currentUser)) {
     return true;
   }
 
-  // 2. فحص الصلاحيات المخصصة المحفوظة من قسم الصلاحيات أولاً (إذا تم تقييده صراحة)
+  // 2. فحص الصلاحيات المخصصة المحفوظة من قسم الصلاحيات أولاً
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
@@ -89,7 +104,7 @@ export const canAccessPeriodicReports = (currentUser) => {
 };
 
 /**
- * ترقية الصلاحيات القديمة لضمان عدم حجب قسم التقارير الدورية أو الأرشيف الخاص أو الأرشيف العام عن أي مستخدم
+ * ترقية الصلاحيات القديمة لإزالة الأقسام الملغية دون الكتابة فوق خيارات المشرف
  */
 export const migrateLegacyPermissions = () => {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -100,25 +115,10 @@ export const migrateLegacyPermissions = () => {
     let changed = false;
     for (const key of Object.keys(all)) {
       if (Array.isArray(all[key])) {
-        // Remove sector-dashboard completely
+        // تنظيف الأقسام الملغية فقط
         if (all[key].includes('sector-dashboard')) {
           all[key] = all[key].filter(s => s !== 'sector-dashboard');
           changed = true;
-        }
-        // Ensure all core sections are unconditionally present for EVERY engineer
-        const core = ['dashboard', 'road-progress', 'executive-progress', 'ai-agent', 'periodic-reports', 'reports-archive'];
-        for (const c of core) {
-          if (!all[key].includes(c)) {
-            all[key].push(c);
-            changed = true;
-          }
-        }
-        const lowKey = String(key).toLowerCase();
-        if (lowKey.includes('saleh') || lowKey.includes('quality') || lowKey.includes('manager') || lowKey.includes('ansari') || lowKey.includes('admin') || lowKey.includes('dev')) {
-          if (!all[key].includes('general-archive')) {
-            all[key].push('general-archive');
-            changed = true;
-          }
         }
       }
     }

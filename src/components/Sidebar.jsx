@@ -209,7 +209,7 @@ export const Sidebar = ({
     const commItems = [
       { id: 'messages', label: 'البريد والمراسلات', icon: Mail, badge: unreadMessages > 0 ? unreadMessages : undefined }
     ];
-    if (isDev || isProjectManager) {
+    if (isDev || isProjectManager || (Array.isArray(userAllowedSections) && userAllowedSections.includes('users'))) {
       commItems.push({ id: 'users', label: 'المستخدمين والصلاحيات', icon: Users });
     }
 
@@ -301,21 +301,18 @@ export const Sidebar = ({
           {menuGroups.map((group, gIdx) => {
             const visibleItems = group.items.filter(item => {
               if (isDev) return true;
-              // Core unified sections are unconditionally visible to ALL engineers
-              if (item.id === 'dashboard' || item.id === 'road-progress' || item.id === 'executive-progress' || item.id === 'ai-agent') {
-                return true;
+              
+              // إذا كان للمستخدم صلاحيات مخصصة محددة من قسم الصلاحيات (UsersView)، يتم اعتمادها نصاً
+              if (Array.isArray(userAllowedSections)) {
+                return userAllowedSections.includes(item.id);
               }
-              if (item.id === 'reports-archive') {
-                return true; // الأرشيف الخاص بالمهندس متاح ومفعل دائماً لكافة المستخدمين
-              }
-              if (item.id === 'periodic-reports') {
-                return Array.isArray(userAllowedSections) ? (userAllowedSections.includes('periodic-reports') || canAccessPeriodicReports(currentUser)) : true;
-              }
+
+              // الصلاحيات الافتراضية التلقائية في حال عدم التخصيص
               if (item.id === 'general-archive') {
                 return canAccessGeneralArchive(currentUser);
               }
-              if (Array.isArray(userAllowedSections)) {
-                return userAllowedSections.includes(item.id);
+              if (item.id === 'users') {
+                return isDev || isProjectManager;
               }
               return true;
             });

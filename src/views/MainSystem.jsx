@@ -50,14 +50,12 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
       migrateLegacyPermissions();
     }, []);
 
-    const coreAlwaysAllowedTabs = ['dashboard', 'road-progress', 'executive-progress', 'ai-agent', 'reports-archive', 'periodic-reports'];
-
     const handleTabChange = (tabId) => {
       setIsMobileSidebarOpen(false);
       const targetTab = tabId === 'sector-dashboard' ? 'dashboard' : tabId;
       const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
       
-      if (!isDev && typeof window !== 'undefined' && !coreAlwaysAllowedTabs.includes(targetTab)) {
+      if (!isDev && typeof window !== 'undefined') {
         try {
           const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
           const u = currentUser?.username;
@@ -65,12 +63,8 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
           const n = currentUser?.name;
           const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
           if (Array.isArray(userPerms) && !userPerms.includes(targetTab)) {
-            if (targetTab === 'general-archive' && canAccessGeneralArchive(currentUser)) {
-              // مسموح لمدير المشروع وم. صالح
-            } else {
-              console.warn(`User ${currentUser?.username} is not permitted to access section: ${targetTab}`);
-              return;
-            }
+            console.warn(`User ${currentUser?.username} is not permitted to access section: ${targetTab}`);
+            return;
           }
         } catch (e) {}
       }
@@ -86,13 +80,6 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
         }
         const isDev = (currentUser?.role || '').includes('تطوير') || currentUser?.username === 'admin' || currentUser?.username === 'dev';
         if (!isDev && typeof window !== 'undefined') {
-          if (activeTab === 'general-archive' && !canAccessGeneralArchive(currentUser)) {
-            setActiveTab('reports-archive');
-            return;
-          }
-          if (coreAlwaysAllowedTabs.includes(activeTab)) {
-            return;
-          }
           try {
             const all = JSON.parse(localStorage.getItem('system_user_section_permissions') || '{}');
             const u = currentUser?.username;
@@ -100,7 +87,8 @@ export const MainSystem = ({ onLogout, currentUser, onUpdateUser }) => {
             const n = currentUser?.name;
             const userPerms = all[u] || all[lowU] || (n ? all[n] : null);
             if (Array.isArray(userPerms) && !userPerms.includes(activeTab)) {
-              setActiveTab('dashboard');
+              const fallback = userPerms[0] || 'dashboard';
+              setActiveTab(fallback);
             }
           } catch (e) {}
         }
