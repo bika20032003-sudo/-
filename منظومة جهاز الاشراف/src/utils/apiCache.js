@@ -1,80 +1,4 @@
-const INITIAL_CORRESPONDENCE_MESSAGES = [
-  {
-    id: 'msg-seed-1',
-    fromUsername: 'project_manager',
-    fromName: 'م. عبدالرحمن الأنصاري',
-    fromRole: 'مدير المشروع',
-    toUsername: 'all',
-    toName: 'كافة أعضاء جهاز الإشراف (تعميم)',
-    toRole: 'جهاز الإشراف والمتابعة',
-    type: 'توجيه فني وملاحظات ميدانية',
-    subject: 'تعميم إداري وفني بشأن التوثيق اليومي للأعمال المنجزة وتتبع الوقود',
-    content: 'السادة مهندسي ومسؤولي جهاز الإشراف الميداني، يُرجى التأكيد على دقة تسجيل قياسات المحطات الميدانية بالكيلومترات، وتدقيق استهلاك الوقود للآليات العاملة بالقطاعين أولاً بأول لضمان المطابقة الفنية والمحاسبية.',
-    reportNumber: null,
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
-  },
-  {
-    id: 'msg-seed-2',
-    fromUsername: 'salah_alarabi',
-    fromName: 'م. صلاح العربي',
-    fromRole: 'مهندس مشرف (المرحلة الأولى)',
-    toUsername: 'project_manager',
-    toName: 'م. عبدالرحمن الأنصاري',
-    toRole: 'مدير المشروع',
-    type: 'إحالة تقرير يومي',
-    subject: 'إحالة التقرير اليومي لمحطة القطاع الأول (كم 241 إلى كم 242)',
-    content: 'تم بحمد الله إنجاز أعمال طبقة الأساس الحبيبي بمعدل طول 300 م.ط ورش مادة التشريب MCO بنجاح وفق الاشتراطات الهندسية. مرفق التقرير الميداني للاعتماد.',
-    reportNumber: 'TARGET-SEC-A-5310',
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
-  },
-  {
-    id: 'msg-seed-3',
-    fromUsername: 'saleh_quality',
-    fromName: 'م. صالح حماد',
-    fromRole: 'مسؤول الجودة',
-    toUsername: 'project_manager',
-    toName: 'م. عبدالرحمن الأنصاري',
-    toRole: 'مدير المشروع',
-    type: 'طلب فحص أو اختبار جودة',
-    subject: 'الموقف الفني لنتائج فحوصات الكثافة الحقلية وعينات FDR',
-    content: 'أفيدكم بأن كافة نتائج اختبارات الكثافة الحقلية لمقاطع FDR بمحطات المرحلة الأولى أظهرت نسبة دمك أعلى من 98% ومطابقة كاملة للمواصفات الفنية المعتمدة للمشروع.',
-    reportNumber: null,
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString()
-  },
-  {
-    id: 'msg-seed-4',
-    fromUsername: 'issa_altahir',
-    fromName: 'م. عيسى الطاهر',
-    fromRole: 'مهندس مشرف (المرحلة الثانية)',
-    toUsername: 'project_manager',
-    toName: 'م. عبدالرحمن الأنصاري',
-    toRole: 'مدير المشروع',
-    type: 'إحالة تقرير يومي',
-    subject: 'متابعة أعمال طبقة إعادة التدوير FDR بالمرحلة الثانية',
-    content: 'تتواصل أعمال فرم وتأهيل طبقة إعادة التدوير (FDR) بالقطاع الثاني بمعدل يومي متقدم مع انتظام عمل الآليات ومداحل الدك الميدانية وفق المخطط الزمني المعتمد للمشروع.',
-    reportNumber: null,
-    isRead: true,
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
-  },
-  {
-    id: 'msg-seed-5',
-    fromUsername: 'fuel_officer',
-    fromName: 'مسؤول الوقود والمحروقات',
-    fromRole: 'مسؤول الوقود بالموقع',
-    toUsername: 'project_manager',
-    toName: 'م. عبدالرحمن الأنصاري',
-    toRole: 'مدير المشروع',
-    type: 'إحالة تقرير يومي',
-    subject: 'إحاطة وصول شحنة الديزل وخزانات الوقود بالموقع 107 والموقع 240',
-    content: 'نحيطكم علماً باستلام وتفريغ شحنة الوقود الجديدة بكمية 40,000 لتر وتوزيعها على خزانات المحطة 107 والمحطة 240، وتأمين كافة الآليات والمعدات العاملة بالقطاعين دون أي عجز.',
-    reportNumber: 'FUEL-DAILY-202611-01',
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString()
-  }
-];
+const INITIAL_CORRESPONDENCE_MESSAGES = [];
 
 import {
   canonicalizeUsername,
@@ -147,17 +71,12 @@ export function getFallbackData(url) {
         const loc = JSON.parse(localStorage.getItem('local_messages') || '[]');
         const map = new Map();
         [...sys, ...loc].forEach(m => {
-          if (m && m.id) map.set(String(m.id), m);
+          if (m && m.id && !String(m.id).startsWith('msg-seed')) map.set(String(m.id), m);
         });
         allMsgs = Array.from(map.values());
-        
-        // Seed initial communications if empty
-        const isInit = localStorage.getItem('system_messages_initialized');
-        if (allMsgs.length === 0 && !isInit) {
-          allMsgs = [...INITIAL_CORRESPONDENCE_MESSAGES];
-          localStorage.setItem('system_messages', JSON.stringify(allMsgs));
-          localStorage.setItem('system_messages_initialized', 'true');
-        }
+        localStorage.setItem('system_messages', JSON.stringify(allMsgs));
+        localStorage.setItem('local_messages', JSON.stringify(allMsgs));
+        localStorage.setItem('system_messages_initialized', 'true');
       }
     } catch {}
     
@@ -595,22 +514,6 @@ export function getFallbackData(url) {
       }
     } catch (e) {
       console.warn('Error reading reports cache:', e);
-    }
-    // Proactively provide official fuel report fallback if list is empty and not deleted
-    const hasFuel = list.some(r => r && (r.isFuelReport || r.reportType === 'تقرير كميات الوقود اليومية'));
-    if (!hasFuel && OFFICIAL_BASELINE_FUEL_REPORT) {
-      let isDel = false;
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
-          if (deleted.has('fuel-daily-2026-10-24') || deleted.has('FUEL-094834_24.10.2026')) {
-            isDel = true;
-          }
-        }
-      } catch (_) {}
-      if (!isDel) {
-        list.unshift(OFFICIAL_BASELINE_FUEL_REPORT);
-      }
     }
     return {
       success: true,

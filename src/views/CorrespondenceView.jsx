@@ -69,19 +69,25 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
     setIsLoading(true);
     try {
       const res = await fastFetch(`/api/messages?username=${encodeURIComponent(u)}`);
+      let fetched = [];
       if (res && res.messages) {
-        setMessages(res.messages);
+        fetched = res.messages;
       } else if (Array.isArray(res)) {
-        setMessages(res);
-      } else {
-        setMessages([]);
+        fetched = res;
       }
+      const cleanMsgs = fetched.filter(m => m && !String(m.id).startsWith('msg-seed'));
+      setMessages(cleanMsgs);
+      try {
+        localStorage.setItem('system_messages', JSON.stringify(cleanMsgs));
+        localStorage.setItem('local_messages', JSON.stringify(cleanMsgs));
+      } catch (_) {}
     } catch (err) {
       console.warn('Could not load messages from server:', err);
       // Fallback to local storage if offline
       try {
         const local = JSON.parse(localStorage.getItem('system_messages') || localStorage.getItem('local_messages') || '[]');
-        setMessages(local);
+        const cleanMsgs = (Array.isArray(local) ? local : []).filter(m => m && !String(m.id).startsWith('msg-seed'));
+        setMessages(cleanMsgs);
       } catch {
         setMessages([]);
       }

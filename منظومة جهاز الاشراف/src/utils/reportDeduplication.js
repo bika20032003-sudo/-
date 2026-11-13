@@ -247,78 +247,22 @@ export function sanitizeLocalReportsStorage() {
     let parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) parsed = [];
 
-    // Pull in section-specific saved reports if available
-    const sectionKeys = [
-      'two_phase_report_data',
-      'road_daily_report_data',
-      'fuel_daily_report_data',
-      'targeted_works_report_data',
-      'executive_progress_data'
-    ];
-    sectionKeys.forEach(secKey => {
-      try {
-        const secRaw = localStorage.getItem(secKey);
-        if (secRaw) {
-          const secObj = JSON.parse(secRaw);
-          if (secObj && (secObj.id || secObj.reportNumber || secObj.basicItems)) {
-            if (secKey === 'executive_progress_data') {
-              secObj.isExecutiveProgressReport = true;
-              secObj.reportType = 'الموقف التنفيذي';
-              secObj.reportCategory = 'executive';
-              if (!secObj.id) secObj.id = 'exec-' + (secObj.reportDate || '2026-10-29');
-              if (!secObj.reportNumber) secObj.reportNumber = '093436_29.10.2026';
-              if (!secObj.title) secObj.title = 'الموقف التنفيذي.';
-              if (!secObj.sector) secObj.sector = 'مشروع صيانة وتطوير طريق أوباري - غات (360 كم)';
-              if (!secObj.date) secObj.date = secObj.reportDate ? new Date(secObj.reportDate).toISOString() : new Date('2026-10-29').toISOString();
-              if (!secObj.dateFormatted) secObj.dateFormatted = secObj.reportDate || '2026-10-29';
-              if (!secObj.overallFinancialPercentage && secObj.grandTotals?.overallFinancialPercentage) {
-                secObj.overallFinancialPercentage = secObj.grandTotals.overallFinancialPercentage;
-              }
-              if (!secObj.totalExecutedValue && secObj.grandTotals?.totalExecutedValue) {
-                secObj.totalExecutedValue = secObj.grandTotals.totalExecutedValue;
-              }
-              if (!secObj.contractValue && secObj.grandTotals?.contractValue) {
-                secObj.contractValue = secObj.grandTotals.contractValue;
-              }
-              if (!secObj.uploadedBy) secObj.uploadedBy = 'م. عبدالرحمن الأنصاري (مدير المشروع)';
-              if (!secObj.engineer) secObj.engineer = 'م. عبدالرحمن الأنصاري';
-              if (!secObj.sectorDirector) secObj.sectorDirector = 'م. عبدالرحمن الأنصاري';
-              if (!secObj.status) secObj.status = 'approved';
-            } else if (secKey === 'road_daily_report_data') {
-              secObj.isRoadProgressReport = true;
-              secObj.reportType = 'تقرير أعمال الطريق اليومي';
-              secObj.reportCategory = 'road';
-              if (!secObj.id) secObj.id = 'road-daily-' + (secObj.reportDate || '2026-10-24');
-              if (!secObj.reportNumber) secObj.reportNumber = 'ROAD-REP-24.10.2026';
-              if (!secObj.dateFormatted) secObj.dateFormatted = secObj.reportDate || '2026-10-24';
-              if (!secObj.date) secObj.date = secObj.reportDate ? new Date(secObj.reportDate).toISOString() : '2026-10-24T00:00:00.000Z';
-              if (!secObj.sector) secObj.sector = 'طريق أوباري - غات';
-              if (!secObj.title) secObj.title = secObj.reportTitle || `تقرير أعمال يوم ${secObj.dayName || 'السبت'} ${secObj.reportDate || '2026-10-24'}`;
-              if (!secObj.status) secObj.status = 'approved';
-              if (!secObj.uploadedBy) secObj.uploadedBy = secObj.sectorDirector || 'م. صلاح العربي';
-              if (!secObj.engineer) secObj.engineer = secObj.sectorDirector || 'م. صلاح العربي';
-            } else if (secKey === 'fuel_daily_report_data') {
-              secObj.isFuelReport = true;
-              secObj.reportType = 'تقرير كميات الوقود اليومية';
-              secObj.reportCategory = 'fuel';
-              if (!secObj.id) secObj.id = 'fuel-daily-' + (secObj.reportDate || '2026-10-24');
-              if (!secObj.reportNumber) secObj.reportNumber = 'FUEL-094834_24.10.2026';
-              if (!secObj.dateFormatted) secObj.dateFormatted = secObj.reportDate || '2026-10-24';
-              if (!secObj.date) secObj.date = secObj.reportDate ? new Date(secObj.reportDate).toISOString() : '2026-10-24T00:00:00.000Z';
-              if (!secObj.sector) secObj.sector = 'مشروع أوباري - غات';
-              if (!secObj.title) secObj.title = secObj.reportTitle || 'تقرير كميات الوقود اليومية';
-              if (!secObj.status) secObj.status = 'approved';
-              if (!secObj.uploadedBy) secObj.uploadedBy = secObj.fuelOfficer || 'مسؤول الوقود والمحروقات بالموقع';
-              if (!secObj.engineer) secObj.engineer = secObj.fuelOfficer || 'مسؤول الوقود والمحروقات بالموقع';
-            }
-            parsed.push(secObj);
-          }
-        }
-      } catch (_) {}
-    });
-    
-    // Filter out deleted reports
-    parsed = parsed.filter(r => r && !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
+    // Filter out deleted reports and any legacy demo/mock reports
+    const mockReportIds = new Set([
+      'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
+      'exec-2026-10-29', '093436_29.10.2026',
+      'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
+      'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'TW-P1-1044', 'rep-tw-p1-1044',
+      'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
+      'SUP-REP-1102', 'rep-sup-1102'
+    ]);
+
+    parsed = parsed.filter(r => r && 
+      !deleted.has(String(r.id)) && 
+      !deleted.has(String(r.reportNumber)) &&
+      !mockReportIds.has(String(r.id)) &&
+      !mockReportIds.has(String(r.reportNumber))
+    );
     
     const clean = deduplicateReportsList(parsed);
     localStorage.setItem('local_reports', JSON.stringify(clean));

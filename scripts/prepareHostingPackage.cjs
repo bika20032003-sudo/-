@@ -474,6 +474,7 @@ try {
   const publicZipPath = path.join(rootDir, 'ملفات_الرفع_المباشر_public_html.zip');
   
   const psScript = `
+$ProgressPreference = 'SilentlyContinue'
 $OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Compress-Archive -Path '${outDir.replace(/'/g, "''")}\\*' -DestinationPath '${fullZipPath.replace(/'/g, "''")}' -Force
 Compress-Archive -Path '${path.join(outDir, 'public_html').replace(/'/g, "''")}\\*' -DestinationPath '${publicZipPath.replace(/'/g, "''")}' -Force

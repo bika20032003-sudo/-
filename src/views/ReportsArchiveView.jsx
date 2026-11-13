@@ -269,22 +269,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       } else if (Array.isArray(res)) {
         list = res;
       }
-      
-      // Proactively pull fuel report if not yet in reports list
-      const hasFuel = list.some(r => r && (r.isFuelReport || r.reportType === 'تقرير كميات الوقود اليومية' || r.reportCategory === 'fuel'));
-      if (!hasFuel) {
-        try {
-          const fuelRes = await fastFetch('/api/fuel-daily-report');
-          if (fuelRes && fuelRes.data && (fuelRes.data.fuelItems || fuelRes.data.reportNumber)) {
-            list.unshift({
-              ...fuelRes.data,
-              isFuelReport: true,
-              reportType: 'تقرير كميات الوقود اليومية',
-              reportCategory: 'fuel'
-            });
-          }
-        } catch (_) {}
-      }
 
       // Merge with locally created reports, filter deleted, and strictly deduplicate
       try {
@@ -293,24 +277,25 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
           res.deletedReportIds.forEach(id => deletedSet.add(String(id)));
         }
 
-        // Active server reports must never be suppressed by a stale blacklist
-        list.forEach(r => {
-          if (r?.id) deletedSet.delete(String(r.id));
-          if (r?.reportNumber) deletedSet.delete(String(r.reportNumber));
-        });
-        localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deletedSet)));
-
         const local = sanitizeLocalReportsStorage();
-        local.forEach(r => {
-          if (r?.id) deletedSet.delete(String(r.id));
-          if (r?.reportNumber) deletedSet.delete(String(r.reportNumber));
-        });
+
+        // Exclude legacy mock demo reports from archive
+        const mockReportIds = new Set([
+          'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
+          'exec-2026-10-29', '093436_29.10.2026',
+          'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
+          'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'TW-P1-1044', 'rep-tw-p1-1044',
+          'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
+          'SUP-REP-1102', 'rep-sup-1102'
+        ]);
 
         // Merge backend list with sanitized local reports
         const combined = [...local, ...list].filter(r => 
           r && 
           !deletedSet.has(String(r.id)) && 
-          !deletedSet.has(String(r.reportNumber))
+          !deletedSet.has(String(r.reportNumber)) &&
+          !mockReportIds.has(String(r.id)) &&
+          !mockReportIds.has(String(r.reportNumber))
         );
 
         // Strict composite deduplication: guarantees no duplicates by ID, Report Number, or (Date + Type + Sector)

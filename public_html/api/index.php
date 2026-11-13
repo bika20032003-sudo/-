@@ -628,45 +628,6 @@ if ($resource === 'reports') {
     if ($method === 'GET' && empty($subId)) {
         $sector = $_GET['sector'] ?? '';
 
-        // Proactively ensure fuelDailyReport is merged into reports if available
-        if (!empty($db['fuelDailyReport']) && is_array($db['fuelDailyReport'])) {
-            $fuelRep = $db['fuelDailyReport'];
-            $fNum = !empty($fuelRep['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string)$fuelRep['reportNumber'])) : '';
-            $fId = strtolower(trim((string)($fuelRep['id'] ?? '')));
-            $found = false;
-            foreach ($db['reports'] as $existingRep) {
-                $eNum = !empty($existingRep['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string)$existingRep['reportNumber'])) : '';
-                $eId = strtolower(trim((string)($existingRep['id'] ?? '')));
-                if (($fNum && $fNum === $eNum) || ($fId && $fId === $eId)) {
-                    $found = true;
-                    break;
-                }
-            }
-            if (!$found) {
-                array_unshift($db['reports'], $fuelRep);
-            }
-        }
-
-        // Remove any active report from deletedReportIds so clients never get a contradicting blacklist
-        if (!empty($db['deletedReportIds'])) {
-            $activeIds = [];
-            foreach ($db['reports'] as $r) {
-                if (!empty($r['id'])) {
-                    $activeIds[strtolower(trim((string)$r['id']))] = true;
-                    $activeIds[strtolower(preg_replace('/[\s\-_]/', '', (string)$r['id']))] = true;
-                }
-                if (!empty($r['reportNumber'])) {
-                    $activeIds[strtolower(trim((string)$r['reportNumber']))] = true;
-                    $activeIds[strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']))] = true;
-                }
-            }
-            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($activeIds) {
-                $raw = strtolower(trim((string)$did));
-                $norm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
-                return empty($activeIds[$raw]) && empty($activeIds[$norm]);
-            }));
-        }
-
         $list = deduplicate_reports_array($db['reports'] ?? []);
         if (!empty($sector)) {
             $list = array_values(array_filter($list, function($r) use ($sector) {

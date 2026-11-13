@@ -18,3 +18,4 @@ define('MYSQL_PORT', 3306);
 define('MYSQL_DB', 'cpanel_monitoring_db');     // اسم قاعدة البيانات
 define('MYSQL_USER', 'cpanel_db_user');         // اسم مستخدم قاعدة البيانات
 define('MYSQL_PASS', 'cpanel_db_password');     // كلمة مرور قاعدة البيانات
+

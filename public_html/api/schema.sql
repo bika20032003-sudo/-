@@ -38,3 +38,4 @@ CREATE TABLE IF NOT EXISTS `messages` (
   KEY `idx_from_username` (`from_username`),
   KEY `idx_to_username` (`to_username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
