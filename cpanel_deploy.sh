@@ -17,6 +17,12 @@ fi
 echo "[Deploy] Target directory: $TARGET_DIR"
 /bin/mkdir -p "$TARGET_DIR"
 
+# 0. أمان البيانات: نسخ احتياطي مؤقت لقاعدة بيانات السيرفر الحية لمنع استبدالها
+if [ -f "$TARGET_DIR/api/data/db.json" ]; then
+    /bin/cp -f "$TARGET_DIR/api/data/db.json" /tmp/cpanel_live_db_backup.json 2>/dev/null || true
+    echo "[Deploy] Backed up live db.json before file sync."
+fi
+
 # 1. نسخ كافة ملفات الواجهة الأمامية من public_html إلى مسار النشر
 if [ -d "public_html" ]; then
     /bin/cp -rf public_html/* "$TARGET_DIR/" 2>/dev/null || true
@@ -27,6 +33,14 @@ elif [ -d "dist" ]; then
     /bin/cp -rf dist/* "$TARGET_DIR/" 2>/dev/null || true
     /bin/cp -f dist/.htaccess "$TARGET_DIR/" 2>/dev/null || true
     echo "[Deploy] Copied dist files successfully."
+fi
+
+# 1.1. استعادة قاعدة البيانات الحية للمشروع فوراً لضمان عدم فقدان أي بيانات مدخلة من المهندسين
+if [ -f /tmp/cpanel_live_db_backup.json ]; then
+    /bin/mkdir -p "$TARGET_DIR/api/data"
+    /bin/cp -f /tmp/cpanel_live_db_backup.json "$TARGET_DIR/api/data/db.json" 2>/dev/null || true
+    /bin/rm -f /tmp/cpanel_live_db_backup.json 2>/dev/null || true
+    echo "[Deploy] Restored and protected live database successfully."
 fi
 
 # 2. ضمان وجود index.htm إلى جانب index.html
