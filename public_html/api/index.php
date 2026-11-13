@@ -45,10 +45,12 @@ if (!defined('MYSQL_ENABLED')) {
     define('MYSQL_ENABLED', false);
 }
 
-function get_mysql_pdo() {
+function get_mysql_pdo()
+{
     static $pdo = null;
     static $attempted = false;
-    if ($attempted) return $pdo;
+    if ($attempted)
+        return $pdo;
     $attempted = true;
 
     $enabled = defined('MYSQL_ENABLED') && MYSQL_ENABLED === true;
@@ -84,7 +86,8 @@ function get_mysql_pdo() {
     }
 }
 
-function get_db() {
+function get_db()
+{
     // 1. Check MySQL if enabled
     $pdo = get_mysql_pdo();
     if ($pdo) {
@@ -94,7 +97,8 @@ function get_db() {
             $row = $stmt->fetch();
             if ($row && !empty($row['data_value'])) {
                 $decoded = json_decode($row['data_value'], true);
-                if (is_array($decoded)) return $decoded;
+                if (is_array($decoded))
+                    return $decoded;
             }
         } catch (Exception $e) {
             error_log("[MySQL Read Notice] " . $e->getMessage());
@@ -123,7 +127,8 @@ function get_db() {
     }
 
     $fp = @fopen(DB_FILE, 'r');
-    if (!$fp) return [];
+    if (!$fp)
+        return [];
     @flock($fp, LOCK_SH);
     $content = @stream_get_contents($fp);
     @flock($fp, LOCK_UN);
@@ -133,7 +138,8 @@ function get_db() {
     return is_array($data) ? $data : [];
 }
 
-function save_db(&$data) {
+function save_db(&$data)
+{
     if (!is_dir(DATA_DIR)) {
         @mkdir(DATA_DIR, 0755, true);
     }
@@ -154,6 +160,7 @@ function save_db(&$data) {
     }
 
     // 2. Always persist to Central Server DB file with exclusive lock
+    $saved = false;
     $fp = @fopen(DB_FILE, 'c+');
     if ($fp) {
         if (@flock($fp, LOCK_EX)) {
@@ -164,14 +171,25 @@ function save_db(&$data) {
             @flock($fp, LOCK_UN);
         }
         @fclose($fp);
-        return true;
+        $saved = true;
+    } else {
+        $saved = @file_put_contents(DB_FILE, $json, LOCK_EX) !== false;
     }
-    return @file_put_contents(DB_FILE, $json, LOCK_EX) !== false;
+
+    // Mirror to server/data/db.json to ensure 100% sync if Node.js is also running
+    $serverDir = dirname(dirname(API_ROOT)) . '/server/data';
+    if (is_dir($serverDir)) {
+        @file_put_contents($serverDir . '/db.json', $json, LOCK_EX);
+    }
+
+    return $saved;
 }
 
-function get_json_input() {
+function get_json_input()
+{
     $raw = file_get_contents('php://input');
-    if (empty($raw)) return [];
+    if (empty($raw))
+        return [];
     $parsed = json_decode($raw, true);
     return is_array($parsed) ? $parsed : [];
 }
@@ -181,9 +199,11 @@ function get_json_input() {
 // 3.1 Domain Helper Functions & Deduplication
 // ==============================================================================
 
-function canonicalize_php_username($u) {
-    $u = strtolower(trim((string)($u ?? '')));
-    if ($u === '') return '';
+function canonicalize_php_username($u)
+{
+    $u = strtolower(trim((string) ($u ?? '')));
+    if ($u === '')
+        return '';
     $map = [
         'dev' => 'admin',
         'developer' => 'admin',
@@ -206,8 +226,10 @@ function canonicalize_php_username($u) {
     return $map[$u] ?? $u;
 }
 
-function normalize_report_date_str($val) {
-    if (empty($val) || !is_string($val)) return '';
+function normalize_report_date_str($val)
+{
+    if (empty($val) || !is_string($val))
+        return '';
     $val = trim($val);
     if (preg_match('/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/', $val, $m)) {
         return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
@@ -218,12 +240,14 @@ function normalize_report_date_str($val) {
     return substr($val, 0, 10);
 }
 
-function get_report_canonical_key($r) {
-    if (!$r || !is_array($r)) return '';
+function get_report_canonical_key($r)
+{
+    if (!$r || !is_array($r))
+        return '';
     $rawDate = $r['reportDate'] ?? $r['date'] ?? $r['dateFormatted'] ?? $r['createdAt'] ?? '';
     $date = normalize_report_date_str($rawDate);
     $type = $r['reportType'] ?? $r['type'] ?? $r['title'] ?? '';
-    
+
     if (!empty($r['isTwoPhaseProgressReport']) || mb_stripos($type, 'المرحلتين') !== false) {
         return 'tp_' . $date;
     }
@@ -239,24 +263,30 @@ function get_report_canonical_key($r) {
         return 'road_' . $sec . '_' . $date;
     }
     if (!empty($r['reportNumber'])) {
-        return 'num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']));
+        return 'num_' . strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber']));
     }
-    return 'id_' . strtolower(trim((string)($r['id'] ?? '')));
+    return 'id_' . strtolower(trim((string) ($r['id'] ?? '')));
 }
 
-function deduplicate_reports_array($reports) {
-    if (!is_array($reports)) return [];
+function deduplicate_reports_array($reports)
+{
+    if (!is_array($reports))
+        return [];
     $map = [];
     foreach ($reports as $r) {
-        if (!is_array($r)) continue;
+        if (!is_array($r))
+            continue;
         $key = get_report_canonical_key($r);
-        $numKey = !empty($r['reportNumber']) ? ('num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']))) : null;
-        $idKey = !empty($r['id']) ? ('id_' . strtolower(trim((string)$r['id']))) : null;
+        $numKey = !empty($r['reportNumber']) ? ('num_' . strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber']))) : null;
+        $idKey = !empty($r['id']) ? ('id_' . strtolower(trim((string) $r['id']))) : null;
 
         $targetKey = null;
-        if (isset($map[$key])) $targetKey = $key;
-        elseif ($numKey && isset($map[$numKey])) $targetKey = $numKey;
-        elseif ($idKey && isset($map[$idKey])) $targetKey = $idKey;
+        if (isset($map[$key]))
+            $targetKey = $key;
+        elseif ($numKey && isset($map[$numKey]))
+            $targetKey = $numKey;
+        elseif ($idKey && isset($map[$idKey]))
+            $targetKey = $idKey;
 
         if ($targetKey) {
             $existing = $map[$targetKey];
@@ -264,22 +294,28 @@ function deduplicate_reports_array($reports) {
             $tOld = strtotime($existing['updatedAt'] ?? $existing['createdAt'] ?? $existing['date'] ?? '') ?: 0;
             $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? $r['fuelItems'] ?? []);
             $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? $existing['fuelItems'] ?? []);
-            
+
             if ($itemsNew >= $itemsOld || $tNew >= $tOld) {
                 $merged = array_merge($existing, $r);
                 $map[$targetKey] = $merged;
-                if ($key) $map[$key] = $merged;
-                if ($numKey) $map[$numKey] = $merged;
-                if ($idKey) $map[$idKey] = $merged;
+                if ($key)
+                    $map[$key] = $merged;
+                if ($numKey)
+                    $map[$numKey] = $merged;
+                if ($idKey)
+                    $map[$idKey] = $merged;
             }
         } else {
-            if ($key) $map[$key] = $r;
-            if ($numKey) $map[$numKey] = $r;
-            if ($idKey) $map[$idKey] = $r;
+            if ($key)
+                $map[$key] = $r;
+            if ($numKey)
+                $map[$numKey] = $r;
+            if ($idKey)
+                $map[$idKey] = $r;
         }
     }
     $unique = array_values(array_unique($map, SORT_REGULAR));
-    usort($unique, function($a, $b) {
+    usort($unique, function ($a, $b) {
         $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: 0;
         $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: 0;
         return $tb <=> $ta;
@@ -287,10 +323,12 @@ function deduplicate_reports_array($reports) {
     return $unique;
 }
 
-function categorize_road_item_to_phase2_id_php($rawName) {
-    if (empty($rawName)) return null;
-    $s = mb_strtolower(trim((string)$rawName), 'UTF-8');
-    
+function categorize_road_item_to_phase2_id_php($rawName)
+{
+    if (empty($rawName))
+        return null;
+    $s = mb_strtolower(trim((string) $rawName), 'UTF-8');
+
     if (mb_stripos($s, 'بدون أسمنت') !== false || mb_stripos($s, 'بدون اسمنت') !== false || mb_stripos($s, 'فرمة أولى') !== false || mb_stripos($s, 'فرمة اولي') !== false) {
         return 4;
     }
@@ -312,18 +350,22 @@ function categorize_road_item_to_phase2_id_php($rawName) {
     return null;
 }
 
-function sync_road_report_to_two_phase_php(&$db, $roadReport) {
-    if (!is_array($roadReport)) return null;
-    
+function sync_road_report_to_two_phase_php(&$db, $roadReport)
+{
+    if (!is_array($roadReport))
+        return null;
+
     $extracted = [];
     $rawItems = $roadReport['items'] ?? [];
     if (is_array($rawItems)) {
         foreach ($rawItems as $it) {
-            if (!is_array($it)) continue;
+            if (!is_array($it))
+                continue;
             $name = $it['description'] ?? $it['name'] ?? $it['item'] ?? '';
             $id = categorize_road_item_to_phase2_id_php($name);
-            if (!$id) continue;
-            
+            if (!$id)
+                continue;
+
             $m = floatval($it['lengthMeters'] ?? $it['length'] ?? $it['todayMeters'] ?? 0);
             if (!isset($extracted[$id])) {
                 $extracted[$id] = 0;
@@ -331,7 +373,7 @@ function sync_road_report_to_two_phase_php(&$db, $roadReport) {
             $extracted[$id] += $m;
         }
     }
-    
+
     if (isset($roadReport['fdrWithoutCementMeters']) && floatval($roadReport['fdrWithoutCementMeters']) > 0) {
         $extracted[4] = floatval($roadReport['fdrWithoutCementMeters']);
     }
@@ -351,7 +393,8 @@ function sync_road_report_to_two_phase_php(&$db, $roadReport) {
         $extracted[6] = floatval($roadReport['serviceRoadMeters']);
     }
 
-    if (empty($extracted)) return null;
+    if (empty($extracted))
+        return null;
 
     $twoPhase = $db['latestTwoPhaseReport'] ?? null;
     if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
@@ -371,15 +414,15 @@ function sync_road_report_to_two_phase_php(&$db, $roadReport) {
         $id = intval($p2['id'] ?? 0);
         if (isset($extracted[$id])) {
             $today = $extracted[$id];
-            $prev = isset($p2['previousMeters']) && is_numeric($p2['previousMeters']) 
-                ? floatval($p2['previousMeters']) 
+            $prev = isset($p2['previousMeters']) && is_numeric($p2['previousMeters'])
+                ? floatval($p2['previousMeters'])
                 : max(0, floatval($p2['totalMeters'] ?? 0) - floatval($p2['todayMeters'] ?? 0));
             $newTotal = $prev + $today;
             $target = floatval($p2['dailyTarget'] ?? 800);
 
-            $p2['previousMeters'] = (string)$prev;
-            $p2['todayMeters'] = (string)$today;
-            $p2['totalMeters'] = (string)$newTotal;
+            $p2['previousMeters'] = (string) $prev;
+            $p2['todayMeters'] = (string) $today;
+            $p2['totalMeters'] = (string) $newTotal;
             $p2['varianceMeters'] = number_format($today - $target, 2, '.', '');
             $p2['notes'] = 'تم تحديثه وتغذيته تلقائياً من تقرير أعمال الطريق اليومي';
         }
@@ -405,8 +448,8 @@ function sync_road_report_to_two_phase_php(&$db, $roadReport) {
                 'category' => $p1['category'] ?? ($idx < 3 ? 'basic' : 'additional'),
                 'name' => $p1['name'] ?? '',
                 'shortName' => $p1['shortName'] ?? '',
-                'todayMeters' => $combToday > 0 ? (string)$combToday : '',
-                'totalMeters' => $combTotal > 0 ? (string)$combTotal : '',
+                'todayMeters' => $combToday > 0 ? (string) $combToday : '',
+                'totalMeters' => $combTotal > 0 ? (string) $combTotal : '',
                 'readyToWorkMeters' => $custom['readyToWorkMeters'] ?? '',
                 'notes' => $custom['notes'] ?? ''
             ]);
@@ -432,7 +475,8 @@ $uri = strtok($uri, '?'); // Remove query string
 
 // Extract sub-path after /api/
 $path = preg_replace('#^.*?/api/?#i', '/', $uri);
-if (empty($path) || $path === '') $path = '/';
+if (empty($path) || $path === '')
+    $path = '/';
 $path = '/' . ltrim($path, '/');
 $segments = explode('/', trim($path, '/'));
 $resource = $segments[0] ?? '';
@@ -503,13 +547,14 @@ if ($resource === 'dashboard') {
         foreach ($equipment as $eq) {
             $st = strtolower($eq['status'] ?? '');
             if (in_array($st, ['stopped', 'maintenance', 'breakdown', 'عطلان'])) {
-                $eqStopped += (int)($eq['count'] ?? 1);
+                $eqStopped += (int) ($eq['count'] ?? 1);
             } else {
-                $eqActive += (int)($eq['count'] ?? 1);
+                $eqActive += (int) ($eq['count'] ?? 1);
             }
         }
         $eqTotal = count($equipment) > 0 ? ($eqActive + $eqStopped) : 25;
-        if ($eqActive === 0 && count($equipment) === 0) $eqActive = 25;
+        if ($eqActive === 0 && count($equipment) === 0)
+            $eqActive = 25;
 
         // Fuel totals from reports and fuel logs
         $totalFuelDispatched = 0;
@@ -517,20 +562,21 @@ if ($resource === 'dashboard') {
         $totalFuelRem = 0;
         foreach ($reports as $r) {
             if (!empty($r['isFuelReport']) || ($r['reportType'] ?? '') === 'تقرير كميات الوقود اليومية' || !empty($r['fuelItems'])) {
-                $disp = (float)str_replace(',', '', $r['totalDispatchedLiters'] ?? $r['fuelAmount'] ?? 0);
-                $rec = (float)str_replace(',', '', $r['totalReceivedLiters'] ?? 0);
-                $rem = (float)str_replace(',', '', $r['totalRemainingLiters'] ?? 0);
+                $disp = (float) str_replace(',', '', $r['totalDispatchedLiters'] ?? $r['fuelAmount'] ?? 0);
+                $rec = (float) str_replace(',', '', $r['totalReceivedLiters'] ?? 0);
+                $rem = (float) str_replace(',', '', $r['totalRemainingLiters'] ?? 0);
                 $totalFuelDispatched += $disp;
                 $totalFuelRec += $rec;
-                if ($totalFuelRem === 0 && $rem > 0) $totalFuelRem = $rem;
+                if ($totalFuelRem === 0 && $rem > 0)
+                    $totalFuelRem = $rem;
             }
         }
         foreach ($fuelList as $f) {
-            $totalFuelDispatched += (float)($f['liters'] ?? 0);
+            $totalFuelDispatched += (float) ($f['liters'] ?? 0);
         }
 
         // Sort recent reports descending
-        usort($reports, function($a, $b) {
+        usort($reports, function ($a, $b) {
             $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: ($a['id'] ?? 0);
             $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: ($b['id'] ?? 0);
             return $tb <=> $ta;
@@ -540,8 +586,8 @@ if ($resource === 'dashboard') {
         $roadMetersToday = 0;
         $roadMetersTotal = 237390;
         if ($twoPhase && !empty($twoPhase['twoPhaseTotals'])) {
-            $roadMetersToday = (float)($twoPhase['twoPhaseTotals']['todayMeters'] ?? 0);
-            $roadMetersTotal = (float)($twoPhase['twoPhaseTotals']['totalCumulativeMeters'] ?? 237390);
+            $roadMetersToday = (float) ($twoPhase['twoPhaseTotals']['todayMeters'] ?? 0);
+            $roadMetersTotal = (float) ($twoPhase['twoPhaseTotals']['totalCumulativeMeters'] ?? 237390);
         }
 
         $phase1Fuel = round($totalFuelDispatched * 0.6);
@@ -583,8 +629,10 @@ if ($resource === 'dashboard') {
 // -------------------------------------------------------------
 if ($resource === 'reports') {
     $db = get_db();
-    if (!isset($db['reports'])) $db['reports'] = [];
-    if (!isset($db['deletedReportIds'])) $db['deletedReportIds'] = [];
+    if (!isset($db['reports']))
+        $db['reports'] = [];
+    if (!isset($db['deletedReportIds']))
+        $db['deletedReportIds'] = [];
 
     // 1. Periodic reports
     if ($subId === 'periodic') {
@@ -606,8 +654,10 @@ if ($resource === 'reports') {
     // 2. Clear all reports (DELETE /api/reports/clear-all or /api/reports/all)
     if ($method === 'DELETE' && ($subId === 'clear-all' || $subId === 'all')) {
         foreach ($db['reports'] as $r) {
-            if (!empty($r['id'])) $db['deletedReportIds'][] = (string)$r['id'];
-            if (!empty($r['reportNumber'])) $db['deletedReportIds'][] = (string)$r['reportNumber'];
+            if (!empty($r['id']))
+                $db['deletedReportIds'][] = (string) $r['id'];
+            if (!empty($r['reportNumber']))
+                $db['deletedReportIds'][] = (string) $r['reportNumber'];
         }
         $db['deletedReportIds'] = array_values(array_unique(array_filter($db['deletedReportIds'])));
         $db['reports'] = [];
@@ -630,7 +680,7 @@ if ($resource === 'reports') {
 
         $list = deduplicate_reports_array($db['reports'] ?? []);
         if (!empty($sector)) {
-            $list = array_values(array_filter($list, function($r) use ($sector) {
+            $list = array_values(array_filter($list, function ($r) use ($sector) {
                 return isset($r['sector']) && mb_stripos($r['sector'], $sector) !== false;
             }));
         }
@@ -657,31 +707,36 @@ if ($resource === 'reports') {
         }
 
         $newKey = get_report_canonical_key($body);
-        $newNum = strtolower(preg_replace('/[\s\-_]/', '', (string)$body['reportNumber']));
-        $newNumRaw = strtolower(trim((string)$body['reportNumber']));
-        $newId = strtolower(trim((string)$body['id']));
-        $newIdNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)$body['id']));
+        $newNum = strtolower(preg_replace('/[\s\-_]/', '', (string) $body['reportNumber']));
+        $newNumRaw = strtolower(trim((string) $body['reportNumber']));
+        $newId = strtolower(trim((string) $body['id']));
+        $newIdNorm = strtolower(preg_replace('/[\s\-_]/', '', (string) $body['id']));
 
         // If it was previously in deletedReportIds, remove it
         if (!empty($db['deletedReportIds'])) {
-            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($newId, $newIdNorm, $newNum, $newNumRaw) {
-                $didRaw = strtolower(trim((string)$did));
-                $didNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
-                if ($didRaw === $newId || $didNorm === $newId || $didRaw === $newIdNorm || $didNorm === $newIdNorm) return false;
-                if ($didRaw === $newNumRaw || $didNorm === $newNum || $didRaw === $newNum) return false;
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function ($did) use ($newId, $newIdNorm, $newNum, $newNumRaw) {
+                $didRaw = strtolower(trim((string) $did));
+                $didNorm = strtolower(preg_replace('/[\s\-_]/', '', (string) $did));
+                if ($didRaw === $newId || $didNorm === $newId || $didRaw === $newIdNorm || $didNorm === $newIdNorm)
+                    return false;
+                if ($didRaw === $newNumRaw || $didNorm === $newNum || $didRaw === $newNum)
+                    return false;
                 return true;
             }));
         }
 
         // Deduplicate: replace if exists with same key, id, or reportNumber
-        $filtered = array_filter($db['reports'] ?? [], function($r) use ($newKey, $newNum, $newId) {
+        $filtered = array_filter($db['reports'] ?? [], function ($r) use ($newKey, $newNum, $newId) {
             $rKey = get_report_canonical_key($r);
-            $rNum = !empty($r['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber'])) : '';
-            $rId = strtolower(trim((string)($r['id'] ?? '')));
+            $rNum = !empty($r['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber'])) : '';
+            $rId = strtolower(trim((string) ($r['id'] ?? '')));
 
-            if ($rKey && $rKey === $newKey) return false;
-            if ($rNum && $rNum === $newNum) return false;
-            if ($rId && $rId === $newId) return false;
+            if ($rKey && $rKey === $newKey)
+                return false;
+            if ($rNum && $rNum === $newNum)
+                return false;
+            if ($rId && $rId === $newId)
+                return false;
             return true;
         });
 
@@ -710,7 +765,7 @@ if ($resource === 'reports') {
         $approvedBy = $body['approvedBy'] ?? 'مدير المشروع';
         $found = null;
         foreach ($db['reports'] as &$r) {
-            if ((string)($r['id'] ?? '') === (string)$subId || (string)($r['reportNumber'] ?? '') === (string)$subId) {
+            if ((string) ($r['id'] ?? '') === (string) $subId || (string) ($r['reportNumber'] ?? '') === (string) $subId) {
                 $r['status'] = 'approved';
                 $r['approvedBy'] = $approvedBy;
                 $found = $r;
@@ -731,7 +786,7 @@ if ($resource === 'reports') {
         $body = get_json_input();
         $found = null;
         foreach ($db['reports'] as &$r) {
-            if ((string)($r['id'] ?? '') === (string)$subId || (string)($r['reportNumber'] ?? '') === (string)$subId) {
+            if ((string) ($r['id'] ?? '') === (string) $subId || (string) ($r['reportNumber'] ?? '') === (string) $subId) {
                 $r = array_merge($r, $body);
                 $found = $r;
                 break;
@@ -748,29 +803,32 @@ if ($resource === 'reports') {
 
     // 7. Delete Report (DELETE /api/reports/:id)
     if ($method === 'DELETE' && !empty($subId)) {
-        if (!isset($db['deletedReportIds'])) $db['deletedReportIds'] = [];
-        $db['deletedReportIds'][] = (string)$subId;
+        if (!isset($db['deletedReportIds']))
+            $db['deletedReportIds'] = [];
+        $db['deletedReportIds'][] = (string) $subId;
         foreach ($db['reports'] ?? [] as $r) {
-            if ((string)($r['id'] ?? '') === (string)$subId || (string)($r['reportNumber'] ?? '') === (string)$subId) {
-                if (!empty($r['id'])) $db['deletedReportIds'][] = (string)$r['id'];
-                if (!empty($r['reportNumber'])) $db['deletedReportIds'][] = (string)$r['reportNumber'];
+            if ((string) ($r['id'] ?? '') === (string) $subId || (string) ($r['reportNumber'] ?? '') === (string) $subId) {
+                if (!empty($r['id']))
+                    $db['deletedReportIds'][] = (string) $r['id'];
+                if (!empty($r['reportNumber']))
+                    $db['deletedReportIds'][] = (string) $r['reportNumber'];
             }
         }
         $db['deletedReportIds'] = array_values(array_unique(array_filter($db['deletedReportIds'])));
 
-        $db['reports'] = array_values(array_filter($db['reports'] ?? [], function($r) use ($subId) {
-            return (string)($r['id'] ?? '') !== (string)$subId && (string)($r['reportNumber'] ?? '') !== (string)$subId;
+        $db['reports'] = array_values(array_filter($db['reports'] ?? [], function ($r) use ($subId) {
+            return (string) ($r['id'] ?? '') !== (string) $subId && (string) ($r['reportNumber'] ?? '') !== (string) $subId;
         }));
-        if (isset($db['fuelDailyReport']) && ((string)($db['fuelDailyReport']['id'] ?? '') === (string)$subId || (string)($db['fuelDailyReport']['reportNumber'] ?? '') === (string)$subId)) {
+        if (isset($db['fuelDailyReport']) && ((string) ($db['fuelDailyReport']['id'] ?? '') === (string) $subId || (string) ($db['fuelDailyReport']['reportNumber'] ?? '') === (string) $subId)) {
             unset($db['fuelDailyReport']);
         }
-        if (isset($db['roadDailyReport']) && ((string)($db['roadDailyReport']['id'] ?? '') === (string)$subId || (string)($db['roadDailyReport']['reportNumber'] ?? '') === (string)$subId)) {
+        if (isset($db['roadDailyReport']) && ((string) ($db['roadDailyReport']['id'] ?? '') === (string) $subId || (string) ($db['roadDailyReport']['reportNumber'] ?? '') === (string) $subId)) {
             unset($db['roadDailyReport']);
         }
-        if (isset($db['executiveProgress']) && ((string)($db['executiveProgress']['id'] ?? '') === (string)$subId || (string)($db['executiveProgress']['reportNumber'] ?? '') === (string)$subId)) {
+        if (isset($db['executiveProgress']) && ((string) ($db['executiveProgress']['id'] ?? '') === (string) $subId || (string) ($db['executiveProgress']['reportNumber'] ?? '') === (string) $subId)) {
             unset($db['executiveProgress']);
         }
-        if (isset($db['latestTwoPhaseReport']) && ((string)($db['latestTwoPhaseReport']['id'] ?? '') === (string)$subId || (string)($db['latestTwoPhaseReport']['reportNumber'] ?? '') === (string)$subId)) {
+        if (isset($db['latestTwoPhaseReport']) && ((string) ($db['latestTwoPhaseReport']['id'] ?? '') === (string) $subId || (string) ($db['latestTwoPhaseReport']['reportNumber'] ?? '') === (string) $subId)) {
             unset($db['latestTwoPhaseReport']);
         }
         save_db($db);
@@ -796,7 +854,7 @@ if ($resource === 'two-phase-report') {
     if ($method === 'POST') {
         $body = get_json_input();
         $db['latestTwoPhaseReport'] = $body;
-        
+
         // Ensure it is simultaneously recorded in reports archive with strict deduplication
         $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports'] ?? []));
 
@@ -818,7 +876,8 @@ if ($resource === 'road-daily-report') {
     if ($method === 'POST') {
         $body = get_json_input();
         $db['roadDailyReport'] = $body;
-        if (!isset($db['reports'])) $db['reports'] = [];
+        if (!isset($db['reports']))
+            $db['reports'] = [];
         $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports']));
         // Automatically feed Phase 2 in Two-Phase report!
         sync_road_report_to_two_phase_php($db, $body);
@@ -852,15 +911,17 @@ if ($resource === 'fuel-daily-report') {
 
         // Un-blacklist this report from deletedReportIds
         if (!empty($db['deletedReportIds'])) {
-            $fId = strtolower(trim((string)($body['id'] ?? '')));
-            $fIdNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)($body['id'] ?? '')));
-            $fNumRaw = strtolower(trim((string)($body['reportNumber'] ?? '')));
-            $fNum = strtolower(preg_replace('/[\s\-_]/', '', (string)($body['reportNumber'] ?? '')));
-            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($fId, $fIdNorm, $fNum, $fNumRaw) {
-                $didRaw = strtolower(trim((string)$did));
-                $didNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
-                if ($didRaw === $fId || $didNorm === $fId || $didRaw === $fIdNorm || $didNorm === $fIdNorm) return false;
-                if ($didRaw === $fNumRaw || $didNorm === $fNum || $didRaw === $fNum) return false;
+            $fId = strtolower(trim((string) ($body['id'] ?? '')));
+            $fIdNorm = strtolower(preg_replace('/[\s\-_]/', '', (string) ($body['id'] ?? '')));
+            $fNumRaw = strtolower(trim((string) ($body['reportNumber'] ?? '')));
+            $fNum = strtolower(preg_replace('/[\s\-_]/', '', (string) ($body['reportNumber'] ?? '')));
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function ($did) use ($fId, $fIdNorm, $fNum, $fNumRaw) {
+                $didRaw = strtolower(trim((string) $did));
+                $didNorm = strtolower(preg_replace('/[\s\-_]/', '', (string) $did));
+                if ($didRaw === $fId || $didNorm === $fId || $didRaw === $fIdNorm || $didNorm === $fIdNorm)
+                    return false;
+                if ($didRaw === $fNumRaw || $didNorm === $fNum || $didRaw === $fNum)
+                    return false;
                 return true;
             }));
         }
@@ -882,7 +943,8 @@ if ($resource === 'fuel') {
     }
     if ($method === 'POST') {
         $body = get_json_input();
-        if (!isset($db['fuel'])) $db['fuel'] = [];
+        if (!isset($db['fuel']))
+            $db['fuel'] = [];
         array_unshift($db['fuel'], $body);
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم تسجيل حركة الوقود بنجاح']);
@@ -914,16 +976,17 @@ if ($resource === 'executive-progress') {
 
         // Un-blacklist from deletedReportIds
         if (!empty($db['deletedReportIds'])) {
-            $eId = strtolower(trim((string)($body['id'] ?? '')));
-            $eNum = strtolower(preg_replace('/[\s\-_]/', '', (string)($body['reportNumber'] ?? '')));
-            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($eId, $eNum) {
-                $raw = strtolower(trim((string)$did));
-                $norm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
+            $eId = strtolower(trim((string) ($body['id'] ?? '')));
+            $eNum = strtolower(preg_replace('/[\s\-_]/', '', (string) ($body['reportNumber'] ?? '')));
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function ($did) use ($eId, $eNum) {
+                $raw = strtolower(trim((string) $did));
+                $norm = strtolower(preg_replace('/[\s\-_]/', '', (string) $did));
                 return $raw !== $eId && $norm !== $eId && $raw !== $eNum && $norm !== $eNum;
             }));
         }
 
-        if (!isset($db['reports'])) $db['reports'] = [];
+        if (!isset($db['reports']))
+            $db['reports'] = [];
         $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports']));
         save_db($db);
         echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث الموقف التنفيذي بنجاح ومزامنته بالأرشيف']);
@@ -936,19 +999,21 @@ if ($resource === 'executive-progress') {
 // -------------------------------------------------------------
 if ($resource === 'road-progress') {
     $db = get_db();
-    if (!isset($db['roadProgress'])) $db['roadProgress'] = [];
+    if (!isset($db['roadProgress']))
+        $db['roadProgress'] = [];
 
     if ($subId === 'update-daily' && $method === 'POST') {
         $body = get_json_input();
         $targetId = $body['id'] ?? null;
-        $todayMeters = (float)($body['todayMeters'] ?? 0);
+        $todayMeters = (float) ($body['todayMeters'] ?? 0);
         $notes = $body['notes'] ?? '';
 
         foreach ($db['roadProgress'] as &$item) {
-            if ((string)$item['id'] === (string)$targetId) {
+            if ((string) $item['id'] === (string) $targetId) {
                 $item['todayMeters'] = $todayMeters;
-                $item['totalMeters'] = (float)($item['previousMeters'] ?? 0) + $todayMeters;
-                if (!empty($notes)) $item['notes'] = $notes;
+                $item['totalMeters'] = (float) ($item['previousMeters'] ?? 0) + $todayMeters;
+                if (!empty($notes))
+                    $item['notes'] = $notes;
                 break;
             }
         }
@@ -970,11 +1035,12 @@ if ($resource === 'road-progress') {
 
 if ($resource === 'messages') {
     $db = get_db();
-    if (!isset($db['messages'])) $db['messages'] = [];
+    if (!isset($db['messages']))
+        $db['messages'] = [];
 
     // Clear messages for a specific user or globally
     if ($method === 'DELETE' && ($subId === 'clear-all' || $subId === 'all' || empty($subId))) {
-        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $rawUsername = strtolower(trim((string) ($_GET['username'] ?? '')));
         $cUsername = canonicalize_php_username($rawUsername);
         $box = $_GET['box'] ?? 'all';
 
@@ -983,7 +1049,7 @@ if ($resource === 'messages') {
             foreach ($db['messages'] as &$m) {
                 $to = canonicalize_php_username($m['toUsername'] ?? '');
                 $from = canonicalize_php_username($m['fromUsername'] ?? '');
-                $rawTo = strtolower(trim((string)($m['toUsername'] ?? '')));
+                $rawTo = strtolower(trim((string) ($m['toUsername'] ?? '')));
                 $isTarget = false;
                 if ($box === 'inbox' && ($to === $cUsername || $rawTo === 'all' || $to === 'all') && $from !== $cUsername) {
                     $isTarget = true;
@@ -993,7 +1059,8 @@ if ($resource === 'messages') {
                     $isTarget = true;
                 }
                 if ($isTarget) {
-                    if (!isset($m['deletedBy']) || !is_array($m['deletedBy'])) $m['deletedBy'] = [];
+                    if (!isset($m['deletedBy']) || !is_array($m['deletedBy']))
+                        $m['deletedBy'] = [];
                     if (!in_array($cUsername, array_map('canonicalize_php_username', $m['deletedBy']))) {
                         $m['deletedBy'][] = $cUsername;
                     }
@@ -1013,12 +1080,13 @@ if ($resource === 'messages') {
 
     // Delete single message (Independent per-user soft delete)
     if ($method === 'DELETE' && !empty($subId)) {
-        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $rawUsername = strtolower(trim((string) ($_GET['username'] ?? '')));
         $cUsername = canonicalize_php_username($rawUsername);
         if (!empty($rawUsername)) {
             foreach ($db['messages'] as &$m) {
-                if ((string)($m['id'] ?? '') === (string)$subId) {
-                    if (!isset($m['deletedBy']) || !is_array($m['deletedBy'])) $m['deletedBy'] = [];
+                if ((string) ($m['id'] ?? '') === (string) $subId) {
+                    if (!isset($m['deletedBy']) || !is_array($m['deletedBy']))
+                        $m['deletedBy'] = [];
                     if (!in_array($cUsername, array_map('canonicalize_php_username', $m['deletedBy']))) {
                         $m['deletedBy'][] = $cUsername;
                     }
@@ -1030,8 +1098,8 @@ if ($resource === 'messages') {
             exit;
         }
 
-        $db['messages'] = array_values(array_filter($db['messages'], function($m) use ($subId) {
-            return (string)($m['id'] ?? '') !== (string)$subId;
+        $db['messages'] = array_values(array_filter($db['messages'], function ($m) use ($subId) {
+            return (string) ($m['id'] ?? '') !== (string) $subId;
         }));
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم حذف الرسالة']);
@@ -1040,13 +1108,14 @@ if ($resource === 'messages') {
 
     // Mark as read
     if ($method === 'PUT' && !empty($subId) && $subAction === 'read') {
-        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $rawUsername = strtolower(trim((string) ($_GET['username'] ?? '')));
         $cUsername = canonicalize_php_username($rawUsername);
         foreach ($db['messages'] as &$m) {
-            if ((string)($m['id'] ?? '') === (string)$subId) {
+            if ((string) ($m['id'] ?? '') === (string) $subId) {
                 $m['isRead'] = true;
                 if (!empty($rawUsername)) {
-                    if (!isset($m['readBy']) || !is_array($m['readBy'])) $m['readBy'] = [];
+                    if (!isset($m['readBy']) || !is_array($m['readBy']))
+                        $m['readBy'] = [];
                     if (!in_array($cUsername, array_map('canonicalize_php_username', $m['readBy']))) {
                         $m['readBy'][] = $cUsername;
                     }
@@ -1078,7 +1147,7 @@ if ($resource === 'messages') {
 
     // List messages (GET /api/messages) - Strictly isolated per user
     if ($method === 'GET') {
-        $rawUsername = strtolower(trim((string)($_GET['username'] ?? '')));
+        $rawUsername = strtolower(trim((string) ($_GET['username'] ?? '')));
         $cUsername = canonicalize_php_username($rawUsername);
         $list = $db['messages'];
         if (!empty($rawUsername)) {
@@ -1090,7 +1159,7 @@ if ($resource === 'messages') {
                 }
                 $to = canonicalize_php_username($m['toUsername'] ?? '');
                 $from = canonicalize_php_username($m['fromUsername'] ?? '');
-                $rawTo = strtolower(trim((string)($m['toUsername'] ?? '')));
+                $rawTo = strtolower(trim((string) ($m['toUsername'] ?? '')));
 
                 // Must be either addressed to user, broadcast to all, or sent by user
                 if ($to === $cUsername || $rawTo === 'all' || $to === 'all' || $from === $cUsername) {
@@ -1131,9 +1200,10 @@ if ($resource === 'equipment') {
         exit;
     }
     if ($method === 'DELETE' && !empty($subId)) {
-        if (!isset($db['equipment'])) $db['equipment'] = [];
-        $db['equipment'] = array_values(array_filter($db['equipment'], function($i) use ($subId) {
-            return (string)($i['id'] ?? '') !== (string)$subId;
+        if (!isset($db['equipment']))
+            $db['equipment'] = [];
+        $db['equipment'] = array_values(array_filter($db['equipment'], function ($i) use ($subId) {
+            return (string) ($i['id'] ?? '') !== (string) $subId;
         }));
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم حذف المعدة من السجل']);
@@ -1149,7 +1219,8 @@ if ($resource === 'alerts') {
     }
     if ($method === 'POST') {
         $body = get_json_input();
-        if (!isset($db['alerts'])) $db['alerts'] = [];
+        if (!isset($db['alerts']))
+            $db['alerts'] = [];
         array_unshift($db['alerts'], $body);
         save_db($db);
         echo json_encode(['success' => true, 'message' => 'تم تسجيل التنبيه']);

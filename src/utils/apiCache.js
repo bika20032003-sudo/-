@@ -1051,7 +1051,7 @@ export async function fastFetch(rawUrl, options = {}) {
     cache.clear();
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await nativeFetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) return await res.json();

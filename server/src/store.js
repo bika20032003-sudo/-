@@ -14,8 +14,17 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.resolve(__dirname, '../data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+
+// Unified Database Path: Shared between PHP API and Node.js backend
+const rootProjectDir = path.resolve(__dirname, '../..');
+const sharedPublicDbDir = path.join(rootProjectDir, 'public_html/api/data');
+const standaloneServerDbDir = path.resolve(__dirname, '../data');
+
+let DATA_DIR = standaloneServerDbDir;
+if (fs.existsSync(sharedPublicDbDir)) {
+  DATA_DIR = sharedPublicDbDir;
+}
+let DB_FILE = path.join(DATA_DIR, 'db.json');
 
 const defaultReports = [];
 const defaultPlanItems = [];
@@ -139,6 +148,16 @@ class Store {
 
       // 3. Atomic rename to DB_FILE
       fs.renameSync(tempFile, DB_FILE);
+
+      // 3.1 Mirror to other db directory to guarantee unified sync across PHP and Node
+      try {
+        const mirrorFile = (DATA_DIR === sharedPublicDbDir)
+          ? path.join(standaloneServerDbDir, 'db.json')
+          : path.join(sharedPublicDbDir, 'db.json');
+        if (fs.existsSync(path.dirname(mirrorFile))) {
+          fs.writeFileSync(mirrorFile, jsonString, 'utf-8');
+        }
+      } catch (_) {}
 
       // 4. Hourly snapshot backup
       const backupsDir = path.join(DATA_DIR, 'backups');
@@ -1762,15 +1781,6 @@ class Store {
       ...newData,
       updatedAt: new Date().toISOString()
     };
-    if (!this.data.reports) this.data.reports = [];
-    const repId = String(newData.id || newData.reportNumber || '');
-    const idx = this.data.reports.findIndex(r => String(r.id) === repId || (newData.reportNumber && String(r.reportNumber) === String(newData.reportNumber)) || r.isExecutiveProgressReport);
-    const enriched = { ...newData, isExecutiveProgressReport: true, reportType: 'الموقف التنفيذي' };
-    if (idx !== -1) {
-      this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
-    } else {
-      // reports only added on explicit save
-    }
     this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
     return this.data.executiveProgress;
@@ -1787,15 +1797,6 @@ class Store {
       ...newData,
       updatedAt: new Date().toISOString()
     };
-    if (!this.data.reports) this.data.reports = [];
-    const repId = String(newData.id || newData.reportNumber || '');
-    const idx = this.data.reports.findIndex(r => String(r.id) === repId || (newData.reportNumber && String(r.reportNumber) === String(newData.reportNumber)) || (r.isRoadProgressReport && r.dateFormatted === newData.dateFormatted));
-    const enriched = { ...newData, isRoadProgressReport: true, reportType: 'تقرير أعمال الطريق اليومي' };
-    if (idx !== -1) {
-      this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
-    } else {
-      // reports only added on explicit save
-    }
     this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
     return this.data.roadDailyReport;
@@ -1812,15 +1813,6 @@ class Store {
       ...newData,
       updatedAt: new Date().toISOString()
     };
-    if (!this.data.reports) this.data.reports = [];
-    const repId = String(newData.id || newData.reportNumber || '');
-    const idx = this.data.reports.findIndex(r => String(r.id) === repId || (newData.reportNumber && String(r.reportNumber) === String(newData.reportNumber)) || (r.isFuelReport && r.reportDate === newData.reportDate));
-    const enriched = { ...newData, isFuelReport: true, reportType: 'تقرير كميات الوقود اليومية', fuelAmount: Number(newData.fuelAmount || newData.totalDispatchedLiters) || 0 };
-    if (idx !== -1) {
-      this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
-    } else {
-      // reports only added on explicit save
-    }
     this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
     return this.data.fuelDailyReport;
