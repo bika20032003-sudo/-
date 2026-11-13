@@ -532,6 +532,46 @@ if ($resource === 'reports') {
     // 3. List all reports (GET /api/reports)
     if ($method === 'GET' && empty($subId)) {
         $sector = $_GET['sector'] ?? '';
+
+        // Proactively ensure fuelDailyReport is merged into reports if available
+        if (!empty($db['fuelDailyReport']) && is_array($db['fuelDailyReport'])) {
+            $fuelRep = $db['fuelDailyReport'];
+            $fNum = !empty($fuelRep['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string)$fuelRep['reportNumber'])) : '';
+            $fId = strtolower(trim((string)($fuelRep['id'] ?? '')));
+            $found = false;
+            foreach ($db['reports'] as $existingRep) {
+                $eNum = !empty($existingRep['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string)$existingRep['reportNumber'])) : '';
+                $eId = strtolower(trim((string)($existingRep['id'] ?? '')));
+                if (($fNum && $fNum === $eNum) || ($fId && $fId === $eId)) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                array_unshift($db['reports'], $fuelRep);
+            }
+        }
+
+        // Remove any active report from deletedReportIds so clients never get a contradicting blacklist
+        if (!empty($db['deletedReportIds'])) {
+            $activeIds = [];
+            foreach ($db['reports'] as $r) {
+                if (!empty($r['id'])) {
+                    $activeIds[strtolower(trim((string)$r['id']))] = true;
+                    $activeIds[strtolower(preg_replace('/[\s\-_]/', '', (string)$r['id']))] = true;
+                }
+                if (!empty($r['reportNumber'])) {
+                    $activeIds[strtolower(trim((string)$r['reportNumber']))] = true;
+                    $activeIds[strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']))] = true;
+                }
+            }
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($activeIds) {
+                $raw = strtolower(trim((string)$did));
+                $norm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
+                return empty($activeIds[$raw]) && empty($activeIds[$norm]);
+            }));
+        }
+
         $list = deduplicate_reports_array($db['reports'] ?? []);
         if (!empty($sector)) {
             $list = array_values(array_filter($list, function($r) use ($sector) {
@@ -562,12 +602,18 @@ if ($resource === 'reports') {
 
         $newKey = get_report_canonical_key($body);
         $newNum = strtolower(preg_replace('/[\s\-_]/', '', (string)$body['reportNumber']));
+        $newNumRaw = strtolower(trim((string)$body['reportNumber']));
         $newId = strtolower(trim((string)$body['id']));
+        $newIdNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)$body['id']));
 
         // If it was previously in deletedReportIds, remove it
         if (!empty($db['deletedReportIds'])) {
-            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($newId, $newNum) {
-                return (string)$did !== $newId && (string)$did !== $newNum;
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($newId, $newIdNorm, $newNum, $newNumRaw) {
+                $didRaw = strtolower(trim((string)$did));
+                $didNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
+                if ($didRaw === $newId || $didNorm === $newId || $didRaw === $newIdNorm || $didNorm === $newIdNorm) return false;
+                if ($didRaw === $newNumRaw || $didNorm === $newNum || $didRaw === $newNum) return false;
+                return true;
             }));
         }
 
@@ -732,12 +778,36 @@ if ($resource === 'road-daily-report') {
 if ($resource === 'fuel-daily-report') {
     $db = get_db();
     if ($method === 'GET') {
-        echo json_encode(['success' => true, 'data' => $db['fuelDailyReport'] ?? null]);
+        $rep = $db['fuelDailyReport'] ?? null;
+        if (!$rep && !empty($db['reports'])) {
+            foreach ($db['reports'] as $r) {
+                if (!empty($r['isFuelReport']) || ($r['reportType'] ?? '') === 'تقرير كميات الوقود اليومية' || ($r['reportCategory'] ?? '') === 'fuel') {
+                    $rep = $r;
+                    break;
+                }
+            }
+        }
+        echo json_encode(['success' => true, 'data' => $rep]);
         exit;
     }
     if ($method === 'POST') {
         $body = get_json_input();
         $db['fuelDailyReport'] = $body;
+
+        // Un-blacklist this report from deletedReportIds
+        if (!empty($db['deletedReportIds'])) {
+            $fId = strtolower(trim((string)($body['id'] ?? '')));
+            $fIdNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)($body['id'] ?? '')));
+            $fNumRaw = strtolower(trim((string)($body['reportNumber'] ?? '')));
+            $fNum = strtolower(preg_replace('/[\s\-_]/', '', (string)($body['reportNumber'] ?? '')));
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($fId, $fIdNorm, $fNum, $fNumRaw) {
+                $didRaw = strtolower(trim((string)$did));
+                $didNorm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
+                if ($didRaw === $fId || $didNorm === $fId || $didRaw === $fIdNorm || $didNorm === $fIdNorm) return false;
+                if ($didRaw === $fNumRaw || $didNorm === $fNum || $didRaw === $fNum) return false;
+                return true;
+            }));
+        }
 
         // Ensure it is simultaneously recorded in reports archive with strict deduplication
         $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports'] ?? []));

@@ -257,8 +257,14 @@ export async function checkServerUpdates(force = false) {
           const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String));
           if (Array.isArray(reportsRes.value.deletedReportIds)) {
             reportsRes.value.deletedReportIds.forEach(id => deleted.add(String(id)));
-            localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deleted)));
           }
+          // Server-delivered active reports must never be suppressed by a stale local blacklist
+          serverReports.forEach(r => {
+            if (r?.id) deleted.delete(String(r.id));
+            if (r?.reportNumber) deleted.delete(String(r.reportNumber));
+          });
+          localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deleted)));
+
           const validReports = serverReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
           const rawLocal = localStorage.getItem('local_reports');
           const localReports = (rawLocal ? JSON.parse(rawLocal) : []).filter(r => !deleted.has(String(r?.id)) && !deleted.has(String(r?.reportNumber)));
@@ -287,9 +293,14 @@ export async function checkServerUpdates(force = false) {
         try {
           const fuelData = fuelDailyRes.value.data;
           localStorage.setItem('fuel_daily_report_data', JSON.stringify(fuelData));
+
+          const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String));
+          if (fuelData.id) deleted.delete(String(fuelData.id));
+          if (fuelData.reportNumber) deleted.delete(String(fuelData.reportNumber));
+          localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deleted)));
           
           const rawLocal = localStorage.getItem('local_reports');
-          const localReports = rawLocal ? JSON.parse(rawLocal) : [];
+          const localReports = (rawLocal ? JSON.parse(rawLocal) : []).filter(r => !deleted.has(String(r?.id)) && !deleted.has(String(r?.reportNumber)));
           const merged = deduplicateReportsList([fuelData, ...localReports]);
           localStorage.setItem('local_reports', JSON.stringify(merged));
           saveReportToIndexedDB(fuelData);

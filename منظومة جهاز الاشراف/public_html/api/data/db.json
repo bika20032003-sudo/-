@@ -578,7 +578,128 @@
   ],
   "fuel": [],
   "alerts": [],
-  "reports": [],
+  "reports": [
+    {
+      "id": "fuel-daily-2026-10-24",
+      "title": "تقرير كميات الوقود اليومية",
+      "reportTitle": "تقرير كميات الوقود اليومية",
+      "reportType": "تقرير كميات الوقود اليومية",
+      "reportCategory": "fuel",
+      "isFuelReport": true,
+      "reportNumber": "FUEL-094834_24.10.2026",
+      "date": "2026-10-24T00:00:00.000Z",
+      "reportDate": "2026-10-24",
+      "dayName": "السبت",
+      "formattedSlashDate": "24/10/2026",
+      "dateFormatted": "24/10/2026",
+      "sector": "مشروع أوباري - غات",
+      "fuelOfficer": "مسؤول الوقود والمحروقات بالموقع",
+      "headOfSupervision": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
+      "totalDispatchedLiters": 22738.00,
+      "totalReceivedLiters": 14631.00,
+      "totalRemainingLiters": 210697.00,
+      "fuelAmount": 22738.00,
+      "status": "approved",
+      "approvedBy": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
+      "uploadedBy": "مسؤول الوقود والمحروقات بالموقع",
+      "engineer": "مسؤول الوقود والمحروقات بالموقع",
+      "sectorDirector": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
+      "notes": "تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: 22,738.00 لتر - الوارد: 14,631.00 لتر - المتبقي: 210,697.00 لتر",
+      "createdAt": "2026-10-24T10:00:00.000Z",
+      "fuelItems": [
+        {
+          "id": 1,
+          "index": 1,
+          "seq": "1",
+          "location": "107",
+          "dispatchedLiters": "570.00",
+          "receivedLiters": "0.00",
+          "remainingLiters": "49,829.00",
+          "notes": ""
+        },
+        {
+          "id": 2,
+          "index": 2,
+          "seq": "2",
+          "location": "240",
+          "dispatchedLiters": "17,530.00",
+          "receivedLiters": "14,631.00",
+          "remainingLiters": "160,868.00",
+          "notes": ""
+        },
+        {
+          "id": 3,
+          "index": 3,
+          "seq": "3",
+          "location": "محطة أوباري",
+          "dispatchedLiters": "4,638.00",
+          "receivedLiters": "0.00",
+          "remainingLiters": "0.00",
+          "notes": "تغذية الآليات العاملة"
+        }
+      ]
+    }
+  ],
+  "fuelDailyReport": {
+    "id": "fuel-daily-2026-10-24",
+    "title": "تقرير كميات الوقود اليومية",
+    "reportTitle": "تقرير كميات الوقود اليومية",
+    "reportType": "تقرير كميات الوقود اليومية",
+    "reportCategory": "fuel",
+    "isFuelReport": true,
+    "reportNumber": "FUEL-094834_24.10.2026",
+    "date": "2026-10-24T00:00:00.000Z",
+    "reportDate": "2026-10-24",
+    "dayName": "السبت",
+    "formattedSlashDate": "24/10/2026",
+    "dateFormatted": "24/10/2026",
+    "sector": "مشروع أوباري - غات",
+    "fuelOfficer": "مسؤول الوقود والمحروقات بالموقع",
+    "headOfSupervision": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
+    "totalDispatchedLiters": 22738.00,
+    "totalReceivedLiters": 14631.00,
+    "totalRemainingLiters": 210697.00,
+    "fuelAmount": 22738.00,
+    "status": "approved",
+    "approvedBy": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
+    "uploadedBy": "مسؤول الوقود والمحروقات بالموقع",
+    "engineer": "مسؤول الوقود والمحروقات بالموقع",
+    "sectorDirector": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
+    "notes": "تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: 22,738.00 لتر - الوارد: 14,631.00 لتر - المتبقي: 210,697.00 لتر",
+    "createdAt": "2026-10-24T10:00:00.000Z",
+    "fuelItems": [
+      {
+        "id": 1,
+        "index": 1,
+        "seq": "1",
+        "location": "107",
+        "dispatchedLiters": "570.00",
+        "receivedLiters": "0.00",
+        "remainingLiters": "49,829.00",
+        "notes": ""
+      },
+      {
+        "id": 2,
+        "index": 2,
+        "seq": "2",
+        "location": "240",
+        "dispatchedLiters": "17,530.00",
+        "receivedLiters": "14,631.00",
+        "remainingLiters": "160,868.00",
+        "notes": ""
+      },
+      {
+        "id": 3,
+        "index": 3,
+        "seq": "3",
+        "location": "محطة أوباري",
+        "dispatchedLiters": "4,638.00",
+        "receivedLiters": "0.00",
+        "remainingLiters": "0.00",
+        "notes": "تغذية الآليات العاملة"
+      }
+    ]
+  },
   "plans": [],
   "issues": [],
   "savedPeriodicReports": [],
@@ -646,12 +767,6 @@
   ],
   "lastUpdated": "2026-11-09T14:21:56.170Z",
   "deletedReportIds": [
-    "PHASE-REP-4228",
-    "1793172128709",
-    "fuel-daily-2026-10-24",
-    "FUEL-094834_24.10.2026",
-    "1793121609000",
-    "ROAD-REP-24.10.2026",
     "rep-p1-8821",
     "REP-P1-8821",
     "rep-tw-p1-1044",
@@ -663,8 +778,6 @@
     "rep-qc-3301",
     "QC-REP-3301",
     "rep-sup-1102",
-    "SUP-REP-1102",
-    "exec-2026-10-29",
-    "093436_29.10.2026"
+    "SUP-REP-1102"
   ]
 }

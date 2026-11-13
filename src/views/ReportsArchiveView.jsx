@@ -270,14 +270,41 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         list = res;
       }
       
+      // Proactively pull fuel report if not yet in reports list
+      const hasFuel = list.some(r => r && (r.isFuelReport || r.reportType === 'تقرير كميات الوقود اليومية' || r.reportCategory === 'fuel'));
+      if (!hasFuel) {
+        try {
+          const fuelRes = await fastFetch('/api/fuel-daily-report');
+          if (fuelRes && fuelRes.data && (fuelRes.data.fuelItems || fuelRes.data.reportNumber)) {
+            list.unshift({
+              ...fuelRes.data,
+              isFuelReport: true,
+              reportType: 'تقرير كميات الوقود اليومية',
+              reportCategory: 'fuel'
+            });
+          }
+        } catch (_) {}
+      }
+
       // Merge with locally created reports, filter deleted, and strictly deduplicate
       try {
-        const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+        let deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
         if (res && Array.isArray(res.deletedReportIds)) {
           res.deletedReportIds.forEach(id => deletedSet.add(String(id)));
-          localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deletedSet)));
         }
+
+        // Active server reports must never be suppressed by a stale blacklist
+        list.forEach(r => {
+          if (r?.id) deletedSet.delete(String(r.id));
+          if (r?.reportNumber) deletedSet.delete(String(r.reportNumber));
+        });
+        localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deletedSet)));
+
         const local = sanitizeLocalReportsStorage();
+        local.forEach(r => {
+          if (r?.id) deletedSet.delete(String(r.id));
+          if (r?.reportNumber) deletedSet.delete(String(r.reportNumber));
+        });
 
         // Merge backend list with sanitized local reports
         const combined = [...local, ...list].filter(r => 

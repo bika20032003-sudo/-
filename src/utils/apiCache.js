@@ -596,6 +596,22 @@ export function getFallbackData(url) {
     } catch (e) {
       console.warn('Error reading reports cache:', e);
     }
+    // Proactively provide official fuel report fallback if list is empty and not deleted
+    const hasFuel = list.some(r => r && (r.isFuelReport || r.reportType === 'تقرير كميات الوقود اليومية'));
+    if (!hasFuel && OFFICIAL_BASELINE_FUEL_REPORT) {
+      let isDel = false;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+          if (deleted.has('fuel-daily-2026-10-24') || deleted.has('FUEL-094834_24.10.2026')) {
+            isDel = true;
+          }
+        }
+      } catch (_) {}
+      if (!isDel) {
+        list.unshift(OFFICIAL_BASELINE_FUEL_REPORT);
+      }
+    }
     return {
       success: true,
       reports: list,

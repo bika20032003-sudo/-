@@ -48,6 +48,33 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
         console.warn('Backend API unavailable, using local storage:', err);
       }
 
+      // Proactively pull fuel report if missing
+      const hasFuelRemote = remoteReports.some(r => r && (r.isFuelReport || r.reportType === 'تقرير كميات الوقود اليومية' || r.reportCategory === 'fuel'));
+      if (!hasFuelRemote) {
+        try {
+          const fuelRes = await fastFetch('/api/fuel-daily-report');
+          if (fuelRes && fuelRes.data && (fuelRes.data.fuelItems || fuelRes.data.reportNumber)) {
+            remoteReports.unshift({
+              ...fuelRes.data,
+              isFuelReport: true,
+              reportType: 'تقرير كميات الوقود اليومية',
+              reportCategory: 'fuel'
+            });
+          }
+        } catch (_) {}
+      }
+
+      // Ensure active server reports are never blacklisted locally
+      if (remoteReports.length > 0) {
+        remoteReports.forEach(r => {
+          if (r?.id) deletedIds = deletedIds.filter(d => d !== String(r.id));
+          if (r?.reportNumber) deletedIds = deletedIds.filter(d => d !== String(r.reportNumber));
+        });
+        try {
+          localStorage.setItem('deleted_report_ids', JSON.stringify(deletedIds));
+        } catch (_) {}
+      }
+
       // Also read locally cached reports and section data
       let localReports = [];
       try {

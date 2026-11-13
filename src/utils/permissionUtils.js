@@ -211,6 +211,7 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
   if (username === 'abrikaw' || userName.includes('بريكاو') || userName.includes('الصالحين') || userName.includes('عبدالسلام') || userRole.includes('رئيس جهاز الإشراف')) {
     if (combinedReportAuthors.includes('بريكاو') || combinedReportAuthors.includes('الصالحين') || combinedReportAuthors.includes('عبدالسلام') || repApprovedBy.includes('ابريكاو')) return true;
     if (String(report.reportType || '').includes('إشراف') || String(report.reportType || '').includes('متابعة')) return true;
+    if (report.isFuelReport || report.reportCategory === 'fuel' || String(report.reportType || '').includes('وقود')) return true;
   }
 
   // م. صالح حماد (مسؤول الجودة)
