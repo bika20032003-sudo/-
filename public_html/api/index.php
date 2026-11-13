@@ -97,6 +97,255 @@ function get_json_input() {
     return is_array($parsed) ? $parsed : [];
 }
 
+
+// ==============================================================================
+// 3.1 Domain Helper Functions & Deduplication
+// ==============================================================================
+
+function canonicalize_php_username($u) {
+    $u = strtolower(trim((string)($u ?? '')));
+    if ($u === '') return '';
+    $map = [
+        'dev' => 'admin',
+        'developer' => 'admin',
+        'development' => 'admin',
+        'alansari' => 'project_manager',
+        'manager' => 'project_manager',
+        'admin_sectors' => 'abrikaw',
+        'sectors' => 'abrikaw',
+        'quality' => 'saleh_quality',
+        'saleh' => 'saleh_quality',
+        'hammad' => 'saleh_quality',
+        'sector_a' => 'salah_alarabi',
+        'alarabi' => 'salah_alarabi',
+        'sector_b' => 'issa_altahir',
+        'altahir' => 'issa_altahir',
+        'fuel' => 'fuel_officer',
+        'fuel_officer' => 'fuel_officer',
+        'honi' => 'honi'
+    ];
+    return $map[$u] ?? $u;
+}
+
+function normalize_report_date_str($val) {
+    if (empty($val) || !is_string($val)) return '';
+    $val = trim($val);
+    if (preg_match('/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/', $val, $m)) {
+        return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
+    }
+    if (preg_match('/^(\d{1,2})[-.\/](\d{1,2})[-.\/](\d{4})/', $val, $m)) {
+        return sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
+    }
+    return substr($val, 0, 10);
+}
+
+function get_report_canonical_key($r) {
+    if (!$r || !is_array($r)) return '';
+    $rawDate = $r['reportDate'] ?? $r['date'] ?? $r['dateFormatted'] ?? $r['createdAt'] ?? '';
+    $date = normalize_report_date_str($rawDate);
+    $type = $r['reportType'] ?? $r['type'] ?? $r['title'] ?? '';
+    
+    if (!empty($r['isTwoPhaseProgressReport']) || mb_stripos($type, 'المرحلتين') !== false) {
+        return 'tp_' . $date;
+    }
+    if (!empty($r['isFuelReport']) || mb_stripos($type, 'وقود') !== false) {
+        return 'fuel_' . $date;
+    }
+    if (!empty($r['isTargetedWorksReport']) || mb_stripos($type, 'مستهدف') !== false) {
+        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
+        return 'tw_' . $sec . '_' . $date;
+    }
+    if (mb_stripos($type, 'طريق') !== false || mb_stripos($type, 'يومي') !== false) {
+        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
+        return 'road_' . $sec . '_' . $date;
+    }
+    if (!empty($r['reportNumber'])) {
+        return 'num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']));
+    }
+    return 'id_' . strtolower(trim((string)($r['id'] ?? '')));
+}
+
+function deduplicate_reports_array($reports) {
+    if (!is_array($reports)) return [];
+    $map = [];
+    foreach ($reports as $r) {
+        if (!is_array($r)) continue;
+        $key = get_report_canonical_key($r);
+        $numKey = !empty($r['reportNumber']) ? ('num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']))) : null;
+        $idKey = !empty($r['id']) ? ('id_' . strtolower(trim((string)$r['id']))) : null;
+
+        $targetKey = null;
+        if (isset($map[$key])) $targetKey = $key;
+        elseif ($numKey && isset($map[$numKey])) $targetKey = $numKey;
+        elseif ($idKey && isset($map[$idKey])) $targetKey = $idKey;
+
+        if ($targetKey) {
+            $existing = $map[$targetKey];
+            $tNew = strtotime($r['updatedAt'] ?? $r['createdAt'] ?? $r['date'] ?? '') ?: 0;
+            $tOld = strtotime($existing['updatedAt'] ?? $existing['createdAt'] ?? $existing['date'] ?? '') ?: 0;
+            $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? $r['fuelItems'] ?? []);
+            $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? $existing['fuelItems'] ?? []);
+            
+            if ($itemsNew >= $itemsOld || $tNew >= $tOld) {
+                $merged = array_merge($existing, $r);
+                $map[$targetKey] = $merged;
+                if ($key) $map[$key] = $merged;
+                if ($numKey) $map[$numKey] = $merged;
+                if ($idKey) $map[$idKey] = $merged;
+            }
+        } else {
+            if ($key) $map[$key] = $r;
+            if ($numKey) $map[$numKey] = $r;
+            if ($idKey) $map[$idKey] = $r;
+        }
+    }
+    $unique = array_values(array_unique($map, SORT_REGULAR));
+    usort($unique, function($a, $b) {
+        $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: 0;
+        $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: 0;
+        return $tb <=> $ta;
+    });
+    return $unique;
+}
+
+function categorize_road_item_to_phase2_id_php($rawName) {
+    if (empty($rawName)) return null;
+    $s = mb_strtolower(trim((string)$rawName), 'UTF-8');
+    
+    if (mb_stripos($s, 'بدون أسمنت') !== false || mb_stripos($s, 'بدون اسمنت') !== false || mb_stripos($s, 'فرمة أولى') !== false || mb_stripos($s, 'فرمة اولي') !== false) {
+        return 4;
+    }
+    if (mb_stripos($s, 'mco') !== false || mb_stripos($s, 'تشريب') !== false || mb_stripos($s, 'رش') !== false) {
+        return 2;
+    }
+    if (mb_stripos($s, 'fdr') !== false || mb_stripos($s, 'إعادة التدوير') !== false || mb_stripos($s, 'اعادة التدوير') !== false || mb_stripos($s, 'فرمة ثانية') !== false || mb_stripos($s, 'فرمة تانية') !== false || mb_stripos($s, 'أسمنت') !== false || mb_stripos($s, 'اسمنت') !== false) {
+        return 1;
+    }
+    if (mb_stripos($s, 'اسفلت') !== false || mb_stripos($s, 'أسفلت') !== false) {
+        return 3;
+    }
+    if (mb_stripos($s, 'أساس') !== false || mb_stripos($s, 'اساس') !== false || mb_stripos($s, 'حبيبي') !== false) {
+        return 5;
+    }
+    if (mb_stripos($s, 'خدمي') !== false) {
+        return 6;
+    }
+    return null;
+}
+
+function sync_road_report_to_two_phase_php(&$db, $roadReport) {
+    if (!is_array($roadReport)) return null;
+    
+    $extracted = [];
+    $rawItems = $roadReport['items'] ?? [];
+    if (is_array($rawItems)) {
+        foreach ($rawItems as $it) {
+            if (!is_array($it)) continue;
+            $name = $it['description'] ?? $it['name'] ?? $it['item'] ?? '';
+            $id = categorize_road_item_to_phase2_id_php($name);
+            if (!$id) continue;
+            
+            $m = floatval($it['lengthMeters'] ?? $it['length'] ?? $it['todayMeters'] ?? 0);
+            if (!isset($extracted[$id])) {
+                $extracted[$id] = 0;
+            }
+            $extracted[$id] += $m;
+        }
+    }
+    
+    if (isset($roadReport['fdrWithoutCementMeters']) && floatval($roadReport['fdrWithoutCementMeters']) > 0) {
+        $extracted[4] = floatval($roadReport['fdrWithoutCementMeters']);
+    }
+    if (isset($roadReport['mcoMeters']) && floatval($roadReport['mcoMeters']) > 0) {
+        $extracted[2] = floatval($roadReport['mcoMeters']);
+    }
+    if (isset($roadReport['fdrMeters']) && floatval($roadReport['fdrMeters']) > 0) {
+        $extracted[1] = floatval($roadReport['fdrMeters']);
+    }
+    if (isset($roadReport['asphaltMeters']) && floatval($roadReport['asphaltMeters']) > 0) {
+        $extracted[3] = floatval($roadReport['asphaltMeters']);
+    }
+    if (isset($roadReport['baseMeters']) && floatval($roadReport['baseMeters']) > 0) {
+        $extracted[5] = floatval($roadReport['baseMeters']);
+    }
+    if (isset($roadReport['serviceRoadMeters']) && floatval($roadReport['serviceRoadMeters']) > 0) {
+        $extracted[6] = floatval($roadReport['serviceRoadMeters']);
+    }
+
+    if (empty($extracted)) return null;
+
+    $twoPhase = $db['latestTwoPhaseReport'] ?? null;
+    if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
+        foreach ($db['reports'] ?? [] as $r) {
+            if (is_array($r) && (!empty($r['isTwoPhaseProgressReport']) || ($r['reportType'] ?? '') === 'تقرير إنجاز المرحلتين') && !empty($r['phase2Items'])) {
+                $twoPhase = $r;
+                break;
+            }
+        }
+    }
+
+    if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
+        return null;
+    }
+
+    foreach ($twoPhase['phase2Items'] as &$p2) {
+        $id = intval($p2['id'] ?? 0);
+        if (isset($extracted[$id])) {
+            $today = $extracted[$id];
+            $prev = isset($p2['previousMeters']) && is_numeric($p2['previousMeters']) 
+                ? floatval($p2['previousMeters']) 
+                : max(0, floatval($p2['totalMeters'] ?? 0) - floatval($p2['todayMeters'] ?? 0));
+            $newTotal = $prev + $today;
+            $target = floatval($p2['dailyTarget'] ?? 800);
+
+            $p2['previousMeters'] = (string)$prev;
+            $p2['todayMeters'] = (string)$today;
+            $p2['totalMeters'] = (string)$newTotal;
+            $p2['varianceMeters'] = number_format($today - $target, 2, '.', '');
+            $p2['notes'] = 'تم تحديثه وتغذيته تلقائياً من تقرير أعمال الطريق اليومي';
+        }
+    }
+    unset($p2);
+
+    if (!empty($twoPhase['phase1Items']) && is_array($twoPhase['phase1Items'])) {
+        if (!isset($twoPhase['combinedItems']) || !is_array($twoPhase['combinedItems'])) {
+            $twoPhase['combinedItems'] = [];
+        }
+        foreach ($twoPhase['phase1Items'] as $idx => $p1) {
+            $p2 = $twoPhase['phase2Items'][$idx] ?? [];
+            $todayP1 = floatval($p1['todayMeters'] ?? 0);
+            $todayP2 = floatval($p2['todayMeters'] ?? 0);
+            $totalP1 = floatval($p1['totalMeters'] ?? 0);
+            $totalP2 = floatval($p2['totalMeters'] ?? 0);
+            $combToday = $todayP1 + $todayP2;
+            $combTotal = $totalP1 + $totalP2;
+
+            $custom = $twoPhase['combinedItems'][$idx] ?? [];
+            $twoPhase['combinedItems'][$idx] = array_merge($custom, [
+                'id' => $p1['id'] ?? ($idx + 1),
+                'category' => $p1['category'] ?? ($idx < 3 ? 'basic' : 'additional'),
+                'name' => $p1['name'] ?? '',
+                'shortName' => $p1['shortName'] ?? '',
+                'todayMeters' => $combToday > 0 ? (string)$combToday : '',
+                'totalMeters' => $combTotal > 0 ? (string)$combTotal : '',
+                'readyToWorkMeters' => $custom['readyToWorkMeters'] ?? '',
+                'notes' => $custom['notes'] ?? ''
+            ]);
+        }
+    }
+
+    $targetDate = $roadReport['reportDate'] ?? $roadReport['dateFormatted'] ?? ($twoPhase['reportDate'] ?? '');
+    $twoPhase['reportDate'] = $targetDate;
+    $twoPhase['dateFormatted'] = $targetDate;
+    $twoPhase['dayName'] = $roadReport['dayName'] ?? ($twoPhase['dayName'] ?? '');
+    $twoPhase['updatedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+    $twoPhase['notes'] = 'تقرير إنجاز المرحلتين — تم تحديث وتغذية المرحلة الثانية تلقائياً من تقرير أعمال الطريق اليومي (' . ($roadReport['reportNumber'] ?? $targetDate) . ')';
+
+    $db['latestTwoPhaseReport'] = $twoPhase;
+    $db['reports'] = deduplicate_reports_array(array_merge([$twoPhase], $db['reports'] ?? []));
+    return $twoPhase;
+}
+
 // 4. Request Route & Method Extraction
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $uri = $_SERVER['REQUEST_URI'] ?? '/api';
@@ -233,14 +482,16 @@ if ($resource === 'dashboard') {
     }
 }
 
+
 // -------------------------------------------------------------
-// [REPORTS: GET, CREATE, UPDATE, DELETE, APPROVE, PERIODIC]
+// [REPORTS: GET, CREATE, UPDATE, DELETE, APPROVE, PERIODIC, CLEAR-ALL]
 // -------------------------------------------------------------
 if ($resource === 'reports') {
     $db = get_db();
     if (!isset($db['reports'])) $db['reports'] = [];
+    if (!isset($db['deletedReportIds'])) $db['deletedReportIds'] = [];
 
-    // Periodic reports
+    // 1. Periodic reports
     if ($subId === 'periodic') {
         if ($subAction === 'save' && $method === 'POST') {
             $body = get_json_input();
@@ -257,254 +508,28 @@ if ($resource === 'reports') {
         exit;
     }
 
-// Helper to normalize dates for reliable deduplication (converts DD/MM/YYYY or YYYY-MM-DD to YYYY-MM-DD)
-function normalize_report_date_str($val) {
-    if (empty($val) || !is_string($val)) return '';
-    $val = trim($val);
-    if (preg_match('/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/', $val, $m)) {
-        return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
-    }
-    if (preg_match('/^(\d{1,2})[-.\/](\d{1,2})[-.\/](\d{4})/', $val, $m)) {
-        return sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
-    }
-    return substr($val, 0, 10);
-}
-
-// Helper to compute canonical deduplication key for a report
-function get_report_canonical_key($r) {
-    if (!$r || !is_array($r)) return '';
-    $rawDate = $r['reportDate'] ?? $r['date'] ?? $r['dateFormatted'] ?? $r['createdAt'] ?? '';
-    $date = normalize_report_date_str($rawDate);
-    $type = $r['reportType'] ?? $r['type'] ?? $r['title'] ?? '';
-    
-    // 1. Two-phase report (single project-wide report per date)
-    if (!empty($r['isTwoPhaseProgressReport']) || mb_stripos($type, 'المرحلتين') !== false) {
-        return 'tp_' . $date;
-    }
-    // 2. Fuel report (single project-wide report per date)
-    if (!empty($r['isFuelReport']) || mb_stripos($type, 'وقود') !== false) {
-        return 'fuel_' . $date;
-    }
-    // 3. Targeted works report (single per sector per date)
-    if (!empty($r['isTargetedWorksReport']) || mb_stripos($type, 'مستهدف') !== false) {
-        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
-        return 'tw_' . $sec . '_' . $date;
-    }
-    // 4. Daily road report (single per sector per date)
-    if (mb_stripos($type, 'طريق') !== false || mb_stripos($type, 'يومي') !== false) {
-        $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
-        return 'road_' . $sec . '_' . $date;
-    }
-    // 5. By normalized report number
-    if (!empty($r['reportNumber'])) {
-        return 'num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']));
-    }
-    return 'id_' . strtolower(trim((string)($r['id'] ?? '')));
-}
-
-// Function to strictly deduplicate a list of reports
-function deduplicate_reports_array($reports) {
-    if (!is_array($reports)) return [];
-    $map = [];
-    foreach ($reports as $r) {
-        if (!is_array($r)) continue;
-        $key = get_report_canonical_key($r);
-        $numKey = !empty($r['reportNumber']) ? ('num_' . strtolower(preg_replace('/[\s\-_]/', '', (string)$r['reportNumber']))) : null;
-        $idKey = !empty($r['id']) ? ('id_' . strtolower(trim((string)$r['id']))) : null;
-
-        $targetKey = null;
-        if (isset($map[$key])) $targetKey = $key;
-        elseif ($numKey && isset($map[$numKey])) $targetKey = $numKey;
-        elseif ($idKey && isset($map[$idKey])) $targetKey = $idKey;
-
-        if ($targetKey) {
-            $existing = $map[$targetKey];
-            $tNew = strtotime($r['updatedAt'] ?? $r['createdAt'] ?? $r['date'] ?? '') ?: 0;
-            $tOld = strtotime($existing['updatedAt'] ?? $existing['createdAt'] ?? $existing['date'] ?? '') ?: 0;
-            $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? $r['fuelItems'] ?? []);
-            $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? $existing['fuelItems'] ?? []);
-            
-            if ($itemsNew >= $itemsOld || $tNew >= $tOld) {
-                $merged = array_merge($existing, $r);
-                $map[$targetKey] = $merged;
-                if ($key) $map[$key] = $merged;
-                if ($numKey) $map[$numKey] = $merged;
-                if ($idKey) $map[$idKey] = $merged;
-            }
-        } else {
-            if ($key) $map[$key] = $r;
-            if ($numKey) $map[$numKey] = $r;
-            if ($idKey) $map[$idKey] = $r;
+    // 2. Clear all reports (DELETE /api/reports/clear-all or /api/reports/all)
+    if ($method === 'DELETE' && ($subId === 'clear-all' || $subId === 'all')) {
+        foreach ($db['reports'] as $r) {
+            if (!empty($r['id'])) $db['deletedReportIds'][] = (string)$r['id'];
+            if (!empty($r['reportNumber'])) $db['deletedReportIds'][] = (string)$r['reportNumber'];
         }
-    }
-    $unique = array_values(array_unique($map, SORT_REGULAR));
-    usort($unique, function($a, $b) {
-        $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: 0;
-        $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: 0;
-        return $tb <=> $ta;
-    });
-    return $unique;
-}
-
-// -------------------------------------------------------------
-// [AUTOMATIC ROAD -> PHASE 2 SYNCHRONIZATION HELPERS]
-// -------------------------------------------------------------
-function categorize_road_item_to_phase2_id_php($rawName) {
-    if (empty($rawName)) return null;
-    $s = mb_strtolower(trim((string)$rawName), 'UTF-8');
-    
-    // FDR without cement (Item 4)
-    if (mb_stripos($s, 'بدون أسمنت') !== false || mb_stripos($s, 'بدون اسمنت') !== false || mb_stripos($s, 'فرمة أولى') !== false || mb_stripos($s, 'فرمة اولي') !== false) {
-        return 4;
-    }
-    // MCO (Item 2)
-    if (mb_stripos($s, 'mco') !== false || mb_stripos($s, 'تشريب') !== false || mb_stripos($s, 'رش') !== false) {
-        return 2;
-    }
-    // FDR with cement / recycled (Item 1)
-    if (mb_stripos($s, 'fdr') !== false || mb_stripos($s, 'إعادة التدوير') !== false || mb_stripos($s, 'اعادة التدوير') !== false || mb_stripos($s, 'فرمة ثانية') !== false || mb_stripos($s, 'فرمة تانية') !== false || mb_stripos($s, 'أسمنت') !== false || mb_stripos($s, 'اسمنت') !== false) {
-        return 1;
-    }
-    // Asphalt (Item 3)
-    if (mb_stripos($s, 'اسفلت') !== false || mb_stripos($s, 'أسفلت') !== false) {
-        return 3;
-    }
-    // Base course (Item 5)
-    if (mb_stripos($s, 'أساس') !== false || mb_stripos($s, 'اساس') !== false || mb_stripos($s, 'حبيبي') !== false) {
-        return 5;
-    }
-    // Service Road (Item 6)
-    if (mb_stripos($s, 'خدمي') !== false) {
-        return 6;
-    }
-    return null;
-}
-
-function sync_road_report_to_two_phase_php(&$db, $roadReport) {
-    if (!is_array($roadReport)) return null;
-    
-    // 1. Extract meters by Phase 2 item id
-    $extracted = [];
-    $rawItems = $roadReport['items'] ?? [];
-    if (is_array($rawItems)) {
-        foreach ($rawItems as $it) {
-            if (!is_array($it)) continue;
-            $name = $it['description'] ?? $it['name'] ?? $it['item'] ?? '';
-            $id = categorize_road_item_to_phase2_id_php($name);
-            if (!$id) continue;
-            
-            $m = floatval($it['lengthMeters'] ?? $it['length'] ?? $it['todayMeters'] ?? 0);
-            if (!isset($extracted[$id])) {
-                $extracted[$id] = 0;
-            }
-            $extracted[$id] += $m;
-        }
-    }
-    
-    // Also check explicit field properties
-    if (isset($roadReport['fdrWithoutCementMeters']) && floatval($roadReport['fdrWithoutCementMeters']) > 0) {
-        $extracted[4] = floatval($roadReport['fdrWithoutCementMeters']);
-    }
-    if (isset($roadReport['mcoMeters']) && floatval($roadReport['mcoMeters']) > 0) {
-        $extracted[2] = floatval($roadReport['mcoMeters']);
-    }
-    if (isset($roadReport['fdrMeters']) && floatval($roadReport['fdrMeters']) > 0) {
-        $extracted[1] = floatval($roadReport['fdrMeters']);
-    }
-    if (isset($roadReport['asphaltMeters']) && floatval($roadReport['asphaltMeters']) > 0) {
-        $extracted[3] = floatval($roadReport['asphaltMeters']);
-    }
-    if (isset($roadReport['baseMeters']) && floatval($roadReport['baseMeters']) > 0) {
-        $extracted[5] = floatval($roadReport['baseMeters']);
-    }
-    if (isset($roadReport['serviceRoadMeters']) && floatval($roadReport['serviceRoadMeters']) > 0) {
-        $extracted[6] = floatval($roadReport['serviceRoadMeters']);
+        $db['deletedReportIds'] = array_values(array_unique(array_filter($db['deletedReportIds'])));
+        $db['reports'] = [];
+        unset($db['fuelDailyReport']);
+        unset($db['roadDailyReport']);
+        unset($db['executiveProgress']);
+        unset($db['latestTwoPhaseReport']);
+        save_db($db);
+        echo json_encode([
+            'success' => true,
+            'message' => 'تم مسح وإفراغ كافة التقارير بنجاح',
+            'deletedReportIds' => $db['deletedReportIds']
+        ]);
+        exit;
     }
 
-    if (empty($extracted)) return null;
-
-    // 2. Fetch or create baseline latestTwoPhaseReport
-    $twoPhase = $db['latestTwoPhaseReport'] ?? null;
-    if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
-        foreach ($db['reports'] ?? [] as $r) {
-            if (is_array($r) && (!empty($r['isTwoPhaseProgressReport']) || ($r['reportType'] ?? '') === 'تقرير إنجاز المرحلتين') && !empty($r['phase2Items'])) {
-                $twoPhase = $r;
-                break;
-            }
-        }
-    }
-
-    if (!is_array($twoPhase) || empty($twoPhase['phase2Items'])) {
-        return null;
-    }
-
-    // 3. Update Phase 2 Items
-    foreach ($twoPhase['phase2Items'] as &$p2) {
-        $id = intval($p2['id'] ?? 0);
-        if (isset($extracted[$id])) {
-            $today = $extracted[$id];
-            $prev = isset($p2['previousMeters']) && is_numeric($p2['previousMeters']) 
-                ? floatval($p2['previousMeters']) 
-                : max(0, floatval($p2['totalMeters'] ?? 0) - floatval($p2['todayMeters'] ?? 0));
-            $newTotal = $prev + $today;
-            $target = floatval($p2['dailyTarget'] ?? 800);
-
-            $p2['previousMeters'] = (string)$prev;
-            $p2['todayMeters'] = (string)$today;
-            $p2['totalMeters'] = (string)$newTotal;
-            $p2['varianceMeters'] = number_format($today - $target, 2, '.', '');
-            $p2['notes'] = 'تم تحديثه وتغذيته تلقائياً من تقرير أعمال الطريق اليومي';
-        }
-    }
-    unset($p2);
-
-    // 4. Update Combined Items
-    if (!empty($twoPhase['phase1Items']) && is_array($twoPhase['phase1Items'])) {
-        if (!isset($twoPhase['combinedItems']) || !is_array($twoPhase['combinedItems'])) {
-            $twoPhase['combinedItems'] = [];
-        }
-        foreach ($twoPhase['phase1Items'] as $idx => $p1) {
-            $p2 = $twoPhase['phase2Items'][$idx] ?? [];
-            $todayP1 = floatval($p1['todayMeters'] ?? 0);
-            $todayP2 = floatval($p2['todayMeters'] ?? 0);
-            $totalP1 = floatval($p1['totalMeters'] ?? 0);
-            $totalP2 = floatval($p2['totalMeters'] ?? 0);
-            $combToday = $todayP1 + $todayP2;
-            $combTotal = $totalP1 + totalP2;
-
-            $custom = $twoPhase['combinedItems'][$idx] ?? [];
-            $twoPhase['combinedItems'][$idx] = array_merge($custom, [
-                'id' => $p1['id'] ?? ($idx + 1),
-                'category' => $p1['category'] ?? ($idx < 3 ? 'basic' : 'additional'),
-                'name' => $p1['name'] ?? '',
-                'shortName' => $p1['shortName'] ?? '',
-                'todayMeters' => $combToday > 0 ? (string)$combToday : '',
-                'totalMeters' => $combTotal > 0 ? (string)$combTotal : '',
-                'readyToWorkMeters' => $custom['readyToWorkMeters'] ?? '',
-                'notes' => $custom['notes'] ?? ''
-            ]);
-        }
-    }
-
-    $targetDate = $roadReport['reportDate'] ?? $roadReport['dateFormatted'] ?? ($twoPhase['reportDate'] ?? '');
-    $twoPhase['reportDate'] = $targetDate;
-    $twoPhase['dateFormatted'] = $targetDate;
-    $twoPhase['dayName'] = $roadReport['dayName'] ?? ($twoPhase['dayName'] ?? '');
-    $twoPhase['updatedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-    $twoPhase['notes'] = 'تقرير إنجاز المرحلتين — تم تحديث وتغذية المرحلة الثانية تلقائياً من تقرير أعمال الطريق اليومي (' . ($roadReport['reportNumber'] ?? $targetDate) . ')';
-
-    $db['latestTwoPhaseReport'] = $twoPhase;
-    $db['reports'] = deduplicate_reports_array(array_merge([$twoPhase], $db['reports'] ?? []));
-    return $twoPhase;
-}
-
-// -------------------------------------------------------------
-// [REPORTS RESOURCE]
-// -------------------------------------------------------------
-if ($resource === 'reports') {
-    $db = get_db();
-
-    // List all reports (GET /api/reports)
+    // 3. List all reports (GET /api/reports)
     if ($method === 'GET' && empty($subId)) {
         $sector = $_GET['sector'] ?? '';
         $list = deduplicate_reports_array($db['reports'] ?? []);
@@ -513,11 +538,15 @@ if ($resource === 'reports') {
                 return isset($r['sector']) && mb_stripos($r['sector'], $sector) !== false;
             }));
         }
-        echo json_encode(['success' => true, 'reports' => $list]);
+        echo json_encode([
+            'success' => true,
+            'reports' => $list,
+            'deletedReportIds' => $db['deletedReportIds'] ?? []
+        ]);
         exit;
     }
 
-    // Create Report (POST /api/reports, /api/reports/create, /api/reports/upload)
+    // 4. Create Report (POST /api/reports, /api/reports/create, /api/reports/upload)
     if ($method === 'POST' && (empty($subId) || $subId === 'create' || $subId === 'upload')) {
         $body = get_json_input();
         if (empty($body['id'])) {
@@ -535,6 +564,13 @@ if ($resource === 'reports') {
         $newNum = strtolower(preg_replace('/[\s\-_]/', '', (string)$body['reportNumber']));
         $newId = strtolower(trim((string)$body['id']));
 
+        // If it was previously in deletedReportIds, remove it
+        if (!empty($db['deletedReportIds'])) {
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($newId, $newNum) {
+                return (string)$did !== $newId && (string)$did !== $newNum;
+            }));
+        }
+
         // Deduplicate: replace if exists with same key, id, or reportNumber
         $filtered = array_filter($db['reports'] ?? [], function($r) use ($newKey, $newNum, $newId) {
             $rKey = get_report_canonical_key($r);
@@ -550,15 +586,12 @@ if ($resource === 'reports') {
         array_unshift($filtered, $body);
         $db['reports'] = deduplicate_reports_array($filtered);
 
-        // If Two Phase report, update latestTwoPhaseReport
         if (!empty($body['isTwoPhaseProgressReport']) || ($body['reportType'] ?? '') === 'تقرير إنجاز المرحلتين') {
             $db['latestTwoPhaseReport'] = $body;
         }
-        // If Fuel report, update fuelDailyReport
         if (!empty($body['isFuelReport']) || ($body['reportType'] ?? '') === 'تقرير كميات الوقود اليومية') {
             $db['fuelDailyReport'] = $body;
         }
-        // If Road daily report, update roadDailyReport and auto-feed Phase 2 of Two-Phase report
         if (!empty($body['isRoadProgressReport']) || ($body['reportType'] ?? '') === 'تقرير أعمال الطريق اليومي') {
             $db['roadDailyReport'] = $body;
             sync_road_report_to_two_phase_php($db, $body);
@@ -569,7 +602,7 @@ if ($resource === 'reports') {
         exit;
     }
 
-    // Approve Report (PUT /api/reports/:id/approve)
+    // 5. Approve Report (PUT /api/reports/:id/approve)
     if ($method === 'PUT' && !empty($subId) && $subAction === 'approve') {
         $body = get_json_input();
         $approvedBy = $body['approvedBy'] ?? 'مدير المشروع';
@@ -591,7 +624,7 @@ if ($resource === 'reports') {
         exit;
     }
 
-    // Update Report (PUT /api/reports/:id)
+    // 6. Update Report (PUT /api/reports/:id)
     if ($method === 'PUT' && !empty($subId)) {
         $body = get_json_input();
         $found = null;
@@ -611,9 +644,19 @@ if ($resource === 'reports') {
         exit;
     }
 
-    // Delete Report (DELETE /api/reports/:id)
+    // 7. Delete Report (DELETE /api/reports/:id)
     if ($method === 'DELETE' && !empty($subId)) {
-        $db['reports'] = array_values(array_filter($db['reports'], function($r) use ($subId) {
+        if (!isset($db['deletedReportIds'])) $db['deletedReportIds'] = [];
+        $db['deletedReportIds'][] = (string)$subId;
+        foreach ($db['reports'] ?? [] as $r) {
+            if ((string)($r['id'] ?? '') === (string)$subId || (string)($r['reportNumber'] ?? '') === (string)$subId) {
+                if (!empty($r['id'])) $db['deletedReportIds'][] = (string)$r['id'];
+                if (!empty($r['reportNumber'])) $db['deletedReportIds'][] = (string)$r['reportNumber'];
+            }
+        }
+        $db['deletedReportIds'] = array_values(array_unique(array_filter($db['deletedReportIds'])));
+
+        $db['reports'] = array_values(array_filter($db['reports'] ?? [], function($r) use ($subId) {
             return (string)($r['id'] ?? '') !== (string)$subId && (string)($r['reportNumber'] ?? '') !== (string)$subId;
         }));
         if (isset($db['fuelDailyReport']) && ((string)($db['fuelDailyReport']['id'] ?? '') === (string)$subId || (string)($db['fuelDailyReport']['reportNumber'] ?? '') === (string)$subId)) {
@@ -629,10 +672,15 @@ if ($resource === 'reports') {
             unset($db['latestTwoPhaseReport']);
         }
         save_db($db);
-        echo json_encode(['success' => true, 'message' => 'تم حذف التقرير من قاعدة البيانات بنجاح']);
+        echo json_encode([
+            'success' => true,
+            'message' => 'تم حذف التقرير من قاعدة البيانات بنجاح',
+            'deletedReportIds' => $db['deletedReportIds']
+        ]);
         exit;
     }
 }
+
 
 // -------------------------------------------------------------
 // [TWO-PHASE PROGRESS REPORT]
@@ -771,30 +819,7 @@ if ($resource === 'road-progress') {
 // -------------------------------------------------------------
 // [MESSAGES & NOTIFICATIONS]
 // -------------------------------------------------------------
-function canonicalize_php_username($u) {
-    $u = strtolower(trim((string)($u ?? '')));
-    if ($u === '') return '';
-    $map = [
-        'dev' => 'admin',
-        'developer' => 'admin',
-        'development' => 'admin',
-        'alansari' => 'project_manager',
-        'manager' => 'project_manager',
-        'admin_sectors' => 'abrikaw',
-        'sectors' => 'abrikaw',
-        'quality' => 'saleh_quality',
-        'saleh' => 'saleh_quality',
-        'hammad' => 'saleh_quality',
-        'sector_a' => 'salah_alarabi',
-        'alarabi' => 'salah_alarabi',
-        'sector_b' => 'issa_altahir',
-        'altahir' => 'issa_altahir',
-        'fuel' => 'fuel_officer',
-        'fuel_officer' => 'fuel_officer',
-        'honi' => 'honi'
-    ];
-    return $map[$u] ?? $u;
-}
+
 
 if ($resource === 'messages') {
     $db = get_db();

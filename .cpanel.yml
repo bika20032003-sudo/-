@@ -2,6 +2,4 @@
 deployment:
   tasks:
     - export DEPLOYPATH=$HOME/public_html/
-    - if [ -f $DEPLOYPATH/api/data/db.json ]; then /bin/cp -f $DEPLOYPATH/api/data/db.json /tmp/db_live_backup.json 2>/dev/null || true; fi
     - /bin/cp -a public_html/. $DEPLOYPATH
-    - if [ -f /tmp/db_live_backup.json ]; then /bin/cp -f /tmp/db_live_backup.json $DEPLOYPATH/api/data/db.json 2>/dev/null || true; /bin/rm -f /tmp/db_live_backup.json 2>/dev/null || true; fi

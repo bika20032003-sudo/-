@@ -61,6 +61,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
   const [viewDetailsReport, setViewDetailsReport] = useState(null);
   const [reportToDelete, setReportToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
+  const [isClearingAll, setIsClearingAll] = useState(false);
   const [editingTargetedReport, setEditingTargetedReport] = useState(null);
 
   // Referral / Forward State
@@ -137,15 +139,31 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         console.warn('API error, saving locally:', apiErr);
       }
 
-      setReports(prev => prev.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...editFormData } : r));
+      const updatedFull = { ...editingReport, ...editFormData };
+      setReports(prev => prev.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? updatedFull : r));
 
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const updatedLocal = local.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...editFormData } : r);
+        const updatedLocal = local.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? updatedFull : r);
         localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+
+        if (editingReport.isExecutiveProgressReport || editingReport.reportCategory === 'executive' || (editingReport.reportType || '').includes('تنفيذي')) {
+          localStorage.setItem('executive_progress_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: updatedFull }));
+        } else if (editingReport.isFuelReport || editingReport.reportCategory === 'fuel' || (editingReport.reportType || '').includes('وقود')) {
+          localStorage.setItem('fuel_daily_report_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('fuel-updated', { detail: updatedFull }));
+        } else if (editingReport.isTwoPhaseProgressReport || editingReport.reportCategory === 'two_phase' || (editingReport.reportType || '').includes('المرحلتين')) {
+          localStorage.setItem('two_phase_report_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: updatedFull }));
+        } else if (editingReport.isRoadProgressReport || editingReport.reportCategory === 'road' || (editingReport.reportType || '').includes('طريق')) {
+          localStorage.setItem('road_daily_report_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: updatedFull }));
+        }
       } catch (storageErr) {}
 
-      window.dispatchEvent(new CustomEvent('report-updated', { detail: { id: targetId, ...editFormData } }));
+      window.dispatchEvent(new CustomEvent('report-updated', { detail: updatedFull }));
+      window.dispatchEvent(new CustomEvent('reports-updated', { detail: updatedFull }));
       setEditingReport(null);
     } catch (err) {
       console.error('Failed to update report:', err);
@@ -255,6 +273,10 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       // Merge with locally created reports, filter deleted, and strictly deduplicate
       try {
         const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+        if (res && Array.isArray(res.deletedReportIds)) {
+          res.deletedReportIds.forEach(id => deletedSet.add(String(id)));
+          localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deletedSet)));
+        }
         const local = sanitizeLocalReportsStorage();
 
         // Merge backend list with sanitized local reports
@@ -509,6 +531,38 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
     }
   };
 
+  const handleClearAllReports = async () => {
+    setIsClearingAll(true);
+    try {
+      await fastFetch('/api/reports/clear-all', { method: 'DELETE' });
+      
+      const allIds = reports.map(r => String(r.id || r.reportNumber)).filter(Boolean);
+      try {
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        const updated = Array.from(new Set([...deleted, ...allIds]));
+        localStorage.setItem('deleted_report_ids', JSON.stringify(updated));
+        localStorage.setItem('local_reports', JSON.stringify([]));
+        localStorage.removeItem('two_phase_report_data');
+        localStorage.removeItem('road_daily_report_data');
+        localStorage.removeItem('fuel_daily_report_data');
+        localStorage.removeItem('targeted_works_report_data');
+        localStorage.removeItem('executive_progress_data');
+      } catch (_) {}
+
+      setReports([]);
+      setIsClearAllModalOpen(false);
+      window.dispatchEvent(new CustomEvent('reports-updated'));
+      window.dispatchEvent(new CustomEvent('report-deleted'));
+      setForwardSuccessMessage('تم تفريغ وحذف كافة التقارير بنجاح من الأرشيف والسيرفر المركزي!');
+      setTimeout(() => setForwardSuccessMessage(null), 5000);
+    } catch (err) {
+      console.error('Error clearing all reports:', err);
+      alert('حدث خطأ أثناء إفراغ الأرشيف.');
+    } finally {
+      setIsClearingAll(false);
+    }
+  };
+
   const myPersonalReportsCount = reports.filter(r => isReportOwnedByEngineer(r, currentUser)).length;
 
   return (
@@ -723,6 +777,30 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
             <FileSpreadsheet size={17} color="#16a34a" />
             <span>تصدير Excel</span>
           </button>
+
+          {(canAccessGeneral || isDevUser(currentUser)) && reports.length > 0 && (
+            <button
+              onClick={() => setIsClearAllModalOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                background: '#fff1f2',
+                color: '#e11d48',
+                border: '1px solid #fecdd3',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="إفراغ الأرشيف ومسح كافة التقارير التجريبية نهائياً من كافة الأجهزة"
+            >
+              <Trash2 size={16} color="#e11d48" />
+              <span>إفراغ الأرشيف 🗑️</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1434,6 +1512,83 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
                 }}
               >
                 إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7.1 Clear All Confirmation Modal */}
+      {isClearAllModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.25rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '500px',
+            padding: '1.8rem',
+            textAlign: 'center',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+            direction: 'rtl'
+          }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem auto' }}>
+              <Trash2 size={28} />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 0.6rem 0' }}>
+              تأكيد إفراغ الأرشيف ومسح كافة التقارير
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.6, margin: '0 0 1.5rem 0' }}>
+              سيتم مسح كافة التقارير الموجودة في الأرشيف ({reports.length} تقرير) نهائياً من <strong>السيرفر المركزي ومن كافة الأجهزة والهواتف المتصلة</strong>.
+              <br />
+              <span style={{ color: '#dc2626', fontWeight: 800 }}>⚠️ لا يمكن التراجع عن هذا الإجراء إطلاقاً!</span>
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem' }}>
+              <button
+                type="button"
+                disabled={isClearingAll}
+                onClick={handleClearAllReports}
+                style={{
+                  background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.75rem 1.6rem',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.9rem',
+                  cursor: isClearingAll ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.35)'
+                }}
+              >
+                {isClearingAll ? 'جاري إفراغ الأرشيف...' : 'نعم، مسح كافة التقارير نهائياً'}
+              </button>
+              <button
+                type="button"
+                disabled={isClearingAll}
+                onClick={() => setIsClearAllModalOpen(false)}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  padding: '0.75rem 1.4rem',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                إلغاء وتراجع
               </button>
             </div>
           </div>

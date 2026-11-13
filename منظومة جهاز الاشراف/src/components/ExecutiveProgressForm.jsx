@@ -221,7 +221,20 @@ export const ExecutiveProgressForm = ({
   onDataChange,
   readOnlyMode = false 
 }) => {
-  const [data, setData] = useState(initialExecutiveData);
+  const [data, setData] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const local = localStorage.getItem('executive_progress_data');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed?.basicItems) && parsed.basicItems.length >= 5) {
+            return parsed;
+          }
+        }
+      }
+    } catch (_) {}
+    return initialExecutiveData;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -233,6 +246,47 @@ export const ExecutiveProgressForm = ({
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showStationModal, setShowStationModal] = useState(false);
   const printRef = useRef(null);
+  const isFirstRender = useRef(true);
+
+  // Real-time synchronization & persistence on field change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!data || !Array.isArray(data.basicItems) || data.basicItems.length === 0) return;
+
+    const cVal = parseFloat(toCleanLatin(data.contractValue)) || 897665675.03;
+    const bSum = (data.basicItems || []).reduce((acc, it) => acc + (parseFloat(toCleanLatin(it.executedValue)) || 0), 0);
+    const aSum = (data.additionalItems || []).reduce((acc, it) => acc + (parseFloat(toCleanLatin(it.executedValue)) || 0), 0);
+    const bPercent = cVal > 0 && bSum > 0 ? parseFloat(((bSum / cVal) * 100).toFixed(2)) : 71.11;
+    
+    const updatedWithCalc = {
+      ...data,
+      contractValue: cVal,
+      totalExecutedValue: bSum > 0 ? bSum : 638329685.45,
+      totalRemainingValue: Math.max(0, cVal - (bSum > 0 ? bSum : 638329685.45)),
+      overallFinancialPercentage: bPercent,
+      basicTotals: { executedValue: bSum > 0 ? bSum : 638329685.45, percentage: bPercent },
+      additionalTotals: { executedValue: aSum },
+      grandTotals: {
+        contractValue: cVal,
+        totalExecutedValue: bSum > 0 ? bSum : 638329685.45,
+        totalRemainingValue: Math.max(0, cVal - (bSum > 0 ? bSum : 638329685.45)),
+        overallFinancialPercentage: bPercent,
+        basicItemsPercentage: bPercent
+      }
+    };
+
+    try {
+      localStorage.setItem('executive_progress_data', JSON.stringify(updatedWithCalc));
+      window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: updatedWithCalc }));
+    } catch (_) {}
+
+    if (onDataChange) {
+      onDataChange(updatedWithCalc);
+    }
+  }, [data]);
 
   // Automatically resolve author name and role from logged-in username (صاحب الحساب المسجل)
   const resolvedAuthor = useMemo(() => {

@@ -10,7 +10,20 @@ import { fastFetch } from '../utils/apiCache.js';
 
 export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintReport }) => {
   const [activeSubTab, setActiveSubTab] = useState('form'); // 'form' | 'dashboard'
-  const [executiveData, setExecutiveData] = useState(initialExecutiveData);
+  const [executiveData, setExecutiveData] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const local = localStorage.getItem('executive_progress_data');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed?.basicItems) && parsed.basicItems.length >= 5) {
+            return parsed;
+          }
+        }
+      }
+    } catch (_) {}
+    return initialExecutiveData;
+  });
   const [loading, setLoading] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showStationModal, setShowStationModal] = useState(false);
@@ -21,8 +34,11 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
       try {
         setLoading(true);
         const res = await fastFetch('/api/executive-progress');
-        if (res && res.success && res.data && isMounted) {
+        if (res && res.success && res.data && Array.isArray(res.data.basicItems) && res.data.basicItems.length >= 5 && isMounted) {
           setExecutiveData(res.data);
+          try {
+            localStorage.setItem('executive_progress_data', JSON.stringify(res.data));
+          } catch (_) {}
         }
       } catch (err) {
         console.warn('Could not fetch executive progress data:', err);
@@ -31,7 +47,19 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
       }
     };
     loadData();
-    return () => { isMounted = false; };
+
+    // Listen to real-time updates from form and sync engine
+    const handleUpdate = (e) => {
+      if (e?.detail && Array.isArray(e.detail.basicItems) && e.detail.basicItems.length >= 5 && isMounted) {
+        setExecutiveData(e.detail);
+      }
+    };
+    window.addEventListener('executive-progress-updated', handleUpdate);
+
+    return () => { 
+      isMounted = false; 
+      window.removeEventListener('executive-progress-updated', handleUpdate);
+    };
   }, []);
 
   // Format currency

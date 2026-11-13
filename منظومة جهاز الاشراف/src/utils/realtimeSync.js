@@ -255,9 +255,13 @@ export async function checkServerUpdates(force = false) {
         const serverReports = reportsRes.value.reports;
         try {
           const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String));
+          if (Array.isArray(reportsRes.value.deletedReportIds)) {
+            reportsRes.value.deletedReportIds.forEach(id => deleted.add(String(id)));
+            localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deleted)));
+          }
           const validReports = serverReports.filter(r => !deleted.has(String(r.id)) && !deleted.has(String(r.reportNumber)));
           const rawLocal = localStorage.getItem('local_reports');
-          const localReports = rawLocal ? JSON.parse(rawLocal) : [];
+          const localReports = (rawLocal ? JSON.parse(rawLocal) : []).filter(r => !deleted.has(String(r?.id)) && !deleted.has(String(r?.reportNumber)));
           const merged = deduplicateReportsList([...validReports, ...localReports]);
           localStorage.setItem('local_reports', JSON.stringify(merged));
           validReports.forEach(r => saveReportToIndexedDB(r));
@@ -304,6 +308,7 @@ export async function checkServerUpdates(force = false) {
         try {
           localStorage.setItem('system_messages', JSON.stringify(messagesRes.value.messages));
           localStorage.setItem('local_messages', JSON.stringify(messagesRes.value.messages));
+          window.dispatchEvent(new CustomEvent('messages-updated'));
         } catch (_) {}
       }
 

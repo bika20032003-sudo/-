@@ -91,6 +91,8 @@ import {
   updateRoadProgressItem
 } from './twoPhaseSync.js';
 
+import { initialExecutiveData } from '../data/mockData.js';
+
 export {
   getStoredTwoPhaseReport,
   saveStoredTwoPhaseReport,
@@ -335,28 +337,17 @@ export function getFallbackData(url) {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const item = localStorage.getItem('executive_progress_data');
-        if (item) localData = JSON.parse(item);
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (Array.isArray(parsed?.basicItems) && parsed.basicItems.length >= 5) {
+            localData = parsed;
+          }
+        }
       }
     } catch (e) {}
     return {
       success: true,
-      data: localData || {
-        projectName: 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر',
-        reportTitle: 'الموقف التنفيذي.',
-        contractValue: 897665675.030,
-        currency: 'دينار',
-        reportDate: '2026-10-24',
-        reportNumber: '093436_24.10.2026',
-        basicTotals: { executedValue: 638329685.46, percentage: 71.11 },
-        additionalTotals: { executedValue: 93573854.26 },
-        grandTotals: {
-          contractValue: 897665675.030,
-          totalExecutedValue: 638329685.46,
-          totalRemainingValue: 259335989.57,
-          overallFinancialPercentage: 71.11,
-          basicItemsPercentage: 71.11
-        }
-      }
+      data: localData || initialExecutiveData
     };
   }
   if (url.includes('/api/reports/periodic')) {
@@ -809,7 +800,7 @@ export function getFallbackData(url) {
   return { success: true, data: [] };
 }
 
-async function fetchWithTimeout(url, options, timeoutMs = 1200) {
+async function fetchWithTimeout(url, options, timeoutMs = 6000) {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -829,6 +820,15 @@ export async function fastFetch(rawUrl, options = {}) {
   if (typeof url === 'string') {
     if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
       url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
+    }
+    const apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
+    if (apiBase) {
+      const cleanBase = apiBase.replace(/\/+$/, '');
+      if (url.startsWith('/api/')) {
+        url = cleanBase + url;
+      } else if (/^https?:\/\/[^/]+\/api\//.test(url)) {
+        url = url.replace(/^https?:\/\/[^/]+/, cleanBase);
+      }
     }
   }
 
@@ -852,12 +852,22 @@ export async function fastFetch(rawUrl, options = {}) {
           localStorage.setItem('local_messages', JSON.stringify([newMsg, ...loc]));
           window.dispatchEvent(new CustomEvent('messages-updated'));
         }
-        // 2. Forward to Cloud Server in Background
-        nativeFetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newMsg)
-        }).catch(() => {});
+        // 2. Forward to Cloud Server with proper URL
+        try {
+          const res = await nativeFetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newMsg)
+          });
+          if (res.ok) {
+            const data = await res.json().catch(() => null);
+            if (data && data.message) {
+              return { success: true, message: data.message };
+            }
+          }
+        } catch (fwdErr) {
+          console.warn('[fastFetch] Error forwarding message to cloud:', fwdErr);
+        }
         return { success: true, message: newMsg };
       } catch (err) {
         console.error('Error saving message in fastFetch:', err);
@@ -885,7 +895,7 @@ export async function fastFetch(rawUrl, options = {}) {
         localStorage.setItem('local_messages', JSON.stringify([]));
         localStorage.setItem('system_messages_initialized', 'true');
         window.dispatchEvent(new CustomEvent('messages-updated'));
-        nativeFetch('/api/messages/clear-all', { method: 'DELETE' }).catch(() => {});
+        nativeFetch(url.includes('clear-all') ? url : '/api/messages/clear-all', { method: 'DELETE' }).catch(() => {});
         return { success: true, message: 'All messages cleared' };
       }
       const msgId = url.split('/api/messages/')[1]?.split('?')[0];
@@ -902,16 +912,13 @@ export async function fastFetch(rawUrl, options = {}) {
       }
       return { success: true, message: 'Deleted message' };
     } else if (method === 'GET') {
-      // First try live server with short timeout
-      const liveData = await fetchWithTimeout(url, options, 1200);
+      // First try live server with 6000ms timeout
+      const liveData = await fetchWithTimeout(url, options, 6000);
       if (liveData && liveData.success && Array.isArray(liveData.messages)) {
         if (typeof window !== 'undefined' && window.localStorage) {
           try {
-            const existing = JSON.parse(localStorage.getItem('system_messages') || '[]');
-            const map = new Map();
-            existing.forEach(m => m && m.id && map.set(String(m.id), m));
-            liveData.messages.forEach(m => m && m.id && map.set(String(m.id), m));
-            localStorage.setItem('system_messages', JSON.stringify(Array.from(map.values())));
+            localStorage.setItem('system_messages', JSON.stringify(liveData.messages));
+            localStorage.setItem('local_messages', JSON.stringify(liveData.messages));
           } catch (_) {}
         }
         return liveData;
@@ -919,31 +926,45 @@ export async function fastFetch(rawUrl, options = {}) {
       return getFallbackData(url);
     }
   }
-  url = rawUrl;
-  if (typeof url === 'string') {
-    // Normalize localhost:5000 or 127.0.0.1:5000 to relative /api to use Vite proxy & eliminate CORS
-    if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
-      url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
-    }
-  }
 
   // Intercept and handle DELETE /api/reports/:id with Guaranteed Local + Cloud Resilience
   const currentMethod = (options.method || 'GET').toUpperCase();
   if (currentMethod === 'DELETE' && typeof url === 'string' && url.includes('/api/reports/')) {
-    const reportId = url.split('/api/reports/')[1]?.split('?')[0];
-    if (reportId && typeof window !== 'undefined' && window.localStorage) {
+    const isClearAll = url.includes('/clear-all') || url.includes('/all');
+    if (isClearAll && typeof window !== 'undefined' && window.localStorage) {
       try {
-        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
-        if (!deleted.includes(String(reportId))) deleted.push(String(reportId));
-        localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
-
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const updatedLocal = local.filter(r => String(r.id) !== String(reportId) && String(r.reportNumber) !== String(reportId));
-        localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
-
-        deleteReportFromIndexedDB(reportId);
+        const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+        local.forEach(r => {
+          if (r?.id) deleted.push(String(r.id));
+          if (r?.reportNumber) deleted.push(String(r.reportNumber));
+        });
+        localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(new Set(deleted))));
+        localStorage.setItem('local_reports', JSON.stringify([]));
+        localStorage.removeItem('two_phase_report_data');
+        localStorage.removeItem('road_daily_report_data');
+        localStorage.removeItem('fuel_daily_report_data');
+        localStorage.removeItem('targeted_works_report_data');
+        localStorage.removeItem('executive_progress_data');
       } catch (e) {
-        console.error('Error syncing report deletion in fastFetch:', e);
+        console.error('Error clearing local reports:', e);
+      }
+    } else {
+      const reportId = url.split('/api/reports/')[1]?.split('?')[0];
+      if (reportId && typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const deleted = JSON.parse(localStorage.getItem('deleted_report_ids') || '[]');
+          if (!deleted.includes(String(reportId))) deleted.push(String(reportId));
+          localStorage.setItem('deleted_report_ids', JSON.stringify(deleted));
+
+          const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+          const updatedLocal = local.filter(r => String(r.id) !== String(reportId) && String(r.reportNumber) !== String(reportId));
+          localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+
+          deleteReportFromIndexedDB(reportId);
+        } catch (e) {
+          console.error('Error syncing report deletion in fastFetch:', e);
+        }
       }
     }
   }
@@ -1120,16 +1141,30 @@ export async function fastFetch(rawUrl, options = {}) {
 
   // If cached data exists but is older, return it immediately and revalidate in background
   if (cached) {
-    fetchWithTimeout(url, options, 1500).then(fresh => {
+    fetchWithTimeout(url, options, 6000).then(fresh => {
       if (fresh) {
+        if (fresh.deletedReportIds && Array.isArray(fresh.deletedReportIds) && typeof window !== 'undefined' && window.localStorage) {
+          try {
+            const del = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+            fresh.deletedReportIds.forEach(id => del.add(String(id)));
+            localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(del)));
+          } catch (_) {}
+        }
         cache.set(cacheKey, { data: fresh, timestamp: Date.now() });
       }
     }).catch(() => {});
     return cached.data;
   }
 
-  // Direct fast fetch with 1500ms timeout
-  const data = await fetchWithTimeout(url, options, 1500);
+  // Direct fast fetch with 6000ms timeout for reliable mobile connections
+  const data = await fetchWithTimeout(url, options, 6000);
+  if (data && data.deletedReportIds && Array.isArray(data.deletedReportIds) && typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const del = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+      data.deletedReportIds.forEach(id => del.add(String(id)));
+      localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(del)));
+    } catch (_) {}
+  }
   const finalData = data || getFallbackData(url);
   cache.set(cacheKey, { data: finalData, timestamp: Date.now() });
   return finalData;

@@ -43,6 +43,10 @@ if [ -f /tmp/cpanel_live_db_backup.json ]; then
     echo "[Deploy] Restored and protected live database successfully."
 fi
 
+# 1.2. ضبط صلاحيات الكتابة لمجلد وملف قاعدة البيانات لمنع أخطاء الحفظ
+/bin/chmod 777 "$TARGET_DIR/api/data" 2>/dev/null || /bin/chmod 755 "$TARGET_DIR/api/data" 2>/dev/null || true
+/bin/chmod 666 "$TARGET_DIR/api/data/db.json" 2>/dev/null || /bin/chmod 644 "$TARGET_DIR/api/data/db.json" 2>/dev/null || true
+
 # 2. ضمان وجود index.htm إلى جانب index.html
 if [ -f "$TARGET_DIR/index.html" ]; then
     /bin/cp -f "$TARGET_DIR/index.html" "$TARGET_DIR/index.htm" 2>/dev/null || true
