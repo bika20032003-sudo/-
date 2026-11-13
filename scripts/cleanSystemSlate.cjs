@@ -8,9 +8,7 @@ console.log('[Clean Slate] Starting comprehensive system purge...');
 // 1. Clean JSON databases
 const dbFiles = [
   path.join(rootDir, 'public_html/api/data/db.json'),
-  path.join(rootDir, 'server/data/db.json'),
-  path.join(rootDir, 'منظومة جهاز الاشراف/public_html/api/data/db.json'),
-  path.join(rootDir, 'منظومة جهاز الاشراف/server/data/db.json')
+  path.join(rootDir, 'server/data/db.json')
 ];
 
 dbFiles.forEach(fp => {

@@ -45,14 +45,6 @@ if (fs.existsSync(path.join(rootPublicHtml, 'assets'))) {
 copyRecursiveSync(distDir, publicHtmlDir);
 copyRecursiveSync(distDir, rootPublicHtml);
 
-const mirrorPublicHtml = path.join(rootDir, 'منظومة جهاز الاشراف', 'public_html');
-if (fs.existsSync(mirrorPublicHtml)) {
-  if (fs.existsSync(path.join(mirrorPublicHtml, 'assets'))) {
-    fs.rmSync(path.join(mirrorPublicHtml, 'assets'), { recursive: true, force: true });
-  }
-  copyRecursiveSync(distDir, mirrorPublicHtml);
-}
-
 // Copy Cloud API folder to public_html release
 const apiSource = path.join(rootPublicHtml, 'api');
 if (fs.existsSync(apiSource)) {

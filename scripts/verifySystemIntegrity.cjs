@@ -161,16 +161,16 @@ assert(printModalCode.includes('break-inside: auto !important'), 'السماح �
 // ----------------------------------------------------
 // 6. فحص بنية التجميع وحزم النشر
 // ----------------------------------------------------
-console.log('\n6️⃣ فحص حزم البناء والاستضافة ومزامنة المرآة:');
+console.log('\n6️⃣ فحص حزم البناء والاستضافة وخادم الإنتاج:');
 
 const distIndex = path.join(__dirname, '../dist/index.html');
 const publicIndex = path.join(__dirname, '../public_html/index.html');
-const mirrorPrintModal = path.join(__dirname, '../منظومة جهاز الاشراف/src/components/OfficialPrintModal.jsx');
+const apiBackendIndex = path.join(__dirname, '../public_html/api/index.php');
 const hostingZip = path.join(__dirname, '../نسخة_الاستضافة_المتكاملة.zip');
 
 assert(fs.existsSync(distIndex), 'وجود ملف البناء الرئيسي dist/index.html');
 assert(fs.existsSync(publicIndex), 'وجود ملف الإنتاج public_html/index.html');
-assert(fs.existsSync(mirrorPrintModal), 'اكتمال مزامنة الملفات مع مجلد المرآة الاحتياطي');
+assert(fs.existsSync(apiBackendIndex), 'اكتمال وجاهزية ملف بوابة الـ API السحابي الموحد public_html/api/index.php');
 assert(fs.existsSync(hostingZip), 'وجود الحزمة المضغوطة الكاملة للاستضافة نسخة_الاستضافة_المتكاملة.zip');
 
 // ----------------------------------------------------
