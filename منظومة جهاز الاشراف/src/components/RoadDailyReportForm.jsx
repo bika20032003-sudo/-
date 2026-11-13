@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   FileSpreadsheet, Printer, Save, RotateCcw, Plus, Trash2, 
   CheckCircle2, AlertCircle, Edit3, Eye, FileText, Send, 
-  MapPin, Calendar, Clock, Milestone, Award, UserCheck, ShieldCheck
+  MapPin, Calendar, Clock, Milestone, Award, UserCheck, ShieldCheck,
+  Layers, ChevronLeft
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache } from '../utils/apiCache.js';
@@ -259,13 +260,23 @@ export const RoadDailyReportForm = ({
             name: rawItem,
             totalLength: 0,
             totalArea: 0,
-            count: 0
+            count: 0,
+            rows: []
           });
         }
         const entry = itemsMap.get(rawItem);
         entry.totalLength += len;
         entry.totalArea += ar;
         entry.count += 1;
+        entry.rows.push({
+          id: row.id,
+          itemNumber: row.itemNumber,
+          stationFrom: row.stationFrom,
+          stationTo: row.stationTo,
+          length: len,
+          area: ar,
+          notes: row.notes
+        });
       }
 
       const lower = rawItem.toLowerCase();
@@ -283,6 +294,9 @@ export const RoadDailyReportForm = ({
       }
     });
 
+    const itemSummaries = Array.from(itemsMap.values());
+    const repeatedItems = itemSummaries.filter(item => item.count > 1);
+
     return {
       // تم إلغاء الإجمالي العام لجميع الأطوال: كل بند يُحسب مستقلاً
       asphaltLen,
@@ -293,9 +307,31 @@ export const RoadDailyReportForm = ({
       baseAr,
       serviceLen,
       itemsCount: (currentData.items || []).length,
-      itemSummaries: Array.from(itemsMap.values())
+      itemSummaries,
+      repeatedItems,
+      itemsMap
     };
   }, [currentData.items]);
+
+  // Auto-save changes in real time so field changes are never lost and Phase 2 is immediately fed
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!reportData || !Array.isArray(reportData.items) || reportData.items.length === 0) return;
+    try {
+      localStorage.setItem('road_daily_report_data', JSON.stringify(reportData));
+      // Automatically feed Phase 2 in Two-Phase Report whenever road report quantities change
+      const syncedTwoPhase = syncDailyRoadReportToTwoPhase(reportData, currentUser);
+      window.dispatchEvent(new CustomEvent('road-daily-updated', { detail: reportData }));
+      window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: reportData }));
+      if (syncedTwoPhase) {
+        window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: syncedTwoPhase }));
+      }
+    } catch (_) {}
+  }, [reportData, currentUser]);
 
   // Handle row changes
   const handleRowChange = (id, field, value) => {
@@ -1068,222 +1104,341 @@ export const RoadDailyReportForm = ({
             <tbody>
               {(currentData.items || []).map((row, idx) => {
                 const isNoteYellow = row.noteHighlight || row.notes === 'معمل ومساحه' || row.notes === 'جاري العمل';
+                const rawItemName = (row.item || '').trim();
+                const itemEntry = calculatedTotals.itemsMap ? calculatedTotals.itemsMap.get(rawItemName) : null;
+                const isRepeatedItem = Boolean(itemEntry && itemEntry.count > 1);
+                const indexInGroup = isRepeatedItem ? itemEntry.rows.findIndex(r => r.id === row.id) : -1;
+                const isLastInGroup = isRepeatedItem && indexInGroup === itemEntry.count - 1;
 
                 return (
-                  <tr key={row.id} style={{ background: '#ffffff' }}>
-                    
-                    {/* Seq */}
-                    <td style={{
-                      border: '2px solid #000000',
-                      padding: '0.5rem 0.25rem',
-                      fontWeight: 900,
-                      background: '#fffbeb'
-                    }}>
-                      <input 
-                        type="text"
-                        value={row.itemNumber || idx + 1}
-                        onChange={(e) => handleRowChange(row.id, 'itemNumber', e.target.value)}
-                        style={{
-                          width: '100%',
-                          border: 'none',
-                          textAlign: 'center',
-                          fontWeight: 900,
-                          fontSize: '0.92rem',
-                          background: 'transparent',
-                          outline: 'none'
-                        }}
-                      />
-                    </td>
-
-                    {/* Item Description */}
-                    <td style={{ border: '2px solid #000000', padding: '0.4rem 0.65rem', textAlign: 'right' }}>
-                      <div style={{ position: 'relative' }}>
+                  <React.Fragment key={row.id}>
+                    <tr style={{ background: '#ffffff' }}>
+                      
+                      {/* Seq */}
+                      <td style={{
+                        border: '2px solid #000000',
+                        padding: '0.5rem 0.25rem',
+                        fontWeight: 900,
+                        background: '#fffbeb'
+                      }}>
                         <input 
                           type="text"
-                          value={row.item}
-                          onChange={(e) => handleRowChange(row.id, 'item', e.target.value)}
-                          placeholder="اسم البند..."
-                          list={`road-items-preset-${row.id}`}
+                          value={row.itemNumber || idx + 1}
+                          onChange={(e) => handleRowChange(row.id, 'itemNumber', e.target.value)}
+                          style={{
+                            width: '100%',
+                            border: 'none',
+                            textAlign: 'center',
+                            fontWeight: 900,
+                            fontSize: '0.92rem',
+                            background: 'transparent',
+                            outline: 'none'
+                          }}
+                        />
+                      </td>
+
+                      {/* Item Description */}
+                      <td style={{ border: '2px solid #000000', padding: '0.4rem 0.65rem', textAlign: 'right' }}>
+                        <div style={{ position: 'relative' }}>
+                          <input 
+                            type="text"
+                            value={row.item}
+                            onChange={(e) => handleRowChange(row.id, 'item', e.target.value)}
+                            placeholder="اسم البند..."
+                            list={`road-items-preset-${row.id}`}
+                            style={{
+                              width: '100%',
+                              border: '1px solid transparent',
+                              borderRadius: '4px',
+                              padding: '0.35rem 0.45rem',
+                              fontWeight: 800,
+                              fontSize: '0.92rem',
+                              color: '#0f172a',
+                              background: 'transparent',
+                              transition: 'border 0.2s',
+                              boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
+                            onBlur={(e) => e.target.style.border = '1px solid transparent'}
+                          />
+                          <datalist id={`road-items-preset-${row.id}`}>
+                            {standardWorkItems.map((preset, pIdx) => (
+                              <option key={pIdx} value={preset} />
+                            ))}
+                          </datalist>
+
+                          {/* Repeated Item Indicator */}
+                          {isRepeatedItem && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', fontSize: '0.74rem' }}>
+                              <span style={{
+                                background: '#eff6ff',
+                                color: '#1d4ed8',
+                                border: '1px solid #bfdbfe',
+                                borderRadius: '4px',
+                                padding: '0.1rem 0.45rem',
+                                fontWeight: 800
+                              }}>
+                                مقطع ({indexInGroup + 1} من {itemEntry.count})
+                              </span>
+                              <span style={{ color: '#475569', fontWeight: 700 }}>
+                                إجمالي البند: <strong style={{ color: '#16a34a' }}>{fmtNum(itemEntry.totalLength)} م.ط</strong>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Station From */}
+                      <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
+                        <input 
+                          type="text"
+                          value={row.stationFrom}
+                          onChange={(e) => handleRowChange(row.id, 'stationFrom', e.target.value)}
+                          placeholder="242+200"
                           style={{
                             width: '100%',
                             border: '1px solid transparent',
                             borderRadius: '4px',
-                            padding: '0.35rem 0.45rem',
+                            padding: '0.35rem 0.25rem',
+                            textAlign: 'center',
                             fontWeight: 800,
                             fontSize: '0.92rem',
-                            color: '#0f172a',
                             background: 'transparent',
-                            transition: 'border 0.2s',
+                            direction: 'ltr',
                             boxSizing: 'border-box'
                           }}
                           onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
                           onBlur={(e) => e.target.style.border = '1px solid transparent'}
                         />
-                        <datalist id={`road-items-preset-${row.id}`}>
-                          {standardWorkItems.map((preset, pIdx) => (
-                            <option key={pIdx} value={preset} />
-                          ))}
-                        </datalist>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Station From */}
-                    <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
-                      <input 
-                        type="text"
-                        value={row.stationFrom}
-                        onChange={(e) => handleRowChange(row.id, 'stationFrom', e.target.value)}
-                        placeholder="242+200"
-                        style={{
-                          width: '100%',
-                          border: '1px solid transparent',
-                          borderRadius: '4px',
-                          padding: '0.35rem 0.25rem',
+                      {/* Station To */}
+                      <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
+                        <input 
+                          type="text"
+                          value={row.stationTo}
+                          onChange={(e) => handleRowChange(row.id, 'stationTo', e.target.value)}
+                          placeholder="242+500"
+                          style={{
+                            width: '100%',
+                            border: '1px solid transparent',
+                            borderRadius: '4px',
+                            padding: '0.35rem 0.25rem',
+                            textAlign: 'center',
+                            fontWeight: 800,
+                            fontSize: '0.92rem',
+                            background: 'transparent',
+                            direction: 'ltr',
+                            boxSizing: 'border-box'
+                          }}
+                          onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
+                          onBlur={(e) => e.target.style.border = '1px solid transparent'}
+                        />
+                      </td>
+
+                      {/* Length (m) */}
+                      <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
+                        <input 
+                          type="text"
+                          value={row.length}
+                          onChange={(e) => handleRowChange(row.id, 'length', e.target.value)}
+                          placeholder="300.00"
+                          style={{
+                            width: '100%',
+                            border: '1px solid transparent',
+                            borderRadius: '4px',
+                            padding: '0.35rem 0.25rem',
+                            textAlign: 'center',
+                            fontWeight: 900,
+                            fontSize: '0.95rem',
+                            color: '#0f172a',
+                            background: 'transparent',
+                            direction: 'ltr',
+                            boxSizing: 'border-box'
+                          }}
+                          onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
+                          onBlur={(e) => e.target.style.border = '1px solid transparent'}
+                        />
+                        {isRepeatedItem && (
+                          <div style={{
+                            fontSize: '0.72rem',
+                            color: '#15803d',
+                            fontWeight: 800,
+                            marginTop: '0.15rem',
+                            direction: 'rtl'
+                          }}>
+                            ∑ إجمالي: {fmtNum(itemEntry.totalLength)}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Area (m2) */}
+                      <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
+                        <input 
+                          type="text"
+                          value={row.area}
+                          onChange={(e) => handleRowChange(row.id, 'area', e.target.value)}
+                          placeholder="3,300.00"
+                          style={{
+                            width: '100%',
+                            border: '1px solid transparent',
+                            borderRadius: '4px',
+                            padding: '0.35rem 0.25rem',
+                            textAlign: 'center',
+                            fontWeight: 900,
+                            fontSize: '0.95rem',
+                            color: '#0f172a',
+                            background: 'transparent',
+                            direction: 'ltr',
+                            boxSizing: 'border-box'
+                          }}
+                          onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
+                          onBlur={(e) => e.target.style.border = '1px solid transparent'}
+                        />
+                      </td>
+
+                      {/* Notes (with yellow background highlight matching image 1) */}
+                      <td style={{
+                        border: '2px solid #000000',
+                        padding: '0.4rem 0.5rem',
+                        background: isNoteYellow ? '#facc15' : '#ffffff',
+                        fontWeight: isNoteYellow ? 900 : 700
+                      }}>
+                        <input 
+                          type="text"
+                          value={row.notes}
+                          onChange={(e) => handleRowChange(row.id, 'notes', e.target.value)}
+                          placeholder="ملاحظات..."
+                          style={{
+                            width: '100%',
+                            border: '1px solid transparent',
+                            borderRadius: '4px',
+                            padding: '0.35rem 0.25rem',
+                            textAlign: 'center',
+                            fontWeight: isNoteYellow ? 900 : 700,
+                            fontSize: '0.88rem',
+                            color: '#000000',
+                            background: 'transparent',
+                            boxSizing: 'border-box'
+                          }}
+                          onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
+                          onBlur={(e) => e.target.style.border = '1px solid transparent'}
+                        />
+                      </td>
+
+                      {/* Action */}
+                      <td style={{ border: '2px solid #000000', padding: '0.35rem' }} className="no-print">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(row.id)}
+                          title="حذف هذا البند"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto'
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+
+                    </tr>
+
+                    {/* Subtotal row immediately after the repeated items group */}
+                    {isLastInGroup && (
+                      <tr key={`subtotal-${row.id}`} style={{
+                        background: '#f0fdf4',
+                        borderTop: '2px dashed #16a34a',
+                        borderBottom: '2px solid #000000',
+                        fontWeight: 900
+                      }}>
+                        <td colSpan={4} style={{
+                          border: '2px solid #000000',
+                          padding: '0.65rem 0.85rem',
+                          textAlign: 'right',
+                          color: '#15803d',
+                          fontSize: '0.92rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                              <span style={{
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '5px',
+                                background: '#16a34a',
+                                color: '#ffffff',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 900,
+                                fontSize: '0.88rem'
+                              }}>∑</span>
+                              <span>إجمالي طول بند [{rawItemName}] (مجموع المقطعين الزوز):</span>
+                            </div>
+                            <span style={{
+                              background: '#dcfce7',
+                              color: '#166534',
+                              border: '1px solid #86efac',
+                              padding: '0.2rem 0.65rem',
+                              borderRadius: '6px',
+                              fontSize: '0.78rem',
+                              fontWeight: 800
+                            }}>
+                              ⚡ يغذي بند [طبقة إعادة التدوير (FDR)] بالمرحلة الثانية بقيمة {fmtNum(itemEntry.totalLength)} م.ط تلقائياً
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{
+                          border: '2px solid #000000',
+                          padding: '0.65rem 0.5rem',
                           textAlign: 'center',
+                          color: '#15803d',
+                          fontWeight: 950,
+                          fontSize: '1.05rem',
+                          direction: 'ltr',
+                          background: '#dcfce7'
+                        }}>
+                          {fmtNum(itemEntry.totalLength)}
+                        </td>
+                        <td style={{
+                          border: '2px solid #000000',
+                          padding: '0.65rem 0.5rem',
+                          textAlign: 'center',
+                          color: '#15803d',
+                          fontWeight: 950,
+                          fontSize: '1.05rem',
+                          direction: 'ltr',
+                          background: '#dcfce7'
+                        }}>
+                          {fmtNum(itemEntry.totalArea)}
+                        </td>
+                        <td colSpan={2} style={{
+                          border: '2px solid #000000',
+                          padding: '0.65rem 0.5rem',
+                          textAlign: 'center',
+                          color: '#166534',
+                          fontSize: '0.82rem',
                           fontWeight: 800,
-                          fontSize: '0.92rem',
-                          background: 'transparent',
-                          direction: 'ltr',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
-                        onBlur={(e) => e.target.style.border = '1px solid transparent'}
-                      />
-                    </td>
-
-                    {/* Station To */}
-                    <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
-                      <input 
-                        type="text"
-                        value={row.stationTo}
-                        onChange={(e) => handleRowChange(row.id, 'stationTo', e.target.value)}
-                        placeholder="242+500"
-                        style={{
-                          width: '100%',
-                          border: '1px solid transparent',
-                          borderRadius: '4px',
-                          padding: '0.35rem 0.25rem',
-                          textAlign: 'center',
-                          fontWeight: 800,
-                          fontSize: '0.92rem',
-                          background: 'transparent',
-                          direction: 'ltr',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
-                        onBlur={(e) => e.target.style.border = '1px solid transparent'}
-                      />
-                    </td>
-
-                    {/* Length (m) */}
-                    <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
-                      <input 
-                        type="text"
-                        value={row.length}
-                        onChange={(e) => handleRowChange(row.id, 'length', e.target.value)}
-                        placeholder="300.00"
-                        style={{
-                          width: '100%',
-                          border: '1px solid transparent',
-                          borderRadius: '4px',
-                          padding: '0.35rem 0.25rem',
-                          textAlign: 'center',
-                          fontWeight: 900,
-                          fontSize: '0.95rem',
-                          color: '#0f172a',
-                          background: 'transparent',
-                          direction: 'ltr',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
-                        onBlur={(e) => e.target.style.border = '1px solid transparent'}
-                      />
-                    </td>
-
-                    {/* Area (m2) */}
-                    <td style={{ border: '2px solid #000000', padding: '0.4rem 0.5rem' }}>
-                      <input 
-                        type="text"
-                        value={row.area}
-                        onChange={(e) => handleRowChange(row.id, 'area', e.target.value)}
-                        placeholder="3,300.00"
-                        style={{
-                          width: '100%',
-                          border: '1px solid transparent',
-                          borderRadius: '4px',
-                          padding: '0.35rem 0.25rem',
-                          textAlign: 'center',
-                          fontWeight: 900,
-                          fontSize: '0.95rem',
-                          color: '#0f172a',
-                          background: 'transparent',
-                          direction: 'ltr',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
-                        onBlur={(e) => e.target.style.border = '1px solid transparent'}
-                      />
-                    </td>
-
-                    {/* Notes (with yellow background highlight matching image 1) */}
-                    <td style={{
-                      border: '2px solid #000000',
-                      padding: '0.4rem 0.5rem',
-                      background: isNoteYellow ? '#facc15' : '#ffffff',
-                      fontWeight: isNoteYellow ? 900 : 700
-                    }}>
-                      <input 
-                        type="text"
-                        value={row.notes}
-                        onChange={(e) => handleRowChange(row.id, 'notes', e.target.value)}
-                        placeholder="ملاحظات..."
-                        style={{
-                          width: '100%',
-                          border: '1px solid transparent',
-                          borderRadius: '4px',
-                          padding: '0.35rem 0.25rem',
-                          textAlign: 'center',
-                          fontWeight: isNoteYellow ? 900 : 700,
-                          fontSize: '0.88rem',
-                          color: '#000000',
-                          background: 'transparent',
-                          boxSizing: 'border-box'
-                        }}
-                        onFocus={(e) => e.target.style.border = '1px solid #0284c7'}
-                        onBlur={(e) => e.target.style.border = '1px solid transparent'}
-                      />
-                    </td>
-
-                    {/* Action */}
-                    <td style={{ border: '2px solid #000000', padding: '0.35rem' }} className="no-print">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRow(row.id)}
-                        title="حذف هذا البند"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#ef4444',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          margin: '0 auto'
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-
-                  </tr>
+                          background: '#f0fdf4'
+                        }}>
+                          مجموع مقاطع البند ({itemEntry.count} مقاطع منفذة)
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
 
               {/* تم إلغاء الإجمالي العام للأعمال المنفذة وإجمالي الأطوال: كل بند يُحسب وتُقاس كمياته على حِدَة */}
               <tr style={{ background: '#f8fafc', color: '#475569', fontWeight: 800, borderTop: '2px solid #000000' }}>
                 <td colSpan={4} style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', textAlign: 'center' }}>
-                  بيان بنود أعمال الطريق المنفذة (كل بند يُحسب مستقلاً)
+                  بيان بنود أعمال الطريق المنفذة (كل بند يُحسب مستقلاً دون جمع تراكمي بين الطبقات المختلفة)
                 </td>
                 <td style={{ border: '2px solid #000000', padding: '0.65rem', fontSize: '0.88rem', color: '#64748b' }}>
                   —
@@ -1298,6 +1453,153 @@ export const RoadDailyReportForm = ({
               </tr>
             </tbody>
           </table>
+        </div>
+
+        {/* ملخص كميات البنود المنفذة ومجموع أطوالها المجمعة والربط المباشر مع تقرير إنجاز المرحلتين */}
+        <div style={{
+          marginTop: '1.5rem',
+          padding: '1.25rem',
+          background: '#f8fafc',
+          border: '1.5px solid #cbd5e1',
+          borderRadius: '10px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#0284c7', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Layers size={20} />
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 900, color: '#0f172a' }}>
+                  ملخص كميات البنود المنفذة وتغذية تقرير إنجاز المرحلتين تلقائياً
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+                  كل بند يُحسب مستقلاً، وتُجمع المقاطع المتكررة للبند نفسه تلقائياً لتغذية المرحلة الثانية بدقة تامة
+                </p>
+              </div>
+            </div>
+
+            {onNavigateTab && (
+              <button
+                type="button"
+                onClick={() => onNavigateTab('two-phase')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '7px',
+                  background: '#0284c7',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)'
+                }}
+              >
+                <span>معاينة تقرير إنجاز المرحلتين</span>
+                <ChevronLeft size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Repeated Items Highlights (Specifically أعمال فرم FDR بالأسمنت) */}
+          {calculatedTotals.repeatedItems && calculatedTotals.repeatedItems.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.15rem' }}>
+              {calculatedTotals.repeatedItems.map((repItem, rIdx) => (
+                <div key={rIdx} style={{
+                  background: '#f0fdf4',
+                  border: '1.5px solid #86efac',
+                  borderRadius: '10px',
+                  padding: '1rem 1.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem'
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.4rem' }}>
+                      <span style={{
+                        background: '#16a34a',
+                        color: '#ffffff',
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '6px',
+                        fontSize: '0.76rem',
+                        fontWeight: 900
+                      }}>
+                        بند مكرر في {repItem.count} مقاطع
+                      </span>
+                      <strong style={{ fontSize: '1.08rem', color: '#14532d' }}>{repItem.name}</strong>
+                    </div>
+
+                    <div style={{ fontSize: '0.84rem', color: '#334155', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.45rem' }}>
+                      {repItem.rows.map((rowItem, rowIdx) => (
+                        <span key={rowIdx} style={{ background: '#ffffff', border: '1px solid #bbf7d0', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                          <strong>مقطع {rowIdx + 1}:</strong> من محطة {rowItem.stationFrom || '—'} إلى {rowItem.stationTo || '—'} (طول: <strong style={{ color: '#16a34a' }}>{fmtNum(rowItem.length)} م.ط</strong> | مساحة: {fmtNum(rowItem.area)} م٢)
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'left', minWidth: '240px', background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#166534', fontWeight: 800 }}>
+                      إجمالي الطول المجمع للبنود الزوز:
+                    </div>
+                    <div style={{ fontSize: '1.55rem', fontWeight: 950, color: '#15803d', direction: 'ltr' }}>
+                      {fmtNum(repItem.totalLength)} <span style={{ fontSize: '0.88rem' }}>م.ط</span>
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 700 }}>
+                      المساحة المجمعة: {fmtNum(repItem.totalArea)} م٢
+                    </div>
+                    <div style={{ marginTop: '0.35rem', fontSize: '0.74rem', color: '#166534', background: '#dcfce7', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 800 }}>
+                      ⚡ يغذي بند [طبقة إعادة التدوير (FDR)] بالمرحلة الثانية
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Quick Grid for All Items Summaries */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+            {calculatedTotals.itemSummaries.map((it, idx) => (
+              <div key={idx} style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '0.85rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>{it.name}</strong>
+                  {it.count > 1 ? (
+                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                      {it.count} مقاطع
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: '#64748b', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                      مقطع واحد
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.35rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>إجمالي الطول:</span>
+                  <strong style={{ fontSize: '1.08rem', color: '#0284c7', direction: 'ltr' }}>
+                    {fmtNum(it.totalLength)} م.ط
+                  </strong>
+                </div>
+                {it.totalArea > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.76rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    <span>المساحة:</span>
+                    <span style={{ direction: 'ltr' }}>{fmtNum(it.totalArea)} م٢</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
 

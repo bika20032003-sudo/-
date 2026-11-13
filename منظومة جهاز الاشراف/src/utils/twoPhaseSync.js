@@ -16,10 +16,10 @@ export const initialPhase1ReportItems = [
 ];
 
 export const initialPhase2ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19,200', todayMeters: '100', totalMeters: '19,300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19,200', todayMeters: '1,220', totalMeters: '20,420', dailyTarget: '800', varianceMeters: '420.00', notes: 'إجمالي مقطعي فرم FDR بالأسمنت من التقرير اليومي: 1,220 م.ط (340 م + 880 م)', color: '#16a34a', shortName: 'إعادة تدوير' },
   { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '11,370', todayMeters: '1,150', totalMeters: '12,520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
   { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '10,290', todayMeters: '0', totalMeters: '10,290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19,320', todayMeters: '300', totalMeters: '19,620', dailyTarget: '800', varianceMeters: '-500.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
   { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '12,030', todayMeters: '600', totalMeters: '12,630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
   { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
 ];
@@ -536,27 +536,33 @@ export function categorizeRoadItemToPhase2(rawName) {
     return 4;
   }
 
-  // 2. رش طبقة التشريب MCO (Item 2 in Phase 2) - check before base so "رش MCO على طبقة الأساس" matches MCO
-  if (name.includes('mco') || name.includes('تشريب') || name.includes('ام سي او') || (name.includes('رش') && !name.includes('لصق'))) {
+  // 2. معالجة بالمياه / رش مياه (Water curing is curing/maintenance of FDR, NOT layer execution - must NOT be added to FDR meters)
+  if (name.includes('معالجه') || name.includes('معالجة') || name.includes('مياه') || name.includes('رش مياه') || name.includes('معالجة مياه')) {
+    return null; // Excluded from layer meters so it never double-counts FDR
+  }
+
+  // 3. رش طبقة التشريب MCO (Item 2 in Phase 2) - check before base so "رش MCO على طبقة الأساس" matches MCO
+  if (name.includes('mco') || name.includes('تشريب') || name.includes('ام سي او') || (name.includes('رش') && !name.includes('لصق') && !name.includes('مياه'))) {
     return 2;
   }
 
-  // 3. طبقة إعادة التدوير FDR بالأسمنت / فرمة ثانية (Item 1 in Phase 2)
-  if (name.includes('fdr') || name.includes('إعادة التدوير') || name.includes('اعادة التدوير') || name.includes('فرمة ثانية') || name.includes('فرمة تانية') || name.includes('أسمنت') || name.includes('اسمنت') || name.includes('معالجه') || name.includes('معالجة')) {
+  // 4. طبقة إعادة التدوير FDR بالأسمنت / فرمة ثانية (Item 1 in Phase 2)
+  // When this item appears multiple times across different stations, all sections are aggregated into Item 1
+  if (name.includes('fdr') || name.includes('إعادة التدوير') || name.includes('اعادة التدوير') || name.includes('فرمة ثانية') || name.includes('فرمة تانية') || name.includes('أسمنت') || name.includes('اسمنت')) {
     return 1;
   }
 
-  // 4. طبقة الاسفلت المحسن (Item 3 in Phase 2)
+  // 5. طبقة الاسفلت المحسن (Item 3 in Phase 2)
   if (name.includes('اسفلت') || name.includes('أسفلت')) {
     return 3;
   }
 
-  // 5. طبقة أساس حبيبي / تشغيل الأساس / تسليم الأساس (Item 5 in Phase 2)
+  // 6. طبقة أساس حبيبي / تشغيل الأساس / تسليم الأساس (Item 5 in Phase 2)
   if (name.includes('أساس') || name.includes('اساس')) {
     return 5;
   }
 
-  // 6. الطريق الخدمي (Item 6 in Phase 2)
+  // 7. الطريق الخدمي (Item 6 in Phase 2)
   if (name.includes('خدمي') || name.includes('خدميه') || name.includes('خدمية')) {
     return 6;
   }
@@ -566,6 +572,7 @@ export function categorizeRoadItemToPhase2(rawName) {
 
 /**
  * Extract aggregated daily meters from a Daily Road Report object
+ * Properly groups identical items (e.g. repeated FDR with cement sections) and calculates their combined total length
  */
 export function extractDailyMetersFromRoadReport(roadReport) {
   const result = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
@@ -587,6 +594,9 @@ export function extractDailyMetersFromRoadReport(roadReport) {
         matchedRows[p2Id].push({
           item: row.item,
           length: num,
+          area: parseFloat(String(row.area || '').replace(/,/g, '')) || 0,
+          stationFrom: row.stationFrom || '',
+          stationTo: row.stationTo || '',
           stations: (row.stationFrom && row.stationTo) ? `${row.stationFrom} إلى ${row.stationTo}` : ''
         });
       }
@@ -598,6 +608,7 @@ export function extractDailyMetersFromRoadReport(roadReport) {
 
 /**
  * Synchronize / Feed Daily Road Report into Phase 2 of Two-Phase Progress Report automatically
+ * Aggregates all sections of the same item (such as FDR with cement appearing twice) into Phase 2 Item 1 total length
  */
 export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
   if (!roadReport || typeof roadReport !== 'object') return null;
@@ -605,7 +616,6 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
 
   try {
     const { dailyMeters, matchedRows } = extractDailyMetersFromRoadReport(roadReport);
-    const hasAnyDailyWork = Object.values(dailyMeters).some(m => m > 0);
 
     const currentTwoPhase = getStoredTwoPhaseReport();
     if (!currentTwoPhase || !Array.isArray(currentTwoPhase.phase2Items)) return null;
@@ -625,9 +635,13 @@ export function syncDailyRoadReportToTwoPhase(roadReport, currentUser) {
       const variance = todayM - target;
 
       const detailList = matchedRows[id] || [];
-      const noteDetail = detailList.length > 0
-        ? `منجز يومي معتمد بتقرير أعمال الطريق: ${todayM.toLocaleString('en-US')} م.ط (${detailList.map(d => d.item).join(' + ')})`
-        : (item.notes || 'منجز معتمد بالتقرير اليومي');
+      let noteDetail = item.notes || 'منجز معتمد بالتقرير اليومي';
+      if (detailList.length > 1) {
+        const sumParts = detailList.map((d, i) => `مقطع ${i + 1}: ${d.length.toLocaleString('en-US')} م.ط (${d.stations})`).join(' + ');
+        noteDetail = `إجمالي ${detailList.length} مقاطع من تقرير أعمال الطريق: ${todayM.toLocaleString('en-US')} م.ط [${sumParts}]`;
+      } else if (detailList.length === 1) {
+        noteDetail = `منجز يومي معتمد بتقرير أعمال الطريق: ${todayM.toLocaleString('en-US')} م.ط (${detailList[0].stations})`;
+      }
 
       return {
         ...item,

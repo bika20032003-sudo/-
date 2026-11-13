@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Layers, Plus, Trash2, Printer, Send, CheckCircle2, 
   AlertCircle, FileSpreadsheet, FileText, Calendar, 
@@ -50,10 +50,10 @@ export const initialPhase1ReportItems = [
 
 // Official Certified Items for Phase 2 (Matching Official Document 24/10/2026)
 export const initialPhase2ReportItems = [
-  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19,200', todayMeters: '100', totalMeters: '19,300', dailyTarget: '800', varianceMeters: '-700.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#16a34a', shortName: 'إعادة تدوير' },
+  { id: 1, category: 'basic', name: 'طبقة إعادة التدوير (FDR)', previousMeters: '19,200', todayMeters: '1,220', totalMeters: '20,420', dailyTarget: '800', varianceMeters: '420.00', notes: 'إجمالي مقطعي فرم FDR بالأسمنت من التقرير اليومي: 1,220 م.ط (340 م + 880 م)', color: '#16a34a', shortName: 'إعادة تدوير' },
   { id: 2, category: 'basic', name: 'رش طبقة التشريب (MCO)', previousMeters: '11,370', todayMeters: '1,150', totalMeters: '12,520', dailyTarget: '800', varianceMeters: '350.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0284c7', shortName: 'رش تشريب' },
   { id: 3, category: 'basic', name: 'طبقة الاسفلت المحسن', previousMeters: '10,290', todayMeters: '0', totalMeters: '10,290', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#0f172a', shortName: 'اسفلت محسن' },
-  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
+  { id: 4, category: 'additional', name: 'فرمة اولي بدون اسمنت(FDR)', previousMeters: '19,320', todayMeters: '300', totalMeters: '19,620', dailyTarget: '800', varianceMeters: '-500.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#22c55e', shortName: 'فرم بدون أسمنت' },
   { id: 5, category: 'additional', name: 'طبقة أساس حبيبي', previousMeters: '12,030', todayMeters: '600', totalMeters: '12,630', dailyTarget: '800', varianceMeters: '-200.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#ea580c', shortName: 'أساس حبيبي' },
   { id: 6, category: 'additional', name: 'الطريق الخدمي', previousMeters: '19,320', todayMeters: '0', totalMeters: '19,320', dailyTarget: '800', varianceMeters: '-800.00', notes: 'منجز معتمد بالتقرير اليومي', color: '#eab308', shortName: 'طريق خدمي' },
 ];
@@ -270,6 +270,48 @@ export const TwoPhaseDailyReportForm = ({
       };
     });
   }, [phase1Items, phase2Items, combinedCustom]);
+
+  // Real-time auto-persistence so modifications are saved immediately on change
+  const isAutoSaveFirstRender = useRef(true);
+  useEffect(() => {
+    if (isAutoSaveFirstRender.current) {
+      isAutoSaveFirstRender.current = false;
+      return;
+    }
+    const currentDraft = {
+      reportNumber,
+      date: new Date(reportDate).toISOString(),
+      dateFormatted: reportDate,
+      dayName,
+      title: `بيان أعمال إنجاز المرحلتين يوم ${dayName} ${reportDate}`,
+      projectName,
+      reportType: 'تقرير إنجاز المرحلتين',
+      shiftType: 'دوام كامل',
+      sector: 'القطاع المشترك (المرحلتين الأولى والثانية)',
+      companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
+      createdByUsername: currentUser?.username,
+      authorUsername: currentUser?.username,
+      createdByName: currentUser?.name || sectorDirector,
+      uploadedBy: currentUser?.name || sectorDirector,
+      engineer: currentUser?.name || sectorDirector,
+      sectorDirector,
+      ownerRepresentative,
+      status: 'approved',
+      approvedBy: 'مدير عام المشروع',
+      notes: 'تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
+      isTwoPhaseProgressReport: true,
+      phase1Items,
+      phase2Items,
+      combinedItems,
+      remainingItems
+    };
+    try {
+      localStorage.setItem('two_phase_report_data', JSON.stringify(currentDraft));
+      saveStoredTwoPhaseReport(currentDraft);
+      window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: currentDraft }));
+      window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: currentDraft }));
+    } catch (_) {}
+  }, [phase1Items, phase2Items, remainingItems, combinedCustom, reportDate, reportNumber]);
 
   // Handlers for Phase 1 updates
   const handleUpdatePhase1 = (id, field, value) => {
