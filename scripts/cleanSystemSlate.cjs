@@ -119,3 +119,4 @@ if (fs.existsSync(serverStorePath)) {
 }
 
 console.log('[Clean Slate] Finished successfully!');
+

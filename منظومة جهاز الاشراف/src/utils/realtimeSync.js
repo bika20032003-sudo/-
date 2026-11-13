@@ -84,7 +84,13 @@ export function getApiBaseUrl() {
   // 2. Custom cloud API URL stored in device
   const custom = localStorage.getItem('custom_cloud_api_url');
   if (custom && custom.trim()) {
-    return custom.trim().replace(/\/+$/, '');
+    const cleanCustom = custom.trim().replace(/\/+$/, '');
+    if ((cleanCustom.includes('localhost') || cleanCustom.includes('127.0.0.1')) && 
+        window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      localStorage.removeItem('custom_cloud_api_url');
+    } else {
+      return cleanCustom;
+    }
   }
 
   // 3. Build-time environment variable

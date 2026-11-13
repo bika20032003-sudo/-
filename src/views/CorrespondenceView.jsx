@@ -100,17 +100,17 @@ export const CorrespondenceView = ({ currentUser, onNavigateTab, onPrintReport }
   const fetchReports = async () => {
     try {
       const res = await fastFetch('/api/reports');
-      const list = res?.reports || (Array.isArray(res) ? res : []);
-      if (list.length > 0) {
-        setReportsList(list);
+      if (res && Array.isArray(res.reports)) {
+        setReportsList(res.reports);
+      } else if (Array.isArray(res)) {
+        setReportsList(res);
       } else {
-        const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        setReportsList(local);
+        setReportsList([]);
       }
     } catch {
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        setReportsList(local);
+        setReportsList(Array.isArray(local) ? local : []);
       } catch {
         setReportsList([]);
       }

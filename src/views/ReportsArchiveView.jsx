@@ -262,51 +262,65 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       setIsLoading(true);
       const url = '/api/reports';
       
+      const mockReportIds = new Set([
+        'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
+        'exec-2026-10-29', '093436_29.10.2026',
+        'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
+        'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'REP-P1-7445', 'rep-p1-7445', 'TW-P1-1044', 'rep-tw-p1-1044',
+        'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
+        'SUP-REP-1102', 'rep-sup-1102', '1793172128709', '1793121609000', '1793116985370'
+      ]);
+
+      let deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
+
       const res = await fastFetch(url);
-      let list = [];
-      if (res && res.reports) {
+      let list = null;
+      if (res && Array.isArray(res.reports)) {
         list = res.reports;
+        if (Array.isArray(res.deletedReportIds)) {
+          res.deletedReportIds.forEach(id => deletedSet.add(String(id)));
+          try {
+            localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deletedSet)));
+          } catch (_) {}
+        }
       } else if (Array.isArray(res)) {
         list = res;
       }
 
-      // Merge with locally created reports, filter deleted, and strictly deduplicate
-      try {
-        let deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
-        if (res && Array.isArray(res.deletedReportIds)) {
-          res.deletedReportIds.forEach(id => deletedSet.add(String(id)));
-        }
-
-        const local = sanitizeLocalReportsStorage();
-
-        // Exclude legacy mock demo reports from archive
-        const mockReportIds = new Set([
-          'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
-          'exec-2026-10-29', '093436_29.10.2026',
-          'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
-          'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'REP-P1-7445', 'rep-p1-7445', 'TW-P1-1044', 'rep-tw-p1-1044',
-          'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
-          'SUP-REP-1102', 'rep-sup-1102', '1793172128709', '1793121609000', '1793116985370'
-        ]);
-
-        // Merge backend list with sanitized local reports
-        const combined = [...local, ...list].filter(r => 
+      // If server responded, the server database is the single authoritative source of truth
+      if (list !== null) {
+        const cleanServerList = list.filter(r => 
           r && 
           !deletedSet.has(String(r.id)) && 
           !deletedSet.has(String(r.reportNumber)) &&
           !mockReportIds.has(String(r.id)) &&
           !mockReportIds.has(String(r.reportNumber))
         );
-
-        // Strict composite deduplication: guarantees no duplicates by ID, Report Number, or (Date + Type + Sector)
-        list = deduplicateReportsList(combined);
-      } catch (storageErr) {
-        console.warn('Storage error in archive:', storageErr);
+        const deduped = deduplicateReportsList(cleanServerList);
+        setReports(deduped);
+        try {
+          localStorage.setItem('local_reports', JSON.stringify(deduped));
+        } catch (_) {}
+      } else {
+        // Fallback to local storage cache only when server is unreachable (offline mode)
+        const local = sanitizeLocalReportsStorage().filter(r => 
+          r && 
+          !deletedSet.has(String(r.id)) && 
+          !deletedSet.has(String(r.reportNumber)) &&
+          !mockReportIds.has(String(r.id)) &&
+          !mockReportIds.has(String(r.reportNumber))
+        );
+        const deduped = deduplicateReportsList(local);
+        setReports(deduped);
       }
-
-      setReports(list);
     } catch (err) {
-      console.error('Failed to load reports archive', err);
+      console.error('Failed to load reports archive from server, using local cache:', err);
+      try {
+        const local = sanitizeLocalReportsStorage();
+        setReports(deduplicateReportsList(local));
+      } catch {
+        setReports([]);
+      }
     } finally {
       setIsLoading(false);
     }

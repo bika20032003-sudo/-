@@ -30,3 +30,4 @@ files.forEach(f => {
 });
 console.log('Found LocalStorage keys:');
 Array.from(keys).sort().forEach(k => console.log(' - ' + k));
+

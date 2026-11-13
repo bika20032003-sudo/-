@@ -740,7 +740,13 @@ export async function fastFetch(rawUrl, options = {}) {
     if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
       url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
     }
-    const apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
+    let apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
+    if (apiBase && (apiBase.includes('localhost') || apiBase.includes('127.0.0.1'))) {
+      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        localStorage.removeItem('custom_cloud_api_url');
+        apiBase = '';
+      }
+    }
     if (apiBase) {
       const cleanBase = apiBase.replace(/\/+$/, '');
       if (url.startsWith('/api/')) {
@@ -889,7 +895,13 @@ export async function fastFetch(rawUrl, options = {}) {
   }
 
   const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
-  const apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
+  let apiBase = (typeof window !== 'undefined' && (localStorage.getItem('custom_cloud_api_url') || import.meta.env.VITE_API_BASE)) || '';
+  if (apiBase && (apiBase.includes('localhost') || apiBase.includes('127.0.0.1'))) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      localStorage.removeItem('custom_cloud_api_url');
+      apiBase = '';
+    }
+  }
 
   // If in static hosting on GitHub Pages without a backend, serve mock data
   if (isGitHubPages && !apiBase) {
