@@ -8,21 +8,44 @@ import './premium-ui.css';
 import { getFallbackData } from './utils/apiCache.js';
 import { initRealtimeSync } from './utils/realtimeSync.js';
 import { sanitizeLocalReportsStorage } from './utils/reportDeduplication.js';
-import { OFFICIAL_BASELINE_FUEL_REPORT } from './data/mockData.js';
+import { OFFICIAL_BASELINE_FUEL_REPORT, initialExecutiveData } from './data/mockData.js';
 
-// Purge any duplicate reports accumulated in browser localStorage
+// Purge any legacy fake reports, messages, and mock data from browser localStorage
+try {
+  const CLEAN_MIGRATION_KEY = 'supervision_clean_slate_v3_2026';
+  if (typeof window !== 'undefined' && window.localStorage && !localStorage.getItem(CLEAN_MIGRATION_KEY)) {
+    localStorage.setItem('local_reports', JSON.stringify([]));
+    localStorage.setItem('system_messages', JSON.stringify([]));
+    localStorage.setItem('local_messages', JSON.stringify([]));
+    localStorage.setItem('system_alerts', JSON.stringify([]));
+    localStorage.setItem('deleted_report_ids', JSON.stringify([]));
+    localStorage.setItem('periodic_reports_archive', JSON.stringify([]));
+    localStorage.removeItem('fuel_daily_report_data');
+    localStorage.removeItem('road_daily_report_data');
+    localStorage.removeItem('two_phase_report_data');
+    localStorage.removeItem('targeted_works_report_data');
+    
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('user_deleted_messages_') || k.startsWith('user_read_messages_') || k.startsWith('cached_api_')) {
+        localStorage.removeItem(k);
+      }
+    });
+    localStorage.setItem(CLEAN_MIGRATION_KEY, 'true');
+  }
+} catch (e) {}
+
 sanitizeLocalReportsStorage();
 
-// Ensure official baseline fuel daily report is adopted in localStorage
+// Ensure official baseline executive progress report is adopted in localStorage
 try {
-  const currentFuel = localStorage.getItem('fuel_daily_report_data');
-  if (!currentFuel) {
-    localStorage.setItem('fuel_daily_report_data', JSON.stringify(OFFICIAL_BASELINE_FUEL_REPORT));
+  const currentExec = localStorage.getItem('executive_progress_data');
+  if (!currentExec) {
+    localStorage.setItem('executive_progress_data', JSON.stringify(initialExecutiveData));
   } else {
-    const parsed = JSON.parse(currentFuel);
-    const hasData = Array.isArray(parsed?.fuelItems) && parsed.fuelItems.length >= 3 && parsed.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
+    const parsed = JSON.parse(currentExec);
+    const hasData = Array.isArray(parsed?.basicItems) && parsed.basicItems.length >= 5;
     if (!hasData) {
-      localStorage.setItem('fuel_daily_report_data', JSON.stringify(OFFICIAL_BASELINE_FUEL_REPORT));
+      localStorage.setItem('executive_progress_data', JSON.stringify(initialExecutiveData));
     }
   }
 } catch (e) {}

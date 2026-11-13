@@ -579,71 +579,12 @@
   "fuel": [],
   "alerts": [],
   "reports": [],
-  "fuelDailyReport": {
-    "id": "fuel-daily-2026-10-24",
-    "title": "تقرير كميات الوقود اليومية",
-    "reportTitle": "تقرير كميات الوقود اليومية",
-    "reportType": "تقرير كميات الوقود اليومية",
-    "reportCategory": "fuel",
-    "isFuelReport": true,
-    "reportNumber": "FUEL-094834_24.10.2026",
-    "date": "2026-10-24T00:00:00.000Z",
-    "reportDate": "2026-10-24",
-    "dayName": "السبت",
-    "formattedSlashDate": "24/10/2026",
-    "dateFormatted": "24/10/2026",
-    "sector": "مشروع أوباري - غات",
-    "fuelOfficer": "مسؤول الوقود والمحروقات بالموقع",
-    "headOfSupervision": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
-    "totalDispatchedLiters": 22738,
-    "totalReceivedLiters": 14631,
-    "totalRemainingLiters": 210697,
-    "fuelAmount": 22738,
-    "status": "approved",
-    "approvedBy": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
-    "uploadedBy": "مسؤول الوقود والمحروقات بالموقع",
-    "engineer": "مسؤول الوقود والمحروقات بالموقع",
-    "sectorDirector": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)",
-    "notes": "تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: 22,738.00 لتر - الوارد: 14,631.00 لتر - المتبقي: 210,697.00 لتر",
-    "createdAt": "2026-10-24T10:00:00.000Z",
-    "fuelItems": [
-      {
-        "id": 1,
-        "index": 1,
-        "seq": "1",
-        "location": "107",
-        "dispatchedLiters": "570.00",
-        "receivedLiters": "0.00",
-        "remainingLiters": "49,829.00",
-        "notes": ""
-      },
-      {
-        "id": 2,
-        "index": 2,
-        "seq": "2",
-        "location": "240",
-        "dispatchedLiters": "17,530.00",
-        "receivedLiters": "14,631.00",
-        "remainingLiters": "160,868.00",
-        "notes": ""
-      },
-      {
-        "id": 3,
-        "index": 3,
-        "seq": "3",
-        "location": "محطة أوباري",
-        "dispatchedLiters": "4,638.00",
-        "receivedLiters": "0.00",
-        "remainingLiters": "0.00",
-        "notes": "تغذية الآليات العاملة"
-      }
-    ]
-  },
+  "fuelDailyReport": null,
   "plans": [],
   "issues": [],
   "savedPeriodicReports": [],
   "messages": [],
-  "lastUpdated": "2026-11-09T14:21:56.170Z",
+  "lastUpdated": "2026-11-13T13:59:33.677Z",
   "deletedReportIds": [],
   "executiveProgress": {
     "projectName": "مشروع صيانة طريق اوباري غات بطول 360 كيلومتر",
@@ -841,5 +782,7 @@
       "projectManager": "م. عبدالرحمن الأنصاري (مدير المشروع)",
       "headOfSupervision": "م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)"
     }
-  }
+  },
+  "roadDailyReport": null,
+  "latestTwoPhaseReport": null
 }

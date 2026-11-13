@@ -25,7 +25,7 @@ export const solarByEquipmentType: { name: string; value: number; percentage: nu
 
 export const initialRecentReports: ReportItem[] = [];
 
-export const initialAlerts: AlertNotification[] = [];
+export const initialAlerts: AlertItem[] = [];
 
 export const initialTomorrowPlan: TomorrowPlanItem[] = [];
 

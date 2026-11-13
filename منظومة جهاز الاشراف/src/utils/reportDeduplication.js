@@ -252,9 +252,9 @@ export function sanitizeLocalReportsStorage() {
       'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
       'exec-2026-10-29', '093436_29.10.2026',
       'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
-      'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'TW-P1-1044', 'rep-tw-p1-1044',
+      'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'REP-P1-7445', 'rep-p1-7445', 'TW-P1-1044', 'rep-tw-p1-1044',
       'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
-      'SUP-REP-1102', 'rep-sup-1102'
+      'SUP-REP-1102', 'rep-sup-1102', '1793172128709', '1793121609000', '1793116985370'
     ]);
 
     parsed = parsed.filter(r => r && 

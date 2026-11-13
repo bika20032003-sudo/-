@@ -1173,6 +1173,30 @@ if ($resource === 'users') {
 }
 
 // -------------------------------------------------------------
+// [SYSTEM PURGE & CLEAN SLATE]
+// -------------------------------------------------------------
+if ($resource === 'system' && ($subId === 'clean-slate' || $subId === 'purge-all' || $subId === 'reset')) {
+    $db = get_db();
+    $db['reports'] = [];
+    $db['messages'] = [];
+    $db['alerts'] = [];
+    $db['plans'] = [];
+    $db['issues'] = [];
+    $db['fuel'] = [];
+    $db['savedPeriodicReports'] = [];
+    $db['deletedReportIds'] = [];
+    $db['fuelDailyReport'] = null;
+    $db['roadDailyReport'] = null;
+    $db['latestTwoPhaseReport'] = null;
+    save_db($db);
+    echo json_encode([
+        'success' => true,
+        'message' => 'تم تنظيف وتصفير قاعدة البيانات المركزية بالكامل بنجاح'
+    ]);
+    exit;
+}
+
+// -------------------------------------------------------------
 // [BACKUP EXPORT & RESTORE]
 // -------------------------------------------------------------
 if ($resource === 'backup') {

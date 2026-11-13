@@ -75,17 +75,10 @@ export const FuelView = ({ currentUser, onNavigateTab }) => {
         } catch (_) {}
       }
 
-      // Also read locally cached reports and section data
+      // Also read locally cached reports
       let localReports = [];
       try {
         localReports = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const sectionFuelRaw = localStorage.getItem('fuel_daily_report_data');
-        if (sectionFuelRaw) {
-          const secFuel = JSON.parse(sectionFuelRaw);
-          if (secFuel && (secFuel.fuelItems || secFuel.reportNumber)) {
-            localReports.push(secFuel);
-          }
-        }
       } catch (e) {
         console.error(e);
       }

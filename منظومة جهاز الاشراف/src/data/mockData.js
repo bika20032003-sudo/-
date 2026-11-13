@@ -19,14 +19,14 @@ export const OFFICIAL_BASELINE_FUEL_REPORT = {
   dateFormatted: '24/10/2026',
   date: '2026-10-24T00:00:00.000Z',
   dayName: 'يوم السبت',
-  reportNumber: 'FUEL-094834_24.10.2026',
+  reportNumber: '',
   sector: 'مشروع أوباري - غات',
   fuelOfficer: 'مسؤول الوقود والمحروقات بالموقع',
   headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
-  totalDispatchedLiters: 22738.00,
-  totalReceivedLiters: 14631.00,
-  totalRemainingLiters: 210697.00,
-  fuelAmount: 22738.00,
+  totalDispatchedLiters: 0.00,
+  totalReceivedLiters: 0.00,
+  totalRemainingLiters: 0.00,
+  fuelAmount: 0.00,
   status: 'approved',
   approvedBy: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
   notes: 'تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: 22,738.00 لتر - الوارد: 14,631.00 لتر - المتبقي: 210,697.00 لتر',
@@ -37,9 +37,9 @@ export const OFFICIAL_BASELINE_FUEL_REPORT = {
       index: 1,
       seq: '1',
       location: '107',
-      dispatchedLiters: '570.00',
+      dispatchedLiters: '0.00',
       receivedLiters: '0.00',
-      remainingLiters: '49,829.00',
+      remainingLiters: '0.00',
       notes: ''
     },
     {
@@ -47,9 +47,9 @@ export const OFFICIAL_BASELINE_FUEL_REPORT = {
       index: 2,
       seq: '2',
       location: '240',
-      dispatchedLiters: '17,530.00',
-      receivedLiters: '14,631.00',
-      remainingLiters: '141,795.00',
+      dispatchedLiters: '0.00',
+      receivedLiters: '0.00',
+      remainingLiters: '0.00',
       notes: ''
     },
     {
@@ -57,9 +57,9 @@ export const OFFICIAL_BASELINE_FUEL_REPORT = {
       index: 3,
       seq: '3',
       location: 'الكسارات',
-      dispatchedLiters: '4,638.00',
+      dispatchedLiters: '0.00',
       receivedLiters: '0.00',
-      remainingLiters: '19,073.00',
+      remainingLiters: '0.00',
       notes: ''
     }
   ]
@@ -67,78 +67,7 @@ export const OFFICIAL_BASELINE_FUEL_REPORT = {
 
 
 export const initialRecentReports = [];
-export const initialAlerts = [
-  {
-    id: 'ALT-101',
-    title: 'انخفاض مخزون الديزل في خزان 107 (المرحلة الأولى)',
-    message: 'الرصيد المتبقي في خزان 107 يبلغ 15,200 لتر. معدل الاستهلاك الميداني اليومي للآليات يستوجب طلب وتوريد شحنة وقود ديزل جديدة خلال 48 ساعة.',
-    type: 'warning',
-    category: 'fuel',
-    priority: 'high',
-    sector: 'المرحلة الأولى',
-    actionLink: 'fuel',
-    isRead: false,
-    author: 'م. صلاح العربي (مشرف المرحلة الأولى)',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    timestamp: 'منذ ساعتين'
-  },
-  {
-    id: 'ALT-102',
-    title: 'صيانة وقائية دورية لماكينة التدوير على البارد FDR-02',
-    message: 'سجلت ماكينة التدوير FDR-02 عدد 248 ساعة تشغيل مستمرة. يلزم فحص سنون الفرم وفلاتر الهيدروليك وتزييت السيور قبل بدء الوردية الصباحية.',
-    type: 'danger',
-    category: 'equipment',
-    priority: 'urgent',
-    sector: 'المرحلة الأولى',
-    actionLink: 'equipment',
-    isRead: false,
-    author: 'مسؤول الصيانة والآليات الميدانية',
-    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-    timestamp: 'منذ 5 ساعات'
-  },
-  {
-    id: 'ALT-103',
-    title: 'اعتماد نتائج الكثافة الحقلية لمسار الأساس الحبيبي (كم 45+200)',
-    message: 'أظهرت الفحوصات المعملية لقطاع المحطة 42+000 إلى 45+200 تحقيق نسبة دك 98.6%، وتم اعتماد الانتقال لمرحلة رش التشريب الأسفلتي MCO.',
-    type: 'info',
-    category: 'quality',
-    priority: 'normal',
-    sector: 'المرحلة الأولى',
-    actionLink: 'road-progress',
-    isRead: true,
-    author: 'م. صالح حماد (مسؤول الجودة والمختبر)',
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    timestamp: 'أمس 02:30 م'
-  },
-  {
-    id: 'ALT-104',
-    title: 'تجهيز صهاريج المياه والجريدر لمسار المرحلة الثانية (134 كم)',
-    message: 'تم تخصيص عدد 2 صهريج مياه وجريدر GRD-02 لترطيب ودك طبقة الأساس الحبيبي بالقطاع الجنوبي تمهيداً لأعمال التسوية والميول الهندسية.',
-    type: 'warning',
-    category: 'progress',
-    priority: 'high',
-    sector: 'المرحلة الثانية',
-    actionLink: 'road-progress',
-    isRead: false,
-    author: 'م. عيسى الطاهر (مشرف المرحلة الثانية)',
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    timestamp: 'اليوم 09:10 ص'
-  },
-  {
-    id: 'ALT-105',
-    title: 'اعتماد الموقف التنفيذي الموحد لمشروع طريق أوباري - غات (360 كم)',
-    message: 'تم اعتماد وتثبيت بيانات الموقف التنفيذي الشامل وإنجاز المرحلة الأولى بنسبة 100% ومتابعة إنجاز المرحلة الثانية وفق المخطط الزمني.',
-    type: 'info',
-    category: 'progress',
-    priority: 'normal',
-    sector: 'all',
-    actionLink: 'executive-progress',
-    isRead: true,
-    author: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
-    createdAt: new Date(Date.now() - 3600000 * 28).toISOString(),
-    timestamp: 'أمس 04:00 م'
-  }
-];
+export const initialAlerts = [];
 export const initialTomorrowPlan = [];
 export const initialEquipment = [
   // 1. ماكينه FDR (3 ماكينات)

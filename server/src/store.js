@@ -1769,7 +1769,7 @@ class Store {
     if (idx !== -1) {
       this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
     } else {
-      this.data.reports.unshift(enriched);
+      // reports only added on explicit save
     }
     this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
@@ -1794,7 +1794,7 @@ class Store {
     if (idx !== -1) {
       this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
     } else {
-      this.data.reports.unshift(enriched);
+      // reports only added on explicit save
     }
     this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();
@@ -1819,7 +1819,7 @@ class Store {
     if (idx !== -1) {
       this.data.reports[idx] = { ...this.data.reports[idx], ...enriched };
     } else {
-      this.data.reports.unshift(enriched);
+      // reports only added on explicit save
     }
     this.data.lastUpdated = new Date().toISOString();
     this.saveToDiskSync();

@@ -21,52 +21,52 @@ const toCleanLatin = (val) => {
     .replace(/[,٬،]/g, '');
 };
 
-// Default initial data matching the approved daily fuel document (Saturday 24/10/2026 - 094834_24.10.2026)
+// Default clean initial data for daily fuel report
 export const initialFuelDailyData = {
-  id: 'fuel-daily-2026-10-24',
+  id: null,
   reportTitle: 'تقرير كميات الوقود اليومية',
-  reportDate: '2026-10-24',
-  dateFormatted: '2026-10-24',
-  date: '2026-10-24T00:00:00.000Z',
-  formattedSlashDate: '24/10/2026',
-  dayName: 'السبت',
-  reportNumber: 'FUEL-094834_24.10.2026',
+  reportDate: '',
+  dateFormatted: '',
+  date: '',
+  formattedSlashDate: '',
+  dayName: '',
+  reportNumber: '',
   reportType: 'تقرير كميات الوقود اليومية',
   reportCategory: 'fuel',
   isFuelReport: true,
   sector: 'مشروع أوباري - غات',
   fuelOfficer: 'مسؤول الوقود والمحروقات بالموقع',
   headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
-  totalDispatchedLiters: 22738.00,
-  totalReceivedLiters: 14631.00,
-  totalRemainingLiters: 210697.00,
-  fuelAmount: 22738.00,
+  totalDispatchedLiters: 0.00,
+  totalReceivedLiters: 0.00,
+  totalRemainingLiters: 0.00,
+  fuelAmount: 0.00,
   fuelItems: [
     {
       id: 1,
       seq: '1',
       location: '107',
-      dispatchedLiters: '570.00',
+      dispatchedLiters: '0.00',
       receivedLiters: '0.00',
-      remainingLiters: '49,829.00',
+      remainingLiters: '0.00',
       notes: ''
     },
     {
       id: 2,
       seq: '2',
       location: '240',
-      dispatchedLiters: '17,530.00',
-      receivedLiters: '14,631.00',
-      remainingLiters: '141,795.00',
+      dispatchedLiters: '0.00',
+      receivedLiters: '0.00',
+      remainingLiters: '0.00',
       notes: ''
     },
     {
       id: 3,
       seq: '3',
       location: 'الكسارات',
-      dispatchedLiters: '4,638.00',
+      dispatchedLiters: '0.00',
       receivedLiters: '0.00',
-      remainingLiters: '19,073.00',
+      remainingLiters: '0.00',
       notes: ''
     }
   ]
@@ -93,7 +93,7 @@ export const normalizeFuelReport = (data) => {
     }))
     : initialFuelDailyData.fuelItems;
 
-  const repDate = data.reportDate || (data.date ? String(data.date).split('T')[0] : '2026-10-24');
+  const repDate = data.reportDate || (data.date ? String(data.date).split('T')[0] : '');
   let slashDate = data.formattedSlashDate || data.dateFormatted;
   if (!slashDate && repDate) {
     const parts = repDate.split('-');
@@ -104,10 +104,10 @@ export const normalizeFuelReport = (data) => {
     ...initialFuelDailyData,
     ...data,
     reportDate: repDate,
-    formattedSlashDate: slashDate || '24/10/2026',
-    dateFormatted: slashDate || '24/10/2026',
-    dayName: data.dayName ? String(data.dayName).replace(/^(يوم\s*)+/gi, '').trim() : 'السبت',
-    reportNumber: data.reportNumber || 'FUEL-094834_24.10.2026',
+    formattedSlashDate: slashDate || '',
+    dateFormatted: slashDate || '',
+    dayName: data.dayName ? String(data.dayName).replace(/^(يوم\s*)+/gi, '').trim() : '',
+    reportNumber: data.reportNumber || '',
     reportTitle: data.reportTitle || data.title || 'تقرير كميات الوقود اليومية',
     fuelOfficer: data.fuelOfficer || (data.uploadedBy ? data.uploadedBy.split('(')[0].trim() : 'مسؤول الوقود بالموقع'),
     headOfSupervision: data.headOfSupervision || (data.approvedBy || 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)'),
@@ -488,7 +488,7 @@ export const FuelDailyReportForm = ({
       reportType: 'تقرير كميات الوقود اليومية',
       reportCategory: 'fuel',
       isFuelReport: true,
-      reportNumber: reportData.reportNumber || 'FUEL-094834_24.10.2026',
+      reportNumber: reportData.reportNumber || '',
       date: repDate ? new Date(repDate).toISOString() : new Date().toISOString(),
       reportDate: repDate,
       dayName: (reportData.dayName || 'السبت').replace(/^(يوم\s*)+/gi, '').trim() || 'السبت',
