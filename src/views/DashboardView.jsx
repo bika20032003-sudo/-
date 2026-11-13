@@ -6,6 +6,24 @@ import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 import { getStoredTwoPhaseReport, calculateTwoPhaseRoadMetrics } from '../utils/twoPhaseSync.js';
 import { initialExecutiveData } from '../data/mockData.js';
 
+// Safe number formatter preventing any NaN display on Dashboard
+const formatDashboardNumber = (val) => {
+  if (val === null || val === undefined || val === '' || val === '-' || val === '—' || String(val).toLowerCase() === 'nan') return '-';
+  const clean = String(val)
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g, '.')
+    .replace(/[,٬،]/g, '')
+    .trim();
+  if (clean === '' || isNaN(Number(clean)) || clean.toLowerCase() === 'nan') return '-';
+  const parts = clean.split('.');
+  const intFormatted = Number(parts[0]).toLocaleString('en-US');
+  if (parts.length > 1 && parts[1] !== '00' && parts[1] !== '0') {
+    return `${intFormatted}.${parts[1]}`;
+  }
+  return intFormatted;
+};
+
 export const DashboardView = ({ onNavigateTab, currentUser }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeChartTab, setActiveChartTab] = useState('progress');
@@ -496,7 +514,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
               </span>
             </div>
             <div style={{ marginTop: '0.4rem', paddingTop: '0.35rem', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b' }}>
-              <span>إنجاز اليوم: <strong style={{ color: '#0369a1' }}>{(metrics.roadProgress.phase2?.todayMeters || 0).toLocaleString()} م.ط</strong></span>
+              <span>إنجاز اليوم: <strong style={{ color: '#0369a1' }}>{formatDashboardNumber(metrics.roadProgress.phase2?.todayMeters || 0)} م.ط</strong></span>
               <span style={{ color: '#0284c7', fontWeight: 700 }}>⚡ تتغذى تلقائياً من تقرير الطريق</span>
             </div>
           </div>
@@ -807,9 +825,9 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     {metrics.roadProgress.latestTwoPhaseReport.remainingItems.slice(0, 4).map((rem, rIdx) => (
                       <tr key={rIdx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '0.4rem', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{rem.name}</td>
-                        <td style={{ padding: '0.4rem', color: '#2563eb', fontWeight: 700 }}>{rem.phase1 ? Number(rem.phase1).toLocaleString() : '-'}</td>
-                        <td style={{ padding: '0.4rem', color: '#0891b2', fontWeight: 700 }}>{rem.phase2 ? Number(rem.phase2).toLocaleString() : '-'}</td>
-                        <td style={{ padding: '0.4rem', fontWeight: 800, color: '#dc2626' }}>{rem.total ? Number(rem.total).toLocaleString() : '-'}</td>
+                        <td style={{ padding: '0.4rem', color: '#2563eb', fontWeight: 700 }}>{formatDashboardNumber(rem.phase1)}</td>
+                        <td style={{ padding: '0.4rem', color: '#0891b2', fontWeight: 700 }}>{formatDashboardNumber(rem.phase2)}</td>
+                        <td style={{ padding: '0.4rem', fontWeight: 800, color: '#dc2626' }}>{formatDashboardNumber(rem.total)}</td>
                         <td style={{ padding: '0.4rem', color: '#64748b' }}>{rem.notes || '-'}</td>
                       </tr>
                     ))}
@@ -1040,15 +1058,15 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                       {/* Metric Value Pill */}
                       {rep.roadMeters ? (
                         <span style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', background: '#dcfce7', color: '#166534', fontSize: '0.82rem', fontWeight: 800 }}>
-                          {Number(rep.roadMeters).toLocaleString()} م.ط
+                          {formatDashboardNumber(rep.roadMeters)} م.ط
                         </span>
                       ) : rep.fuelAmount ? (
                         <span style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', background: '#ffedd5', color: '#9a3412', fontSize: '0.82rem', fontWeight: 800 }}>
-                          {Number(rep.fuelAmount).toLocaleString()} لتر
+                          {formatDashboardNumber(rep.fuelAmount)} لتر
                         </span>
                       ) : rep.productionAmount ? (
                         <span style={{ padding: '0.35rem 0.75rem', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontSize: '0.82rem', fontWeight: 800 }}>
-                          {Number(rep.productionAmount).toLocaleString()} طن
+                          {formatDashboardNumber(rep.productionAmount)} طن
                         </span>
                       ) : null}
 

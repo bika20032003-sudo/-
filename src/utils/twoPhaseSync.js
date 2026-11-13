@@ -146,14 +146,20 @@ export function getStoredTwoPhaseReport() {
           varianceMeters: formatTwoPhaseNumber(item.varianceMeters),
           category: item.category || (idx < 3 ? 'basic' : 'additional')
         })),
-        remainingItems: remaining.map((item, idx) => ({
-          ...baseline.remainingItems[idx],
-          ...item,
-          phase1: item.phase1 !== undefined && item.phase1 !== null && item.phase1 !== '' ? formatTwoPhaseNumber(item.phase1) : '',
-          phase2: item.phase2 !== undefined && item.phase2 !== null && item.phase2 !== '' ? formatTwoPhaseNumber(item.phase2) : '',
-          total: item.total !== undefined && item.total !== null && item.total !== '' ? formatTwoPhaseNumber(item.total) : '',
-          group: item.group || (idx < 3 ? 'A' : 'B')
-        })),
+        remainingItems: remaining.map((item, idx) => {
+          const base = baseline.remainingItems[idx] || {};
+          const p1 = item.phase1 !== undefined && item.phase1 !== null && item.phase1 !== '' && String(item.phase1).toLowerCase() !== 'nan' ? formatTwoPhaseNumber(item.phase1) : (base.phase1 || '');
+          const p2 = item.phase2 !== undefined && item.phase2 !== null && item.phase2 !== '' && String(item.phase2).toLowerCase() !== 'nan' ? formatTwoPhaseNumber(item.phase2) : (base.phase2 || '');
+          const tot = item.total !== undefined && item.total !== null && item.total !== '' && String(item.total).toLowerCase() !== 'nan' ? formatTwoPhaseNumber(item.total) : (base.total || '');
+          return {
+            ...base,
+            ...item,
+            phase1: p1,
+            phase2: p2,
+            total: tot,
+            group: item.group || (idx < 3 ? 'A' : 'B')
+          };
+        }),
         combinedItems: combined.map((item, idx) => ({
           ...baseline.combinedItems[idx],
           ...item,
@@ -200,9 +206,9 @@ export function saveStoredTwoPhaseReport(report) {
       })) : sanitized.phase2Items,
       remainingItems: Array.isArray(sanitized.remainingItems) ? sanitized.remainingItems.map(it => ({
         ...it,
-        phase1: it.phase1 !== undefined && it.phase1 !== null && it.phase1 !== '' ? formatTwoPhaseNumber(it.phase1) : '',
-        phase2: it.phase2 !== undefined && it.phase2 !== null && it.phase2 !== '' ? formatTwoPhaseNumber(it.phase2) : '',
-        total: it.total !== undefined && it.total !== null && it.total !== '' ? formatTwoPhaseNumber(it.total) : ''
+        phase1: it.phase1 !== undefined && it.phase1 !== null && it.phase1 !== '' && String(it.phase1).toLowerCase() !== 'nan' ? formatTwoPhaseNumber(it.phase1) : '',
+        phase2: it.phase2 !== undefined && it.phase2 !== null && it.phase2 !== '' && String(it.phase2).toLowerCase() !== 'nan' ? formatTwoPhaseNumber(it.phase2) : '',
+        total: it.total !== undefined && it.total !== null && it.total !== '' && String(it.total).toLowerCase() !== 'nan' ? formatTwoPhaseNumber(it.total) : ''
       })) : sanitized.remainingItems,
       combinedItems: Array.isArray(sanitized.combinedItems) ? sanitized.combinedItems.map(it => ({
         ...it,

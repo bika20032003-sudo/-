@@ -20,14 +20,14 @@ export const parseCleanNumber = (val, defaultVal = 0) => {
 
 // Format number with standard thousand commas (e.g. 226,083 or 114,467.00)
 export const formatTwoPhaseNumber = (val) => {
-  if (val === null || val === undefined || val === '' || val === '—' || val === '-') return '';
+  if (val === null || val === undefined || val === '' || val === '—' || val === '-' || String(val).toLowerCase() === 'nan') return '';
   const clean = String(val)
     .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
     .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
     .replace(/٫/g, '.')
     .replace(/[,٬،]/g, '')
     .trim();
-  if (clean === '' || isNaN(Number(clean))) return String(val);
+  if (clean === '' || isNaN(Number(clean)) || clean.toLowerCase() === 'nan') return '';
   const parts = clean.split('.');
   const intFormatted = Number(parts[0]).toLocaleString('en-US');
   return parts.length > 1 ? `${intFormatted}.${parts[1]}` : intFormatted;

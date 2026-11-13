@@ -147,6 +147,7 @@ console.log('\n5️⃣ فحص ملفات الكود المصدرية والتأ�
 const printModalCode = fs.readFileSync(path.join(__dirname, '../src/components/OfficialPrintModal.jsx'), 'utf8');
 const fuelFormCode = fs.readFileSync(path.join(__dirname, '../src/components/FuelDailyReportForm.jsx'), 'utf8');
 const twoPhaseFormCode = fs.readFileSync(path.join(__dirname, '../src/components/TwoPhaseDailyReportForm.jsx'), 'utf8');
+const dashboardViewCode = fs.readFileSync(path.join(__dirname, '../src/views/DashboardView.jsx'), 'utf8');
 
 // فحص عدم وجود "يوم يوم" في المحتوى المعروض (مع استثناء التعليقات البرمجية)
 const printModalNoComments = printModalCode.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -157,6 +158,8 @@ assert(printModalCode.includes('minHeight: \'165px\'') || printModalCode.include
 assert(twoPhaseFormCode.includes('LabelList'), 'إدراج خاصية LabelList لإظهار القيم الرقمية فوق الأعمدة البيانية في شاشة إنجاز المرحلتين');
 assert(printModalCode.includes('📄 صفحة واحدة (1 Page)'), 'وجود زر الملاءمة الذكية لصفحة واحدة (1 Page) في شريط الطباعة');
 assert(printModalCode.includes('break-inside: auto !important'), 'السماح للجدول بالتمدد دون قفز مفاجئ لصفحة 2 تاركاً صفحة 1 فارغة');
+assert(!dashboardViewCode.includes('Number(rem.phase2).toLocaleString'), 'منع تحويل أرقام جدول المتبقي بـ Number().toLocaleString لمنع ظهور NaN');
+assert(dashboardViewCode.includes('formatDashboardNumber(rem.phase2)'), 'استخدام دالة formatDashboardNumber لعرض قيم المرحلة الثانية بأمان تام');
 
 // ----------------------------------------------------
 // 6. فحص بنية التجميع وحزم النشر
