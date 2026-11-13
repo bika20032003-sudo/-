@@ -137,15 +137,31 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         console.warn('API error, saving locally:', apiErr);
       }
 
-      setReports(prev => prev.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...editFormData } : r));
+      const updatedFull = { ...editingReport, ...editFormData };
+      setReports(prev => prev.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? updatedFull : r));
 
       try {
         const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
-        const updatedLocal = local.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? { ...r, ...editFormData } : r);
+        const updatedLocal = local.map(r => (String(r.id) === String(targetId) || String(r.reportNumber) === String(targetNum)) ? updatedFull : r);
         localStorage.setItem('local_reports', JSON.stringify(updatedLocal));
+
+        if (editingReport.isExecutiveProgressReport || editingReport.reportCategory === 'executive' || (editingReport.reportType || '').includes('تنفيذي')) {
+          localStorage.setItem('executive_progress_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: updatedFull }));
+        } else if (editingReport.isFuelReport || editingReport.reportCategory === 'fuel' || (editingReport.reportType || '').includes('وقود')) {
+          localStorage.setItem('fuel_daily_report_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('fuel-updated', { detail: updatedFull }));
+        } else if (editingReport.isTwoPhaseProgressReport || editingReport.reportCategory === 'two_phase' || (editingReport.reportType || '').includes('المرحلتين')) {
+          localStorage.setItem('two_phase_report_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: updatedFull }));
+        } else if (editingReport.isRoadProgressReport || editingReport.reportCategory === 'road' || (editingReport.reportType || '').includes('طريق')) {
+          localStorage.setItem('road_daily_report_data', JSON.stringify(updatedFull));
+          window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: updatedFull }));
+        }
       } catch (storageErr) {}
 
-      window.dispatchEvent(new CustomEvent('report-updated', { detail: { id: targetId, ...editFormData } }));
+      window.dispatchEvent(new CustomEvent('report-updated', { detail: updatedFull }));
+      window.dispatchEvent(new CustomEvent('reports-updated', { detail: updatedFull }));
       setEditingReport(null);
     } catch (err) {
       console.error('Failed to update report:', err);

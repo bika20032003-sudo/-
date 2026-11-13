@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Layers, Plus, Trash2, Printer, Send, CheckCircle2, 
   AlertCircle, FileSpreadsheet, FileText, Calendar, 
@@ -270,6 +270,48 @@ export const TwoPhaseDailyReportForm = ({
       };
     });
   }, [phase1Items, phase2Items, combinedCustom]);
+
+  // Real-time auto-persistence so modifications are saved immediately on change
+  const isAutoSaveFirstRender = useRef(true);
+  useEffect(() => {
+    if (isAutoSaveFirstRender.current) {
+      isAutoSaveFirstRender.current = false;
+      return;
+    }
+    const currentDraft = {
+      reportNumber,
+      date: new Date(reportDate).toISOString(),
+      dateFormatted: reportDate,
+      dayName,
+      title: `بيان أعمال إنجاز المرحلتين يوم ${dayName} ${reportDate}`,
+      projectName,
+      reportType: 'تقرير إنجاز المرحلتين',
+      shiftType: 'دوام كامل',
+      sector: 'القطاع المشترك (المرحلتين الأولى والثانية)',
+      companyName: 'ائتلاف الشركات المنفذة لطريق أوباري غات',
+      createdByUsername: currentUser?.username,
+      authorUsername: currentUser?.username,
+      createdByName: currentUser?.name || sectorDirector,
+      uploadedBy: currentUser?.name || sectorDirector,
+      engineer: currentUser?.name || sectorDirector,
+      sectorDirector,
+      ownerRepresentative,
+      status: 'approved',
+      approvedBy: 'مدير عام المشروع',
+      notes: 'تقرير الأعمال المنجزة للمرحلتين — حساب كل بند مستقلاً دون جمع تراكمي بين الطبقات',
+      isTwoPhaseProgressReport: true,
+      phase1Items,
+      phase2Items,
+      combinedItems,
+      remainingItems
+    };
+    try {
+      localStorage.setItem('two_phase_report_data', JSON.stringify(currentDraft));
+      saveStoredTwoPhaseReport(currentDraft);
+      window.dispatchEvent(new CustomEvent('two-phase-updated', { detail: currentDraft }));
+      window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: currentDraft }));
+    } catch (_) {}
+  }, [phase1Items, phase2Items, remainingItems, combinedCustom, reportDate, reportNumber]);
 
   // Handlers for Phase 1 updates
   const handleUpdatePhase1 = (id, field, value) => {

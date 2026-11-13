@@ -700,3 +700,211 @@ export const initialRoadProgress = [
     notes: 'منجز معتمد بالتقرير اليومي'
   }
 ];
+
+// Default initial data matching the approved executive progress document (24/10/2026)
+export const initialExecutiveData = {
+  projectName: 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر',
+  reportTitle: 'الموقف التنفيذي.',
+  contractValue: 897665675.030,
+  currency: 'دينار',
+  reportDate: '2026-10-29',
+  reportNumber: '093436_29.10.2026',
+  basicTotals: { executedValue: 638329685.45, percentage: 71.11 },
+  additionalTotals: { executedValue: 94318535.86 },
+  grandTotals: {
+    contractValue: 897665675.030,
+    totalExecutedValue: 638329685.45,
+    totalRemainingValue: 259335989.58,
+    overallFinancialPercentage: 71.11,
+    basicItemsPercentage: 71.11
+  },
+  basicItems: [
+    {
+      id: 1,
+      section: 'أولاً: الدراسة والتصميم',
+      itemNumber: '1',
+      description: 'دراسة وتصميم كامل القطاع ويشمل العمل حساب حجم المرور وأخذ عينات من الطريق الحالي وتحديد حجم الضرر بالإضافة الى تصميم طبقة الاساس المعدل بطريقة ( FDR ) وتصميم طبقات الرصف التي تليها',
+      unit: 'مقطوعية',
+      contractQuantity: 1,
+      executedQuantity: 0.875,
+      remainingQuantity: 0.125,
+      unitRate: 17601287.75,
+      executedValue: 15401126.78,
+      percentage: 87.50,
+      notes: ''
+    },
+    {
+      id: 2,
+      section: 'ثانياً: أعمال الرصف',
+      itemNumber: '2',
+      description: 'كشط جزء من طبقات الاسفلت والاساس الحبيبي القائم وإعادة تدوير المواد الناتجة من عملية الكشط باستخدام تقنية إعادة تدوير كامل الرصف Full Depth Reclamation FDR ( بعد تعديل خواصها بالإضافات اللازمة ) وفرشها في طبقة جديدة اسفل كأساس لجسم الطريق وتشمل كافة الاختبارات اللازمة لتحديد نسب خلط المواد الإضافية وأسمنت والبودرة واستخدام المعدات الخاصة بالعمل والايادي العاملة واختبارات ضبط الجودة حسب المواصفات الفنية وتعليمات المهندس المشرف.',
+      unit: 'م2',
+      contractQuantity: 3060000.00,
+      executedQuantity: 2239792.63,
+      remainingQuantity: 820207.37,
+      unitRate: 119.44,
+      executedValue: 267520831.73,
+      percentage: 73.20,
+      notes: 'محسوبة من أطوال ومساحات المحطات (L41)'
+    },
+    {
+      id: 3,
+      section: 'ثانياً: أعمال الرصف',
+      itemNumber: '3',
+      description: 'توريد ورش طبقة تشريب نوع ( MC0 ) بمعدل 1.5 كجم / م2 على السطح النهائي للأساس الحبيبي بعرض واجهة تشمل ثمن المواد وتكاليف النقل ونظافة السطح قبل رشه والآلات والمعدات والأيدي العاملة وكل ما يلزم لنهو العمل والمعتمدة بالمتر المسطح طبقاً للمواصفات الفنية وتعليمات المهندس المشرف',
+      unit: 'م2',
+      contractQuantity: 3060000.00,
+      executedQuantity: 2179342.47,
+      remainingQuantity: 880657.53,
+      unitRate: 13.73,
+      executedValue: 29922372.11,
+      percentage: 71.22,
+      notes: 'محسوبة من أطوال ومساحات المحطات (F37)'
+    },
+    {
+      id: 4,
+      section: 'ثانياً: أعمال الرصف',
+      itemNumber: '4',
+      description: 'توريد وفرش طبقة اسفلتية سطحية محسنة باستخدام البوليمر بسمك 6 سم وبعرض 9.00 م والدك والتسوية طبقاً للمواصفات الفنية وتعليمات المهندس المشرف',
+      unit: 'م2',
+      contractQuantity: 3060000.00,
+      executedQuantity: 2139464.47,
+      remainingQuantity: 920535.53,
+      unitRate: 145.35,
+      executedValue: 310971160.71,
+      percentage: 69.92,
+      notes: 'محسوبة من أطوال ومساحات المحطات (R37)'
+    },
+    {
+      id: 5,
+      section: 'ثالثاً: الأعمال الإرشادية',
+      itemNumber: '5',
+      description: 'تركيب علامات الإرشاد ويشمل هذا البند توريد وتركيب ودعامات لافتات الإرشاد ووضعها في اماكنها وذلك تشمل توريد الاعمدة واللوحات اللازمة وكذلك ثمن المواد والنقل والتوزيع والطلاء العاكس والكتابة وتثبيت العلامات في المواقع المعتمدة بقواعد خرسانية طبقاً للمواصفات الفنية وتعليمات المهندس المشرف',
+      unit: 'عدد',
+      contractQuantity: 72.00,
+      executedQuantity: 0.00,
+      remainingQuantity: 72.00,
+      unitRate: 1783.99,
+      executedValue: 0.00,
+      percentage: 0.00,
+      notes: ''
+    },
+    {
+      id: 6,
+      section: 'ثالثاً: الأعمال الإرشادية',
+      itemNumber: '6',
+      description: 'تركيب علامات أرضية لتحديد السرعة ( عواكس أرضية ) وتشمل وضع وحواف الطريق حسب المواصفات الفنية المعمول بها',
+      unit: 'عدد',
+      contractQuantity: 1080.00,
+      executedQuantity: 0.00,
+      remainingQuantity: 1080.00,
+      unitRate: 135.04,
+      executedValue: 0.00,
+      percentage: 0.00,
+      notes: ''
+    },
+    {
+      id: 7,
+      section: 'ثالثاً: الأعمال الإرشادية',
+      itemNumber: '7',
+      description: 'تركيب السياج المعدني الواقي ويشمل هذا البند إزالة الاسوار المرنة التالفة والاعمدة المتضررة وإبعادها عن حرم الطريق مع توريد وتركيب أسوار مرنة جديدة في الأماكن وتنظيفها حسب المواصفات.',
+      unit: 'م.ط',
+      contractQuantity: 2160.00,
+      executedQuantity: 500.00,
+      remainingQuantity: 1660.00,
+      unitRate: 1205.23,
+      executedValue: 602615.00,
+      percentage: 23.15,
+      notes: ''
+    },
+    {
+      id: 8,
+      section: 'رابعاً: أعمال الطلاء',
+      itemNumber: '8',
+      description: 'طلاء سطح الطريق ويشمل هذا البند تنظيف سطح الطريق من الاتربة والمواد العالقة وتوريد طلاء',
+      unit: '',
+      contractQuantity: '',
+      executedQuantity: '',
+      remainingQuantity: '',
+      unitRate: '',
+      executedValue: '',
+      percentage: '',
+      notes: 'بند تمهيدي لأعمال الطلاء وتخطيط المسارات'
+    },
+    {
+      id: 9,
+      section: 'رابعاً: أعمال الطلاء',
+      itemNumber: '9',
+      description: 'خطوط صفراء على جانبى الطريق بعرض 15 سم .',
+      unit: 'م.ط',
+      contractQuantity: 720000.00,
+      executedQuantity: 402403.00,
+      remainingQuantity: 317597.00,
+      unitRate: 23.07,
+      executedValue: 9283437.21,
+      percentage: 55.89,
+      notes: ''
+    },
+    {
+      id: 10,
+      section: 'رابعاً: أعمال الطلاء',
+      itemNumber: '10',
+      description: 'خطوط بيضاء متقطعة بمحور الطريق بعرض 15 سم',
+      unit: 'م.ط',
+      contractQuantity: 240000.00,
+      executedQuantity: 180646.00,
+      remainingQuantity: 59354.00,
+      unitRate: 23.07,
+      executedValue: 4167503.22,
+      percentage: 75.27,
+      notes: ''
+    },
+    {
+      id: 11,
+      section: 'رابعاً: أعمال الطلاء',
+      itemNumber: '11',
+      description: 'خطوط بيضاء مستمرة بمحور الطريق بعرض 15 سم .',
+      unit: 'م.ط',
+      contractQuantity: 120000.00,
+      executedQuantity: 19967.00,
+      remainingQuantity: 100033.00,
+      unitRate: 23.07,
+      executedValue: 460638.69,
+      percentage: 16.64,
+      notes: ''
+    }
+  ],
+  additionalItems: [
+    {
+      id: 1,
+      itemNumber: '1',
+      description: 'طبقة أساس حبيبي',
+      unit: 'م3',
+      contractQuantity: '',
+      executedQuantity: 270078.68,
+      remainingQuantity: '',
+      unitRate: 299.52,
+      executedValue: 80893967.36,
+      percentage: '',
+      notes: 'محسوبة من أطوال ومساحات المحطات بسماكة 12.5 سم (AA44)'
+    },
+    {
+      id: 2,
+      itemNumber: '2',
+      description: 'الطريق الخدمي',
+      unit: 'كيلومتر',
+      contractQuantity: '',
+      executedQuantity: 225.623,
+      remainingQuantity: '',
+      unitRate: 59500.00,
+      executedValue: 13424568.50,
+      percentage: '',
+      notes: ''
+    }
+  ],
+  signatories: {
+    preparedBy: 'جهاز الإشراف الميداني',
+    projectManager: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
+    headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)'
+  }
+};

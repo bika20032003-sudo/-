@@ -8,7 +8,7 @@ import './premium-ui.css';
 import { getFallbackData } from './utils/apiCache.js';
 import { initRealtimeSync } from './utils/realtimeSync.js';
 import { sanitizeLocalReportsStorage } from './utils/reportDeduplication.js';
-import { OFFICIAL_BASELINE_FUEL_REPORT } from './data/mockData.js';
+import { OFFICIAL_BASELINE_FUEL_REPORT, initialExecutiveData } from './data/mockData.js';
 
 // Purge any duplicate reports accumulated in browser localStorage
 sanitizeLocalReportsStorage();
@@ -23,6 +23,20 @@ try {
     const hasData = Array.isArray(parsed?.fuelItems) && parsed.fuelItems.length >= 3 && parsed.fuelItems.some(i => parseFloat(String(i.dispatchedLiters || '').replace(/,/g, '')) > 0);
     if (!hasData) {
       localStorage.setItem('fuel_daily_report_data', JSON.stringify(OFFICIAL_BASELINE_FUEL_REPORT));
+    }
+  }
+} catch (e) {}
+
+// Ensure official baseline executive progress report is adopted in localStorage
+try {
+  const currentExec = localStorage.getItem('executive_progress_data');
+  if (!currentExec) {
+    localStorage.setItem('executive_progress_data', JSON.stringify(initialExecutiveData));
+  } else {
+    const parsed = JSON.parse(currentExec);
+    const hasData = Array.isArray(parsed?.basicItems) && parsed.basicItems.length >= 5;
+    if (!hasData) {
+      localStorage.setItem('executive_progress_data', JSON.stringify(initialExecutiveData));
     }
   }
 } catch (e) {}

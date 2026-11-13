@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   FileSpreadsheet, Printer, Save, RotateCcw, Plus, Trash2, 
   CheckCircle2, AlertCircle, Edit3, Eye, FileText, Send, 
@@ -296,6 +296,20 @@ export const RoadDailyReportForm = ({
       itemSummaries: Array.from(itemsMap.values())
     };
   }, [currentData.items]);
+
+  // Auto-save changes in real time so field changes are never lost
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!reportData || !Array.isArray(reportData.items) || reportData.items.length === 0) return;
+    try {
+      localStorage.setItem('road_daily_report_data', JSON.stringify(reportData));
+      window.dispatchEvent(new CustomEvent('road-progress-updated', { detail: reportData }));
+    } catch (_) {}
+  }, [reportData]);
 
   // Handle row changes
   const handleRowChange = (id, field, value) => {

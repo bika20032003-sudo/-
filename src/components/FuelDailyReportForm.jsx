@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Fuel, Printer, Save, RotateCcw, Plus, Trash2,
   CheckCircle2, AlertCircle, Edit3, Eye, FileSpreadsheet,
@@ -353,6 +353,20 @@ export const FuelDailyReportForm = ({
       itemsCount: (currentData.fuelItems || []).length
     };
   }, [currentData.fuelItems]);
+
+  // Auto-save changes in real time so field changes are never lost
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!reportData || !Array.isArray(reportData.fuelItems) || reportData.fuelItems.length === 0) return;
+    try {
+      localStorage.setItem('fuel_daily_report_data', JSON.stringify(reportData));
+      window.dispatchEvent(new CustomEvent('fuel-updated', { detail: reportData }));
+    } catch (_) {}
+  }, [reportData]);
 
   // Handle row changes
   const handleRowChange = (id, field, value) => {

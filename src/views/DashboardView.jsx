@@ -4,6 +4,7 @@ import { fastFetch } from '../utils/apiCache.js';
 import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 import { getStoredTwoPhaseReport, calculateTwoPhaseRoadMetrics } from '../utils/twoPhaseSync.js';
+import { initialExecutiveData } from '../data/mockData.js';
 
 export const DashboardView = ({ onNavigateTab, currentUser }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -101,10 +102,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             // 2. LIVE EXECUTIVE PROGRESS (الموقف التنفيذي المالي والفني المعتمد):
             let execOverallP = 71.11;
             let execContractVal = 897665675.03;
-            let execTotalExecuted = 638329685.46;
-            let execBasicExecuted = 638329685.46;
-            let execAdditionalExecuted = 0;
-            let execRemainingVal = 259335989.57;
+            let execTotalExecuted = 638329685.45;
+            let execBasicExecuted = 638329685.45;
+            let execAdditionalExecuted = 94318535.86;
+            let execRemainingVal = 259335989.58;
             let execBasicP = 71.11;
 
             if (typeof window !== 'undefined' && window.localStorage) {
@@ -112,11 +113,13 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                     const rawExec = localStorage.getItem('executive_progress_data');
                     if (rawExec) {
                         const parsedExec = JSON.parse(rawExec);
-                        const cVal = Number(parsedExec.contractValue) || 897665675.03;
-                        const bSum = (parsedExec.basicItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
-                        const aSum = (parsedExec.additionalItems || []).reduce((acc, it) => acc + (Number(it.executedValue) || 0), 0);
-                        const totalExec = bSum; // البنود الأساسية فقط
-                        if (cVal > 0) {
+                        const cVal = parseFloat(String(parsedExec.contractValue || '').replace(/,/g, '')) || 897665675.03;
+                        const items = Array.isArray(parsedExec.basicItems) && parsedExec.basicItems.length > 0 ? parsedExec.basicItems : (initialExecutiveData?.basicItems || []);
+                        const bSum = items.reduce((acc, it) => acc + (parseFloat(String(it.executedValue || '').replace(/,/g, '')) || 0), 0);
+                        const aItems = Array.isArray(parsedExec.additionalItems) ? parsedExec.additionalItems : (initialExecutiveData?.additionalItems || []);
+                        const aSum = aItems.reduce((acc, it) => acc + (parseFloat(String(it.executedValue || '').replace(/,/g, '')) || 0), 0);
+                        const totalExec = bSum > 0 ? bSum : 638329685.45;
+                        if (cVal > 0 && bSum > 0) {
                             execBasicP = parseFloat(((bSum / cVal) * 100).toFixed(2));
                             execOverallP = execBasicP;
                             execContractVal = cVal;
@@ -124,6 +127,9 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
                             execBasicExecuted = bSum;
                             execAdditionalExecuted = aSum;
                             execRemainingVal = Math.max(0, cVal - totalExec);
+                        } else if (parsedExec.overallFinancialPercentage || parsedExec.basicPercentage) {
+                            execOverallP = parseFloat(parsedExec.overallFinancialPercentage || parsedExec.basicPercentage);
+                            execBasicP = execOverallP;
                         }
                     }
                 } catch (e) {}
@@ -384,7 +390,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <div>
               <span style={{ fontSize: '0.85rem', color: '#93c5fd', fontWeight: 700 }}>نسبة الإنجاز المالي العام (الموقف التنفيذي)</span>
               <div style={{ fontSize: '2.5rem', fontWeight: 900, lineHeight: 1.1, margin: '0.35rem 0' }}>
-                {metrics.executiveProgress?.overallPercentage || metrics.roadProgress.overallPercentage || 71.11}%
+                {(metrics.executiveProgress?.overallPercentage ? Number(metrics.executiveProgress.overallPercentage).toFixed(2) : (execOverallP ? Number(execOverallP).toFixed(2) : '71.11'))}%
               </div>
               <div style={{ fontSize: '0.78rem', color: '#bfdbfe', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span>مكتمل من إجمالي 360.00 كم</span>
@@ -399,10 +405,10 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             <div style={{ position: 'relative', width: '74px', height: '74px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="74" height="74" viewBox="0 0 36 36">
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3.5"/>
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#38bdf8" strokeWidth="3.5" strokeDasharray={`${metrics.roadProgress.overallPercentage || 71.11}, 100`} strokeLinecap="round"/>
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#38bdf8" strokeWidth="3.5" strokeDasharray={`${metrics.executiveProgress?.overallPercentage || execOverallP || 71.11}, 100`} strokeLinecap="round"/>
               </svg>
               <span style={{ position: 'absolute', fontSize: '0.85rem', fontWeight: 900, color: '#fff' }}>
-                {Math.round(metrics.roadProgress.overallPercentage || 71)}%
+                {Math.round(metrics.executiveProgress?.overallPercentage || execOverallP || 71)}%
               </span>
             </div>
           </div>

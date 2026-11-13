@@ -91,6 +91,8 @@ import {
   updateRoadProgressItem
 } from './twoPhaseSync.js';
 
+import { initialExecutiveData } from '../data/mockData.js';
+
 export {
   getStoredTwoPhaseReport,
   saveStoredTwoPhaseReport,
@@ -335,28 +337,17 @@ export function getFallbackData(url) {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const item = localStorage.getItem('executive_progress_data');
-        if (item) localData = JSON.parse(item);
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (Array.isArray(parsed?.basicItems) && parsed.basicItems.length >= 5) {
+            localData = parsed;
+          }
+        }
       }
     } catch (e) {}
     return {
       success: true,
-      data: localData || {
-        projectName: 'مشروع صيانة طريق اوباري غات بطول 360 كيلومتر',
-        reportTitle: 'الموقف التنفيذي.',
-        contractValue: 897665675.030,
-        currency: 'دينار',
-        reportDate: '2026-10-24',
-        reportNumber: '093436_24.10.2026',
-        basicTotals: { executedValue: 638329685.46, percentage: 71.11 },
-        additionalTotals: { executedValue: 93573854.26 },
-        grandTotals: {
-          contractValue: 897665675.030,
-          totalExecutedValue: 638329685.46,
-          totalRemainingValue: 259335989.57,
-          overallFinancialPercentage: 71.11,
-          basicItemsPercentage: 71.11
-        }
-      }
+      data: localData || initialExecutiveData
     };
   }
   if (url.includes('/api/reports/periodic')) {
