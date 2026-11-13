@@ -585,6 +585,12 @@ export const ExecutiveProgressView = ({ currentUser, onNavigateTab, onPrintRepor
               };
               try {
                 localStorage.setItem('executive_progress_data', JSON.stringify(updated));
+                window.dispatchEvent(new CustomEvent('executive-progress-updated', { detail: updated }));
+                fastFetch('/api/executive-progress', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(updated)
+                }).catch(() => {});
               } catch (_) {}
               return updated;
             });

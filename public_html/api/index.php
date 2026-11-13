@@ -35,8 +35,73 @@ if (!is_dir(DATA_DIR)) {
     @mkdir(DATA_DIR, 0755, true);
 }
 
-// 3. Database Engine (Thread-Safe with Exclusive File Locks)
+// -------------------------------------------------------------
+// [DATABASE ENGINE - DUAL-MODE MYSQL & CENTRAL SERVER STORE]
+// -------------------------------------------------------------
+if (file_exists(API_ROOT . '/db_config.php')) {
+    require_once API_ROOT . '/db_config.php';
+}
+if (!defined('MYSQL_ENABLED')) {
+    define('MYSQL_ENABLED', false);
+}
+
+function get_mysql_pdo() {
+    static $pdo = null;
+    static $attempted = false;
+    if ($attempted) return $pdo;
+    $attempted = true;
+
+    $enabled = defined('MYSQL_ENABLED') && MYSQL_ENABLED === true;
+    $host = defined('MYSQL_HOST') ? MYSQL_HOST : (getenv('DB_HOST') ?: 'localhost');
+    $dbName = defined('MYSQL_DB') ? MYSQL_DB : getenv('DB_NAME');
+    $user = defined('MYSQL_USER') ? MYSQL_USER : getenv('DB_USER');
+    $pass = defined('MYSQL_PASS') ? MYSQL_PASS : getenv('DB_PASS');
+    $port = defined('MYSQL_PORT') ? MYSQL_PORT : (getenv('DB_PORT') ?: 3306);
+
+    if (!$enabled || empty($dbName)) {
+        return null;
+    }
+
+    try {
+        $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_TIMEOUT => 3
+        ]);
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `system_data_store` (
+            `key_name` VARCHAR(64) NOT NULL PRIMARY KEY,
+            `data_value` LONGTEXT NOT NULL,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+        return $pdo;
+    } catch (Exception $e) {
+        error_log("[MySQL Connection Notice] " . $e->getMessage());
+        $pdo = null;
+        return null;
+    }
+}
+
 function get_db() {
+    // 1. Check MySQL if enabled
+    $pdo = get_mysql_pdo();
+    if ($pdo) {
+        try {
+            $stmt = $pdo->prepare("SELECT data_value FROM system_data_store WHERE key_name = 'main_db' LIMIT 1");
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if ($row && !empty($row['data_value'])) {
+                $decoded = json_decode($row['data_value'], true);
+                if (is_array($decoded)) return $decoded;
+            }
+        } catch (Exception $e) {
+            error_log("[MySQL Read Notice] " . $e->getMessage());
+        }
+    }
+
+    // 2. Central Server DB Fallback (Thread-Safe File with shared locks)
     if (!file_exists(DB_FILE)) {
         return [
             'users' => [],
@@ -74,7 +139,21 @@ function save_db(&$data) {
     }
     $data['lastUpdated'] = gmdate('Y-m-d\TH:i:s\Z');
     $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    
+
+    // 1. Sync to MySQL if enabled
+    $pdo = get_mysql_pdo();
+    if ($pdo) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO system_data_store (key_name, data_value, updated_at) 
+                VALUES ('main_db', :val, NOW()) 
+                ON DUPLICATE KEY UPDATE data_value = :val2, updated_at = NOW()");
+            $stmt->execute([':val' => $json, ':val2' => $json]);
+        } catch (Exception $e) {
+            error_log("[MySQL Save Notice] " . $e->getMessage());
+        }
+    }
+
+    // 2. Always persist to Central Server DB file with exclusive lock
     $fp = @fopen(DB_FILE, 'c+');
     if ($fp) {
         if (@flock($fp, LOCK_EX)) {
@@ -388,6 +467,22 @@ if ($path === '/sync/timestamp') {
         'reportsCount' => count($db['reports'] ?? []),
         'messagesCount' => count($db['messages'] ?? [])
     ]);
+    exit;
+}
+
+if ($resource === 'db-status') {
+    $pdo = get_mysql_pdo();
+    $db = get_db();
+    echo json_encode([
+        'success' => true,
+        'engine' => $pdo ? 'MySQL Database (متصلة ونشطة بنجاح)' : 'Central Server Database (قاعدة بيانات الخادم المركزية الموحدة)',
+        'is_mysql' => ($pdo !== null),
+        'server_time' => gmdate('Y-m-d H:i:s \G\M\T'),
+        'reports_count' => count($db['reports'] ?? []),
+        'messages_count' => count($db['messages'] ?? []),
+        'users_count' => count($db['users'] ?? []),
+        'last_updated' => $db['lastUpdated'] ?? null
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -840,12 +935,33 @@ if ($resource === 'fuel') {
 if ($resource === 'executive-progress') {
     $db = get_db();
     if ($method === 'GET') {
-        echo json_encode(['success' => true, 'data' => $db['executiveProgress'] ?? null]);
+        $rep = $db['executiveProgress'] ?? null;
+        if (!$rep && !empty($db['reports'])) {
+            foreach ($db['reports'] as $r) {
+                if (!empty($r['isExecutiveProgressReport']) || ($r['reportType'] ?? '') === 'الموقف التنفيذي' || ($r['reportCategory'] ?? '') === 'executive') {
+                    $rep = $r;
+                    break;
+                }
+            }
+        }
+        echo json_encode(['success' => true, 'data' => $rep]);
         exit;
     }
     if ($method === 'POST') {
         $body = get_json_input();
         $db['executiveProgress'] = $body;
+
+        // Un-blacklist from deletedReportIds
+        if (!empty($db['deletedReportIds'])) {
+            $eId = strtolower(trim((string)($body['id'] ?? '')));
+            $eNum = strtolower(preg_replace('/[\s\-_]/', '', (string)($body['reportNumber'] ?? '')));
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function($did) use ($eId, $eNum) {
+                $raw = strtolower(trim((string)$did));
+                $norm = strtolower(preg_replace('/[\s\-_]/', '', (string)$did));
+                return $raw !== $eId && $norm !== $eId && $raw !== $eNum && $norm !== $eNum;
+            }));
+        }
+
         if (!isset($db['reports'])) $db['reports'] = [];
         $db['reports'] = deduplicate_reports_array(array_merge([$body], $db['reports']));
         save_db($db);
