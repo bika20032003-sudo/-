@@ -161,11 +161,11 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
       totalReceivedLiters: totalReceived,
       totalRemainingLiters: totalRemaining,
       totalDispatchedLiters: totalDispatched,
-      createdByUsername: currentUser?.username || 'fuel_officer',
-      authorUsername: currentUser?.username || 'fuel_officer',
-      createdByName: currentUser?.name || 'مسؤول الوقود والمحروقات',
-      uploadedBy: currentUser?.name || 'مسؤول الوقود والمحروقات',
-      engineer: currentUser?.name || 'مسؤول الوقود والمحروقات',
+      createdByUsername: currentUser?.username || 'admin',
+      authorUsername: currentUser?.username || 'admin',
+      createdByName: currentUser?.name || 'جهاز الإشراف والمتابعة',
+      uploadedBy: currentUser?.name || 'جهاز الإشراف والمتابعة',
+      engineer: currentUser?.name || 'جهاز الإشراف والمتابعة',
       status: 'approved',
       approvedBy: 'م. عبدالرحمن الأنصاري (مدير المشروع)',
       fuelItems: validRows.map((r, idx) => ({
@@ -238,7 +238,7 @@ export const CreateFuelReportModal = ({ isOpen, onClose, currentUser, onReportCr
     const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
-      const senderCanon = canonicalizeUsername(currentUser?.username) || 'fuel_officer';
+      const senderCanon = canonicalizeUsername(currentUser?.username) || 'admin';
       const senderInfo = getSupervisorInfo(senderCanon);
       const newMsgs = [];
       for (const targetUser of targets) {

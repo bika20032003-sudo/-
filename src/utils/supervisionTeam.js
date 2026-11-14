@@ -53,15 +53,6 @@ export const BASE_SUPERVISORS = [
     avatar: ''
   },
   {
-    username: 'fuel_officer',
-    name: 'مسؤول الوقود والمحروقات',
-    role: 'مسؤول الوقود بالموقع',
-    title: 'مسؤول الوقود والمحروقات (المواقع 107 و 240)',
-    badge: 'إدارة الوقود',
-    sector: 'all',
-    avatar: ''
-  },
-  {
     username: 'admin',
     name: 'م. حساب التطوير',
     role: 'حساب التطوير',
@@ -128,13 +119,6 @@ export const CANONICAL_ALIASES = {
   'عيسى': 'issa_altahir',
   'الطاهر': 'issa_altahir',
   'م. عيسى الطاهر': 'issa_altahir',
-
-  // Fuel Officer
-  'fuel_officer': 'fuel_officer',
-  'fuel': 'fuel_officer',
-  'وقود': 'fuel_officer',
-  'مسؤول الوقود': 'fuel_officer',
-  'مسؤول الوقود والمحروقات': 'fuel_officer',
 
   // Broadcast
   'all': 'all',

@@ -21,8 +21,7 @@ const OFFICIAL_ENGINEERS_FILTER_LIST = [
   { id: 'issa_altahir', name: 'م. عيسى الطاهر', role: 'مشرف المرحلة الثانية' },
   { id: 'abrikaw', name: 'م. عبدالسلام ابريكاو', role: 'رئيس جهاز الإشراف' },
   { id: 'saleh_quality', name: 'م. صالح حماد', role: 'مسؤول الجودة' },
-  { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' },
-  { id: 'fuel_officer', name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و240' }
+  { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري', role: 'مدير المشروع' }
 ];
 
 const getOfficialForwardList = () => [

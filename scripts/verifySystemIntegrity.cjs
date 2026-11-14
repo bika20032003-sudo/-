@@ -224,9 +224,9 @@ assert(archiveViewCode.includes('setArchiveMode(canGen ? \'general\' : \'persona
 assert(archiveViewCode.includes('fuel-updated') && archiveViewCode.includes('reports-updated'), 'استماع الأرشيف اللحظي لتحديثات تقرير الوقود المعتمدة');
 
 // ----------------------------------------------------
-// 9. اختبار حذف م. مروان الهوني ومنع تكرار مسؤول الوقود
+// 9. اختبار قسم الصلاحيات وحذف مروان الهوني ومسؤول الوقود نهائياً
 // ----------------------------------------------------
-console.log('\n9️⃣ اختبار قسم الصلاحيات وحذف مروان الهوني ومنع تكرار مسؤول الوقود:');
+console.log('\n9️⃣ اختبار قسم الصلاحيات وحذف مروان الهوني ومسؤول الوقود نهائياً:');
 
 const loginPageCode = fs.readFileSync(path.join(__dirname, '../src/components/LoginPage.jsx'), 'utf8');
 const supervisionCode = fs.readFileSync(path.join(__dirname, '../src/utils/supervisionTeam.js'), 'utf8');
@@ -235,11 +235,14 @@ const roadFormCode = fs.readFileSync(path.join(__dirname, '../src/components/Roa
 const periodicViewCode = fs.readFileSync(path.join(__dirname, '../src/views/PeriodicReportsView.jsx'), 'utf8');
 
 assert(!supervisionCode.includes("username: 'honi'"), 'حذف م. مروان الهوني نهائياً من قائمة المشرفين BASE_SUPERVISORS');
+assert(!supervisionCode.includes("username: 'fuel_officer'"), 'حذف مسؤول الوقود نهائياً من قائمة المشرفين BASE_SUPERVISORS');
 assert(!loginPageCode.includes("name: 'م. مروان الهوني'"), 'حذف م. مروان الهوني نهائياً من المستخدمين الافتراضيين DEFAULT_USERS');
+assert(!loginPageCode.includes("username: 'fuel_officer'"), 'حذف مسؤول الوقود نهائياً من المستخدمين الافتراضيين DEFAULT_USERS');
 assert(!periodicViewCode.includes("{ id: 'honi'"), 'حذف مروان من فلاتر التقارير الدورية PeriodicReportsView');
+assert(!periodicViewCode.includes("{ id: 'fuel_officer'"), 'حذف مسؤول الوقود من فلاتر التقارير الدورية PeriodicReportsView');
 assert(!roadFormCode.includes("'مروان الهوني'"), 'استبدال الاسم المباشر لمروان في تقارير الطريق RoadDailyReportForm');
-assert(loginPageCode.includes('isFuelOfficerAccount'), 'توفير فاحص دقيق لحسابات مسؤول الوقود لمنع التكرار');
-assert(loginPageCode.includes('seenFuel'), 'ضمان وجود حساب واحد فقط لمسؤول الوقود واستبعاد أي تكرار');
+assert(loginPageCode.includes('isFuelOfficerAccount'), 'توفير فاحص دقيق لحسابات مسؤول الوقود لاستبعادها وتطهيرها');
+assert(loginPageCode.includes('!isFuelOfficerAccount(u)'), 'ضمان استبعاد وحذف أي حساب لمسؤول الوقود من قائمة المستخدمين');
 assert(loginPageCode.includes('isMarwanAccount'), 'فلترة واستبعاد أي حساب باسم مروان أو الهوني تلقائياً من الذاكرة والتخزين');
 assert(usersViewCode.includes('deleteCustomUser(id, username, name)'), 'دعم الحذف الجذري للمستخدمين المخصصين بالمعرف والاسم واسم المستخدم');
 

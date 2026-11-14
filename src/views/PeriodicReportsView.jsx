@@ -18,8 +18,7 @@ export const OFFICIAL_ENGINEERS_FILTER_LIST = [
   { id: 'issa_altahir', name: 'م. عيسى الطاهر (المرحلة الثانية)' },
   { id: 'abrikaw', name: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)' },
   { id: 'saleh_quality', name: 'م. صالح حماد (مسؤول الجودة)' },
-  { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري (مدير المشروع)' },
-  { id: 'fuel_officer', name: 'مسؤول الوقود والمحروقات' }
+  { id: 'project_manager', name: 'م. عبدالرحمن الأنصاري (مدير المشروع)' }
 ];
 
 // Clean text and force standard Latin digits (0-9)

@@ -173,12 +173,11 @@ export const FuelDailyReportForm = ({
       'salah_alarabi': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
       'sector_a': { name: 'م. صلاح العربي', role: 'مهندس مشرف (المرحلة الأولى)' },
       'issa_altahir': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
-      'sector_b': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' },
-      'fuel_officer': { name: 'مسؤول الوقود والمحروقات', role: 'مسؤول الوقود بالموقع' }
+      'sector_b': { name: 'م. عيسى الطاهر', role: 'مهندس مشرف (المرحلة الثانية)' }
     };
     const uKey = String(currentUser?.username || '').toLowerCase().trim();
     if (OFFICIAL_MAP[uKey]) return OFFICIAL_MAP[uKey];
-    return { name: 'مسؤول الوقود والمحروقات', role: 'المواقع 107 و 240' };
+    return { name: currentUser?.name || 'جهاز الإشراف والمتابعة', role: currentUser?.role || 'إدارة الوقود بالموقع' };
   }, [currentUser]);
 
   const officialSupervisors = useMemo(() => getAllSupervisors(), []);
@@ -190,7 +189,7 @@ export const FuelDailyReportForm = ({
     const targets = isAll ? officialSupervisors : [officialSupervisors.find(u => u.username === forwardRecipient) || officialSupervisors[0]];
 
     try {
-      const senderCanon = canonicalizeUsername(currentUser?.username) || 'fuel_officer';
+      const senderCanon = canonicalizeUsername(currentUser?.username) || 'admin';
       const senderInfo = getSupervisorInfo(senderCanon);
       const newMsgs = [];
       for (const targetUser of targets) {
@@ -549,8 +548,8 @@ export const FuelDailyReportForm = ({
     try {
       const printableObj = {
         ...getFullPrintableReport(),
-        createdByUsername: currentUser?.username || 'fuel_officer',
-        authorUsername: currentUser?.username || 'fuel_officer',
+        createdByUsername: currentUser?.username || 'admin',
+        authorUsername: currentUser?.username || 'admin',
         createdByName: resolvedAuthor.name,
         authorRole: resolvedAuthor.role,
         uploadedBy: `${resolvedAuthor.name} (${resolvedAuthor.role})`,
@@ -1363,7 +1362,7 @@ export const FuelDailyReportForm = ({
             </div>
           </div>
           <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700, background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px' }}>
-            اسم المستخدم: <strong style={{ color: '#0f172a' }}>{currentUser?.username || 'fuel_officer'}</strong>
+            اسم المستخدم: <strong style={{ color: '#0f172a' }}>{currentUser?.username || 'admin'}</strong>
           </div>
         </div>
 

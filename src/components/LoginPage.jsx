@@ -62,16 +62,6 @@ const DEFAULT_USERS = [
     sector: 'all',
     email: 'alansari@mot.gov.ly',
     password: 'admin1234'
-  },
-  {
-    id: 7,
-    username: 'fuel_officer',
-    name: 'مسؤول الوقود والمحروقات',
-    role: 'مسؤول الوقود بالموقع',
-    title: 'مسؤول الوقود والمحروقات (المواقع 107 و 240)',
-    sector: 'all',
-    email: 'fuel@mot.gov.ly',
-    password: 'fuel123'
   }
 ];
 
@@ -107,12 +97,7 @@ const ALIASES = {
   'saleh_quality': 'saleh_quality',
   'صالح': 'saleh_quality',
   'م. صالح حماد': 'saleh_quality',
-  'hammad': 'saleh_quality',
-  'fuel': 'fuel_officer',
-  'fuel_officer': 'fuel_officer',
-  'وقود': 'fuel_officer',
-  'مسؤول الوقود': 'fuel_officer',
-  'مسؤول الوقود والمحروقات': 'fuel_officer'
+  'hammad': 'saleh_quality'
 };
 
 /**
@@ -191,8 +176,8 @@ export function getSystemUsers() {
     const rawCustom = localStorage.getItem('system_custom_users');
     let customUsers = rawCustom ? JSON.parse(rawCustom) : [];
     if (Array.isArray(customUsers)) {
-      // Purge any Marwan or duplicate fuel entries from stored custom users
-      const cleanedCustom = customUsers.filter(cu => cu && typeof cu === 'object' && !isMarwanAccount(cu));
+      // Purge any Marwan or fuel officer entries from stored custom users
+      const cleanedCustom = customUsers.filter(cu => cu && typeof cu === 'object' && !isMarwanAccount(cu) && !isFuelOfficerAccount(cu));
       if (cleanedCustom.length !== customUsers.length) {
         localStorage.setItem('system_custom_users', JSON.stringify(cleanedCustom));
         customUsers = cleanedCustom;
@@ -200,7 +185,7 @@ export function getSystemUsers() {
 
       customUsers.forEach(cu => {
         if (!cu || typeof cu !== 'object') return;
-        if (isMarwanAccount(cu)) return;
+        if (isMarwanAccount(cu) || isFuelOfficerAccount(cu)) return;
         if (isDeleted(cu)) return;
 
         // Never allow legacy cache to overwrite core account identities
@@ -209,19 +194,6 @@ export function getSystemUsers() {
         }
 
         const cuPass = (savedPasswords && (savedPasswords[cu.username] || savedPasswords[cu.username.toLowerCase()] || savedPasswords[cu.name])) || cu.password || 'admin1234';
-
-        // Check if this is a fuel officer custom user: deduplicate into single canonical account
-        if (isFuelOfficerAccount(cu)) {
-          const canonFuelIdx = users.findIndex(u => isFuelOfficerAccount(u));
-          if (canonFuelIdx >= 0) {
-            users[canonFuelIdx] = {
-              ...users[canonFuelIdx],
-              password: cuPass || users[canonFuelIdx].password,
-              avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[canonFuelIdx].avatar || ''
-            };
-            return;
-          }
-        }
 
         const existingIdx = users.findIndex(u => u.username === cu.username || u.id === cu.id);
         if (existingIdx === -1) {
@@ -241,18 +213,8 @@ export function getSystemUsers() {
       });
     }
 
-    // Filter out deleted users & Marwan
-    users = users.filter(u => !isMarwanAccount(u) && !isDeleted(u));
-
-    // Deduplicate fuel officer accounts strictly: keep only 1 canonical fuel officer
-    let seenFuel = false;
-    users = users.filter(u => {
-      if (isFuelOfficerAccount(u)) {
-        if (seenFuel) return false;
-        seenFuel = true;
-      }
-      return true;
-    });
+    // Filter out deleted users, Marwan, and Fuel Officer
+    users = users.filter(u => !isMarwanAccount(u) && !isFuelOfficerAccount(u) && !isDeleted(u));
 
     // Deduplicate by username
     const seenUsernames = new Set();
