@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Eye, EyeOff, AlertCircle, Facebook } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, AlertCircle, Facebook, User, Lock, LogIn } from 'lucide-react';
 
 // ===== Official Supervision Agency Hierarchy (أعضاء جهاز الإشراف) =====
 const DEFAULT_USERS = [
@@ -479,9 +479,10 @@ export const LoginPage = ({ onLoginSuccess }) => {
             {/* Form Fields */}
             <form onSubmit={handleLogin} style={{ marginTop: '0.5rem' }}>
               <div className="form-group">
-                <label className="form-label">اسم المستخدم</label>
-                <div className="input-container">
+                <label htmlFor="login-username" className="form-label">اسم المستخدم</label>
+                <div className="input-container" style={{ position: 'relative' }}>
                   <input 
+                    id="login-username"
                     type="text" 
                     className="form-input" 
                     value={username} 
@@ -489,14 +490,18 @@ export const LoginPage = ({ onLoginSuccess }) => {
                     placeholder="أدخل اسم المستخدم" 
                     dir="ltr"
                     autoComplete="username"
+                    style={{ paddingRight: '40px' }}
+                    required
                   />
+                  <User size={18} style={{ position: 'absolute', right: '12px', color: '#94a3b8', pointerEvents: 'none' }} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">كلمة المرور</label>
-                <div className="input-container">
+                <label htmlFor="login-password" className="form-label">كلمة المرور</label>
+                <div className="input-container" style={{ position: 'relative' }}>
                   <input 
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'} 
                     className="form-input" 
                     value={password} 
@@ -504,14 +509,19 @@ export const LoginPage = ({ onLoginSuccess }) => {
                     placeholder="أدخل كلمة المرور" 
                     dir="ltr"
                     autoComplete="current-password"
+                    style={{ paddingRight: '40px', paddingLeft: '40px' }}
+                    required
                   />
+                  <Lock size={18} style={{ position: 'absolute', right: '12px', color: '#94a3b8', pointerEvents: 'none' }} />
                   <button 
                     type="button" 
                     className="input-icon-btn" 
                     onClick={() => setShowPassword(!showPassword)} 
                     title={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                    aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                    style={{ width: '36px', height: '36px' }}
                   >
-                    {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                    {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
                   </button>
                 </div>
               </div>
@@ -522,20 +532,21 @@ export const LoginPage = ({ onLoginSuccess }) => {
                 className="submit-btn" 
                 disabled={isLoading} 
                 style={{ 
-                  marginTop: '1.5rem',
-                  background: '#2563eb',
+                  marginTop: '1.25rem',
+                  background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  height: '46px',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '0.96rem',
+                  height: '48px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.5rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+                  gap: '0.55rem',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.35)',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {isLoading ? (
@@ -545,6 +556,7 @@ export const LoginPage = ({ onLoginSuccess }) => {
                   </>
                 ) : (
                   <>
+                    <LogIn size={18} />
                     <span>تسجيل الدخول للمنظومة</span>
                   </>
                 )}
