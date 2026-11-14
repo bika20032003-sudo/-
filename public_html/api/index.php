@@ -244,9 +244,20 @@ function get_report_canonical_key($r)
 {
     if (!$r || !is_array($r))
         return '';
+    $rNum = !empty($r['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber'])) : '';
+    $rId = !empty($r['id']) ? strtolower(trim((string) $r['id'])) : '';
     $rawDate = $r['reportDate'] ?? $r['date'] ?? $r['dateFormatted'] ?? $r['createdAt'] ?? '';
     $date = normalize_report_date_str($rawDate);
     $type = $r['reportType'] ?? $r['type'] ?? $r['title'] ?? '';
+
+    // If report has unique reportNumber, use that as primary canonical key
+    if (!empty($rNum)) {
+        return 'num_' . $rNum;
+    }
+    // If report has specific id, use that
+    if (!empty($rId)) {
+        return 'id_' . $rId;
+    }
 
     if (!empty($r['isTwoPhaseProgressReport']) || mb_stripos($type, 'المرحلتين') !== false) {
         return 'tp_' . $date;
@@ -262,65 +273,60 @@ function get_report_canonical_key($r)
         $sec = (isset($r['sector']) && mb_stripos($r['sector'], 'الثانية') !== false) ? 'p2' : 'p1';
         return 'road_' . $sec . '_' . $date;
     }
-    if (!empty($r['reportNumber'])) {
-        return 'num_' . strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber']));
-    }
-    return 'id_' . strtolower(trim((string) ($r['id'] ?? '')));
+    return 'rep_' . $date . '_' . substr(md5(json_encode($r)), 0, 8);
 }
 
 function deduplicate_reports_array($reports)
 {
     if (!is_array($reports))
         return [];
-    $map = [];
+    $result = [];
+    $seenIds = [];
+    $seenNumbers = [];
+    $seenKeys = [];
+
     foreach ($reports as $r) {
         if (!is_array($r))
             continue;
+        $id = !empty($r['id']) ? strtolower(trim((string) $r['id'])) : null;
+        $num = !empty($r['reportNumber']) ? strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber'])) : null;
         $key = get_report_canonical_key($r);
-        $numKey = !empty($r['reportNumber']) ? ('num_' . strtolower(preg_replace('/[\s\-_]/', '', (string) $r['reportNumber']))) : null;
-        $idKey = !empty($r['id']) ? ('id_' . strtolower(trim((string) $r['id']))) : null;
 
-        $targetKey = null;
-        if (isset($map[$key]))
-            $targetKey = $key;
-        elseif ($numKey && isset($map[$numKey]))
-            $targetKey = $numKey;
-        elseif ($idKey && isset($map[$idKey]))
-            $targetKey = $idKey;
+        $foundIdx = -1;
+        if ($id && isset($seenIds[$id])) {
+            $foundIdx = $seenIds[$id];
+        } elseif ($num && isset($seenNumbers[$num])) {
+            $foundIdx = $seenNumbers[$num];
+        } elseif ($key && isset($seenKeys[$key]) && (empty($num) && empty($id))) {
+            $foundIdx = $seenKeys[$key];
+        }
 
-        if ($targetKey) {
-            $existing = $map[$targetKey];
+        if ($foundIdx >= 0) {
+            $existing = $result[$foundIdx];
             $tNew = strtotime($r['updatedAt'] ?? $r['createdAt'] ?? $r['date'] ?? '') ?: 0;
             $tOld = strtotime($existing['updatedAt'] ?? $existing['createdAt'] ?? $existing['date'] ?? '') ?: 0;
             $itemsNew = count($r['items'] ?? $r['combinedItems'] ?? $r['fuelItems'] ?? []);
             $itemsOld = count($existing['items'] ?? $existing['combinedItems'] ?? $existing['fuelItems'] ?? []);
 
             if ($itemsNew >= $itemsOld || $tNew >= $tOld) {
-                $merged = array_merge($existing, $r);
-                $map[$targetKey] = $merged;
-                if ($key)
-                    $map[$key] = $merged;
-                if ($numKey)
-                    $map[$numKey] = $merged;
-                if ($idKey)
-                    $map[$idKey] = $merged;
+                $result[$foundIdx] = array_merge($existing, $r);
             }
         } else {
-            if ($key)
-                $map[$key] = $r;
-            if ($numKey)
-                $map[$numKey] = $r;
-            if ($idKey)
-                $map[$idKey] = $r;
+            $newIdx = count($result);
+            $result[] = $r;
+            if ($id) $seenIds[$id] = $newIdx;
+            if ($num) $seenNumbers[$num] = $newIdx;
+            if ($key) $seenKeys[$key] = $newIdx;
         }
     }
-    $unique = array_values(array_unique($map, SORT_REGULAR));
-    usort($unique, function ($a, $b) {
+
+    usort($result, function ($a, $b) {
         $ta = strtotime($a['date'] ?? $a['createdAt'] ?? '') ?: 0;
         $tb = strtotime($b['date'] ?? $b['createdAt'] ?? '') ?: 0;
         return $tb <=> $ta;
     });
-    return $unique;
+
+    return $result;
 }
 
 function categorize_road_item_to_phase2_id_php($rawName)
@@ -679,7 +685,18 @@ if ($resource === 'reports') {
     if ($method === 'GET' && empty($subId)) {
         $sector = $_GET['sector'] ?? '';
 
-        $list = deduplicate_reports_array($db['reports'] ?? []);
+        $allReports = $db['reports'] ?? [];
+        if (!empty($db['roadDailyReport']) && is_array($db['roadDailyReport'])) {
+            array_unshift($allReports, $db['roadDailyReport']);
+        }
+        if (!empty($db['latestTwoPhaseReport']) && is_array($db['latestTwoPhaseReport'])) {
+            array_unshift($allReports, $db['latestTwoPhaseReport']);
+        }
+        if (!empty($db['fuelDailyReport']) && is_array($db['fuelDailyReport'])) {
+            array_unshift($allReports, $db['fuelDailyReport']);
+        }
+
+        $list = deduplicate_reports_array($allReports);
         if (!empty($sector)) {
             $list = array_values(array_filter($list, function ($r) use ($sector) {
                 return isset($r['sector']) && mb_stripos($r['sector'], $sector) !== false;
@@ -876,6 +893,24 @@ if ($resource === 'road-daily-report') {
     }
     if ($method === 'POST') {
         $body = get_json_input();
+        if (empty($body['id'])) {
+            $body['id'] = 'road-daily-' . str_replace('-', '', ($body['reportDate'] ?? date('Ymd'))) . '-' . round(microtime(true) * 1000);
+        }
+        if (empty($body['reportNumber'])) {
+            $body['reportNumber'] = 'ROAD-REP-' . date('d.m.Y');
+        }
+
+        $rId = strtolower(trim((string) $body['id']));
+        $rNum = strtolower(trim((string) $body['reportNumber']));
+
+        // Unblock from deletedReportIds
+        if (!empty($db['deletedReportIds'])) {
+            $db['deletedReportIds'] = array_values(array_filter($db['deletedReportIds'], function ($did) use ($rId, $rNum) {
+                $d = strtolower(trim((string) $did));
+                return $d !== $rId && $d !== $rNum && $d !== 'road-daily-2026-10-24' && $d !== 'road-rep-24.10.2026';
+            }));
+        }
+
         $db['roadDailyReport'] = $body;
         if (!isset($db['reports']))
             $db['reports'] = [];
@@ -883,7 +918,7 @@ if ($resource === 'road-daily-report') {
         // Automatically feed Phase 2 in Two-Phase report!
         sync_road_report_to_two_phase_php($db, $body);
         save_db($db);
-        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم تحديث تقرير أعمال الطريق وتغذية المرحلة الثانية تلقائياً ومزامنته بالأرشيف']);
+        echo json_encode(['success' => true, 'data' => $body, 'message' => 'تم حفظ تقرير أعمال الطريق وتغذية المرحلة الثانية تلقائياً ومزامنته بالأرشيف']);
         exit;
     }
 }
@@ -1076,7 +1111,7 @@ function get_default_road_progress_items_php($db = [])
 // -------------------------------------------------------------
 if ($resource === 'road-progress') {
     $db = get_db();
-    if (empty($db['roadProgress']) || !is_array($db['roadProgress']) || count($db['roadProgress']) === 0) {
+    if (empty($db['roadProgress']) || !is_array($db['roadProgress']) || count($db['roadProgress']) < 12) {
         $db['roadProgress'] = get_default_road_progress_items_php($db);
         save_db($db);
     }

@@ -153,8 +153,7 @@ fs.writeFileSync(path.join(rootPublicHtml, 'web.config'), webConfigContent, 'utf
 const cpanelYmlContent = `---
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/public_html/
-    - /bin/cp -a public_html/. $DEPLOYPATH
+    - /bin/bash -c "if [ -f cpanel_deploy.sh ]; then bash cpanel_deploy.sh; elif [ -f ../cpanel_deploy.sh ]; then bash ../cpanel_deploy.sh; else /bin/cp -rf public_html/* ~/public_html/; fi"
 `;
 fs.writeFileSync(path.join(outDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
 fs.writeFileSync(path.join(rootDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');

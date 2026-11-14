@@ -300,19 +300,29 @@ export function sanitizeLocalReportsStorage() {
     const mockReportIds = new Set([
       'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
       'exec-2026-10-29', '093436_29.10.2026',
-      'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
       'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'REP-P1-7445', 'rep-p1-7445', 'TW-P1-1044', 'rep-tw-p1-1044',
       'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
       'SUP-REP-1102', 'rep-sup-1102', '1793172128709', '1793121609000', '1793116985370'
     ]);
 
-    parsed = parsed.filter(r => r && 
-      !deleted.has(String(r.id)) && 
-      !deleted.has(String(r.reportNumber)) &&
-      !mockReportIds.has(String(r.id)) &&
-      !mockReportIds.has(String(r.reportNumber)) &&
-      !isMockOrEmptyFuelReport(r)
-    );
+    const hasRealContent = (r) => {
+      if (!r) return false;
+      if (Array.isArray(r.items) && r.items.length > 0) return true;
+      if (Array.isArray(r.combinedItems) && r.combinedItems.length > 0) return true;
+      if (Array.isArray(r.phase1Items) && r.phase1Items.length > 0) return true;
+      if (Array.isArray(r.phase2Items) && r.phase2Items.length > 0) return true;
+      if (Array.isArray(r.fuelItems) && r.fuelItems.length > 0) return true;
+      return false;
+    };
+
+    parsed = parsed.filter(r => {
+      if (!r) return false;
+      const rId = String(r.id || '');
+      const rNum = String(r.reportNumber || '');
+      if (deleted.has(rId) || deleted.has(rNum)) return false;
+      if (hasRealContent(r)) return true;
+      return !mockReportIds.has(rId) && !mockReportIds.has(rNum) && !isMockOrEmptyFuelReport(r);
+    });
     
     const clean = deduplicateReportsList(parsed);
     localStorage.setItem('local_reports', JSON.stringify(clean));

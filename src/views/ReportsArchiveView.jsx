@@ -263,7 +263,6 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
       const mockReportIds = new Set([
         'fuel-daily-2026-10-24', 'FUEL-094834_24.10.2026',
         'exec-2026-10-29', '093436_29.10.2026',
-        'road-daily-2026-10-24', 'ROAD-REP-24.10.2026',
         'PHASE-REP-4228', 'REP-P1-8821', 'rep-p1-8821', 'REP-P1-7445', 'rep-p1-7445', 'TW-P1-1044', 'rep-tw-p1-1044',
         'REP-P2-9934', 'rep-p2-9934', 'TW-P2-2055', 'rep-tw-p2-2055', 'QC-REP-3301', 'rep-qc-3301',
         'SUP-REP-1102', 'rep-sup-1102', '1793172128709', '1793121609000', '1793116985370'
@@ -285,15 +284,28 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         list = res;
       }
 
+      // Helper to check if a report has actual verified items
+      const hasRealContent = (r) => {
+        if (!r) return false;
+        if (Array.isArray(r.items) && r.items.length > 0) return true;
+        if (Array.isArray(r.combinedItems) && r.combinedItems.length > 0) return true;
+        if (Array.isArray(r.phase1Items) && r.phase1Items.length > 0) return true;
+        if (Array.isArray(r.phase2Items) && r.phase2Items.length > 0) return true;
+        if (Array.isArray(r.fuelItems) && r.fuelItems.length > 0) return true;
+        return false;
+      };
+
       // If server responded, the server database is the single authoritative source of truth
       if (list !== null) {
-        const cleanServerList = list.filter(r => 
-          r && 
-          !deletedSet.has(String(r.id)) && 
-          !deletedSet.has(String(r.reportNumber)) &&
-          !mockReportIds.has(String(r.id)) &&
-          !mockReportIds.has(String(r.reportNumber))
-        );
+        const cleanServerList = list.filter(r => {
+          if (!r) return false;
+          const rId = String(r.id || '');
+          const rNum = String(r.reportNumber || '');
+          if (deletedSet.has(rId) || deletedSet.has(rNum)) return false;
+          // Never filter out real reports with actual items
+          if (hasRealContent(r)) return true;
+          return !mockReportIds.has(rId) && !mockReportIds.has(rNum);
+        });
         const deduped = deduplicateReportsList(cleanServerList);
         setReports(deduped);
         try {
@@ -301,13 +313,14 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         } catch (_) {}
       } else {
         // Fallback to local storage cache only when server is unreachable (offline mode)
-        const local = sanitizeLocalReportsStorage().filter(r => 
-          r && 
-          !deletedSet.has(String(r.id)) && 
-          !deletedSet.has(String(r.reportNumber)) &&
-          !mockReportIds.has(String(r.id)) &&
-          !mockReportIds.has(String(r.reportNumber))
-        );
+        const local = sanitizeLocalReportsStorage().filter(r => {
+          if (!r) return false;
+          const rId = String(r.id || '');
+          const rNum = String(r.reportNumber || '');
+          if (deletedSet.has(rId) || deletedSet.has(rNum)) return false;
+          if (hasRealContent(r)) return true;
+          return !mockReportIds.has(rId) && !mockReportIds.has(rNum);
+        });
         const deduped = deduplicateReportsList(local);
         setReports(deduped);
       }
@@ -411,6 +424,8 @@ export const ReportsArchiveView = ({ currentUser, onNavigateTab, initialMode = '
         if (!r.isFuelReport && r.reportType !== 'تقرير كميات الوقود اليومية' && r.title !== 'تقرير كميات الوقود اليومية') return false;
       } else if (typeFilter === 'تقرير الأعمال المستهدفة') {
         if (!r.isTargetedWorksReport && r.reportType !== 'تقرير الأعمال المستهدفة') return false;
+      } else if (typeFilter === 'تقرير أعمال الطريق اليومي' || typeFilter.includes('طريق')) {
+        if (!r.isRoadProgressReport && r.reportCategory !== 'road' && !String(r.reportType || '').includes('طريق') && !String(r.title || '').includes('طريق')) return false;
       } else if (r.reportType !== typeFilter) {
         return false;
       }

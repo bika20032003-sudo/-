@@ -1,5 +1,4 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/public_html/
-    - /bin/cp -a public_html/. $DEPLOYPATH
+    - /bin/bash -c "if [ -f cpanel_deploy.sh ]; then bash cpanel_deploy.sh; elif [ -f ../cpanel_deploy.sh ]; then bash ../cpanel_deploy.sh; else /bin/cp -rf public_html/* ~/public_html/; fi"

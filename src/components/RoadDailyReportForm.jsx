@@ -484,35 +484,39 @@ export const RoadDailyReportForm = ({
   };
 
   // Prepare full printable report object
-  const getFullPrintableReport = () => ({
-    id: 'road-daily-' + (reportData.reportDate || '2026-10-24'),
-    title: reportData.reportTitle || `تقرير أعمال يوم ${reportData.dayName} ${reportData.reportDate}`,
-    reportType: 'تقرير أعمال الطريق اليومي',
-    reportCategory: 'road',
-    reportNumber: reportData.reportNumber || 'ROAD-REP-24.10.2026',
-    date: reportData.reportDate ? new Date(reportData.reportDate).toISOString() : new Date().toISOString(),
-    dayName: reportData.dayName || 'السبت',
-    dateFormatted: reportData.reportDate,
-    sector: reportData.sector || 'طريق أوباري - غات',
-    companyName: 'طريق أوباري - غات',
-    sectorDirector: reportData.sectorDirector || currentUser?.name || 'م. صلاح العربي',
-    ownerRepresentative: reportData.ownerRepresentative || '................................',
-    itemSummaries: calculatedTotals.itemSummaries,
-    items: (currentData.items || []).map((it, idx) => ({
-      index: idx + 1,
-      itemNumber: it.itemNumber || String(idx + 1),
-      item: it.item,
-      stationFrom: it.stationFrom,
-      stationTo: it.stationTo,
-      length: parseNum(it.length),
-      area: it.area ? parseNum(it.area) : '',
-      notes: it.notes,
-      noteHighlight: it.noteHighlight
-    })),
-    status: 'approved',
-    uploadedBy: reportData.sectorDirector || currentUser?.name || 'م. صلاح العربي',
-    approvedBy: reportData.ownerRepresentative || 'ممثل الجهة المالكة'
-  });
+  const getFullPrintableReport = () => {
+    const dynamicId = reportData.id || ('road-daily-' + (reportData.reportDate || '2026-10-24').replace(/-/g, '') + '-' + Date.now());
+    const dynamicNum = reportData.reportNumber || 'ROAD-REP-24.10.2026';
+    return {
+      id: dynamicId,
+      title: reportData.reportTitle || `تقرير أعمال يوم ${reportData.dayName} ${reportData.reportDate}`,
+      reportType: 'تقرير أعمال الطريق اليومي',
+      reportCategory: 'road',
+      reportNumber: dynamicNum,
+      date: reportData.reportDate ? new Date(reportData.reportDate).toISOString() : new Date().toISOString(),
+      dayName: reportData.dayName || 'السبت',
+      dateFormatted: reportData.reportDate,
+      sector: reportData.sector || 'طريق أوباري - غات',
+      companyName: 'طريق أوباري - غات',
+      sectorDirector: reportData.sectorDirector || currentUser?.name || 'م. صلاح العربي',
+      ownerRepresentative: reportData.ownerRepresentative || '................................',
+      itemSummaries: calculatedTotals.itemSummaries,
+      items: (currentData.items || []).map((it, idx) => ({
+        index: idx + 1,
+        itemNumber: it.itemNumber || String(idx + 1),
+        item: it.item,
+        stationFrom: it.stationFrom,
+        stationTo: it.stationTo,
+        length: parseNum(it.length),
+        area: it.area ? parseNum(it.area) : '',
+        notes: it.notes,
+        noteHighlight: it.noteHighlight
+      })),
+      status: 'approved',
+      uploadedBy: reportData.sectorDirector || currentUser?.name || 'م. صلاح العربي',
+      approvedBy: reportData.ownerRepresentative || 'ممثل الجهة المالكة'
+    };
+  };
 
   const handleTriggerPrint = () => {
     const rep = getFullPrintableReport();
@@ -632,6 +636,20 @@ export const RoadDailyReportForm = ({
 
       // 2. Immediately update state
       setReportData(printableObj);
+
+      // Unblock IDs from deleted_report_ids
+      try {
+        const delRaw = localStorage.getItem('deleted_report_ids');
+        if (delRaw) {
+          const dels = JSON.parse(delRaw).filter(d => 
+            String(d) !== String(printableObj.id) && 
+            String(d) !== String(printableObj.reportNumber) &&
+            String(d) !== 'road-daily-2026-10-24' &&
+            String(d) !== 'ROAD-REP-24.10.2026'
+          );
+          localStorage.setItem('deleted_report_ids', JSON.stringify(dels));
+        }
+      } catch (_) {}
 
       // 3. Universal authoritative persistence
       const saved = await persistReportUniversal(printableObj, currentUser);

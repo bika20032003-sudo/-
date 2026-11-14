@@ -268,6 +268,24 @@ assert(dashboardCode.includes('sanitizeLocalReportsStorage'), 'تطهير الذ
 assert(apiCacheCode.includes('isMockOrEmptyFuelReport'), 'منع واجهة الـ API من إرجاع تقارير وقود فارغة أو وهمية');
 
 // ----------------------------------------------------
+// 11. اختبار حفظ وأرشفة تقارير أعمال الطريق والموقف التنفيذي التفصيلي والنشر
+// ----------------------------------------------------
+console.log('\n1️⃣1️⃣ اختبار حفظ وأرشفة تقارير أعمال الطريق والموقف التنفيذي التفصيلي والنشر:');
+const roadProgressViewCodeUpdated = fs.readFileSync(path.join(__dirname, '../src/views/RoadProgressView.jsx'), 'utf8');
+const archiveViewCodeUpdated = fs.readFileSync(path.join(__dirname, '../src/views/ReportsArchiveView.jsx'), 'utf8');
+const cpanelYml = fs.readFileSync(path.join(__dirname, '../.cpanel.yml'), 'utf8');
+const phpIndexCodeUpdated = fs.readFileSync(path.join(__dirname, '../public_html/api/index.php'), 'utf8');
+
+assert(!archiveViewCodeUpdated.includes("'road-daily-2026-10-24'"), 'إلغاء حظر تقرير أعمال الطريق من mockReportIds في الأرشيف');
+assert(!reportDedupCode.includes("'road-daily-2026-10-24'"), 'إلغاء حظر تقرير أعمال الطريق من mockReportIds في أدوات الفلترة');
+assert(archiveViewCodeUpdated.includes('hasRealContent'), 'حماية تقارير الطريق المحتوية على بنود من الاستبعاد');
+assert(roadProgressViewCodeUpdated.includes('hasPhase2'), 'ضمان توليد بنود المرحلة الثانية دائماً في الموقف التنفيذي التفصيلي');
+assert(roadProgressViewCodeUpdated.includes('itemId > 6'), 'دعم فلترة المرحلة الثانية بمعرفات البنود والتسميات المتعددة');
+assert(phpIndexCodeUpdated.includes('$allReports = $db[\'reports\'] ?? [];'), 'دمج تقارير الطريق والمرحلتين تلقائياً في استجابة الأرشيف GET /api/reports');
+assert(phpIndexCodeUpdated.includes('count($db[\'roadProgress\']) < 12'), 'إعادة توليد بنود المرحلتين في الـ PHP إذا كانت أقل من 12 بنداً');
+assert(cpanelYml.includes('cpanel_deploy.sh'), 'تنفيذ سكربت النشر التلقائي cpanel_deploy.sh في ملف .cpanel.yml');
+
+// ----------------------------------------------------
 // خلاصة الفحص
 // ----------------------------------------------------
 console.log('\n====================================================');

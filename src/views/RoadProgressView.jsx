@@ -76,11 +76,13 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
             const filtered = uniqueList.filter(r => 
                 r.isTwoPhaseProgressReport || 
                 r.isRoadProgressReport ||
+                r.reportCategory === 'road' ||
+                r.reportCategory === 'two_phase' ||
                 r.reportType === 'تقرير إنجاز المرحلتين' ||
                 r.reportType === 'تقرير أعمال الطريق اليومي' ||
                 r.reportType === 'تقرير أعمال الطريق اليومية' ||
                 r.reportType === 'تقرير أعمال يومي' ||
-                (r.title && (r.title.includes('بيان أعمال') || r.title.includes('المرحلتين')))
+                (r.title && (r.title.includes('بيان أعمال') || r.title.includes('المرحلتين') || r.title.includes('طريق')))
             );
             if (filtered.length === 0) {
               const baseline = getCertifiedBaselineTwoPhaseReport();
@@ -183,25 +185,47 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
         XLSX.writeFile(wb, `نسبة_الانجاز_طريق_اوباري_غات_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
-    // Robust fallback to guarantee executive progress items are always displayed
+    // Robust fallback to guarantee executive progress items are always displayed for BOTH phases
     const allItems = useMemo(() => {
+        let items = [];
         if (projectData?.items && Array.isArray(projectData.items) && projectData.items.length > 0) {
-            return projectData.items;
+            items = projectData.items;
+        } else if (projectData?.data && Array.isArray(projectData.data) && projectData.data.length > 0) {
+            items = projectData.data;
+        } else if (projectData?.roadProgress && Array.isArray(projectData.roadProgress) && projectData.roadProgress.length > 0) {
+            items = projectData.roadProgress;
         }
-        if (projectData?.data && Array.isArray(projectData.data) && projectData.data.length > 0) {
-            return projectData.data;
+
+        const defaults = generateRoadProgressItems();
+        if (!items || items.length === 0) {
+            return defaults;
         }
-        if (projectData?.roadProgress && Array.isArray(projectData.roadProgress) && projectData.roadProgress.length > 0) {
-            return projectData.roadProgress;
+
+        // Guarantee Phase 2 items are present even if backend had an older or partial dataset
+        const hasPhase2 = items.some(it => {
+            const sec = String(it?.sector || '');
+            return sec.includes('الثانية') || sec.includes('B') || sec.includes('2') || Number(it?.id) > 6;
+        });
+
+        if (!hasPhase2 || items.length < 12) {
+            const phase2Defaults = defaults.filter(d => (d.sector || '').includes('الثانية') || Number(d.id) > 6);
+            return [...items, ...phase2Defaults];
         }
-        return generateRoadProgressItems();
+
+        return items;
     }, [projectData]);
 
     // Filter items based on activePhase tab
     const filteredItems = useMemo(() => {
-        return allItems.filter(item => {
-            if (activePhase === 'phase1') return (item.sector || '').includes('الأولى');
-            if (activePhase === 'phase2') return (item.sector || '').includes('الثانية');
+        return allItems.filter((item, idx) => {
+            const sec = String(item.sector || (idx < 6 ? 'المرحلة الأولى' : 'المرحلة الثانية'));
+            const itemId = Number(item.id) || (idx + 1);
+            if (activePhase === 'phase1') {
+                return sec.includes('الأولى') || sec.includes('A') || sec.includes('1') || itemId <= 6;
+            }
+            if (activePhase === 'phase2') {
+                return sec.includes('الثانية') || sec.includes('B') || sec.includes('2') || itemId > 6;
+            }
             return true;
         });
     }, [allItems, activePhase]);

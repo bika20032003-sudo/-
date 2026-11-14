@@ -24,15 +24,26 @@ if [ -f "$TARGET_DIR/api/data/db.json" ]; then
 fi
 
 # 1. نسخ كافة ملفات الواجهة الأمامية من public_html إلى مسار النشر
-if [ -d "public_html" ]; then
-    /bin/cp -rf public_html/* "$TARGET_DIR/" 2>/dev/null || true
-    /bin/cp -f public_html/.htaccess "$TARGET_DIR/" 2>/dev/null || true
-    /bin/cp -f public_html/.nojekyll "$TARGET_DIR/" 2>/dev/null || true
-    echo "[Deploy] Copied public_html files successfully."
-elif [ -d "dist" ]; then
-    /bin/cp -rf dist/* "$TARGET_DIR/" 2>/dev/null || true
-    /bin/cp -f dist/.htaccess "$TARGET_DIR/" 2>/dev/null || true
-    echo "[Deploy] Copied dist files successfully."
+CURRENT_DIR=$(pwd)
+if [ "$CURRENT_DIR" = "$TARGET_DIR" ] || [ "$CURRENT_DIR" = "$HOME/public_html" ]; then
+    echo "[Deploy] Repository is cloned directly in public_html."
+    if [ -d "public_html" ]; then
+        /bin/cp -rf public_html/* . 2>/dev/null || true
+        /bin/cp -f public_html/.htaccess . 2>/dev/null || true
+        /bin/cp -f public_html/.nojekyll . 2>/dev/null || true
+    fi
+else
+    echo "[Deploy] Copying files from public_html to $TARGET_DIR..."
+    if [ -d "public_html" ]; then
+        /bin/cp -rf public_html/* "$TARGET_DIR/" 2>/dev/null || true
+        /bin/cp -f public_html/.htaccess "$TARGET_DIR/" 2>/dev/null || true
+        /bin/cp -f public_html/.nojekyll "$TARGET_DIR/" 2>/dev/null || true
+        echo "[Deploy] Copied public_html files successfully."
+    elif [ -d "dist" ]; then
+        /bin/cp -rf dist/* "$TARGET_DIR/" 2>/dev/null || true
+        /bin/cp -f dist/.htaccess "$TARGET_DIR/" 2>/dev/null || true
+        echo "[Deploy] Copied dist files successfully."
+    fi
 fi
 
 # 1.1. استعادة قاعدة البيانات الحية للمشروع فوراً لضمان عدم فقدان أي بيانات مدخلة من المهندسين
