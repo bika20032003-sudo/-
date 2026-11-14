@@ -219,7 +219,7 @@ assert(realtimeSyncCode.includes('BroadcastChannel'), 'تفعيل تقنية Bro
 assert(realtimeSyncCode.includes('urlParam'), 'دعم التقاط باراميتر ?api= للربط السحابي المباشر للهواتف الذكية بنقرة واحدة');
 assert(realtimeSyncCode.includes('pageshow') && realtimeSyncCode.includes('visibilitychange'), 'تفعيل استجابة المزامنة اللحظية فور فتح الهاتف أو العودة للتطبيق');
 assert(fs.existsSync(cloudModalPath), 'وجود نافذة إدارة المزامنة السحابية وتوحيد الأجهزة CloudSyncModal.jsx');
-assert(navbarCode.includes('CloudSyncModal') && navbarCode.includes('مزامنة الأجهزة: كل دقيقة ⚡'), 'إتاحة مؤشر وتحكم المزامنة اللحظية في شريط النظام العلوي للحواسب والهواتف');
+assert(!navbarCode.includes('مزامنة الأجهزة: كل دقيقة ⚡') && !navbarCode.includes('النسخ الاحتياطي'), 'تنظيف شريط النظام العلوي وإلغاء أزرار المزامنة والنسخ الاحتياطي لمنع التشتت والازدحام');
 assert(archiveViewCode.includes('setArchiveMode(canGen ? \'general\' : \'personal\')'), 'تحديث نمط الأرشيف تلقائياً عند تغيير الحساب أو دخول مدير المشروع');
 assert(archiveViewCode.includes('fuel-updated') && archiveViewCode.includes('reports-updated'), 'استماع الأرشيف اللحظي لتحديثات تقرير الوقود المعتمدة');
 
