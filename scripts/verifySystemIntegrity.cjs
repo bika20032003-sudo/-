@@ -148,6 +148,8 @@ const printModalCode = fs.readFileSync(path.join(__dirname, '../src/components/O
 const fuelFormCode = fs.readFileSync(path.join(__dirname, '../src/components/FuelDailyReportForm.jsx'), 'utf8');
 const twoPhaseFormCode = fs.readFileSync(path.join(__dirname, '../src/components/TwoPhaseDailyReportForm.jsx'), 'utf8');
 const dashboardViewCode = fs.readFileSync(path.join(__dirname, '../src/views/DashboardView.jsx'), 'utf8');
+const roadProgressViewCode = fs.readFileSync(path.join(__dirname, '../src/views/RoadProgressView.jsx'), 'utf8');
+const phpApiCode = fs.readFileSync(path.join(__dirname, '../public_html/api/index.php'), 'utf8');
 
 // فحص عدم وجود "يوم يوم" في المحتوى المعروض (مع استثناء التعليقات البرمجية)
 const printModalNoComments = printModalCode.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -160,6 +162,8 @@ assert(printModalCode.includes('📄 صفحة واحدة (1 Page)'), 'وجود �
 assert(printModalCode.includes('break-inside: auto !important'), 'السماح للجدول بالتمدد دون قفز مفاجئ لصفحة 2 تاركاً صفحة 1 فارغة');
 assert(!dashboardViewCode.includes('Number(rem.phase2).toLocaleString'), 'منع تحويل أرقام جدول المتبقي بـ Number().toLocaleString لمنع ظهور NaN');
 assert(dashboardViewCode.includes('formatDashboardNumber(rem.phase2)'), 'استخدام دالة formatDashboardNumber لعرض قيم المرحلة الثانية بأمان تام');
+assert(roadProgressViewCode.includes('generateRoadProgressItems'), 'ضمان إظهار بنود الموقف التنفيذي التفصيلي دائماً وتفادي الجدول الفارغ');
+assert(phpApiCode.includes('get_default_road_progress_items_php'), 'توليد وتوفير بنود الموقف التنفيذي في خادم الـ PHP على الاستضافة');
 
 // ----------------------------------------------------
 // 6. فحص بنية التجميع وحزم النشر

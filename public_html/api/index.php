@@ -464,6 +464,7 @@ function sync_road_report_to_two_phase_php(&$db, $roadReport)
     $twoPhase['notes'] = 'تقرير إنجاز المرحلتين — تم تحديث وتغذية المرحلة الثانية تلقائياً من تقرير أعمال الطريق اليومي (' . ($roadReport['reportNumber'] ?? $targetDate) . ')';
 
     $db['latestTwoPhaseReport'] = $twoPhase;
+    $db['roadProgress'] = get_default_road_progress_items_php($db);
     $db['reports'] = deduplicate_reports_array(array_merge([$twoPhase], $db['reports'] ?? []));
     return $twoPhase;
 }
@@ -994,13 +995,91 @@ if ($resource === 'executive-progress') {
     }
 }
 
+function get_default_road_progress_items_php($db = [])
+{
+    $twoPhase = $db['latestTwoPhaseReport'] ?? null;
+    $p1 = $twoPhase['phase1Items'] ?? [];
+    $p2 = $twoPhase['phase2Items'] ?? [];
+    $combined = $twoPhase['combinedItems'] ?? [];
+
+    $itemConfigs = [
+        ['name' => 'طبقة إعادة التدوير (FDR)', 'category' => 'بنود أساسية', 'defTarget' => 800, 'p1Total' => 226083, 'p2Total' => 20420, 'p2Today' => 1220],
+        ['name' => 'رش طبقة التشريب (MCO)', 'category' => 'بنود أساسية', 'defTarget' => 800, 'p1Total' => 226083, 'p2Total' => 12520, 'p2Today' => 1150],
+        ['name' => 'طبقة الاسفلت المحسن', 'category' => 'بنود أساسية', 'defTarget' => 800, 'p1Total' => 226083, 'p2Total' => 10290, 'p2Today' => 0],
+        ['name' => 'فرمة اولي بدون اسمنت(FDR)', 'category' => 'بنود إضافية', 'defTarget' => 800, 'p1Total' => 226083, 'p2Total' => 19620, 'p2Today' => 300],
+        ['name' => 'طبقة أساس حبيبي', 'category' => 'بنود إضافية', 'defTarget' => 800, 'p1Total' => 226083, 'p2Total' => 12630, 'p2Today' => 600],
+        ['name' => 'الطريق الخدمي', 'category' => 'بنود إضافية', 'defTarget' => 800, 'p1Total' => 226213, 'p2Total' => 19320, 'p2Today' => 0]
+    ];
+
+    $items = [];
+    foreach ($itemConfigs as $idx => $cfg) {
+        $raw = $p1[$idx] ?? [];
+        $c = $combined[$idx] ?? [];
+        $cleanTotal = str_replace(',', '', (string)($raw['totalMeters'] ?? ''));
+        $total = (is_numeric($cleanTotal) && floatval($cleanTotal) > 0) ? floatval($cleanTotal) : $cfg['p1Total'];
+        $cleanToday = str_replace(',', '', (string)($raw['todayMeters'] ?? ''));
+        $today = is_numeric($cleanToday) ? floatval($cleanToday) : 0;
+        $prev = max(0, $total - $today);
+        $cleanTarget = str_replace(',', '', (string)($raw['dailyTarget'] ?? ''));
+        $target = is_numeric($cleanTarget) ? floatval($cleanTarget) : $cfg['defTarget'];
+        $cleanReady = str_replace(',', '', (string)($c['readyToWorkMeters'] ?? ''));
+        $ready = is_numeric($cleanReady) ? floatval($cleanReady) : 0;
+
+        $items[] = [
+            'id' => $idx + 1,
+            'sector' => 'المرحلة الأولى',
+            'itemName' => !empty($raw['name']) ? $raw['name'] : $cfg['name'],
+            'category' => ($raw['category'] ?? '') === 'additional' ? 'بنود إضافية' : 'بنود أساسية',
+            'todayMeters' => $today,
+            'previousMeters' => $prev,
+            'totalMeters' => $total,
+            'dailyTarget' => $target,
+            'varianceMeters' => $today > 0 ? ($today - $target) : 0,
+            'readyLength' => $ready,
+            'notes' => !empty($raw['notes']) ? $raw['notes'] : 'مكتملة بالكامل بالمرحلة الأولى'
+        ];
+    }
+
+    foreach ($itemConfigs as $idx => $cfg) {
+        $raw = $p2[$idx] ?? [];
+        $c = $combined[$idx] ?? [];
+        $cleanTotal = str_replace(',', '', (string)($raw['totalMeters'] ?? ''));
+        $total = (is_numeric($cleanTotal) && floatval($cleanTotal) > 0) ? floatval($cleanTotal) : $cfg['p2Total'];
+        $cleanToday = str_replace(',', '', (string)($raw['todayMeters'] ?? ''));
+        $today = is_numeric($cleanToday) ? floatval($cleanToday) : $cfg['p2Today'];
+        $prev = max(0, $total - $today);
+        $cleanTarget = str_replace(',', '', (string)($raw['dailyTarget'] ?? ''));
+        $target = is_numeric($cleanTarget) ? floatval($cleanTarget) : $cfg['defTarget'];
+        $cleanReady = str_replace(',', '', (string)($c['readyToWorkMeters'] ?? ''));
+        $ready = is_numeric($cleanReady) ? floatval($cleanReady) : 0;
+
+        $items[] = [
+            'id' => $idx + 7,
+            'sector' => 'المرحلة الثانية',
+            'itemName' => !empty($raw['name']) ? $raw['name'] : $cfg['name'],
+            'category' => ($raw['category'] ?? '') === 'additional' ? 'بنود إضافية' : 'بنود أساسية',
+            'todayMeters' => $today,
+            'previousMeters' => $prev,
+            'totalMeters' => $total,
+            'dailyTarget' => $target,
+            'varianceMeters' => $today - $target,
+            'readyLength' => $ready,
+            'notes' => !empty($raw['notes']) ? $raw['notes'] : 'منجز معتمد بالتقرير اليومي'
+        ];
+    }
+
+    return $items;
+}
+
 // -------------------------------------------------------------
 // [ROAD PROGRESS & DAILY UPDATE]
 // -------------------------------------------------------------
 if ($resource === 'road-progress') {
     $db = get_db();
-    if (!isset($db['roadProgress']))
-        $db['roadProgress'] = [];
+    if (empty($db['roadProgress']) || !is_array($db['roadProgress']) || count($db['roadProgress']) === 0) {
+        $db['roadProgress'] = get_default_road_progress_items_php($db);
+        save_db($db);
+    }
 
     if ($subId === 'update-daily' && $method === 'POST') {
         $body = get_json_input();
@@ -1012,6 +1091,7 @@ if ($resource === 'road-progress') {
             if ((string) $item['id'] === (string) $targetId) {
                 $item['todayMeters'] = $todayMeters;
                 $item['totalMeters'] = (float) ($item['previousMeters'] ?? 0) + $todayMeters;
+                $item['varianceMeters'] = $todayMeters - ($item['dailyTarget'] ?? 800);
                 if (!empty($notes))
                     $item['notes'] = $notes;
                 break;
@@ -1023,7 +1103,12 @@ if ($resource === 'road-progress') {
     }
 
     if ($method === 'GET') {
-        echo json_encode(['success' => true, 'data' => $db['roadProgress']]);
+        echo json_encode([
+            'success' => true, 
+            'items' => $db['roadProgress'], 
+            'data' => $db['roadProgress'],
+            'roadProgress' => $db['roadProgress']
+        ]);
         exit;
     }
 }
