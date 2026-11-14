@@ -15,7 +15,7 @@
 
 import { clearApiCache, fastFetch } from './apiCache.js';
 import { saveReportToIndexedDB } from './secureDatabase.js';
-import { deduplicateReportsList } from './reportDeduplication.js';
+import { deduplicateReportsList, isMockOrEmptyFuelReport } from './reportDeduplication.js';
 
 export const AUTO_SYNC_INTERVAL_MS = 60000; // 60 seconds (1 minute) as requested by user
 
@@ -298,18 +298,18 @@ export async function checkServerUpdates(force = false) {
       if (fuelDailyRes.status === 'fulfilled' && fuelDailyRes.value && fuelDailyRes.value.data) {
         try {
           const fuelData = fuelDailyRes.value.data;
-          localStorage.setItem('fuel_daily_report_data', JSON.stringify(fuelData));
+          if (fuelData && typeof fuelData === 'object' && !isMockOrEmptyFuelReport(fuelData) && fuelData.reportNumber) {
+            localStorage.setItem('fuel_daily_report_data', JSON.stringify(fuelData));
 
-          const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String));
-          if (fuelData.id) deleted.delete(String(fuelData.id));
-          if (fuelData.reportNumber) deleted.delete(String(fuelData.reportNumber));
-          localStorage.setItem('deleted_report_ids', JSON.stringify(Array.from(deleted)));
-          
-          const rawLocal = localStorage.getItem('local_reports');
-          const localReports = (rawLocal ? JSON.parse(rawLocal) : []).filter(r => !deleted.has(String(r?.id)) && !deleted.has(String(r?.reportNumber)));
-          const merged = deduplicateReportsList([fuelData, ...localReports]);
-          localStorage.setItem('local_reports', JSON.stringify(merged));
-          saveReportToIndexedDB(fuelData);
+            const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]').map(String));
+            if (!deleted.has(String(fuelData.id)) && !deleted.has(String(fuelData.reportNumber))) {
+              const rawLocal = localStorage.getItem('local_reports');
+              const localReports = (rawLocal ? JSON.parse(rawLocal) : []).filter(r => !deleted.has(String(r?.id)) && !deleted.has(String(r?.reportNumber)) && !isMockOrEmptyFuelReport(r));
+              const merged = deduplicateReportsList([fuelData, ...localReports]);
+              localStorage.setItem('local_reports', JSON.stringify(merged));
+              saveReportToIndexedDB(fuelData);
+            }
+          }
         } catch (_) {}
       }
 

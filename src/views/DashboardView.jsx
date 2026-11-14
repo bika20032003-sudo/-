@@ -5,6 +5,7 @@ import { OfficialPrintModal } from '../components/OfficialPrintModal';
 import { canAccessTwoPhaseReport } from '../utils/permissionUtils.js';
 import { getStoredTwoPhaseReport, calculateTwoPhaseRoadMetrics } from '../utils/twoPhaseSync.js';
 import { initialExecutiveData } from '../data/mockData.js';
+import { sanitizeLocalReportsStorage, isMockOrEmptyFuelReport } from '../utils/reportDeduplication.js';
 
 // Safe number formatter preventing any NaN display on Dashboard
 const formatDashboardNumber = (val) => {
@@ -182,12 +183,22 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             let reportsList = summaryRes?.recentReports || [];
             if (typeof window !== 'undefined' && window.localStorage) {
                 try {
-                    const local = JSON.parse(localStorage.getItem('local_reports') || '[]');
+                    const local = sanitizeLocalReportsStorage();
                     const deletedSet = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
                     const existingIds = new Set(reportsList.map(r => String(r.id || r.reportNumber)));
-                    const validLocal = local.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)) && !existingIds.has(String(r.id || r.reportNumber)));
+                    const validLocal = local.filter(r => 
+                        !deletedSet.has(String(r.id)) && 
+                        !deletedSet.has(String(r.reportNumber)) && 
+                        !existingIds.has(String(r.id || r.reportNumber)) &&
+                        !isMockOrEmptyFuelReport(r)
+                    );
                     reportsList = [...validLocal, ...reportsList];
-                    reportsList = reportsList.filter(r => !deletedSet.has(String(r.id)) && !deletedSet.has(String(r.reportNumber)));
+                    reportsList = reportsList.filter(r => 
+                        r && 
+                        !deletedSet.has(String(r.id)) && 
+                        !deletedSet.has(String(r.reportNumber)) &&
+                        !isMockOrEmptyFuelReport(r)
+                    );
                     reportsList.sort((a, b) => {
                         const dateA = a.date ? new Date(a.date).getTime() : (Number(a.id) || 0);
                         const dateB = b.date ? new Date(b.date).getTime() : (Number(b.id) || 0);

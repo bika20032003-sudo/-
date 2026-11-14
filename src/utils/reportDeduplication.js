@@ -235,6 +235,44 @@ export function deduplicateReportsList(reportsList) {
 }
 
 /**
+ * Detects whether a report is an empty/dummy/mock fuel report
+ */
+export function isMockOrEmptyFuelReport(r) {
+  if (!r || typeof r !== 'object') return false;
+  const isFuel = r.isFuelReport || r.reportCategory === 'fuel' || String(r.reportType || '').includes('وقود') || String(r.title || '').includes('وقود');
+  if (!isFuel) return false;
+
+  const num = String(r.reportNumber || '').trim();
+  const id = String(r.id || '').trim();
+  const notes = String(r.notes || '');
+
+  // Missing or empty reportNumber indicates a template/unsaved record
+  if (!num || num === "''" || num === 'null' || num === 'undefined') return true;
+
+  // Known mock IDs and numbers
+  if (num === 'FUEL-094834_24.10.2026' || id === 'fuel-daily-2026-10-24' || id === 'fuel-daily-baseline') return true;
+
+  // Mock baseline notes string
+  if (notes.includes('22,738.00') && !num.startsWith('FUEL-REP-')) return true;
+
+  // Mock template officer title with no real items
+  if (r.fuelOfficer === 'مسؤول الوقود والمحروقات بالموقع' && (!r.id || String(r.id).includes('baseline'))) return true;
+
+  // Zero-value empty template without real numbers
+  const items = Array.isArray(r.fuelItems) ? r.fuelItems : [];
+  const disp = parseFloat(String(r.totalDispatchedLiters || r.fuelAmount || 0).replace(/,/g, '')) || 0;
+  const rec = parseFloat(String(r.totalReceivedLiters || 0).replace(/,/g, '')) || 0;
+  const rem = parseFloat(String(r.totalRemainingLiters || 0).replace(/,/g, '')) || 0;
+  const hasNonZeroItem = items.some(it => (parseFloat(String(it.dispatchedLiters || 0).replace(/,/g, '')) > 0) || (parseFloat(String(it.receivedLiters || 0).replace(/,/g, '')) > 0));
+
+  if (disp === 0 && rec === 0 && rem === 0 && !hasNonZeroItem && (!r.id || !num)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Sanitizes and deduplicates localStorage['local_reports'] in place.
  * Also pulls in any section-specific report data (two_phase, road, fuel, targeted, executive)
  * that may have been saved directly to its section key.
@@ -242,6 +280,17 @@ export function deduplicateReportsList(reportsList) {
 export function sanitizeLocalReportsStorage() {
   if (typeof window === 'undefined' || !window.localStorage) return [];
   try {
+    // Purge mock fuel daily report data if present in localStorage
+    const rawFuel = localStorage.getItem('fuel_daily_report_data');
+    if (rawFuel) {
+      try {
+        const parsedFuel = JSON.parse(rawFuel);
+        if (isMockOrEmptyFuelReport(parsedFuel)) {
+          localStorage.removeItem('fuel_daily_report_data');
+        }
+      } catch (_) {}
+    }
+
     const deleted = new Set(JSON.parse(localStorage.getItem('deleted_report_ids') || '[]'));
     const raw = localStorage.getItem('local_reports');
     let parsed = raw ? JSON.parse(raw) : [];
@@ -261,7 +310,8 @@ export function sanitizeLocalReportsStorage() {
       !deleted.has(String(r.id)) && 
       !deleted.has(String(r.reportNumber)) &&
       !mockReportIds.has(String(r.id)) &&
-      !mockReportIds.has(String(r.reportNumber))
+      !mockReportIds.has(String(r.reportNumber)) &&
+      !isMockOrEmptyFuelReport(r)
     );
     
     const clean = deduplicateReportsList(parsed);

@@ -12,58 +12,7 @@ export const initialDailySummary = {
 export const solarTrend7Days = [];
 export const solarByEquipmentType = [];
 
-export const OFFICIAL_BASELINE_FUEL_REPORT = {
-  reportTitle: 'تقرير كميات الوقود اليومية',
-  reportDate: '2026-10-24',
-  formattedSlashDate: '24/10/2026',
-  dateFormatted: '24/10/2026',
-  date: '2026-10-24T00:00:00.000Z',
-  dayName: 'يوم السبت',
-  reportNumber: '',
-  sector: 'مشروع أوباري - غات',
-  fuelOfficer: 'مسؤول الوقود والمحروقات بالموقع',
-  headOfSupervision: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
-  totalDispatchedLiters: 0.00,
-  totalReceivedLiters: 0.00,
-  totalRemainingLiters: 0.00,
-  fuelAmount: 0.00,
-  status: 'approved',
-  approvedBy: 'م. عبدالسلام ابريكاو (رئيس جهاز الإشراف)',
-  notes: 'تقرير كميات الوقود اليومية المعتمد - إجمالي المنصرف: 22,738.00 لتر - الوارد: 14,631.00 لتر - المتبقي: 210,697.00 لتر',
-  isFuelReport: true,
-  fuelItems: [
-    {
-      id: 1,
-      index: 1,
-      seq: '1',
-      location: '107',
-      dispatchedLiters: '0.00',
-      receivedLiters: '0.00',
-      remainingLiters: '0.00',
-      notes: ''
-    },
-    {
-      id: 2,
-      index: 2,
-      seq: '2',
-      location: '240',
-      dispatchedLiters: '0.00',
-      receivedLiters: '0.00',
-      remainingLiters: '0.00',
-      notes: ''
-    },
-    {
-      id: 3,
-      index: 3,
-      seq: '3',
-      location: 'الكسارات',
-      dispatchedLiters: '0.00',
-      receivedLiters: '0.00',
-      remainingLiters: '0.00',
-      notes: ''
-    }
-  ]
-};
+export const OFFICIAL_BASELINE_FUEL_REPORT = null;
 
 
 export const initialRecentReports = [];

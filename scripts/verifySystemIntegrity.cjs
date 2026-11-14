@@ -247,6 +247,22 @@ assert(loginPageCode.includes('isMarwanAccount'), 'فلترة واستبعاد �
 assert(usersViewCode.includes('deleteCustomUser(id, username, name)'), 'دعم الحذف الجذري للمستخدمين المخصصين بالمعرف والاسم واسم المستخدم');
 
 // ----------------------------------------------------
+// 10. اختبار نظافة الداش بورد ومنع ظهور أي تقارير وقود وهمية أو افتراضية
+// ----------------------------------------------------
+console.log('\n🔟 اختبار نظافة الداش بورد ومنع ظهور أي تقارير وقود وهمية أو افتراضية:');
+
+const mockDataCode = fs.readFileSync(path.join(__dirname, '../src/data/mockData.js'), 'utf8');
+const reportDedupCode = fs.readFileSync(path.join(__dirname, '../src/utils/reportDeduplication.js'), 'utf8');
+const dashboardCode = fs.readFileSync(path.join(__dirname, '../src/views/DashboardView.jsx'), 'utf8');
+const apiCacheCode = fs.readFileSync(path.join(__dirname, '../src/utils/apiCache.js'), 'utf8');
+
+assert(mockDataCode.includes('OFFICIAL_BASELINE_FUEL_REPORT = null;'), 'تصفير التقرير الافتراضي للوقود ومنع زرع أي تقرير افتراضي');
+assert(reportDedupCode.includes('isMockOrEmptyFuelReport'), 'توفير دالة فحص وتطهير تقارير الوقود الوهمية أو غير المكتملة');
+assert(dashboardCode.includes('isMockOrEmptyFuelReport'), 'فلترة أحدث التقارير في الداش بورد لاستبعاد أي تقرير وقود وهمي');
+assert(dashboardCode.includes('sanitizeLocalReportsStorage'), 'تطهير الذاكرة المحلية للتقارير عند تحميل الداش بورد');
+assert(apiCacheCode.includes('isMockOrEmptyFuelReport'), 'منع واجهة الـ API من إرجاع تقارير وقود فارغة أو وهمية');
+
+// ----------------------------------------------------
 // خلاصة الفحص
 // ----------------------------------------------------
 console.log('\n====================================================');

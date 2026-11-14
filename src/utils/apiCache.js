@@ -25,7 +25,7 @@ export {
   updateRoadProgressItem
 };
 import { deleteReportFromIndexedDB } from './secureDatabase.js';
-import { deduplicateReportsList, sanitizeLocalReportsStorage, areReportsIdentical } from './reportDeduplication.js';
+import { deduplicateReportsList, sanitizeLocalReportsStorage, areReportsIdentical, isMockOrEmptyFuelReport } from './reportDeduplication.js';
 import {
   initialDailySummary,
   initialRecentReports,
@@ -224,10 +224,10 @@ export function getFallbackData(url) {
         if (raw) localData = JSON.parse(raw);
       }
     } catch {}
-    if (localData && typeof localData === 'object' && Array.isArray(localData.fuelItems) && localData.fuelItems.length > 0) {
+    if (localData && typeof localData === 'object' && Array.isArray(localData.fuelItems) && localData.fuelItems.length > 0 && localData.reportNumber && !isMockOrEmptyFuelReport(localData)) {
       return { success: true, data: localData };
     }
-    return { success: true, data: OFFICIAL_BASELINE_FUEL_REPORT };
+    return { success: true, data: null };
   }
   if (url.includes('/api/two-phase-report')) {
     const rep = getStoredTwoPhaseReport();
