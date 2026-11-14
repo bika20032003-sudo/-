@@ -259,6 +259,7 @@ const apiCacheCode = fs.readFileSync(path.join(__dirname, '../src/utils/apiCache
 assert(mockDataCode.includes('OFFICIAL_BASELINE_FUEL_REPORT = null;'), 'تصفير التقرير الافتراضي للوقود ومنع زرع أي تقرير افتراضي');
 assert(reportDedupCode.includes('isMockOrEmptyFuelReport'), 'توفير دالة فحص وتطهير تقارير الوقود الوهمية أو غير المكتملة');
 assert(dashboardCode.includes('isMockOrEmptyFuelReport'), 'فلترة أحدث التقارير في الداش بورد لاستبعاد أي تقرير وقود وهمي');
+assert(!dashboardCode.includes('إشراف م. صلاح العربي'), 'إلغاء إشراف م. صلاح العربي من عداد إنجاز المرحلة الأولى في الداش بورد');
 assert(dashboardCode.includes('sanitizeLocalReportsStorage'), 'تطهير الذاكرة المحلية للتقارير عند تحميل الداش بورد');
 assert(apiCacheCode.includes('isMockOrEmptyFuelReport'), 'منع واجهة الـ API من إرجاع تقارير وقود فارغة أو وهمية');
 

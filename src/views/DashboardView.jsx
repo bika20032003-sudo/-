@@ -482,7 +482,7 @@ export const DashboardView = ({ onNavigateTab, currentUser }) => {
             </div>
             <div style={{ marginTop: '0.4rem', paddingTop: '0.35rem', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b' }}>
               <span>إنجاز قطاع المرحلة الأولى</span>
-              <span style={{ color: '#15803d', fontWeight: 700 }}>إشراف م. صلاح العربي</span>
+              <span style={{ color: '#15803d', fontWeight: 700 }}>مكتملة ومستلمة بالكامل (100%) ✅</span>
             </div>
           </div>
 
