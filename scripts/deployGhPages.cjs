@@ -55,6 +55,13 @@ try {
   // Switch back to main
   run('git checkout main');
   console.log('Returned to main branch.');
+
+  // Regenerate hosting package and zip on main
+  try {
+    run('node scripts/prepareHostingPackage.cjs');
+  } catch (err) {
+    console.log('Hosting package regeneration notice:', err.message);
+  }
 } catch (e) {
   console.error('Deployment failed:', e.message);
   try {
