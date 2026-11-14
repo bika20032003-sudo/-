@@ -268,7 +268,7 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
     setDayName('الأحد');
     setSector('طريق أوباري - غات');
     setReportNumber('TARGET-25.10.2026');
-    setSectorDirector('مروان الهوني');
+    setSectorDirector(currentUser?.name || 'م. عيسى الطاهر');
     setTargetedSections(initialTargetedWorksSections.map(s => ({
       ...s,
       workItems: s.workItems.map(w => ({ ...w })),

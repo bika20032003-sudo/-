@@ -495,7 +495,7 @@ export const RoadDailyReportForm = ({
     dateFormatted: reportData.reportDate,
     sector: reportData.sector || 'طريق أوباري - غات',
     companyName: 'طريق أوباري - غات',
-    sectorDirector: reportData.sectorDirector || 'مروان الهوني',
+    sectorDirector: reportData.sectorDirector || currentUser?.name || 'م. صلاح العربي',
     ownerRepresentative: reportData.ownerRepresentative || '................................',
     itemSummaries: calculatedTotals.itemSummaries,
     items: (currentData.items || []).map((it, idx) => ({
@@ -510,7 +510,7 @@ export const RoadDailyReportForm = ({
       noteHighlight: it.noteHighlight
     })),
     status: 'approved',
-    uploadedBy: reportData.sectorDirector || 'مروان الهوني',
+    uploadedBy: reportData.sectorDirector || currentUser?.name || 'م. صلاح العربي',
     approvedBy: reportData.ownerRepresentative || 'ممثل الجهة المالكة'
   });
 
@@ -623,8 +623,8 @@ export const RoadDailyReportForm = ({
         createdByUsername: currentUser?.username,
         authorUsername: currentUser?.username,
         createdByName: currentUser?.name || reportData.sectorDirector,
-        uploadedBy: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
-        engineer: currentUser?.name || reportData.sectorDirector || 'مروان الهوني',
+        uploadedBy: currentUser?.name || reportData.sectorDirector || 'م. صلاح العربي',
+        engineer: currentUser?.name || reportData.sectorDirector || 'م. صلاح العربي',
         notes: `تقرير أعمال الطريق اليومي المعتمد ليوم ${reportData.dayName} ${reportData.reportDate} - عدد البنود: ${reportData.items?.length || 0} بنود منفذة`,
         createdAt: reportData.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -1611,7 +1611,7 @@ export const RoadDailyReportForm = ({
           padding: '2rem 3rem 0.5rem',
           marginTop: '1.5rem'
         }}>
-          {/* Right: Sector Director (مدير القطاع مهندس: مروان الهوني) */}
+          {/* Right: Sector Director (مدير القطاع) */}
           <div style={{ textAlign: 'center', minWidth: '240px' }}>
             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#000000' }}>
               مدير القطاع

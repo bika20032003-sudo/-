@@ -62,15 +62,6 @@ export const BASE_SUPERVISORS = [
     avatar: ''
   },
   {
-    username: 'honi',
-    name: 'م. مروان الهوني',
-    role: 'مهندس إشراف ميداني',
-    title: 'مهندس إشراف ومتابعة ميدانية',
-    badge: 'إشراف ميداني',
-    sector: 'all',
-    avatar: ''
-  },
-  {
     username: 'admin',
     name: 'م. حساب التطوير',
     role: 'حساب التطوير',
@@ -144,12 +135,6 @@ export const CANONICAL_ALIASES = {
   'وقود': 'fuel_officer',
   'مسؤول الوقود': 'fuel_officer',
   'مسؤول الوقود والمحروقات': 'fuel_officer',
-
-  // Marwan Al-Honi
-  'honi': 'honi',
-  'الهوني': 'honi',
-  'مروان': 'honi',
-  'م. مروان الهوني': 'honi',
 
   // Broadcast
   'all': 'all',

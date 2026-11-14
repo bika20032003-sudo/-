@@ -284,14 +284,16 @@ export const UsersView = ({ currentUser }) => {
   };
 
   // Handle Delete User
-  const handleDeleteUser = (id, name) => {
-    if ([1, 2, 3, 4, 5, 6].includes(id)) {
+  const handleDeleteUser = (id, name, username) => {
+    const isCore = [1, 2, 3, 4, 5, 6].includes(id) || 
+                   ['admin', 'project_manager', 'abrikaw', 'saleh_quality', 'salah_alarabi', 'issa_altahir'].includes(String(username || '').toLowerCase());
+    if (isCore) {
       setFeedbackMsg({ type: 'error', text: 'لا يمكن حذف الأعضاء الأساسيين لجهاز الإشراف المعتمد' });
       return;
     }
     if (!window.confirm(`هل أنت متأكد من حذف حساب (${name}) نهائياً من المنظومة؟`)) return;
 
-    deleteCustomUser(id);
+    deleteCustomUser(id, username, name);
     setFeedbackMsg({ type: 'success', text: `تم حذف المستخدم "${name}" بنجاح` });
     loadUsers();
   };
@@ -801,7 +803,7 @@ export const UsersView = ({ currentUser }) => {
                 filteredUsers.map((user) => {
                   const roleStyle = getRoleStyle(user.role || '');
                   const isPasswordVisible = visiblePasswords[user.id];
-                  const isPermanent = [1, 2, 3, 4, 5, 6].includes(user.id) || ['admin', 'project_manager'].includes(user.username);
+                  const isPermanent = [1, 2, 3, 4, 5, 6].includes(user.id) || ['admin', 'project_manager', 'abrikaw', 'saleh_quality', 'salah_alarabi', 'issa_altahir'].includes(String(user.username || '').toLowerCase());
                   const userAvatar = user.avatar || localStorage.getItem(`user_avatar_${user.username}`) || '';
 
                   return (
@@ -1012,7 +1014,7 @@ export const UsersView = ({ currentUser }) => {
 
                           <button
                             type="button"
-                            onClick={() => handleDeleteUser(user.id, user.name)}
+                            onClick={() => handleDeleteUser(user.id, user.name, user.username)}
                             disabled={isPermanent}
                             style={{
                               background: isPermanent ? '#f8fafc' : '#fef2f2',

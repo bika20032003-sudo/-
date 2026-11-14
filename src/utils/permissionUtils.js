@@ -248,11 +248,6 @@ export const isReportOwnedByEngineer = (report, currentUser) => {
     ) return true;
   }
 
-  // م. مروان الهوني
-  if (userName.includes('الهوني') || username.includes('honi')) {
-    if (combinedReportAuthors.includes('الهوني')) return true;
-  }
-
   return false;
 };
 

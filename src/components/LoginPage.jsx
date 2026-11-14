@@ -72,16 +72,6 @@ const DEFAULT_USERS = [
     sector: 'all',
     email: 'fuel@mot.gov.ly',
     password: 'fuel123'
-  },
-  {
-    id: 8,
-    username: 'honi',
-    name: 'م. مروان الهوني',
-    role: 'مهندس إشراف ميداني',
-    title: 'مهندس إشراف ومتابعة ميدانية',
-    sector: 'all',
-    email: 'honi@mot.gov.ly',
-    password: 'honi123'
   }
 ];
 
@@ -122,11 +112,40 @@ const ALIASES = {
   'fuel_officer': 'fuel_officer',
   'وقود': 'fuel_officer',
   'مسؤول الوقود': 'fuel_officer',
-  'مسؤول الوقود والمحروقات': 'fuel_officer',
-  'honi': 'honi',
-  'الهوني': 'honi',
-  'مروان': 'honi',
-  'م. مروان الهوني': 'honi'
+  'مسؤول الوقود والمحروقات': 'fuel_officer'
+};
+
+/**
+ * Helper to identify fuel officer accounts
+ */
+const isFuelOfficerAccount = (u) => {
+  if (!u) return false;
+  const uname = String(u.username || '').toLowerCase();
+  const name = String(u.name || '').toLowerCase();
+  const role = String(u.role || '').toLowerCase();
+  const title = String(u.title || '').toLowerCase();
+  return uname === 'fuel_officer' || uname === 'fuel' || 
+         role.includes('وقود') || name.includes('مسؤول الوقود') || title.includes('مسؤول الوقود');
+};
+
+/**
+ * Helper to identify Marwan accounts (purged permanently)
+ */
+const isMarwanAccount = (u) => {
+  if (!u) return false;
+  const uname = String(u.username || '').toLowerCase();
+  const name = String(u.name || '').toLowerCase();
+  return uname === 'honi' || name.includes('مروان') || name.includes('الهوني');
+};
+
+/**
+ * Core official accounts that must never be deleted
+ */
+const isCoreOfficialAccount = (u) => {
+  if (!u) return false;
+  const coreIds = [1, 2, 3, 4, 5, 6];
+  const coreUsernames = ['admin', 'project_manager', 'abrikaw', 'saleh_quality', 'salah_alarabi', 'issa_altahir'];
+  return coreIds.includes(u.id) || coreUsernames.includes(String(u.username || '').toLowerCase());
 };
 
 /**
@@ -135,6 +154,23 @@ const ALIASES = {
 export function getSystemUsers() {
   let users = JSON.parse(JSON.stringify(DEFAULT_USERS));
   try {
+    // Read deleted users list
+    const rawDeleted = localStorage.getItem('system_deleted_users');
+    const deletedList = rawDeleted ? JSON.parse(rawDeleted) : [];
+    const isDeleted = (u) => {
+      if (isCoreOfficialAccount(u)) return false;
+      return deletedList.some(d => {
+        if (!d) return false;
+        if (typeof d === 'number' || typeof d === 'string') {
+          return String(d).toLowerCase() === String(u.id).toLowerCase() || 
+                 String(d).toLowerCase() === String(u.username).toLowerCase();
+        }
+        return (d.id && d.id === u.id) || 
+               (d.username && String(d.username).toLowerCase() === String(u.username).toLowerCase()) ||
+               (d.name && d.name === u.name);
+      });
+    };
+
     const rawPasswords = localStorage.getItem('system_user_passwords');
     const savedPasswords = rawPasswords ? JSON.parse(rawPasswords) : {};
     if (savedPasswords && typeof savedPasswords === 'object') {
@@ -153,23 +189,48 @@ export function getSystemUsers() {
 
     // Merge custom users safely
     const rawCustom = localStorage.getItem('system_custom_users');
-    const customUsers = rawCustom ? JSON.parse(rawCustom) : [];
+    let customUsers = rawCustom ? JSON.parse(rawCustom) : [];
     if (Array.isArray(customUsers)) {
+      // Purge any Marwan or duplicate fuel entries from stored custom users
+      const cleanedCustom = customUsers.filter(cu => cu && typeof cu === 'object' && !isMarwanAccount(cu));
+      if (cleanedCustom.length !== customUsers.length) {
+        localStorage.setItem('system_custom_users', JSON.stringify(cleanedCustom));
+        customUsers = cleanedCustom;
+      }
+
       customUsers.forEach(cu => {
         if (!cu || typeof cu !== 'object') return;
+        if (isMarwanAccount(cu)) return;
+        if (isDeleted(cu)) return;
+
         // Never allow legacy cache to overwrite core account identities
         if (cu.username === 'admin' || cu.username === 'project_manager') {
           return;
         }
-        const existingIdx = users.findIndex(u => u.username === cu.username || u.id === cu.id);
+
         const cuPass = (savedPasswords && (savedPasswords[cu.username] || savedPasswords[cu.username.toLowerCase()] || savedPasswords[cu.name])) || cu.password || 'admin1234';
+
+        // Check if this is a fuel officer custom user: deduplicate into single canonical account
+        if (isFuelOfficerAccount(cu)) {
+          const canonFuelIdx = users.findIndex(u => isFuelOfficerAccount(u));
+          if (canonFuelIdx >= 0) {
+            users[canonFuelIdx] = {
+              ...users[canonFuelIdx],
+              password: cuPass || users[canonFuelIdx].password,
+              avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || users[canonFuelIdx].avatar || ''
+            };
+            return;
+          }
+        }
+
+        const existingIdx = users.findIndex(u => u.username === cu.username || u.id === cu.id);
         if (existingIdx === -1) {
           users.push({
             ...cu,
             password: cuPass,
             avatar: localStorage.getItem(`user_avatar_${cu.username}`) || cu.avatar || ''
           });
-        } else if (![1, 2, 3, 4, 5, 6].includes(users[existingIdx].id)) {
+        } else if (!isCoreOfficialAccount(users[existingIdx])) {
           users[existingIdx] = {
             ...users[existingIdx],
             ...cu,
@@ -179,6 +240,28 @@ export function getSystemUsers() {
         }
       });
     }
+
+    // Filter out deleted users & Marwan
+    users = users.filter(u => !isMarwanAccount(u) && !isDeleted(u));
+
+    // Deduplicate fuel officer accounts strictly: keep only 1 canonical fuel officer
+    let seenFuel = false;
+    users = users.filter(u => {
+      if (isFuelOfficerAccount(u)) {
+        if (seenFuel) return false;
+        seenFuel = true;
+      }
+      return true;
+    });
+
+    // Deduplicate by username
+    const seenUsernames = new Set();
+    users = users.filter(u => {
+      const uname = String(u.username || '').toLowerCase();
+      if (!uname || seenUsernames.has(uname)) return false;
+      seenUsernames.add(uname);
+      return true;
+    });
 
     // Guaranteed presence of dev account and project manager
     if (!users.some(u => u.username === 'admin')) {
@@ -266,13 +349,37 @@ export function saveCustomUser(user) {
 }
 
 /**
- * Delete a custom user from localStorage
+ * Delete a custom or non-core user from localStorage permanently
  */
-export function deleteCustomUser(userId) {
+export function deleteCustomUser(userId, username, name) {
   try {
-    const customUsers = JSON.parse(localStorage.getItem('system_custom_users') || '[]');
-    const filtered = customUsers.filter(u => u.id !== userId);
+    const rawCustom = localStorage.getItem('system_custom_users') || '[]';
+    const customUsers = JSON.parse(rawCustom);
+    const filtered = customUsers.filter(u => {
+      if (!u) return false;
+      if (userId && (u.id === userId || String(u.id) === String(userId))) return false;
+      if (username && String(u.username).toLowerCase() === String(username).toLowerCase()) return false;
+      if (name && u.name === name) return false;
+      return true;
+    });
     localStorage.setItem('system_custom_users', JSON.stringify(filtered));
+
+    // Register into system_deleted_users so non-core or default users stay deleted
+    const rawDeleted = localStorage.getItem('system_deleted_users') || '[]';
+    const deletedUsers = JSON.parse(rawDeleted);
+    const already = deletedUsers.some(d => {
+      if (!d) return false;
+      if (typeof d === 'number' || typeof d === 'string') {
+        return (userId && String(d) === String(userId)) || 
+               (username && String(d).toLowerCase() === String(username).toLowerCase());
+      }
+      return (userId && d.id === userId) ||
+             (username && String(d.username || '').toLowerCase() === String(username).toLowerCase());
+    });
+    if (!already) {
+      deletedUsers.push({ id: userId, username: username || '', name: name || '' });
+      localStorage.setItem('system_deleted_users', JSON.stringify(deletedUsers));
+    }
     return true;
   } catch (e) {
     console.error('Error deleting custom user:', e);
