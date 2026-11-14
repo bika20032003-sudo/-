@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages & Sync cPanel Hosting
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -42,3 +42,14 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  sync-cpanel:
+    name: Auto-Sync cPanel Hosting
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger cPanel Auto-Deployment Webhook
+        run: |
+          echo "Triggering cPanel automatic sync on ubarighatroad.ly..."
+          curl -s -k -m 30 "https://ubarighatroad.ly/cpanel_deploy.php?key=supervision_deploy_secret" || true
+          echo "Webhook ping completed."

@@ -153,56 +153,22 @@ fs.writeFileSync(path.join(rootPublicHtml, 'web.config'), webConfigContent, 'utf
 const cpanelYmlContent = `---
 deployment:
   tasks:
-    - /bin/bash -c "if [ -f cpanel_deploy.sh ]; then bash cpanel_deploy.sh; elif [ -f ../cpanel_deploy.sh ]; then bash ../cpanel_deploy.sh; else /bin/cp -rf public_html/* ~/public_html/; fi"
+    - export DEPLOYPATH=$HOME/public_html/
+    - /bin/bash cpanel_deploy.sh
 `;
 fs.writeFileSync(path.join(outDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
 fs.writeFileSync(path.join(rootDir, '.cpanel.yml'), cpanelYmlContent, 'utf8');
 
+// Copy cpanel_deploy.sh helper script to output package
+if (fs.existsSync(path.join(rootDir, 'cpanel_deploy.sh'))) {
+  fs.copyFileSync(path.join(rootDir, 'cpanel_deploy.sh'), path.join(outDir, 'cpanel_deploy.sh'));
+}
+
 // 6. Add Webhook deploy script (PHP) for automated GitHub Push deployment
-const deployPhpContent = `<?php
-/**
- * Auto-Deployment Webhook Script for cPanel Git Version Control
- * سكربت التحديث التلقائي الفوري عند إرسال أي Commit على GitHub
- */
-header('Content-Type: application/json; charset=utf-8');
-
-// مفتاح حماية سري لمنع الاستدعاء غير المصرح به
-$secret_key = 'supervision_deploy_secret'; 
-
-$provided_key = $_GET['key'] ?? ($_SERVER['HTTP_X_DEPLOY_KEY'] ?? '');
-if ($secret_key !== '' && $provided_key !== $secret_key) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized: Invalid deploy key']);
-    exit;
+const deployPhpPath = path.join(rootPublicHtml, 'cpanel_deploy.php');
+if (fs.existsSync(deployPhpPath)) {
+  fs.copyFileSync(deployPhpPath, path.join(publicHtmlDir, 'cpanel_deploy.php'));
 }
-
-$output = [];
-$return_var = 0;
-
-// سحب التحديثات من مستودع Git الرئيسي
-exec('git pull origin main 2>&1', $output, $return_var);
-
-// تشغيل أمر النشر الخاص بـ cPanel
-if (file_exists('.cpanel.yml') || file_exists('../.cpanel.yml')) {
-    exec('/usr/local/cpanel/bin/git-check 2>&1', $output);
-}
-
-// إعادة تشغيل تطبيق Node.js إن وجد
-if (file_exists('tmp/restart.txt')) {
-    touch('tmp/restart.txt');
-} elseif (file_exists('../tmp/restart.txt')) {
-    touch('../tmp/restart.txt');
-}
-
-echo json_encode([
-    'success' => $return_var === 0,
-    'message' => 'HEAD Commit Deployed Successfully',
-    'output' => $output,
-    'timestamp' => date('Y-m-d H:i:s')
-]);
-`;
-fs.writeFileSync(path.join(publicHtmlDir, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
-fs.writeFileSync(path.join(rootPublicHtml, 'cpanel_deploy.php'), deployPhpContent, 'utf8');
 
 // 7. Copy backend server source files
 const srcServerDir = path.join(rootDir, 'server');
