@@ -291,7 +291,12 @@ export const RoadProgressView = ({ currentUser, onNavigateTab }) => {
           {canAccessTwoPhaseReport(currentUser) ? (
             <button 
               className="primary-action-btn" 
-              onClick={() => onNavigateTab && onNavigateTab('create-report')} 
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('portal_pending_report_category', 'two_phase');
+                }
+                if (onNavigateTab) onNavigateTab('create-report');
+              }}
               style={{ 
                 height: '38px', 
                 background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', 

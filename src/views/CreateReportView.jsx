@@ -39,8 +39,31 @@ export const CreateReportView = ({ currentUser, onNavigateTab, onPrintReport }) 
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Active Report Category: 'road' | 'fuel'
-  const [reportCategory, setReportCategory] = useState('road');
+  // Active Report Category: 'road' | 'fuel' | 'targeted' | 'two_phase' | 'executive'
+  const [reportCategory, setReportCategory] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const pending = localStorage.getItem('portal_pending_report_category');
+        if (pending) {
+          localStorage.removeItem('portal_pending_report_category');
+          return pending;
+        }
+      }
+    } catch (e) {}
+    return 'road';
+  });
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const pending = localStorage.getItem('portal_pending_report_category');
+        if (pending) {
+          localStorage.removeItem('portal_pending_report_category');
+          setReportCategory(pending);
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   useEffect(() => {
     if (reportCategory === 'two_phase' && !canAccessTwoPhaseReport(currentUser)) {

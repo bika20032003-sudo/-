@@ -4,10 +4,6 @@ import {
   AlertCircle, FileSpreadsheet, FileText, Calendar, 
   TrendingUp, BarChart3, RotateCcw, Eye, Edit3, Save, 
   HelpCircle, UserCheck, Shield, ChevronLeft, Award, Check, RefreshCw, Zap } from 'lucide-react';
-import { 
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
-  CartesianGrid, Tooltip, Cell, LabelList 
-} from 'recharts';
 import * as XLSX from 'xlsx';
 import { fastFetch, clearApiCache, saveStoredTwoPhaseReport, getStoredTwoPhaseReport } from '../utils/apiCache.js';
 import { persistReportUniversal } from '../utils/reportPersistence.js';
@@ -546,12 +542,19 @@ export const TwoPhaseDailyReportForm = ({
     }
   };
 
-  // Prepare chart data for each phase
+  // Prepare chart data for each phase with full item metadata
   const getChartData = (items) => {
-    return items.map(item => ({
-      name: item.shortName || item.name,
+    if (!Array.isArray(items)) return [];
+    const palette = ['#16a34a', '#0284c7', '#0f172a', '#22c55e', '#ea580c', '#eab308'];
+    return items.map((item, idx) => ({
+      ...item,
+      id: item.id || idx + 1,
+      name: item.name || '',
+      shortName: item.shortName || item.name || `بند ${idx + 1}`,
+      todayMeters: item.todayMeters,
+      totalMeters: item.totalMeters,
       value: parseTwoPhaseNumber(item.totalMeters) || parseTwoPhaseNumber(item.todayMeters) || 0,
-      color: item.color
+      color: item.color || palette[idx % palette.length]
     }));
   };
 
@@ -1311,9 +1314,71 @@ export const TwoPhaseDailyReportForm = ({
     );
   };
 
-  // Helper renderer for chart cards (Large, spacious & clear visual fidelity)
-  const renderChartCard = (title, data) => {
-    const isFull = chartLayoutMode === 'full';
+  // Custom high-performance LabelList for crisp value display above bars
+  const LabelList = ({ value, isFull, isHovered }) => {
+    const numVal = parseTwoPhaseNumber(value);
+    if (!numVal || numVal <= 0) return <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 800 }}>0</span>;
+    const formatted = numVal >= 1000 ? `${(numVal / 1000).toFixed(1)}k` : numVal.toLocaleString('en-US');
+    return (
+      <span style={{
+        fontSize: isFull ? '0.78rem' : '0.70rem',
+        fontWeight: 900,
+        color: isHovered ? '#1d4ed8' : '#0f172a',
+        marginBottom: '4px',
+        whiteSpace: 'nowrap',
+        background: isHovered ? '#eff6ff' : 'rgba(255, 255, 255, 0.85)',
+        padding: '1px 5px',
+        borderRadius: '4px',
+        border: isHovered ? '1px solid #bfdbfe' : '1px solid transparent',
+        boxShadow: isHovered ? '0 2px 5px rgba(37, 99, 235, 0.15)' : 'none',
+        transition: 'all 0.15s ease'
+      }}>
+        {formatted}
+      </span>
+    );
+  };
+
+  // Dedicated Native Interactive Bar Chart Component (100% Reliable, Zero Dependency, Mobile & RTL Optimized)
+  const TwoPhaseInteractiveChart = ({ title, items = [], isFull = true }) => {
+    const [hoveredIdx, setHoveredIdx] = useState(null);
+
+    const palette = ['#16a34a', '#0284c7', '#0f172a', '#22c55e', '#ea580c', '#eab308'];
+
+    const validItems = useMemo(() => {
+      return (items || []).filter(Boolean).map((it, idx) => {
+        const todayVal = parseTwoPhaseNumber(it.todayMeters);
+        const totalVal = parseTwoPhaseNumber(it.totalMeters);
+        const val = totalVal > 0 ? totalVal : (todayVal > 0 ? todayVal : 0);
+        return {
+          ...it,
+          id: it.id || idx + 1,
+          shortLabel: it.shortName || it.name || `بند ${idx + 1}`,
+          fullLabel: it.name || it.shortName || '',
+          todayVal,
+          totalVal,
+          val,
+          color: it.color || palette[idx % palette.length]
+        };
+      });
+    }, [items]);
+
+    const maxVal = useMemo(() => {
+      const vals = validItems.map(i => i.val);
+      return Math.max(...vals, 100);
+    }, [validItems]);
+
+    // Determine a clean ceiling for the Y axis
+    const ceiling = useMemo(() => {
+      if (maxVal <= 100) return 100;
+      if (maxVal <= 1000) return Math.ceil(maxVal / 100) * 100;
+      if (maxVal <= 25000) return Math.ceil(maxVal / 5000) * 5000;
+      if (maxVal <= 100000) return Math.ceil(maxVal / 10000) * 10000;
+      return Math.ceil(maxVal / 25000) * 25000;
+    }, [maxVal]);
+
+    const yTicks = [1, 0.75, 0.5, 0.25, 0];
+    const hoveredItem = hoveredIdx !== null ? validItems[hoveredIdx] : null;
+
     return (
       <div style={{
         background: '#ffffff',
@@ -1324,60 +1389,240 @@ export const TwoPhaseDailyReportForm = ({
         height: '100%',
         minHeight: isFull ? '390px' : '360px',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+        position: 'relative'
       }}>
+        {/* Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1.5px solid #e2e8f0',
           paddingBottom: '0.65rem',
-          marginBottom: '0.85rem'
+          marginBottom: '0.85rem',
+          flexWrap: 'wrap',
+          gap: '0.5rem'
         }}>
           <span style={{ fontSize: '1rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <BarChart3 size={18} color="#2563eb" />
             {title}
           </span>
-          <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 800, background: '#f8fafc', padding: '3px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-            متر طولي (م.ط)
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {hoveredItem ? (
+              <span style={{
+                fontSize: '0.80rem',
+                fontWeight: 800,
+                background: '#eff6ff',
+                color: '#1d4ed8',
+                padding: '3px 9px',
+                borderRadius: '6px',
+                border: '1px solid #bfdbfe'
+              }}>
+                {hoveredItem.shortLabel}: {Number(hoveredItem.val).toLocaleString('en-US')} م.ط
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 800, background: '#f8fafc', padding: '3px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                متر طولي (م.ط)
+              </span>
+            )}
+          </div>
         </div>
 
-        <div style={{ width: '100%', minHeight: isFull ? '330px' : '290px', flex: 1, height: '100%' }}>
-          <ResponsiveContainer width="100%" height={isFull ? 340 : 300}>
-            <BarChart data={data} margin={{ top: 25, right: 15, left: 15, bottom: isFull ? 25 : 45 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis 
-                dataKey="name" 
-                tick={{ fontSize: isFull ? 12 : 11, fill: '#0f172a', fontWeight: 800 }} 
-                interval={0}
-                angle={isFull ? 0 : -18}
-                textAnchor={isFull ? 'middle' : 'end'}
-                height={isFull ? 35 : 50}
-              />
-              <YAxis 
-                tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }}
-                tickFormatter={(val) => val >= 1000 ? `${(val/1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}k` : val}
-              />
-              <Tooltip 
-                formatter={(val) => [`${Number(val).toLocaleString('en-US')} م.ط`, 'الإنجاز']}
-                contentStyle={{ borderRadius: '8px', direction: 'rtl', fontSize: '0.9rem', fontWeight: 800, border: '1.5px solid #cbd5e1', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-              />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={isFull ? 64 : 46}>
-                <LabelList 
-                  dataKey="value" 
-                  position="top" 
-                  formatter={(val) => val > 0 ? (val >= 1000 ? `${(val/1000).toFixed(1)}k` : Number(val).toLocaleString('en-US')) : ''}
-                  style={{ fontSize: '11px', fontWeight: 900, fill: '#0f172a' }}
-                />
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || '#2563eb'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Main Chart Graphic Canvas (Rock-solid Vector Flex / SVG Layout) */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          position: 'relative',
+          minHeight: isFull ? '290px' : '250px',
+          width: '100%',
+          marginTop: '0.4rem'
+        }}>
+          {/* Y-Axis Labels Column */}
+          <div style={{
+            width: '52px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            paddingBottom: '36px',
+            paddingTop: '16px',
+            color: '#64748b',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            userSelect: 'none',
+            direction: 'ltr'
+          }}>
+            {yTicks.map((ratio, i) => {
+              const tickVal = Math.round(ceiling * ratio);
+              const label = tickVal >= 1000 ? `${(tickVal / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}k` : tickVal;
+              return <span key={i}>{label}</span>;
+            })}
+          </div>
+
+          {/* Plot Area with Grid Lines and Bars */}
+          <div style={{
+            flex: 1,
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            marginRight: '6px',
+            minWidth: 0
+          }}>
+            {/* Horizontal Grid Lines */}
+            <div style={{
+              position: 'absolute',
+              top: '16px',
+              bottom: '36px',
+              left: 0,
+              right: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              pointerEvents: 'none',
+              zIndex: 0
+            }}>
+              {yTicks.map((_, i) => (
+                <div key={i} style={{
+                  width: '100%',
+                  borderBottom: i === yTicks.length - 1 ? '1.5px solid #94a3b8' : '1px dashed #e2e8f0'
+                }} />
+              ))}
+            </div>
+
+            {/* Bars Row */}
+            <div style={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-around',
+              height: 'calc(100% - 36px)',
+              gap: '8px',
+              padding: '0 4px'
+            }}>
+              {validItems.map((item, idx) => {
+                const heightPercent = ceiling > 0 ? Math.min(100, Math.max(item.val > 0 ? 6 : 2, (item.val / ceiling) * 100)) : 2;
+                const isHovered = hoveredIdx === idx;
+                return (
+                  <div 
+                    key={idx}
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    onClick={() => setHoveredIdx(prev => prev === idx ? null : idx)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      height: '100%',
+                      justifyContent: 'flex-end',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      transition: 'transform 0.2s ease',
+                      transform: isHovered ? 'translateY(-3px)' : 'none'
+                    }}
+                  >
+                    {/* Value Above Bar via LabelList */}
+                    <LabelList value={item.val} isFull={isFull} isHovered={isHovered} />
+
+                    {/* Vertical Column Bar */}
+                    <div style={{
+                      width: isFull ? '64%' : '76%',
+                      maxWidth: isFull ? '54px' : '44px',
+                      minWidth: '24px',
+                      height: `${heightPercent}%`,
+                      background: `linear-gradient(180deg, ${item.color} 0%, ${item.color}dd 100%)`,
+                      borderRadius: '8px 8px 0 0',
+                      boxShadow: isHovered 
+                        ? `0 6px 14px ${item.color}66` 
+                        : '0 2px 6px rgba(0,0,0,0.06)',
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      filter: isHovered ? 'brightness(1.08)' : 'none'
+                    }} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* X-Axis Labels Row */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              height: '36px',
+              alignItems: 'center',
+              borderTop: '1.5px solid #334155',
+              paddingTop: '4px',
+              gap: '8px'
+            }}>
+              {validItems.map((item, idx) => {
+                const isHovered = hoveredIdx === idx;
+                return (
+                  <div 
+                    key={idx}
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      fontSize: isFull ? '0.78rem' : '0.72rem',
+                      fontWeight: isHovered ? 900 : 800,
+                      color: isHovered ? '#1d4ed8' : '#1e293b',
+                      lineHeight: 1.2,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                    title={item.fullLabel}
+                  >
+                    {item.shortLabel}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
+
+        {/* Interactive Detail Ribbon When Hovered */}
+        {hoveredItem && (
+          <div style={{
+            marginTop: '0.65rem',
+            padding: '0.55rem 0.9rem',
+            background: '#f8fafc',
+            border: '1.5px solid #bfdbfe',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.82rem',
+            color: '#0f172a',
+            fontWeight: 800,
+            animation: 'fadeIn 0.2s ease-in-out',
+            boxShadow: '0 2px 6px rgba(37,99,235,0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: hoveredItem.color, display: 'inline-block' }} />
+              <span>{hoveredItem.fullLabel}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+              <span>الإجمالي المنجز: <strong style={{ color: '#16a34a' }}>{Number(hoveredItem.val).toLocaleString('en-US')} م.ط</strong></span>
+              {hoveredItem.todayVal > 0 && <span>إنجاز اليوم: <strong style={{ color: '#2563eb' }}>{Number(hoveredItem.todayVal).toLocaleString('en-US')} م.ط</strong></span>}
+              {hoveredItem.notes && <span style={{ color: '#64748b', fontSize: '0.75rem' }}>({hoveredItem.notes})</span>}
+            </div>
+          </div>
+        )}
       </div>
+    );
+  };
+
+  // Helper renderer for chart cards (Large, spacious & clear visual fidelity)
+  const renderChartCard = (title, data) => {
+    const isFull = chartLayoutMode === 'full';
+    return (
+      <TwoPhaseInteractiveChart title={title} items={data} isFull={isFull} />
     );
   };
 
@@ -1943,30 +2188,30 @@ export const TwoPhaseDailyReportForm = ({
 
       {/* SECTION 1: PHASE 1 TABLE (Right) + CHART (Left) */}
       <div className={`two-phase-grid-split ${chartLayoutMode === 'full' ? 'full-mode' : 'split-mode'}`} style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           {renderPhaseTable('المرحلة الأولى', phase1Items, handleUpdatePhase1, '#1e40af')}
         </div>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           {renderChartCard('الأعمال المنجزة المرحلة الأولى', chartDataPhase1)}
         </div>
       </div>
 
       {/* SECTION 2: PHASE 2 TABLE (Right) + CHART (Left) */}
       <div className={`two-phase-grid-split ${chartLayoutMode === 'full' ? 'full-mode' : 'split-mode'}`} style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           {renderPhaseTable('المرحلة الثانية', phase2Items, handleUpdatePhase2, '#0284c7')}
         </div>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           {renderChartCard('الأعمال المنجزة المرحلة الثانية', chartDataPhase2)}
         </div>
       </div>
 
       {/* SECTION 3: COMBINED TWO-PHASE TABLE (Right) + CHART (Left) */}
       <div className={`two-phase-grid-split ${chartLayoutMode === 'full' ? 'full-mode' : 'split-mode'}`} style={{ display: 'grid', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           {renderCombinedTable()}
         </div>
-        <div>
+        <div style={{ minWidth: 0, width: '100%' }}>
           {renderChartCard('إجمالي الأعمال المنجزة', chartDataCombined)}
         </div>
       </div>
