@@ -314,9 +314,12 @@ function deduplicate_reports_array($reports)
         } else {
             $newIdx = count($result);
             $result[] = $r;
-            if ($id) $seenIds[$id] = $newIdx;
-            if ($num) $seenNumbers[$num] = $newIdx;
-            if ($key) $seenKeys[$key] = $newIdx;
+            if ($id)
+                $seenIds[$id] = $newIdx;
+            if ($num)
+                $seenNumbers[$num] = $newIdx;
+            if ($key)
+                $seenKeys[$key] = $newIdx;
         }
     }
 
@@ -1050,14 +1053,14 @@ function get_default_road_progress_items_php($db = [])
     foreach ($itemConfigs as $idx => $cfg) {
         $raw = $p1[$idx] ?? [];
         $c = $combined[$idx] ?? [];
-        $cleanTotal = str_replace(',', '', (string)($raw['totalMeters'] ?? ''));
+        $cleanTotal = str_replace(',', '', (string) ($raw['totalMeters'] ?? ''));
         $total = (is_numeric($cleanTotal) && floatval($cleanTotal) > 0) ? floatval($cleanTotal) : $cfg['p1Total'];
-        $cleanToday = str_replace(',', '', (string)($raw['todayMeters'] ?? ''));
+        $cleanToday = str_replace(',', '', (string) ($raw['todayMeters'] ?? ''));
         $today = is_numeric($cleanToday) ? floatval($cleanToday) : 0;
         $prev = max(0, $total - $today);
-        $cleanTarget = str_replace(',', '', (string)($raw['dailyTarget'] ?? ''));
+        $cleanTarget = str_replace(',', '', (string) ($raw['dailyTarget'] ?? ''));
         $target = is_numeric($cleanTarget) ? floatval($cleanTarget) : $cfg['defTarget'];
-        $cleanReady = str_replace(',', '', (string)($c['readyToWorkMeters'] ?? ''));
+        $cleanReady = str_replace(',', '', (string) ($c['readyToWorkMeters'] ?? ''));
         $ready = is_numeric($cleanReady) ? floatval($cleanReady) : 0;
 
         $items[] = [
@@ -1078,14 +1081,14 @@ function get_default_road_progress_items_php($db = [])
     foreach ($itemConfigs as $idx => $cfg) {
         $raw = $p2[$idx] ?? [];
         $c = $combined[$idx] ?? [];
-        $cleanTotal = str_replace(',', '', (string)($raw['totalMeters'] ?? ''));
+        $cleanTotal = str_replace(',', '', (string) ($raw['totalMeters'] ?? ''));
         $total = (is_numeric($cleanTotal) && floatval($cleanTotal) > 0) ? floatval($cleanTotal) : $cfg['p2Total'];
-        $cleanToday = str_replace(',', '', (string)($raw['todayMeters'] ?? ''));
+        $cleanToday = str_replace(',', '', (string) ($raw['todayMeters'] ?? ''));
         $today = is_numeric($cleanToday) ? floatval($cleanToday) : $cfg['p2Today'];
         $prev = max(0, $total - $today);
-        $cleanTarget = str_replace(',', '', (string)($raw['dailyTarget'] ?? ''));
+        $cleanTarget = str_replace(',', '', (string) ($raw['dailyTarget'] ?? ''));
         $target = is_numeric($cleanTarget) ? floatval($cleanTarget) : $cfg['defTarget'];
-        $cleanReady = str_replace(',', '', (string)($c['readyToWorkMeters'] ?? ''));
+        $cleanReady = str_replace(',', '', (string) ($c['readyToWorkMeters'] ?? ''));
         $ready = is_numeric($cleanReady) ? floatval($cleanReady) : 0;
 
         $items[] = [
@@ -1139,8 +1142,8 @@ if ($resource === 'road-progress') {
 
     if ($method === 'GET') {
         echo json_encode([
-            'success' => true, 
-            'items' => $db['roadProgress'], 
+            'success' => true,
+            'items' => $db['roadProgress'],
             'data' => $db['roadProgress'],
             'roadProgress' => $db['roadProgress']
         ]);
